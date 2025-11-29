@@ -126,6 +126,30 @@ def extraction_request_create(request):
                 request,
                 f'Solicitação #{extraction_request.pk} criada com sucesso!'
             )
+            
+            # Verifica se deve continuar cadastrando
+            keep_data = request.POST.get('keep_data_for_new')
+            if keep_data:
+                # Mantém dados comuns para nova solicitação
+                initial_data = {
+                    'requester_agency_unit': extraction_request.requester_agency_unit.pk if extraction_request.requester_agency_unit else None,
+                    'requester_reply_email': extraction_request.requester_reply_email,
+                    'requester_authority_name': extraction_request.requester_authority_name,
+                    'requester_authority_position': extraction_request.requester_authority_position.pk if extraction_request.requester_authority_position else None,
+                    'crime_category': extraction_request.crime_category.pk if extraction_request.crime_category else None,
+                    'extraction_unit': extraction_request.extraction_unit.pk if extraction_request.extraction_unit else None,
+                }
+                form = ExtractionRequestForm(initial=initial_data, user=request.user)
+                
+                context = {
+                    'page_title': 'Nova Solicitação',
+                    'page_icon': 'fa-plus',
+                    'form': form,
+                    'action': 'create',
+                    'keep_data_checked': True,
+                }
+                return render(request, 'requisitions/extraction_request_form.html', context)
+            
             return redirect('requisitions:detail', pk=extraction_request.pk)
     else:
         form = ExtractionRequestForm(user=request.user)

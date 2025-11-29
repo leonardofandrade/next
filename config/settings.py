@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'apps.public',
     'apps.base_tables',
     'apps.users',
+    'apps.requisitions',
 ]
 
 MIDDLEWARE = [

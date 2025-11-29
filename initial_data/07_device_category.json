@@ -1,0 +1,17 @@
+{
+  "device_types": [
+    {
+      "name": "Smartphone",
+      "description": "Telefone celular com funcionalidades avançadas",
+      "default_selection": true
+    },
+    {
+      "name": "Tablet",
+      "description": "Dispositivo móvel com tela maior que um smartphone"
+    },
+    {
+      "name": "Outros",
+      "description": "Outros"
+    }
+  ]
+}

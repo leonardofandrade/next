@@ -1,0 +1,676 @@
+{
+  "brands": [
+    {
+      "name": "Desconhecida",
+      "description": "Quando a marca do dispositivo não é conhecida",
+      "models": [
+        {
+          "name": "Desconhecido",
+          "commercial_name": "",
+          "code": "N/A",
+          "description": "Quando o modelo do dispositivo não é conhecido"
+        }
+      ]
+    },
+    {
+      "name": "Samsung",
+      "description": "Fabricante sul-coreana de dispositivos eletrônicos",
+      "models": [
+        {
+          "name": "Galaxy S23 Ultra",
+          "commercial_name": "Samsung Galaxy S23 Ultra",
+          "code": "SM-S918B",
+          "description": "Smartphone flagship lançado em 2023"
+        },
+        {
+          "name": "Galaxy S23+",
+          "commercial_name": "Samsung Galaxy S23+",
+          "code": "SM-S916B",
+          "description": "Smartphone flagship lançado em 2023"
+        },
+        {
+          "name": "Galaxy S23",
+          "commercial_name": "Samsung Galaxy S23",
+          "code": "SM-S911B",
+          "description": "Smartphone flagship lançado em 2023"
+        },
+        {
+          "name": "Galaxy S22 Ultra",
+          "commercial_name": "Samsung Galaxy S22 Ultra",
+          "code": "SM-S908B",
+          "description": "Smartphone flagship lançado em 2022"
+        },
+        {
+          "name": "Galaxy S22+",
+          "commercial_name": "Samsung Galaxy S22+",
+          "code": "SM-S906B",
+          "description": "Smartphone flagship lançado em 2022"
+        },
+        {
+          "name": "Galaxy A54 5G",
+          "commercial_name": "Samsung Galaxy A54 5G",
+          "code": "SM-A546B",
+          "description": "Smartphone intermediário premium lançado em 2023"
+        },
+        {
+          "name": "Galaxy A34 5G",
+          "commercial_name": "Samsung Galaxy A34 5G",
+          "code": "SM-A346B",
+          "description": "Smartphone intermediário lançado em 2023"
+        },
+        {
+          "name": "Galaxy M54 5G",
+          "commercial_name": "Samsung Galaxy M54 5G",
+          "code": "SM-M546B",
+          "description": "Smartphone intermediário lançado em 2023"
+        },
+        {
+          "name": "Galaxy A14",
+          "commercial_name": "Samsung Galaxy A14",
+          "code": "SM-A145F",
+          "description": "Smartphone básico lançado em 2023"
+        },
+        {
+          "name": "Galaxy Z Fold4",
+          "commercial_name": "Samsung Galaxy Z Fold4",
+          "code": "SM-F936B",
+          "description": "Smartphone dobrável lançado em 2022"
+        }
+      ]
+    },
+    {
+      "name": "Apple",
+      "description": "Fabricante americana de dispositivos eletrônicos",
+      "models": [
+        {
+          "name": "iPhone 14 Pro Max",
+          "commercial_name": "Apple iPhone 14 Pro Max",
+          "code": "A2894",
+          "description": "Smartphone flagship lançado em 2022"
+        },
+        {
+          "name": "iPhone 14 Pro",
+          "commercial_name": "Apple iPhone 14 Pro",
+          "code": "A2890",
+          "description": "Smartphone flagship lançado em 2022"
+        },
+        {
+          "name": "iPhone 14 Plus",
+          "commercial_name": "Apple iPhone 14 Plus",
+          "code": "A2886",
+          "description": "Smartphone flagship lançado em 2022"
+        },
+        {
+          "name": "iPhone 14",
+          "commercial_name": "Apple iPhone 14",
+          "code": "A2882",
+          "description": "Smartphone flagship lançado em 2022"
+        },
+        {
+          "name": "iPhone 13 Pro Max",
+          "commercial_name": "Apple iPhone 13 Pro Max",
+          "code": "A2644",
+          "description": "Smartphone flagship lançado em 2021"
+        },
+        {
+          "name": "iPhone 13 Pro",
+          "commercial_name": "Apple iPhone 13 Pro",
+          "code": "A2640",
+          "description": "Smartphone flagship lançado em 2021"
+        },
+        {
+          "name": "iPhone 13",
+          "commercial_name": "Apple iPhone 13",
+          "code": "A2633",
+          "description": "Smartphone flagship lançado em 2021"
+        },
+        {
+          "name": "iPhone 13 mini",
+          "commercial_name": "Apple iPhone 13 mini",
+          "code": "A2629",
+          "description": "Smartphone flagship compacto lançado em 2021"
+        },
+        {
+          "name": "iPhone 12 Pro Max",
+          "commercial_name": "Apple iPhone 12 Pro Max",
+          "code": "A2412",
+          "description": "Smartphone flagship lançado em 2020"
+        },
+        {
+          "name": "iPhone SE (3ª geração)",
+          "commercial_name": "Apple iPhone SE (2022)",
+          "code": "A2783",
+          "description": "Smartphone intermediário lançado em 2022"
+        }
+      ]
+    },
+    {
+      "name": "Motorola",
+      "description": "Fabricante americana de dispositivos eletrônicos",
+      "models": [
+        {
+          "name": "Edge 40 Pro",
+          "commercial_name": "Motorola Edge 40 Pro",
+          "code": "XT2301-4",
+          "description": "Smartphone flagship lançado em 2023"
+        },
+        {
+          "name": "Edge 30 Ultra",
+          "commercial_name": "Motorola Edge 30 Ultra",
+          "code": "XT2241-1",
+          "description": "Smartphone flagship lançado em 2022"
+        },
+        {
+          "name": "Edge 30 Pro",
+          "commercial_name": "Motorola Edge 30 Pro",
+          "code": "XT2201-1",
+          "description": "Smartphone flagship lançado em 2022"
+        },
+        {
+          "name": "Edge 30 Neo",
+          "commercial_name": "Motorola Edge 30 Neo",
+          "code": "XT2245-1",
+          "description": "Smartphone intermediário premium lançado em 2022"
+        },
+        {
+          "name": "Moto G73 5G",
+          "commercial_name": "Motorola Moto G73 5G",
+          "code": "XT2337-1",
+          "description": "Smartphone intermediário lançado em 2023"
+        },
+        {
+          "name": "Moto G53 5G",
+          "commercial_name": "Motorola Moto G53 5G",
+          "code": "XT2335-2",
+          "description": "Smartphone intermediário lançado em 2023"
+        },
+        {
+          "name": "Moto G23",
+          "commercial_name": "Motorola Moto G23",
+          "code": "XT2333-1",
+          "description": "Smartphone básico lançado em 2023"
+        },
+        {
+          "name": "Moto G13",
+          "commercial_name": "Motorola Moto G13",
+          "code": "XT2331-1",
+          "description": "Smartphone básico lançado em 2023"
+        },
+        {
+          "name": "Moto G72",
+          "commercial_name": "Motorola Moto G72",
+          "code": "XT2255-1",
+          "description": "Smartphone intermediário lançado em 2022"
+        },
+        {
+          "name": "Moto G42",
+          "commercial_name": "Motorola Moto G42",
+          "code": "XT2233-1",
+          "description": "Smartphone básico lançado em 2022"
+        }
+      ]
+    },
+    {
+      "name": "Xiaomi",
+      "description": "Fabricante chinesa de dispositivos eletrônicos",
+      "models": [
+        {
+          "name": "13 Pro",
+          "commercial_name": "Xiaomi 13 Pro",
+          "code": "2210132G",
+          "description": "Smartphone flagship lançado em 2023"
+        },
+        {
+          "name": "13",
+          "commercial_name": "Xiaomi 13",
+          "code": "2211133G",
+          "description": "Smartphone flagship lançado em 2023"
+        },
+        {
+          "name": "12T Pro",
+          "commercial_name": "Xiaomi 12T Pro",
+          "code": "22081212G",
+          "description": "Smartphone flagship lançado em 2022"
+        },
+        {
+          "name": "12T",
+          "commercial_name": "Xiaomi 12T",
+          "code": "22071212AG",
+          "description": "Smartphone flagship lançado em 2022"
+        },
+        {
+          "name": "Redmi Note 12 Pro+ 5G",
+          "commercial_name": "Xiaomi Redmi Note 12 Pro+ 5G",
+          "code": "22101316G",
+          "description": "Smartphone intermediário premium lançado em 2023"
+        },
+        {
+          "name": "Redmi Note 12 Pro 5G",
+          "commercial_name": "Xiaomi Redmi Note 12 Pro 5G",
+          "code": "22101316UG",
+          "description": "Smartphone intermediário premium lançado em 2023"
+        },
+        {
+          "name": "Redmi Note 12 5G",
+          "commercial_name": "Xiaomi Redmi Note 12 5G",
+          "code": "22111317G",
+          "description": "Smartphone intermediário lançado em 2023"
+        },
+        {
+          "name": "Redmi Note 11",
+          "commercial_name": "Xiaomi Redmi Note 11",
+          "code": "2201117TG",
+          "description": "Smartphone intermediário lançado em 2022"
+        },
+        {
+          "name": "POCO X5 Pro 5G",
+          "commercial_name": "Xiaomi POCO X5 Pro 5G",
+          "code": "22101320G",
+          "description": "Smartphone intermediário lançado em 2023"
+        },
+        {
+          "name": "POCO X5 5G",
+          "commercial_name": "Xiaomi POCO X5 5G",
+          "code": "22111317PG",
+          "description": "Smartphone intermediário lançado em 2023"
+        }
+      ]
+    },
+    {
+      "name": "OPPO",
+      "description": "Fabricante chinesa de dispositivos eletrônicos",
+      "models": [
+        {
+          "name": "Find X6 Pro",
+          "commercial_name": "OPPO Find X6 Pro",
+          "code": "PHU110",
+          "description": "Smartphone flagship lançado em 2023"
+        },
+        {
+          "name": "Find X6",
+          "commercial_name": "OPPO Find X6",
+          "code": "PHT110",
+          "description": "Smartphone flagship lançado em 2023"
+        },
+        {
+          "name": "Find N2 Flip",
+          "commercial_name": "OPPO Find N2 Flip",
+          "code": "CPH3523",
+          "description": "Smartphone dobrável lançado em 2023"
+        },
+        {
+          "name": "Reno8 Pro 5G",
+          "commercial_name": "OPPO Reno8 Pro 5G",
+          "code": "CPH2357",
+          "description": "Smartphone intermediário premium lançado em 2022"
+        },
+        {
+          "name": "Reno8 5G",
+          "commercial_name": "OPPO Reno8 5G",
+          "code": "CPH2359",
+          "description": "Smartphone intermediário premium lançado em 2022"
+        },
+        {
+          "name": "Reno8",
+          "commercial_name": "OPPO Reno8",
+          "code": "CPH2361",
+          "description": "Smartphone intermediário lançado em 2022"
+        },
+        {
+          "name": "A78 5G",
+          "commercial_name": "OPPO A78 5G",
+          "code": "CPH2471",
+          "description": "Smartphone intermediário lançado em 2023"
+        },
+        {
+          "name": "A77s",
+          "commercial_name": "OPPO A77s",
+          "code": "CPH2473",
+          "description": "Smartphone intermediário lançado em 2022"
+        },
+        {
+          "name": "A57",
+          "commercial_name": "OPPO A57",
+          "code": "CPH2387",
+          "description": "Smartphone básico lançado em 2022"
+        },
+        {
+          "name": "A17",
+          "commercial_name": "OPPO A17",
+          "code": "CPH2477",
+          "description": "Smartphone básico lançado em 2022"
+        }
+      ]
+    },
+    {
+      "name": "Vivo",
+      "description": "Fabricante chinesa de dispositivos eletrônicos",
+      "models": [
+        {
+          "name": "X90 Pro+",
+          "commercial_name": "Vivo X90 Pro+",
+          "code": "V2227A",
+          "description": "Smartphone flagship lançado em 2023"
+        },
+        {
+          "name": "X90 Pro",
+          "commercial_name": "Vivo X90 Pro",
+          "code": "V2219A",
+          "description": "Smartphone flagship lançado em 2023"
+        },
+        {
+          "name": "X90",
+          "commercial_name": "Vivo X90",
+          "code": "V2218A",
+          "description": "Smartphone flagship lançado em 2023"
+        },
+        {
+          "name": "V27 Pro",
+          "commercial_name": "Vivo V27 Pro",
+          "code": "V2230",
+          "description": "Smartphone intermediário premium lançado em 2023"
+        },
+        {
+          "name": "V27",
+          "commercial_name": "Vivo V27",
+          "code": "V2231",
+          "description": "Smartphone intermediário premium lançado em 2023"
+        },
+        {
+          "name": "V25 Pro",
+          "commercial_name": "Vivo V25 Pro",
+          "code": "V2158",
+          "description": "Smartphone intermediário premium lançado em 2022"
+        },
+        {
+          "name": "V25",
+          "commercial_name": "Vivo V25",
+          "code": "V2202",
+          "description": "Smartphone intermediário lançado em 2022"
+        },
+        {
+          "name": "Y100",
+          "commercial_name": "Vivo Y100",
+          "code": "V2239",
+          "description": "Smartphone intermediário lançado em 2023"
+        },
+        {
+          "name": "Y35",
+          "commercial_name": "Vivo Y35",
+          "code": "V2205",
+          "description": "Smartphone básico lançado em 2022"
+        },
+        {
+          "name": "Y22",
+          "commercial_name": "Vivo Y22",
+          "code": "V2207",
+          "description": "Smartphone básico lançado em 2022"
+        }
+      ]
+    },
+    {
+      "name": "OnePlus",
+      "description": "Fabricante chinesa de dispositivos eletrônicos",
+      "models": [
+        {
+          "name": "11",
+          "commercial_name": "OnePlus 11",
+          "code": "CPH2447",
+          "description": "Smartphone flagship lançado em 2023"
+        },
+        {
+          "name": "10T",
+          "commercial_name": "OnePlus 10T",
+          "code": "CPH2413",
+          "description": "Smartphone flagship lançado em 2022"
+        },
+        {
+          "name": "10 Pro",
+          "commercial_name": "OnePlus 10 Pro",
+          "code": "NE2210",
+          "description": "Smartphone flagship lançado em 2022"
+        },
+        {
+          "name": "Nord N30 5G",
+          "commercial_name": "OnePlus Nord N30 5G",
+          "code": "CPH2513",
+          "description": "Smartphone intermediário lançado em 2023"
+        },
+        {
+          "name": "Nord CE 3 Lite 5G",
+          "commercial_name": "OnePlus Nord CE 3 Lite 5G",
+          "code": "CPH2467",
+          "description": "Smartphone intermediário lançado em 2023"
+        },
+        {
+          "name": "Nord CE 2 Lite 5G",
+          "commercial_name": "OnePlus Nord CE 2 Lite 5G",
+          "code": "CPH2381",
+          "description": "Smartphone intermediário lançado em 2022"
+        },
+        {
+          "name": "Nord CE 2 5G",
+          "commercial_name": "OnePlus Nord CE 2 5G",
+          "code": "CPH2339",
+          "description": "Smartphone intermediário lançado em 2022"
+        },
+        {
+          "name": "Nord N20 SE",
+          "commercial_name": "OnePlus Nord N20 SE",
+          "code": "CPH2469",
+          "description": "Smartphone básico lançado em 2022"
+        },
+        {
+          "name": "Nord N20",
+          "commercial_name": "OnePlus Nord N20",
+          "code": "GN2200",
+          "description": "Smartphone intermediário lançado em 2022"
+        },
+        {
+          "name": "Nord N200 5G",
+          "commercial_name": "OnePlus Nord N200 5G",
+          "code": "DE2118",
+          "description": "Smartphone básico lançado em 2021"
+        }
+      ]
+    },
+    {
+      "name": "Realme",
+      "description": "Fabricante chinesa de dispositivos eletrônicos",
+      "models": [
+        {
+          "name": "GT3",
+          "commercial_name": "Realme GT3",
+          "code": "RMX3820",
+          "description": "Smartphone flagship lançado em 2023"
+        },
+        {
+          "name": "GT Neo 5",
+          "commercial_name": "Realme GT Neo 5",
+          "code": "RMX3706",
+          "description": "Smartphone flagship lançado em 2023"
+        },
+        {
+          "name": "GT2 Pro",
+          "commercial_name": "Realme GT2 Pro",
+          "code": "RMX3301",
+          "description": "Smartphone flagship lançado em 2022"
+        },
+        {
+          "name": "11 Pro+ 5G",
+          "commercial_name": "Realme 11 Pro+ 5G",
+          "code": "RMX3741",
+          "description": "Smartphone intermediário premium lançado em 2023"
+        },
+        {
+          "name": "11 Pro 5G",
+          "commercial_name": "Realme 11 Pro 5G",
+          "code": "RMX3771",
+          "description": "Smartphone intermediário premium lançado em 2023"
+        },
+        {
+          "name": "10 Pro+ 5G",
+          "commercial_name": "Realme 10 Pro+ 5G",
+          "code": "RMX3686",
+          "description": "Smartphone intermediário premium lançado em 2022"
+        },
+        {
+          "name": "10 Pro 5G",
+          "commercial_name": "Realme 10 Pro 5G",
+          "code": "RMX3663",
+          "description": "Smartphone intermediário lançado em 2022"
+        },
+        {
+          "name": "10",
+          "commercial_name": "Realme 10",
+          "code": "RMX3630",
+          "description": "Smartphone intermediário lançado em 2022"
+        },
+        {
+          "name": "C55",
+          "commercial_name": "Realme C55",
+          "code": "RMX3710",
+          "description": "Smartphone básico lançado em 2023"
+        },
+        {
+          "name": "C33",
+          "commercial_name": "Realme C33",
+          "code": "RMX3624",
+          "description": "Smartphone básico lançado em 2022"
+        }
+      ]
+    },
+    {
+      "name": "Asus",
+      "description": "Fabricante taiwanesa de dispositivos eletrônicos",
+      "models": [
+        {
+          "name": "ROG Phone 7 Ultimate",
+          "commercial_name": "Asus ROG Phone 7 Ultimate",
+          "code": "AI2205_D",
+          "description": "Smartphone gamer flagship lançado em 2023"
+        },
+        {
+          "name": "ROG Phone 7",
+          "commercial_name": "Asus ROG Phone 7",
+          "code": "AI2205_B",
+          "description": "Smartphone gamer flagship lançado em 2023"
+        },
+        {
+          "name": "ROG Phone 6D Ultimate",
+          "commercial_name": "Asus ROG Phone 6D Ultimate",
+          "code": "AI2203_D",
+          "description": "Smartphone gamer flagship lançado em 2022"
+        },
+        {
+          "name": "ROG Phone 6D",
+          "commercial_name": "Asus ROG Phone 6D",
+          "code": "AI2203_B",
+          "description": "Smartphone gamer flagship lançado em 2022"
+        },
+        {
+          "name": "ROG Phone 6 Pro",
+          "commercial_name": "Asus ROG Phone 6 Pro",
+          "code": "AI2201_C",
+          "description": "Smartphone gamer flagship lançado em 2022"
+        },
+        {
+          "name": "ROG Phone 6",
+          "commercial_name": "Asus ROG Phone 6",
+          "code": "AI2201_B",
+          "description": "Smartphone gamer flagship lançado em 2022"
+        },
+        {
+          "name": "Zenfone 9",
+          "commercial_name": "Asus Zenfone 9",
+          "code": "AI2202",
+          "description": "Smartphone flagship compacto lançado em 2022"
+        },
+        {
+          "name": "Zenfone 8",
+          "commercial_name": "Asus Zenfone 8",
+          "code": "ZS590KS",
+          "description": "Smartphone flagship compacto lançado em 2021"
+        },
+        {
+          "name": "Zenfone 8 Flip",
+          "commercial_name": "Asus Zenfone 8 Flip",
+          "code": "ZS672KS",
+          "description": "Smartphone flagship lançado em 2021"
+        },
+        {
+          "name": "ROG Phone 5s Pro",
+          "commercial_name": "Asus ROG Phone 5s Pro",
+          "code": "ZS676KS_C",
+          "description": "Smartphone gamer flagship lançado em 2021"
+        }
+      ]
+    },
+    {
+      "name": "Sony",
+      "description": "Fabricante japonesa de dispositivos eletrônicos",
+      "models": [
+        {
+          "name": "Xperia 1 V",
+          "commercial_name": "Sony Xperia 1 V",
+          "code": "XQ-DQ72",
+          "description": "Smartphone flagship lançado em 2023"
+        },
+        {
+          "name": "Xperia 1 IV",
+          "commercial_name": "Sony Xperia 1 IV",
+          "code": "XQ-CT72",
+          "description": "Smartphone flagship lançado em 2022"
+        },
+        {
+          "name": "Xperia 1 III",
+          "commercial_name": "Sony Xperia 1 III",
+          "code": "XQ-BC72",
+          "description": "Smartphone flagship lançado em 2021"
+        },
+        {
+          "name": "Xperia 5 IV",
+          "commercial_name": "Sony Xperia 5 IV",
+          "code": "XQ-CQ72",
+          "description": "Smartphone flagship compacto lançado em 2022"
+        },
+        {
+          "name": "Xperia 5 III",
+          "commercial_name": "Sony Xperia 5 III",
+          "code": "XQ-BQ72",
+          "description": "Smartphone flagship compacto lançado em 2021"
+        },
+        {
+          "name": "Xperia 10 V",
+          "commercial_name": "Sony Xperia 10 V",
+          "code": "XQ-DT72",
+          "description": "Smartphone intermediário lançado em 2023"
+        },
+        {
+          "name": "Xperia 10 IV",
+          "commercial_name": "Sony Xperia 10 IV",
+          "code": "XQ-CC72",
+          "description": "Smartphone intermediário lançado em 2022"
+        },
+        {
+          "name": "Xperia 10 III",
+          "commercial_name": "Sony Xperia 10 III",
+          "code": "XQ-BT52",
+          "description": "Smartphone intermediário lançado em 2021"
+        },
+        {
+          "name": "Xperia Pro-I",
+          "commercial_name": "Sony Xperia Pro-I",
+          "code": "XQ-BE72",
+          "description": "Smartphone profissional lançado em 2021"
+        },
+        {
+          "name": "Xperia Pro",
+          "commercial_name": "Sony Xperia Pro",
+          "code": "XQ-AQ62",
+          "description": "Smartphone profissional lançado em 2021"
+        }
+      ]
+    }
+  ]
+}

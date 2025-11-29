@@ -1,0 +1,7 @@
+[
+    {"acronym": "DPC", "name": "Delegado de Polícia Civil", "default_selection": true},
+    {"acronym": "OIP", "name": "Oficial Investigador de Polícia"},
+    {"acronym": "AI", "name": "Analista de Inteligência"},
+    {"acronym": "PCO", "name": "Perito Criminal Oficial"},
+    {"acronym": "PJ", "name": "Promotor de Justiça"}
+]

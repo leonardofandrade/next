@@ -1,0 +1,10 @@
+[
+    {"acronym": "NI", "name": "NÃO INFORMADO"},
+    {"acronym": "HM", "name": "Homicício"},
+    {"acronym": "TD", "name": "Tráfico de Drogas"},
+    {"acronym": "OC", "name": "Organização Criminosa"},
+    {"acronym": "AI", "name": "Abuso Infantil"},
+    {"acronym": "FR", "name": "Fraude"},
+    {"acronym": "SE", "name": "Sequestro"},
+    {"acronym": "RO", "name": "Roubo"}
+]

@@ -1,0 +1,82 @@
+{
+  "organizations": [
+    {
+      "name": "SECRETARIA DA SEGURANÇA PÚBLICA E DEFESA SOCIAL",
+      "acronym": "SSPDS",
+      "agencies": [
+        {
+          "name": "COORDENADORIA DE INTELIGÊNCIA",
+          "acronym": "COIN",
+          "agency_units": [
+            {
+              "name": "Célula de Inteligência",
+              "acronym": "CEINT",
+              "is_extraction_unit": true
+            },
+            {
+              "name": "Célula de Inteligência de Sinais",
+              "acronym": "CEINS",
+              "is_extraction_unit": true
+            }
+          ]
+        },
+        {
+          "name": "POLÍCIA CIVIL DO ESTADO DO CEARÁ",
+          "acronym": "PCCE",
+          "agency_units": []
+        },
+        {
+          "name": "PERÍCIA FORENSE DO ESTADO DO CEARÁ",
+          "acronym": "PEFOCE",
+          "agency_units": [
+            {
+              "name": "Núcleo de Perícias em Informática",
+              "acronym": "NUPTI",
+              "is_extraction_unit": true,
+              "phone": "(85) 3331-1901",
+              "email": "nupti@pefoce.ce.gov.br",
+              "address_line1": "Rua Paulo Jacó",
+              "address_number": null,
+              "address_line2": "Barreira",
+              "neighborhood": "S/N – Centro",
+              "city_name": "CEP:62.796-000",
+              "postal_code": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MINISTÉRIO PÚBLICO DO ESTADO DO CEARÁ",
+      "acronym": "MPCE",
+      "agencies": [
+        {
+          "name": "ORGÃOS DE INVESTIGAÇÃO",
+          "acronym": "OI",
+          "agency_units": [
+            {
+              "name": "Grupo de Atuação Especial de Combate às Organizações Criminosas",
+              "acronym": "GAECO"
+            },
+            {
+              "name": "Grupo de Atuação Especial de Combate à Sonegação Fiscal",
+              "acronym": "GAESF"
+            },
+            {
+              "name": "Núcleo de Investigação Criminal",
+              "acronym": "NUIC"
+            },
+            {
+              "name": "Procuradoria de Justiça dos Crimes contra a Administração Pública",
+              "acronym": "PROCAP"
+            },
+            {
+              "name": "Grupo Especial de Combate à Corrupção",
+              "acronym": "GECOC"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

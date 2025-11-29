@@ -1,0 +1,205 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-2">
+                        <i class="fas {{ page_icon }} text-primary me-2"></i>
+                        {{ page_title }}
+                    </h1>
+                    <p class="text-muted mb-0">Detalhes da solicitação de extração</p>
+                </div>
+                <div class="btn-group" role="group">
+                    <a href="{% url 'requisitions:list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Voltar
+                    </a>
+                    <a href="{% url 'requisitions:update' extraction_request.pk %}" class="btn btn-warning">
+                        <i class="fas fa-edit me-2"></i>
+                        Editar
+                    </a>
+                    <a href="{% url 'requisitions:delete' extraction_request.pk %}" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>
+                        Excluir
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Informações Principais -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Informações da Solicitação
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Unidade Solicitante</label>
+                            <p class="mb-0">
+                                <strong>{{ extraction_request.requester_agency_unit.acronym|default:"N/A" }}</strong><br>
+                                <small>{{ extraction_request.requester_agency_unit.name|default:"" }}</small>
+                            </p>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="text-muted small">Data da Solicitação</label>
+                            <p class="mb-0"><strong>{{ extraction_request.requested_at|date:"d/m/Y H:i"|default:"N/A" }}</strong></p>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="text-muted small">Status</label>
+                            <p class="mb-0">
+                                <span class="badge bg-{{ extraction_request.get_status_color }}">
+                                    {{ extraction_request.get_status_display }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Unidade de Extração</label>
+                            <p class="mb-0">
+                                <strong>{{ extraction_request.extraction_unit.acronym|default:"N/A" }}</strong><br>
+                                <small>{{ extraction_request.extraction_unit.name|default:"" }}</small>
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Quantidade de Dispositivos</label>
+                            <p class="mb-0"><strong>{{ extraction_request.requested_device_amount }}</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Autoridade -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user-tie me-2"></i>
+                        Autoridade Solicitante
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Nome</label>
+                            <p class="mb-0"><strong>{{ extraction_request.requester_authority_name|default:"N/A" }}</strong></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Cargo</label>
+                            <p class="mb-0"><strong>{{ extraction_request.requester_authority_position|default:"N/A" }}</strong></p>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="text-muted small">E-mail para Resposta</label>
+                            <p class="mb-0"><strong>{{ extraction_request.requester_reply_email|default:"N/A" }}</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Processo -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-gavel me-2"></i>
+                        Informações do Processo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Procedimentos</label>
+                            <p class="mb-0"><strong>{{ extraction_request.request_procedures|default:"N/A" }}</strong></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Categoria de Crime</label>
+                            <p class="mb-0"><strong>{{ extraction_request.crime_category|default:"N/A" }}</strong></p>
+                        </div>
+                        {% if extraction_request.additional_info %}
+                        <div class="col-md-12 mb-3">
+                            <label class="text-muted small">Informações Adicionais</label>
+                            <p class="mb-0">{{ extraction_request.additional_info }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recebimento -->
+            {% if extraction_request.received_at %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-inbox me-2"></i>
+                        Informações de Recebimento
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Recebido em</label>
+                            <p class="mb-0"><strong>{{ extraction_request.received_at|date:"d/m/Y H:i" }}</strong></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Recebido por</label>
+                            <p class="mb-0"><strong>{{ extraction_request.received_by.get_full_name|default:extraction_request.received_by.username }}</strong></p>
+                        </div>
+                        {% if extraction_request.receipt_notes %}
+                        <div class="col-md-12 mb-3">
+                            <label class="text-muted small">Observações</label>
+                            <p class="mb-0">{{ extraction_request.receipt_notes }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Auditoria -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Auditoria
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted small">Criado em</label>
+                        <p class="mb-0"><strong>{{ extraction_request.created_at|date:"d/m/Y H:i"|default:"N/A" }}</strong></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small">Criado por</label>
+                        <p class="mb-0"><strong>{{ extraction_request.created_by.get_full_name|default:extraction_request.created_by.username|default:"N/A" }}</strong></p>
+                    </div>
+                    {% if extraction_request.updated_at %}
+                    <div class="mb-3">
+                        <label class="text-muted small">Atualizado em</label>
+                        <p class="mb-0"><strong>{{ extraction_request.updated_at|date:"d/m/Y H:i" }}</strong></p>
+                    </div>
+                    {% endif %}
+                    {% if extraction_request.updated_by %}
+                    <div class="mb-3">
+                        <label class="text-muted small">Atualizado por</label>
+                        <p class="mb-0"><strong>{{ extraction_request.updated_by.get_full_name|default:extraction_request.updated_by.username }}</strong></p>
+                    </div>
+                    {% endif %}
+                    <div class="mb-0">
+                        <label class="text-muted small">Versão</label>
+                        <p class="mb-0"><span class="badge bg-secondary">v{{ extraction_request.version }}</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

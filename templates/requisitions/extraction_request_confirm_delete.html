@@ -1,0 +1,66 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Confirmar Exclusão
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Atenção!</strong> Esta ação não pode ser desfeita.
+                    </div>
+
+                    <p class="mb-3">Você tem certeza que deseja excluir a seguinte solicitação?</p>
+
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">ID:</dt>
+                                <dd class="col-sm-8">#{{ extraction_request.pk }}</dd>
+
+                                <dt class="col-sm-4">Unidade:</dt>
+                                <dd class="col-sm-8">{{ extraction_request.requester_agency_unit.acronym|default:"N/A" }}</dd>
+
+                                <dt class="col-sm-4">Procedimentos:</dt>
+                                <dd class="col-sm-8">{{ extraction_request.request_procedures|default:"N/A" }}</dd>
+
+                                <dt class="col-sm-4">Data:</dt>
+                                <dd class="col-sm-8">{{ extraction_request.requested_at|date:"d/m/Y H:i"|default:"N/A" }}</dd>
+
+                                <dt class="col-sm-4">Status:</dt>
+                                <dd class="col-sm-8 mb-0">
+                                    <span class="badge bg-{{ extraction_request.get_status_color }}">
+                                        {{ extraction_request.get_status_display }}
+                                    </span>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'requisitions:detail' extraction_request.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>
+                                Sim, Excluir Solicitação
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

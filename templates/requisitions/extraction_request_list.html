@@ -1,0 +1,183 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-2">
+                        <i class="fas {{ page_icon }} text-primary me-2"></i>
+                        {{ page_title }}
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Gerencie todas as solicitações de extração
+                    </p>
+                </div>
+                <div>
+                    <a href="{% url 'requisitions:create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Nova Solicitação
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-filter me-2"></i>
+                Filtros de Pesquisa
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    {{ form.search.label_tag }}
+                    {{ form.search }}
+                </div>
+                <div class="col-md-2">
+                    {{ form.status.label_tag }}
+                    {{ form.status }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.requester_agency_unit.label_tag }}
+                    {{ form.requester_agency_unit }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.extraction_unit.label_tag }}
+                    {{ form.extraction_unit }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.crime_category.label_tag }}
+                    {{ form.crime_category }}
+                </div>
+                <div class="col-md-2">
+                    {{ form.date_from.label_tag }}
+                    {{ form.date_from }}
+                </div>
+                <div class="col-md-2">
+                    {{ form.date_to.label_tag }}
+                    {{ form.date_to }}
+                </div>
+                <div class="col-md-5 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>
+                        Pesquisar
+                    </button>
+                    <a href="{% url 'requisitions:list' %}" class="btn btn-secondary">
+                        <i class="fas fa-times me-1"></i>
+                        Limpar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    Resultados da Pesquisa
+                </h5>
+                <span class="badge bg-secondary">
+                    {{ total_count }} solicitação{{ total_count|pluralize:"ões" }}
+                </span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="5%">ID</th>
+                                <th width="15%">Unidade Solicitante</th>
+                                <th width="15%">Procedimentos</th>
+                                <th width="15%">Autoridade</th>
+                                <th width="10%">Data</th>
+                                <th width="10%">Dispositivos</th>
+                                <th width="10%">Status</th>
+                                <th width="10%">Unidade Extração</th>
+                                <th width="10%" class="text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for request in page_obj %}
+                            <tr>
+                                <td>
+                                    <strong class="text-primary">#{{ request.id }}</strong>
+                                </td>
+                                <td>
+                                    <small>{{ request.requester_agency_unit.acronym|default:"N/A" }}</small>
+                                </td>
+                                <td>
+                                    <small>{{ request.request_procedures|default:"N/A" }}</small>
+                                </td>
+                                <td>
+                                    <small>{{ request.requester_authority_name|default:"N/A" }}</small>
+                                </td>
+                                <td>
+                                    <small>{{ request.requested_at|date:"d/m/Y H:i"|default:"N/A" }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ request.requested_device_amount }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ request.get_status_color }}">
+                                        {{ request.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small>{{ request.extraction_unit.acronym|default:"N/A" }}</small>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'requisitions:detail' request.pk %}" 
+                                           class="btn btn-outline-primary" 
+                                           title="Ver Detalhes">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'requisitions:update' request.pk %}" 
+                                           class="btn btn-outline-warning" 
+                                           title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'requisitions:delete' request.pk %}" 
+                                           class="btn btn-outline-danger" 
+                                           title="Excluir">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <div class="card-footer">
+                    {% include '_global/layout/includes/pagination.html' %}
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Nenhuma solicitação encontrada.</p>
+                    <a href="{% url 'requisitions:create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Criar Nova Solicitação
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

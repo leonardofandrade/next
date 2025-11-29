@@ -36,11 +36,32 @@
             <ul class="navbar-nav me-auto">
                 {% if user.is_authenticated %}
                     <!-- Solicitações -->
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'requisitions:list' %}">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="requisitionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-envelope-open-text me-1"></i>
                             Solicitações
                         </a>
+                        <ul class="dropdown-menu" aria-labelledby="requisitionsDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'requisitions:list' %}">
+                                    <i class="fas fa-list me-2"></i>
+                                    Todas as Solicitações
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'requisitions:not_received' %}">
+                                    <i class="fas fa-inbox me-2"></i>
+                                    Não Recebidas
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'requisitions:create' %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Nova Solicitação
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                 {% endif %}
             </ul>

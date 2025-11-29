@@ -271,3 +271,74 @@ def extraction_request_delete(request, pk):
     }
     
     return render(request, 'requisitions/extraction_request_confirm_delete.html', context)
+
+
+@login_required
+def extraction_request_not_received(request):
+    """
+    Lista solicitações não recebidas (pending ou assigned e sem received_at)
+    """
+    form = ExtractionRequestSearchForm(request.GET or None)
+    
+    # Busca solicitações não recebidas
+    queryset = ExtractionRequest.objects.filter(
+        deleted_at__isnull=True,
+        received_at__isnull=True,
+        status__in=[ExtractionRequest.REQUEST_STATUS_PENDING, ExtractionRequest.REQUEST_STATUS_ASSIGNED]
+    ).select_related(
+        'requester_agency_unit',
+        'extraction_unit',
+        'requester_authority_position',
+        'crime_category',
+        'created_by'
+    ).order_by('-requested_at', '-created_at')
+    
+    # Aplica filtros
+    if form.is_valid():
+        search = form.cleaned_data.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(request_procedures__icontains=search) |
+                Q(requester_authority_name__icontains=search) |
+                Q(additional_info__icontains=search)
+            )
+        
+        status = form.cleaned_data.get('status')
+        if status and status in [ExtractionRequest.REQUEST_STATUS_PENDING, ExtractionRequest.REQUEST_STATUS_ASSIGNED]:
+            queryset = queryset.filter(status=status)
+        
+        requester_agency_unit = form.cleaned_data.get('requester_agency_unit')
+        if requester_agency_unit:
+            queryset = queryset.filter(requester_agency_unit=requester_agency_unit)
+        
+        extraction_unit = form.cleaned_data.get('extraction_unit')
+        if extraction_unit:
+            queryset = queryset.filter(extraction_unit=extraction_unit)
+        
+        crime_category = form.cleaned_data.get('crime_category')
+        if crime_category:
+            queryset = queryset.filter(crime_category=crime_category)
+        
+        date_from = form.cleaned_data.get('date_from')
+        if date_from:
+            queryset = queryset.filter(requested_at__date__gte=date_from)
+        
+        date_to = form.cleaned_data.get('date_to')
+        if date_to:
+            queryset = queryset.filter(requested_at__date__lte=date_to)
+    
+    # Paginação
+    paginator = Paginator(queryset, 25)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_title': 'Solicitações Não Recebidas',
+        'page_icon': 'fa-inbox',
+        'form': form,
+        'page_obj': page_obj,
+        'total_count': queryset.count(),
+        'view_type': 'not_received',
+    }
+    
+    return render(request, 'requisitions/extraction_request_list.html', context)

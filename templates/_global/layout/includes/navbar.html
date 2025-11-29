@@ -35,70 +35,7 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
                 {% if user.is_authenticated %}
-                    <!-- Requisitions Menu -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="requisitionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-envelope-open-text me-1"></i>
-                            Solicitações
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="requisitionsDropdown">
-                            <li>
-                                <a class="dropdown-item" href="{% url 'requisitions:list' %}">
-                                    <i class="fas fa-search list me-2"></i>
-                                    Pesquisar Solicitações
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'requisitions:create' %}">
-                                    <i class="fas fa-plus me-2"></i>
-                                    Nova Solicitação
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'requisitions:not_received' %}">
-                                    <i class="fas fa-hourglass-start me-2"></i>
-                                    Não Recebidas
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'requisitions:distribution_report' %}">
-                                    <i class="fas fa-chart-pie me-2"></i>
-                                    Extrato de Distribuições
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    
-                    <!-- Cases Menu -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="casesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-folder-open me-1"></i>
-                            Processos
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="casesDropdown">
-                            <li>
-                                <a class="dropdown-item" href="{% url 'cases:list' %}">
-                                    <i class="fas fa-list me-2"></i>
-                                    Todos os Processos
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'cases:create' %}">
-                                    <i class="fas fa-plus me-2"></i>
-                                    Novo Processo
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    
-                    <!-- Admin Menu -->
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'core:admin_dashboard' %}">
-                            <i class="fas fa-tachometer-alt me-1"></i>
-                            Painel de Controle
-                        </a>
-                    </li>
+                    <!-- Menu items serão adicionados conforme as funcionalidades forem implementadas -->
                 {% endif %}
             </ul>
             <ul class="navbar-nav ms-auto">

@@ -186,3 +186,18 @@ LOGOUT_REDIRECT_URL = '/next/login/'
 # Pagination settings
 # Default number of items per page in list views
 PAGINATE_BY = int(os.environ.get('PAGINATE_BY', '25'))
+
+# CSRF Settings
+CSRF_COOKIE_HTTPONLY = False  # Permite JavaScript acessar o cookie CSRF se necessário
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+# Session Settings
+SESSION_COOKIE_AGE = 86400  # 24 horas em segundos
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_SAVE_EVERY_REQUEST = False
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False

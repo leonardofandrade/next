@@ -1,0 +1,122 @@
+<!-- Help Section - Expandable/Collapsible -->
+{% block help_section_content %}
+<div class="help-section">
+    <div class="help-toggle p-3" data-bs-toggle="collapse" data-bs-target="#helpContent" aria-expanded="false" aria-controls="helpContent">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-question-circle text-primary me-2"></i>
+                <strong class="text-primary">Ajuda e Instruções</strong>
+            </div>
+            <i class="fas fa-chevron-down text-primary help-chevron"></i>
+        </div>
+    </div>
+    
+    <div class="collapse help-content" id="helpContent">
+        <div class="p-3">
+            {% block help_content %}
+            <!-- Default help content -->
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-primary mb-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Informações Gerais
+                    </h6>
+                    <ul class="list-unstyled small text-muted">
+                        <li class="mb-1">
+                            <i class="fas fa-check text-success me-1"></i>
+                            Use os filtros para encontrar registros específicos
+                        </li>
+                        <li class="mb-1">
+                            <i class="fas fa-check text-success me-1"></i>
+                            Clique nos cabeçalhos das tabelas para ordenar
+                        </li>
+                        <li class="mb-1">
+                            <i class="fas fa-check text-success me-1"></i>
+                            Use a paginação para navegar entre os resultados
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-primary mb-2">
+                        <i class="fas fa-keyboard me-1"></i>
+                        Atalhos do Teclado
+                    </h6>
+                    <ul class="list-unstyled small text-muted">
+                        <li class="mb-1">
+                            <kbd class="small">Ctrl + N</kbd> - Novo registro
+                        </li>
+                        <li class="mb-1">
+                            <kbd class="small">Ctrl + F</kbd> - Buscar
+                        </li>
+                        <li class="mb-1">
+                            <kbd class="small">Esc</kbd> - Fechar modais
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="alert alert-info mb-0">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-2">
+                                <strong>Dica:</strong> 
+                                Mantenha esta seção aberta enquanto aprende a usar o sistema. 
+                                Você pode fechá-la clicando novamente no cabeçalho.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endblock help_content %}
+        </div>
+    </div>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Remember help section state
+    var helpContent = document.getElementById('helpContent');
+    var helpToggle = document.querySelector('.help-toggle');
+    
+    if (helpContent && helpToggle) {
+        // Check if user has a preference stored
+        var helpState = localStorage.getItem('helpSectionExpanded');
+        
+        if (helpState === 'true') {
+            helpContent.classList.add('show');
+            helpToggle.setAttribute('aria-expanded', 'true');
+        }
+        
+        // Save state when toggled
+        helpContent.addEventListener('shown.bs.collapse', function() {
+            localStorage.setItem('helpSectionExpanded', 'true');
+        });
+        
+        helpContent.addEventListener('hidden.bs.collapse', function() {
+            localStorage.setItem('helpSectionExpanded', 'false');
+        });
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl + H to toggle help
+        if (e.ctrlKey && e.key === 'h') {
+            e.preventDefault();
+            if (helpToggle) {
+                helpToggle.click();
+            }
+        }
+        
+        // Escape to close help if open
+        if (e.key === 'Escape' && helpContent && helpContent.classList.contains('show')) {
+            helpToggle.click();
+        }
+    });
+});
+</script>
+{% endblock help_section_content %}

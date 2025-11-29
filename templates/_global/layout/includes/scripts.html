@@ -1,0 +1,644 @@
+{% load static %}
+
+<!-- Bootstrap 5 JavaScript Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+<!-- Modal Utils JavaScript - Included inline below -->
+
+<!-- Chart.js for dashboard charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+
+<!-- Select2 CSS and JS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Flatpickr JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+
+<!-- Toast Utils JavaScript -->
+<script src="{% static 'assets/js/toast-utils.js' %}"></script>
+
+<!-- Toast Test JavaScript (only in development) -->
+{% if debug %}
+<script src="{% static 'assets/js/toast-test.js' %}"></script>
+{% endif %}
+
+<!-- Custom JavaScript -->
+<script>
+// Global JavaScript functions and utilities
+
+// CSRF Token for AJAX requests
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const csrftoken = getCookie('csrftoken');
+
+// Configure AJAX requests to include CSRF token
+if (typeof $ !== 'undefined') {
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+}
+
+// Utility functions
+const Utils = {
+    // Show loading spinner
+    showLoading: function(element) {
+        if (element) {
+            element.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin spinner-custom"></i> Carregando...</div>';
+        }
+    },
+    
+    // Format date to Brazilian format
+    formatDate: function(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('pt-BR');
+    },
+    
+    // Format datetime to Brazilian format
+    formatDateTime: function(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleString('pt-BR');
+    },
+    
+    // Confirm action with modal
+    confirmAction: function(message, callback, title = 'Confirmar Ação') {
+        const modalHtml = `
+            <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="confirmModalLabel">
+                                <i class="fas fa-question-circle text-warning me-2"></i>
+                                ${title}
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            ${message}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-1"></i>Cancelar
+                            </button>
+                            <button type="button" class="btn btn-danger" id="confirmButton">
+                                <i class="fas fa-check me-1"></i>Confirmar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if any
+        const existingModal = document.getElementById('confirmModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        modal.show();
+        
+        // Handle confirm button
+        document.getElementById('confirmButton').addEventListener('click', function() {
+            modal.hide();
+            if (callback) callback();
+        });
+        
+        // Clean up modal after hide
+        document.getElementById('confirmModal').addEventListener('hidden.bs.modal', function() {
+            this.remove();
+        });
+    },
+    
+    // Copy text to clipboard
+    copyToClipboard: function(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            showToast('Texto copiado para a área de transferência!', 'success');
+        }).catch(function() {
+            showToast('Erro ao copiar texto', 'error');
+        });
+    }
+};
+
+// Modal utilities
+const ModalUtils = {
+    // Load content into modal via AJAX
+    loadModal: function(url, modalId = 'dynamicModal') {
+        let modal = document.getElementById(modalId);
+        
+        // Create modal if it doesn't exist
+        if (!modal) {
+            const modalHtml = `
+                <div class="modal fade" id="${modalId}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-body text-center p-4">
+                                <i class="fas fa-spinner fa-spin fa-2x spinner-custom mb-3"></i>
+                                <p>Carregando...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            modal = document.getElementById(modalId);
+        }
+        
+        // Show modal
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+        
+        // Load content
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrftoken
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            modal.querySelector('.modal-content').innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading modal:', error);
+            modal.querySelector('.modal-content').innerHTML = `
+                <div class="modal-header">
+                    <h5 class="modal-title">Erro</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Erro ao carregar conteúdo. Tente novamente.
+                    </div>
+                </div>
+            `;
+        });
+    }
+};
+
+// Form utilities
+const FormUtils = {
+    // Auto-submit form on change
+    autoSubmitOnChange: function(formSelector, delay = 500) {
+        const form = document.querySelector(formSelector);
+        if (!form) return;
+        
+        let timeout;
+        const inputs = form.querySelectorAll('input, select, textarea');
+        
+        inputs.forEach(input => {
+            input.addEventListener('change', function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    form.submit();
+                }, delay);
+            });
+        });
+    },
+    
+    // Validate form before submit
+    validateForm: function(formSelector, rules = {}) {
+        const form = document.querySelector(formSelector);
+        if (!form) return true;
+        
+        let isValid = true;
+        
+        // Clear previous validation
+        form.querySelectorAll('.is-invalid').forEach(el => {
+            el.classList.remove('is-invalid');
+        });
+        form.querySelectorAll('.invalid-feedback').forEach(el => {
+            el.remove();
+        });
+        
+        // Validate each field
+        Object.keys(rules).forEach(fieldName => {
+            const field = form.querySelector(`[name="${fieldName}"]`);
+            const rule = rules[fieldName];
+            
+            if (field && rule.required && !field.value.trim()) {
+                isValid = false;
+                field.classList.add('is-invalid');
+                const feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback';
+                feedback.textContent = rule.message || 'Este campo é obrigatório';
+                field.parentNode.appendChild(feedback);
+            }
+        });
+        
+        return isValid;
+    }
+};
+
+// Table utilities
+const TableUtils = {
+    // Make table sortable
+    makeSortable: function(tableSelector) {
+        const table = document.querySelector(tableSelector);
+        if (!table) return;
+        
+        const headers = table.querySelectorAll('th[data-sort]');
+        headers.forEach(header => {
+            header.style.cursor = 'pointer';
+            header.innerHTML += ' <i class="fas fa-sort text-muted"></i>';
+            
+            header.addEventListener('click', function() {
+                const sortField = this.dataset.sort;
+                const currentUrl = new URL(window.location);
+                const currentSort = currentUrl.searchParams.get('sort');
+                
+                if (currentSort === sortField) {
+                    currentUrl.searchParams.set('sort', `-${sortField}`);
+                } else {
+                    currentUrl.searchParams.set('sort', sortField);
+                }
+                
+                window.location.href = currentUrl.toString();
+            });
+        });
+    }
+};
+
+// Date utilities
+const DateUtils = {
+    // Initialize Flatpickr for datetime fields
+    initFlatpickr: function() {
+        const datetimeFields = document.querySelectorAll('.flatpickr-datetime');
+        datetimeFields.forEach(function(field) {
+            // Destroy existing instance if it exists
+            if (field._flatpickr) {
+                field._flatpickr.destroy();
+            }
+            
+            // Clear any existing calendar elements
+            const existingCalendar = document.querySelector('.flatpickr-calendar');
+            if (existingCalendar) {
+                existingCalendar.remove();
+            }
+            
+            flatpickr(field, {
+                enableTime: true,
+                dateFormat: "d/m/Y H:i",
+                time_24hr: true,
+                allowInput: true,
+                locale: "pt",
+                placeholder: "dd/mm/aaaa hh:mm",
+                static: false, // Use inline positioning
+                inline: false, // Don't use inline mode
+                appendTo: document.body, // Append to body to avoid container issues
+                position: "auto", // Auto position
+                monthSelectorType: "dropdown", // Use dropdown for month selection
+                yearSelectorType: "dropdown", // Use dropdown for year selection
+                parseDate: function(datestr, format) {
+                    // Custom parser for Brazilian date format
+                    if (format === "d/m/Y H:i") {
+                        const parts = datestr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{1,2})/);
+                        if (parts) {
+                            const day = parseInt(parts[1], 10);
+                            const month = parseInt(parts[2], 10) - 1; // JavaScript months are 0-based
+                            const year = parseInt(parts[3], 10);
+                            const hour = parseInt(parts[4], 10);
+                            const minute = parseInt(parts[5], 10);
+                            return new Date(year, month, day, hour, minute);
+                        }
+                    }
+                    return new Date(datestr);
+                },
+                onReady: function(selectedDates, dateStr, instance) {
+                    // Add calendar icon
+                    const input = instance.element;
+                    const wrapper = input.parentNode;
+                    if (!wrapper.querySelector('.flatpickr-icon')) {
+                        const icon = document.createElement('i');
+                        icon.className = 'fas fa-calendar-alt flatpickr-icon';
+                        icon.style.position = 'absolute';
+                        icon.style.right = '10px';
+                        icon.style.top = '50%';
+                        icon.style.transform = 'translateY(-50%)';
+                        icon.style.color = '#6c757d';
+                        icon.style.pointerEvents = 'none';
+                        icon.style.zIndex = '1';
+                        wrapper.style.position = 'relative';
+                        wrapper.appendChild(icon);
+                    }
+                    
+                    // Ensure calendar is properly styled
+                    const calendar = instance.calendarContainer;
+                    if (calendar) {
+                        calendar.style.zIndex = '9999';
+                        calendar.style.position = 'absolute';
+                    }
+                },
+                onChange: function(selectedDates, dateStr, instance) {
+                    // Ensure proper formatting
+                    if (dateStr) {
+                        instance.element.value = dateStr;
+                    }
+                },
+                onOpen: function(selectedDates, dateStr, instance) {
+                    // Force proper calendar rendering
+                    setTimeout(function() {
+                        const calendar = instance.calendarContainer;
+                        if (calendar) {
+                            calendar.style.display = 'block';
+                            calendar.style.zIndex = '9999';
+                        }
+                    }, 10);
+                }
+            });
+        });
+    }
+};
+
+// Initialize common functionality
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - Initializing toasts...');
+    
+    // Initialize toasts first (for messages) with a small delay to ensure DOM is ready
+    setTimeout(function() {
+        var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        console.log('Found toasts:', toastElList.length); // Debug log
+        
+        if (toastElList.length > 0) {
+            console.log('Initializing toasts...');
+            var toastList = toastElList.map(function(toastEl) {
+                console.log('Creating toast for element:', toastEl.id);
+                
+                var toast = new bootstrap.Toast(toastEl, {
+                    autohide: true,
+                    delay: 5000
+                });
+                
+                // Add event listener for when toast is shown
+                toastEl.addEventListener('shown.bs.toast', function() {
+                    console.log('Toast shown:', toastEl.id);
+                });
+                
+                // Add event listener for when toast is hidden
+                toastEl.addEventListener('hidden.bs.toast', function() {
+                    console.log('Toast hidden:', toastEl.id);
+                });
+                
+                return toast;
+            });
+            
+            // Show all toasts with a small delay between each
+            toastList.forEach(function(toast, index) {
+                setTimeout(function() {
+                    console.log('Showing toast:', index);
+                    try {
+                        toast.show();
+                    } catch (error) {
+                        console.error('Error showing toast:', error);
+                    }
+                }, index * 100); // 100ms delay between each toast
+            });
+        } else {
+            console.log('No toasts found to initialize');
+        }
+    }, 300); // Increased delay to ensure DOM is fully ready
+    
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Initialize popovers
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    var popoverList = popoverTriggerList.map(function(popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl);
+    });
+    
+    // Initialize Flatpickr for datetime fields
+    DateUtils.initFlatpickr();
+    
+    // Re-initialize Flatpickr if needed (for dynamic content)
+    window.reinitFlatpickr = function() {
+        DateUtils.initFlatpickr();
+    };
+    
+    // Initialize Select2
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+        $('.select2').select2({
+            language: 'pt-BR',
+            placeholder: 'Selecione uma opção',
+            allowClear: true
+        });
+    }
+    
+    // Auto-hide alerts after 10 seconds (except errors)
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert:not(.alert-danger):not(.alert-error)');
+        alerts.forEach(function(alert) {
+            if (alert.querySelector('.btn-close')) {
+                const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                bsAlert.close();
+            }
+        });
+    }, 10000);
+    
+    // Handle modal links
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('[data-modal-url]') || e.target.closest('[data-modal-url]')) {
+            e.preventDefault();
+            const element = e.target.matches('[data-modal-url]') ? e.target : e.target.closest('[data-modal-url]');
+            const url = element.dataset.modalUrl;
+            ModalUtils.loadModal(url);
+        }
+    });
+    
+    // Handle copy buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('[data-copy]') || e.target.closest('[data-copy]')) {
+            e.preventDefault();
+            const element = e.target.matches('[data-copy]') ? e.target : e.target.closest('[data-copy]');
+            const text = element.dataset.copy;
+            Utils.copyToClipboard(text);
+        }
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl + N for new record
+        if (e.ctrlKey && e.key === 'n') {
+            const newButton = document.querySelector('[data-shortcut="new"]');
+            if (newButton) {
+                e.preventDefault();
+                newButton.click();
+            }
+        }
+        
+        // Escape to close modals
+        if (e.key === 'Escape') {
+            const openModals = document.querySelectorAll('.modal.show');
+            openModals.forEach(modal => {
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                if (bsModal) bsModal.hide();
+            });
+        }
+    });
+    
+    // Auto-focus first input in modals
+    document.addEventListener('shown.bs.modal', function(e) {
+        const firstInput = e.target.querySelector('input:not([type="hidden"]), select, textarea');
+        if (firstInput) {
+            firstInput.focus();
+        }
+    });
+    
+    // Confirm delete actions
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('[data-confirm-delete]') || e.target.closest('[data-confirm-delete]')) {
+            e.preventDefault();
+            const element = e.target.matches('[data-confirm-delete]') ? e.target : e.target.closest('[data-confirm-delete]');
+            const message = element.dataset.confirmDelete || 'Tem certeza que deseja excluir este item?';
+            
+            Utils.confirmAction(message, function() {
+                if (element.tagName === 'A') {
+                    window.location.href = element.href;
+                } else if (element.tagName === 'BUTTON' && element.form) {
+                    element.form.submit();
+                }
+            }, 'Confirmar Exclusão');
+        }
+    });
+});
+
+// Toast System is now handled by toast-utils.js
+// Legacy function for backward compatibility
+function showToast(message, type = 'info', duration = 5000) {
+    if (typeof window.ToastSystem !== 'undefined') {
+        return window.ToastSystem.show(message, type, { duration });
+    } else {
+        console.warn('ToastSystem not available, using fallback');
+        // Fallback implementation
+        const container = document.querySelector('.toast-container') || createToastContainer();
+        const toastId = 'toast-' + Date.now();
+        const toastHtml = `
+            <div class="toast align-items-center text-bg-${type} border-0" 
+                 role="alert" aria-live="assertive" aria-atomic="true" 
+                 data-bs-autohide="true" data-bs-delay="${duration}" id="${toastId}">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" 
+                            data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', toastHtml);
+        const toast = new bootstrap.Toast(document.getElementById(toastId));
+        toast.show();
+        return toast;
+    }
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '1055';
+    document.body.appendChild(container);
+    return container;
+}
+
+// Function to show custom alert messages via JavaScript
+function showAlert(message, type = 'info', dismissible = true) {
+    var alertContainer = document.querySelector('.alert-container');
+    if (!alertContainer) {
+        alertContainer = document.createElement('div');
+        alertContainer.className = 'alert-container mb-3';
+        var mainContent = document.querySelector('main .content-area');
+        if (mainContent) {
+            mainContent.parentNode.insertBefore(alertContainer, mainContent);
+        } else {
+            document.body.appendChild(alertContainer);
+        }
+    }
+    
+    var iconClass = '';
+    var title = '';
+    switch(type) {
+        case 'success':
+            iconClass = 'fas fa-check-circle';
+            title = 'Sucesso!';
+            break;
+        case 'warning':
+            iconClass = 'fas fa-exclamation-triangle';
+            title = 'Atenção!';
+            break;
+        case 'error':
+        case 'danger':
+            iconClass = 'fas fa-exclamation-circle';
+            title = 'Erro!';
+            break;
+        default:
+            iconClass = 'fas fa-info-circle';
+            title = 'Informação!';
+    }
+    
+    var dismissibleClass = dismissible ? 'alert-dismissible' : '';
+    var closeButton = dismissible ? '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' : '';
+    
+    var alertHtml = `
+        <div class="alert alert-${type} ${dismissibleClass} fade show" role="alert">
+            <div class="d-flex align-items-center">
+                <div class="flex-shrink-0 me-2">
+                    <i class="${iconClass}"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <strong>${title}</strong>
+                    ${message}
+                </div>
+            </div>
+            ${closeButton}
+        </div>
+    `;
+    
+    alertContainer.insertAdjacentHTML('beforeend', alertHtml);
+    
+    // Auto-hide non-error alerts after 10 seconds
+    if (type !== 'error' && type !== 'danger' && dismissible) {
+        var newAlert = alertContainer.lastElementChild;
+        setTimeout(function() {
+            if (newAlert && newAlert.parentNode) {
+                var bsAlert = new bootstrap.Alert(newAlert);
+                bsAlert.close();
+            }
+        }, 10000);
+    }
+}
+
+// Export utilities to global scope
+window.Utils = Utils;
+window.ModalUtils = ModalUtils;
+window.FormUtils = FormUtils;
+window.TableUtils = TableUtils;
+window.DateUtils = DateUtils;
+window.showToast = showToast;
+window.showAlert = showAlert;
+</script>

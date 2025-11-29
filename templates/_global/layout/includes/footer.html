@@ -1,0 +1,68 @@
+<!-- Footer -->
+<footer class="footer mt-auto py-3 bg-light border-top">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <span class="text-muted">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    <strong>
+                        {% if central_agency and central_agency.acronym %}
+                            {{ central_agency.acronym }}
+                        {% else %}
+                            SSPDS
+                        {% endif %}
+                    </strong> - 
+                    {% if system_config and system_config.system_description %}
+                        {{ system_config.system_description }}
+                    {% else %}
+                        Sistema de Gestão de Extrações Digitais
+                    {% endif %}
+                </span>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <span class="text-muted">
+                    <small>
+                        Versão 
+                        {% if system_config and system_config.system_version %}
+                            {{ system_config.system_version }}
+                        {% else %}
+                            1.0.0
+                        {% endif %} | 
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        {{ "now"|date:"Y" }}
+                        {% if user.is_authenticated %}
+                        | 
+                        <i class="fas fa-user me-1"></i>
+                        {{ user.get_full_name|default:user.username }}
+                        {% endif %}
+                    </small>
+                </span>
+            </div>
+        </div>
+        
+        <!-- Additional footer info for larger screens -->
+        <div class="row mt-2 d-none d-lg-flex">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted">
+                        <small>
+                            <i class="fas fa-info-circle me-1"></i>
+                            {% if central_agency and central_agency.primary_email %}
+                                Para suporte técnico, entre em contato: {{ central_agency.primary_email }}
+                            {% else %}
+                                Para suporte técnico, entre em contato com a equipe de TI
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div class="text-muted">
+                        <small>
+                            <i class="fas fa-clock me-1"></i>
+                            Última atualização: {{ "now"|date:"d/m/Y H:i" }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+

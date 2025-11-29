@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+{% include '_global/layout/includes/head.html' %}
+<body class="bg-light">
+    <!-- Navigation for login page -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'public:landing' %}">
+                <i class="fas fa-shield-alt me-2"></i>
+                <span class="fw-bold">Sistema de Extrações</span>
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{% url 'public:landing' %}">
+                    <i class="fas fa-home me-1"></i>
+                    Início
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Login Section -->
+    <section class="login-section py-5">
+        <div class="container">
+            <div class="row justify-content-center align-items-center min-vh-100">
+                <div class="col-md-8 col-lg-6 col-xl-5">
+                    <div class="card shadow-lg border-0">
+                        <div class="card-header bg-primary text-white text-center py-4">
+                            <div class="mb-3">
+                                <i class="fas fa-shield-alt fa-3x"></i>
+                            </div>
+                            <h4 class="mb-0">Acesso ao Sistema</h4>
+                            <p class="mb-0 opacity-75">Entre com suas credenciais</p>
+                        </div>
+                        
+                        <div class="card-body p-4">
+                            <!-- Messages -->
+                            {% include '_global/layout/includes/messages.html' %}
+                            
+                            <!-- Login Form -->
+                            <form method="post" novalidate>
+                                {% csrf_token %}
+                                
+                                <!-- Username/Email Field -->
+                                <div class="form-group mb-4">
+                                    <label for="{{ form.username.id_for_label }}" class="form-label fw-semibold text-dark mb-2">
+                                        <i class="fas fa-user text-primary me-2"></i>
+                                        E-mail ou ID Funcional
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="fas fa-envelope text-muted"></i>
+                                        </span>
+                                        <input type="text" 
+                                               class="form-control border-start-0 {% if form.username.errors %}is-invalid{% endif %}" 
+                                               id="{{ form.username.id_for_label }}" 
+                                               name="{{ form.username.name }}" 
+                                               value="{{ form.username.value|default:'' }}"
+                                               placeholder="Digite seu e-mail ou ID funcional"
+                                               required>
+                                    </div>
+                                    {% if form.username.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.username.errors %}
+                                                <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Password Field -->
+                                <div class="form-group mb-4">
+                                    <label for="{{ form.password.id_for_label }}" class="form-label fw-semibold text-dark mb-2">
+                                        <i class="fas fa-lock text-primary me-2"></i>
+                                        Senha
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group position-relative">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="fas fa-key text-muted"></i>
+                                        </span>
+                                        <input type="password" 
+                                               class="form-control border-start-0 {% if form.password.errors %}is-invalid{% endif %}" 
+                                               id="{{ form.password.id_for_label }}" 
+                                               name="{{ form.password.name }}"
+                                               placeholder="Digite sua senha"
+                                               required>
+                                        <button type="button" class="btn btn-outline-secondary border-start-0" id="togglePassword" style="z-index: 10;">
+                                            <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                                        </button>
+                                    </div>
+                                    {% if form.password.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.password.errors %}
+                                                <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Extraction Unit Field (if available in form) -->
+                                {% if form.extraction_unit %}
+                                <div class="form-group mb-4">
+                                    <label for="{{ form.extraction_unit.id_for_label }}" class="form-label fw-semibold text-dark mb-2">
+                                        <i class="fas fa-building text-primary me-2"></i>
+                                        Unidade de Extração
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="fas fa-map-marker-alt text-muted"></i>
+                                        </span>
+                                        <select class="form-select border-start-0 {% if form.extraction_unit.errors %}is-invalid{% endif %}" 
+                                                id="{{ form.extraction_unit.id_for_label }}" 
+                                                name="{{ form.extraction_unit.name }}">
+                                            <option value="">Selecione sua unidade...</option>
+                                            {% for choice in form.extraction_unit.field.choices %}
+                                                {% if choice.0 %}
+                                                <option value="{{ choice.0 }}" {% if form.extraction_unit.value == choice.0 %}selected{% endif %}>
+                                                    {{ choice.1 }}
+                                                </option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    {% if form.extraction_unit.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.extraction_unit.errors %}
+                                                <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Remember Me -->
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="rememberMe" name="remember_me">
+                                    <label class="form-check-label text-muted" for="rememberMe">
+                                        Lembrar-me neste dispositivo
+                                    </label>
+                                </div>
+                                
+                                <!-- Submit Button -->
+                                <div class="d-grid mb-3">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-sign-in-alt me-2"></i>
+                                        Entrar
+                                    </button>
+                                </div>
+                                
+                                <!-- Non-field errors -->
+                                {% if form.non_field_errors %}
+                                    <div class="alert alert-danger">
+                                        {% for error in form.non_field_errors %}
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-exclamation-circle me-2"></i>
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </form>
+                            
+                            <!-- Additional Links -->
+                            <div class="text-center">
+                                <hr class="my-4">
+                                <p class="text-muted mb-2">
+                                    <small>Problemas para acessar?</small>
+                                </p>
+                                <div class="d-flex justify-content-center gap-3">
+                                    <a href="#" class="text-decoration-none small" data-bs-toggle="modal" data-bs-target="#helpModal">
+                                        <i class="fas fa-question-circle me-1"></i>
+                                        Ajuda
+                                    </a>
+                                    <a href="#" class="text-decoration-none small" data-bs-toggle="modal" data-bs-target="#supportModal">
+                                        <i class="fas fa-headset me-1"></i>
+                                        Suporte
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer bg-light text-center py-3">
+                            <small class="text-muted">
+                                <i class="fas fa-shield-alt me-1"></i>
+                                SSPDS - Sistema Seguro de Extrações Digitais
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="helpModalLabel">
+                        <i class="fas fa-question-circle text-primary me-2"></i>
+                        Ajuda para Login
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">Como fazer login:</h6>
+                            <ol class="list-group list-group-numbered">
+                                <li class="list-group-item d-flex align-items-start">
+                                    <div class="ms-2 me-auto">
+                                        <div class="fw-bold">E-mail ou ID Funcional</div>
+                                        Use seu e-mail institucional (@sspds.ce.gov.br) ou seu ID funcional
+                                    </div>
+                                </li>
+                                <li class="list-group-item d-flex align-items-start">
+                                    <div class="ms-2 me-auto">
+                                        <div class="fw-bold">Senha</div>
+                                        Digite a senha fornecida pelo administrador do sistema
+                                    </div>
+                                </li>
+                                <li class="list-group-item d-flex align-items-start">
+                                    <div class="ms-2 me-auto">
+                                        <div class="fw-bold">Unidade de Extração</div>
+                                        Selecione a unidade onde você trabalha (se solicitado)
+                                    </div>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Primeira vez no sistema?</strong> 
+                        Entre em contato com o administrador para criar sua conta.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Support Modal -->
+    <div class="modal fade" id="supportModal" tabindex="-1" aria-labelledby="supportModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="supportModalLabel">
+                        <i class="fas fa-headset text-primary me-2"></i>
+                        Suporte Técnico
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">Entre em contato conosco:</h6>
+                            
+                            <div class="list-group">
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">
+                                            <i class="fas fa-envelope text-primary me-2"></i>
+                                            E-mail
+                                        </h6>
+                                    </div>
+                                    <p class="mb-1">suporte.ti@sspds.ce.gov.br</p>
+                                    <small class="text-muted">Resposta em até 24 horas</small>
+                                </div>
+                                
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">
+                                            <i class="fas fa-phone text-primary me-2"></i>
+                                            Telefone
+                                        </h6>
+                                    </div>
+                                    <p class="mb-1">(85) 3101-0000</p>
+                                    <small class="text-muted">Horário comercial: 8h às 17h</small>
+                                </div>
+                                
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">
+                                            <i class="fas fa-clock text-primary me-2"></i>
+                                            Horário de Atendimento
+                                        </h6>
+                                    </div>
+                                    <p class="mb-1">Segunda a Sexta: 8h às 17h</p>
+                                    <small class="text-muted">Exceto feriados</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="help-section">
+        <div class="help-toggle p-3" data-bs-toggle="collapse" data-bs-target="#loginHelpContent" aria-expanded="false">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-question-circle text-primary me-2"></i>
+                    <strong class="text-primary">Dicas de Login</strong>
+                </div>
+                <i class="fas fa-chevron-down text-primary help-chevron"></i>
+            </div>
+        </div>
+        
+        <div class="collapse help-content" id="loginHelpContent">
+            <div class="p-3">
+                <div class="small text-muted">
+                    <p class="mb-2">
+                        <i class="fas fa-lightbulb text-warning me-1"></i>
+                        <strong>Dica:</strong> Você pode usar tanto seu e-mail quanto seu ID funcional para fazer login.
+                    </p>
+                    <p class="mb-2">
+                        <i class="fas fa-shield-alt text-success me-1"></i>
+                        <strong>Segurança:</strong> Nunca compartilhe suas credenciais com outras pessoas.
+                    </p>
+                    <p class="mb-0">
+                        <i class="fas fa-mobile-alt text-info me-1"></i>
+                        <strong>Mobile:</strong> O sistema é otimizado para dispositivos móveis.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    {% include '_global/layout/includes/scripts.html' %}
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Focus on first input
+        const firstInput = document.querySelector('input[type="text"], input[type="email"]');
+        if (firstInput) {
+            firstInput.focus();
+        }
+        
+        // Show/hide password toggle
+        const togglePasswordBtn = document.getElementById('togglePassword');
+        const passwordField = document.querySelector('input[type="password"]');
+        const togglePasswordIcon = document.getElementById('togglePasswordIcon');
+        
+        if (togglePasswordBtn && passwordField && togglePasswordIcon) {
+            togglePasswordBtn.addEventListener('click', function() {
+                if (passwordField.type === 'password') {
+                    passwordField.type = 'text';
+                    togglePasswordIcon.className = 'fas fa-eye-slash';
+                    this.setAttribute('title', 'Ocultar senha');
+                } else {
+                    passwordField.type = 'password';
+                    togglePasswordIcon.className = 'fas fa-eye';
+                    this.setAttribute('title', 'Mostrar senha');
+                }
+            });
+            
+            // Set initial title
+            togglePasswordBtn.setAttribute('title', 'Mostrar senha');
+        }
+        
+        // Enhanced form validation feedback
+        const form = document.querySelector('form');
+        const inputs = form.querySelectorAll('input[required], select[required]');
+        
+        inputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.value.trim() === '') {
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                }
+            });
+            
+            input.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid') && this.value.trim() !== '') {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                }
+            });
+        });
+        
+        // Form submission enhancement
+        form.addEventListener('submit', function() {
+            let hasErrors = false;
+            
+            inputs.forEach(input => {
+                if (input.value.trim() === '') {
+                    input.classList.add('is-invalid');
+                    hasErrors = true;
+                } else {
+                    input.classList.remove('is-invalid');
+                    input.classList.add('is-valid');
+                }
+            });
+            
+            if (hasErrors) {
+                // Focus on first invalid field
+                const firstInvalid = form.querySelector('.is-invalid');
+                if (firstInvalid) {
+                    firstInvalid.focus();
+                }
+            }
+        });
+    });
+    </script>
+    
+</body>
+</html>

@@ -15,8 +15,20 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.shortcuts import redirect
+
+def redirect_to_next(request):
+    """Redireciona automaticamente para /next/"""
+    return redirect('/next/')
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('', redirect_to_next),
+    path('next/', include([
+        path('admin/', admin.site.urls),
+        path('', include('apps.public.urls')),
+        path('', include('apps.base_tables.urls')),
+        path('', include('apps.users.urls')),
+        path('', include('apps.core.urls')),
+    ])),
 ]

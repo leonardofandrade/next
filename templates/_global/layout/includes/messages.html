@@ -1,0 +1,59 @@
+<!-- Enhanced Django Messages System -->
+{% if messages %}
+    <!-- Debug: Show message count -->
+    <script>console.log('Django messages found:', {{ messages|length }});</script>
+    
+    <!-- Process messages with enhanced toast system -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Wait for ToastSystem to be available
+        setTimeout(function() {
+            if (typeof window.ToastSystem !== 'undefined' && window.ToastSystem.show) {
+                {% for message in messages %}
+                    {% if message.tags == 'success' %}
+                        window.ToastSystem.success('{{ message|escapejs }}');
+                    {% elif message.tags == 'info' %}
+                        window.ToastSystem.info('{{ message|escapejs }}');
+                    {% elif message.tags == 'warning' %}
+                        window.ToastSystem.warning('{{ message|escapejs }}');
+                    {% elif message.tags == 'error' or message.tags == 'danger' %}
+                        window.ToastSystem.error('{{ message|escapejs }}');
+                    {% else %}
+                        window.ToastSystem.info('{{ message|escapejs }}');
+                    {% endif %}
+                {% endfor %}
+            } else if (typeof showToast !== 'undefined') {
+                console.warn('ToastSystem not available, using fallback showToast');
+                {% for message in messages %}
+                    showToast('{{ message|escapejs }}', '{{ message.tags|default:"info" }}');
+                {% endfor %}
+            } else {
+                console.warn('No toast system available, using basic alerts');
+                {% for message in messages %}
+                    alert('{{ message.tags|upper }}: {{ message|escapejs }}');
+                {% endfor %}
+            }
+        }, 200);
+    });
+    </script>
+    
+    <!-- Fallback Alert Container for critical errors that need immediate attention -->
+    <div class="alert-container mb-3">
+        {% for message in messages %}
+            {% if message.tags == 'error' or message.tags == 'danger' %}
+                <div class="alert alert-{{ message.tags|default:'danger' }} alert-dismissible fade show" role="alert">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 me-2">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <strong>Erro Crítico!</strong>
+                            {{ message }}
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}

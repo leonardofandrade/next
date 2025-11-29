@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+{% include '_global/layout/includes/head.html' %}
+<body class="bg-light">
+    <!-- Navigation for landing page -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'public:landing' %}">
+                <i class="fas fa-shield-alt me-2"></i>
+                <span class="fw-bold">Sistema de Gerenciamento de Extrações Forenses de Dados</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'public:login' %}">
+                            <i class="fas fa-sign-in-alt me-1"></i>
+                            Entrar
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section py-5">
+        <div class="container">
+            <div class="row align-items-center min-vh-100">
+                <div class="col-lg-6">
+                    <div class="hero-content">
+                        <h1 class="display-4 fw-bold text-dark mb-4">
+                            Sistema de Gestão de 
+                            <span class="text-primary">Extrações Digitais</span>
+                        </h1>
+                        <p class="lead text-muted mb-4">
+                            Plataforma integrada para gerenciamento de distribuições, processos e extrações digitais 
+                            da Secretaria da Segurança Pública e Defesa Social do Ceará.
+                        </p>
+                        
+                        <div class="d-flex flex-column flex-sm-row gap-3 mb-5">
+                            <a href="{% url 'public:login' %}" class="btn btn-primary btn-lg px-4">
+                                <i class="fas fa-sign-in-alt me-2"></i>
+                                Acessar Sistema
+                            </a>
+                            <a href="#features" class="btn btn-outline-primary btn-lg px-4">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Saiba Mais
+                            </a>
+                        </div>
+                        
+                        <!-- Quick Stats -->
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <h3 class="h4 text-primary mb-1">
+                                        <i class="fas fa-tasks"></i>
+                                    </h3>
+                                    <p class="small text-muted mb-0">Distribuições</p>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <h3 class="h4 text-primary mb-1">
+                                        <i class="fas fa-folder-open"></i>
+                                    </h3>
+                                    <p class="small text-muted mb-0">Processos</p>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <h3 class="h4 text-primary mb-1">
+                                        <i class="fas fa-download"></i>
+                                    </h3>
+                                    <p class="small text-muted mb-0">Extrações</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="hero-image text-center">
+                        <div class="card shadow-lg border-0">
+                            <div class="card-body p-5">
+                                <div class="mb-4">
+                                    <i class="fas fa-shield-alt fa-5x text-primary"></i>
+                                </div>
+                                <h4 class="card-title text-dark mb-3">Segurança e Eficiência</h4>
+                                <p class="card-text text-muted">
+                                    Sistema desenvolvido para atender às necessidades específicas 
+                                    da SSPDS, garantindo segurança, rastreabilidade e eficiência 
+                                    nos processos de extração digital.
+                                </p>
+                                
+                                <!-- Security badges -->
+                                <div class="d-flex justify-content-center gap-3 mt-4">
+                                    <span class="badge bg-success px-3 py-2">
+                                        <i class="fas fa-lock me-1"></i>
+                                        Seguro
+                                    </span>
+                                    <span class="badge bg-info px-3 py-2">
+                                        <i class="fas fa-chart-line me-1"></i>
+                                        Eficiente
+                                    </span>
+                                    <span class="badge bg-warning px-3 py-2">
+                                        <i class="fas fa-history me-1"></i>
+                                        Rastreável
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features-section py-5 bg-white">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center mb-5">
+                    <h2 class="h1 text-dark mb-3">Principais Funcionalidades</h2>
+                    <p class="lead text-muted">
+                        Conheça as principais características do sistema
+                    </p>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                <!-- Feature 1 -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-tasks fa-3x text-primary"></i>
+                            </div>
+                            <h5 class="card-title text-dark">Gestão de Distribuições</h5>
+                            <p class="card-text text-muted">
+                                Controle completo das distribuições de material para extração, 
+                                com rastreamento desde a solicitação até a entrega.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-folder-open fa-3x text-primary"></i>
+                            </div>
+                            <h5 class="card-title text-dark">Controle de Processos</h5>
+                            <p class="card-text text-muted">
+                                Gerenciamento completo dos processos de extração, 
+                                com acompanhamento de status e histórico detalhado.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Feature 3 -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-mobile-alt fa-3x text-primary"></i>
+                            </div>
+                            <h5 class="card-title text-dark">Cadastro de Dispositivos</h5>
+                            <p class="card-text text-muted">
+                                Registro detalhado de dispositivos móveis com informações 
+                                técnicas, estado físico e dados de segurança.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Feature 4 -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-chart-bar fa-3x text-primary"></i>
+                            </div>
+                            <h5 class="card-title text-dark">Relatórios e Estatísticas</h5>
+                            <p class="card-text text-muted">
+                                Dashboard com métricas em tempo real e relatórios 
+                                detalhados para acompanhamento da produtividade.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Feature 5 -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-users fa-3x text-primary"></i>
+                            </div>
+                            <h5 class="card-title text-dark">Controle de Usuários</h5>
+                            <p class="card-text text-muted">
+                                Sistema de permissões granular com controle de acesso 
+                                baseado em perfis e unidades organizacionais.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Feature 6 -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-history fa-3x text-primary"></i>
+                            </div>
+                            <h5 class="card-title text-dark">Auditoria Completa</h5>
+                            <p class="card-text text-muted">
+                                Registro completo de todas as ações realizadas no sistema, 
+                                garantindo rastreabilidade e conformidade.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section py-5 bg-primary text-white">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h3 class="h2 mb-2">Pronto para começar?</h3>
+                    <p class="lead mb-0">
+                        Acesse o sistema e comece a gerenciar suas extrações digitais de forma eficiente.
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <a href="{% url 'public:login' %}" class="btn btn-light btn-lg px-4">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        Entrar no Sistema
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer py-4 bg-dark text-white">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        <strong>SSPDS - Sistema de Extrações Digitais</strong>
+                    </div>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="text-muted">
+                        © {{ "now"|date:"Y" }} Secretaria da Segurança Pública e Defesa Social do Ceará
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Help Section -->
+    <div class="help-section">
+        <div class="help-toggle p-3" data-bs-toggle="collapse" data-bs-target="#landingHelpContent" aria-expanded="false">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-question-circle text-primary me-2"></i>
+                    <strong class="text-primary">Ajuda - Como Acessar o Sistema</strong>
+                </div>
+                <i class="fas fa-chevron-down text-primary help-chevron"></i>
+            </div>
+        </div>
+        
+        <div class="collapse help-content" id="landingHelpContent">
+            <div class="p-3">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-2">
+                            <i class="fas fa-sign-in-alt me-1"></i>
+                            Como Fazer Login
+                        </h6>
+                        <ul class="list-unstyled small text-muted">
+                            <li class="mb-1">
+                                <i class="fas fa-check text-success me-1"></i>
+                                Use seu e-mail institucional ou ID funcional
+                            </li>
+                            <li class="mb-1">
+                                <i class="fas fa-check text-success me-1"></i>
+                                Digite sua senha de acesso
+                            </li>
+                            <li class="mb-1">
+                                <i class="fas fa-check text-success me-1"></i>
+                                Selecione sua unidade de extração
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-2">
+                            <i class="fas fa-question-circle me-1"></i>
+                            Problemas de Acesso?
+                        </h6>
+                        <ul class="list-unstyled small text-muted">
+                            <li class="mb-1">
+                                <i class="fas fa-phone me-1"></i>
+                                Entre em contato com o suporte técnico
+                            </li>
+                            <li class="mb-1">
+                                <i class="fas fa-envelope me-1"></i>
+                                Envie um e-mail para a equipe de TI
+                            </li>
+                            <li class="mb-1">
+                                <i class="fas fa-user-cog me-1"></i>
+                                Solicite criação/recuperação de conta
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    {% include '_global/layout/includes/scripts.html' %}
+    
+</body>
+</html>

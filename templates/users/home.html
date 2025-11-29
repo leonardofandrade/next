@@ -1,0 +1,17 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+
+{% block page_title %}<i class="fas {{ page_icon }} me-2"></i> {{ page_title }}{% endblock page_title %}
+{% block page_description %}{{ page_description }}{% endblock page_description %}
+{% block page_icon %}{{ page_icon }}{% endblock page_icon %}
+{% block content %}
+<div class="row g3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Bem-vindo ao sistema {{ user.get_full_name|default:user.username }}</h5>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

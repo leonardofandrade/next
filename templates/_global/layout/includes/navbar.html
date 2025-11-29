@@ -1,0 +1,162 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'users:home' %}">
+            {% if extraction_agency %}
+                {% if extraction_agency.has_main_logo %}
+                    <img src="data:{{ extraction_agency.get_main_logo_mime_type }};base64,{{ extraction_agency.get_main_logo_base64 }}" 
+                         alt="Logo {{ extraction_agency.acronym }}" 
+                         class="me-2" 
+                         style="max-height: 40px; max-width: 120px; object-fit: contain;">
+                {% else %}
+                    <i class="fas fa-shield-alt me-2"></i>
+                {% endif %}
+                <div>
+                    <div class="fw-bold">
+                        {% if general_settings and general_settings.system_name %}
+                            {{ general_settings.system_name }}
+                        {% else %}
+                            Sistema de Extrações Digitais
+                        {% endif %}
+                    </div>
+                    <div class="small text-white-50">
+                        {{ extraction_agency.acronym }}{% if general_settings and general_settings.system_version %} · v{{ general_settings.system_version }}{% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <i class="fas fa-shield-alt me-2"></i>
+                <span class="fw-bold">Sistema de Extrações Digitais</span>
+            {% endif %}
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                {% if user.is_authenticated %}
+                    <!-- Requisitions Menu -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="requisitionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-envelope-open-text me-1"></i>
+                            Solicitações
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="requisitionsDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'requisitions:list' %}">
+                                    <i class="fas fa-search list me-2"></i>
+                                    Pesquisar Solicitações
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'requisitions:create' %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Nova Solicitação
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'requisitions:not_received' %}">
+                                    <i class="fas fa-hourglass-start me-2"></i>
+                                    Não Recebidas
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'requisitions:distribution_report' %}">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Extrato de Distribuições
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Cases Menu -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="casesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-folder-open me-1"></i>
+                            Processos
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="casesDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'cases:list' %}">
+                                    <i class="fas fa-list me-2"></i>
+                                    Todos os Processos
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'cases:create' %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Novo Processo
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Admin Menu -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'core:admin_dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-1"></i>
+                            Painel de Controle
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                {% if user.is_authenticated %}
+                    <!-- User Info Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle me-2"></i>
+                            <span>{{ user.get_full_name|default:user.username }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="fas fa-user me-2"></i>
+                                    {{ user.get_full_name|default:user.username }}
+                                </h6>
+                            </li>
+                            {% if user.email %}
+                            <li>
+                                <span class="dropdown-item-text text-muted small">
+                                    <i class="fas fa-envelope me-2"></i>
+                                    {{ user.email }}
+                                </span>
+                            </li>
+                            {% endif %}
+                            {% if user.profile.agency_unit %}
+                            <li>
+                                <span class="dropdown-item-text text-muted small">
+                                    <i class="fas fa-building me-2"></i>
+                                    {{ user.profile.agency_unit.acronym }}
+                                </span>
+                            </li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'users:home' %}">
+                                    <i class="fas fa-home me-2"></i>
+                                    Página Inicial
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="{% url 'public:logout' %}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>
+                                    Sair
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'public:login' %}">
+                            <i class="fas fa-sign-in-alt me-1"></i>
+                            Entrar
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>

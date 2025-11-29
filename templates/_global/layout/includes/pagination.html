@@ -1,0 +1,161 @@
+<!-- Bootstrap 5 Pagination Component -->
+{% if is_paginated %}
+<nav aria-label="Navegação de páginas" class="mt-4 p-2 border-top">
+    <div class="row align-items-center">
+        <!-- Results info -->
+        <div class="col-md-6">
+            <p class="text-muted mb-0">
+                <small>
+                    <i class="fas fa-info-circle me-1"></i>
+                    Mostrando 
+                    <strong>{{ page_obj.start_index }}</strong> a 
+                    <strong>{{ page_obj.end_index }}</strong> de 
+                    <strong>{{ paginator.count }}</strong> 
+                    {% if paginator.count == 1 %}
+                        resultado
+                    {% else %}
+                        resultados
+                    {% endif %}
+                </small>
+            </p>
+        </div>
+        
+        <!-- Pagination controls -->
+        <div class="col-md-6">
+            <ul class="pagination pagination-sm justify-content-md-end justify-content-center mb-0">
+                <!-- First page -->
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value_list in request.GET.lists %}{% if key != 'page' %}{% for value in value_list %}{{ key }}={{ value|urlencode }}&{% endfor %}{% endif %}{% endfor %}page=1" aria-label="Primeira página">
+                            <i class="fas fa-angle-double-left"></i>
+                            <span class="d-none d-sm-inline ms-1">Primeira</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <i class="fas fa-angle-double-left"></i>
+                            <span class="d-none d-sm-inline ms-1">Primeira</span>
+                        </span>
+                    </li>
+                {% endif %}
+                
+                <!-- Previous page -->
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value_list in request.GET.lists %}{% if key != 'page' %}{% for value in value_list %}{{ key }}={{ value|urlencode }}&{% endfor %}{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" aria-label="Página anterior">
+                            <i class="fas fa-angle-left"></i>
+                            <span class="d-none d-sm-inline ms-1">Anterior</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <i class="fas fa-angle-left"></i>
+                            <span class="d-none d-sm-inline ms-1">Anterior</span>
+                        </span>
+                    </li>
+                {% endif %}
+                
+                <!-- Page numbers -->
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active" aria-current="page">
+                            <span class="page-link">
+                                {{ num }}
+                                <span class="visually-hidden">(página atual)</span>
+                            </span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value_list in request.GET.lists %}{% if key != 'page' %}{% for value in value_list %}{{ key }}={{ value|urlencode }}&{% endfor %}{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                <!-- Next page -->
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value_list in request.GET.lists %}{% if key != 'page' %}{% for value in value_list %}{{ key }}={{ value|urlencode }}&{% endfor %}{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" aria-label="Próxima página">
+                            <span class="d-none d-sm-inline me-1">Próxima</span>
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <span class="d-none d-sm-inline me-1">Próxima</span>
+                            <i class="fas fa-angle-right"></i>
+                        </span>
+                    </li>
+                {% endif %}
+                
+                <!-- Last page -->
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value_list in request.GET.lists %}{% if key != 'page' %}{% for value in value_list %}{{ key }}={{ value|urlencode }}&{% endfor %}{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}" aria-label="Última página">
+                            <span class="d-none d-sm-inline me-1">Última</span>
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <span class="d-none d-sm-inline me-1">Última</span>
+                            <i class="fas fa-angle-double-right"></i>
+                        </span>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Mobile-friendly page selector -->
+    <div class="row mt-2 d-md-none">
+        <div class="col-12">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text">
+                    <i class="fas fa-list-ol"></i>
+                </span>
+                <select class="form-select" onchange="window.location.href='?{% for key, value_list in request.GET.lists %}{% if key != 'page' %}{% for value in value_list %}{{ key }}={{ value|urlencode }}&{% endfor %}{% endif %}{% endfor %}page=' + this.value">
+                    {% for num in page_obj.paginator.page_range %}
+                        <option value="{{ num }}" {% if page_obj.number == num %}selected{% endif %}>
+                            Página {{ num }} de {{ page_obj.paginator.num_pages }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Page size selector (optional) -->
+{% if show_page_size_selector|default:False %}
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex align-items-center justify-content-center">
+            <small class="text-muted me-2">Itens por página:</small>
+            <select class="form-select form-select-sm" style="width: auto;" onchange="changePageSize(this.value)">
+                <option value="10" {% if request.GET.page_size == '10' or not request.GET.page_size and paginate_by == 10 %}selected{% endif %}>10</option>
+                <option value="25" {% if request.GET.page_size == '25' or not request.GET.page_size and paginate_by == 25 %}selected{% endif %}>25</option>
+                <option value="50" {% if request.GET.page_size == '50' or not request.GET.page_size and paginate_by == 50 %}selected{% endif %}>50</option>
+                <option value="100" {% if request.GET.page_size == '100' or not request.GET.page_size and paginate_by == 100 %}selected{% endif %}>100</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<script>
+function changePageSize(pageSize) {
+    var url = new URL(window.location);
+    url.searchParams.set('page_size', pageSize);
+    url.searchParams.delete('page'); // Reset to first page
+    window.location.href = url.toString();
+}
+</script>
+{% endif %}
+{% endif %}

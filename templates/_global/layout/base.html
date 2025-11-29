@@ -1,0 +1,58 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+    {% include '_global/layout/includes/head.html' %}
+<body class="bg-light">
+    <!-- Navigation -->
+    {% block navbar %}
+     {% include '_global/layout/includes/navbar.html' %}
+    {% endblock %}
+    
+    <div class="container-fluid">
+        <!-- Main Content -->
+        <main class="{% if user.is_authenticated %}col-12 ms-sm-auto ms-sm-auto px-md-4{% else %}col-12{% endif %} main-content-with-navbar">
+            <!-- Page Header -->
+            {% block page_header %}
+            <div class="pt-3 pb-2 mb-3 border-bottom">
+                <!-- Title and Actions Row -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center mb-2">
+                    <h1 class="h2 text-dark mb-0">
+                        {% block page_title %}Next{% endblock page_title%}
+                    </h1>
+                    <div class="btn-toolbar">
+                        {% block page_actions %}{% endblock page_actions %}
+                    </div>
+                </div>
+                <!-- Page Description -->
+                <div class="text-muted small">
+                    {% block page_description %}{% endblock page_description %}
+                </div>
+            </div>
+            {% endblock page_header %}
+             <!-- Messages -->
+             {% include '_global/layout/includes/messages.html' %}
+            <!-- Help Section - Temporarily commented out -->
+            {% comment %}
+            {% block help_section %}
+            {% include '_global/layout/includes/help_accordion.html' %}
+            {% endblock %}
+            {% endcomment %}
+            
+            <!-- Main Content Area -->
+            <div class="content-area">
+                {% block content %}{% endblock %}
+            </div>
+
+        </main>
+    </div>
+    
+    <!-- Footer -->
+    {% include '_global/layout/includes/footer.html' %}
+        
+    <!-- Scripts -->
+    {% include '_global/layout/includes/scripts.html' %}
+    
+    <!-- Page Specific Scripts -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

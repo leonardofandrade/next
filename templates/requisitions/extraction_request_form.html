@@ -61,20 +61,23 @@
                                 </small>
                             </div>
 
-                            <div class="col-md-3">
-                                <label for="{{ form.requested_at.id_for_label }}" class="form-label">
-                                    {{ form.requested_at.label }}
+                            <div class="col-md-6">
+                                <label for="{{ form.request_procedures.id_for_label }}" class="form-label">
+                                    {{ form.request_procedures.label }}
                                     <span class="text-danger">*</span>
                                 </label>
-                                {{ form.requested_at }}
-                                {% if form.requested_at.errors %}
+                                {{ form.request_procedures }}
+                                {% if form.request_procedures.errors %}
                                     <div class="invalid-feedback d-block">
-                                        {{ form.requested_at.errors }}
+                                        {{ form.request_procedures.errors }}
                                     </div>
                                 {% endif %}
+                                <small class="form-text text-muted">
+                                    {{ form.request_procedures.help_text }}
+                                </small>
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label for="{{ form.requested_device_amount.id_for_label }}" class="form-label">
                                     {{ form.requested_device_amount.label }}
                                 </label>
@@ -86,7 +89,7 @@
                                 {% endif %}
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-md-8">
                                 <label for="{{ form.extraction_unit.id_for_label }}" class="form-label">
                                     {{ form.extraction_unit.label }}
                                 </label>
@@ -96,18 +99,9 @@
                                         {{ form.extraction_unit.errors }}
                                     </div>
                                 {% endif %}
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="{{ form.status.id_for_label }}" class="form-label">
-                                    {{ form.status.label }}
-                                </label>
-                                {{ form.status }}
-                                {% if form.status.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.status.errors }}
-                                    </div>
-                                {% endif %}
+                                <small class="form-text text-muted">
+                                    {{ form.extraction_unit.help_text }}
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -170,19 +164,7 @@
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="{{ form.request_procedures.id_for_label }}" class="form-label">
-                                    {{ form.request_procedures.label }}
-                                </label>
-                                {{ form.request_procedures }}
-                                {% if form.request_procedures.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.request_procedures.errors }}
-                                    </div>
-                                {% endif %}
-                            </div>
-
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label for="{{ form.crime_category.id_for_label }}" class="form-label">
                                     {{ form.crime_category.label }}
                                 </label>

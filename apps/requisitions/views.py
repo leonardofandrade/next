@@ -110,6 +110,16 @@ def extraction_request_create(request):
         if form.is_valid():
             extraction_request = form.save(commit=False)
             extraction_request.created_by = request.user
+            
+            # Define requested_at automaticamente
+            extraction_request.requested_at = timezone.now()
+            
+            # Define status baseado na extraction_unit
+            if extraction_request.extraction_unit:
+                extraction_request.status = ExtractionRequest.REQUEST_STATUS_ASSIGNED
+            else:
+                extraction_request.status = ExtractionRequest.REQUEST_STATUS_PENDING
+            
             extraction_request.save()
             
             messages.success(
@@ -140,6 +150,9 @@ def extraction_request_update(request, pk):
         pk=pk
     )
     
+    # Armazena o extraction_unit anterior para comparação
+    old_extraction_unit = extraction_request.extraction_unit
+    
     if request.method == 'POST':
         form = ExtractionRequestForm(
             request.POST,
@@ -150,6 +163,19 @@ def extraction_request_update(request, pk):
             extraction_request = form.save(commit=False)
             extraction_request.updated_by = request.user
             extraction_request.version += 1
+            
+            # Atualiza status se extraction_unit mudou
+            new_extraction_unit = extraction_request.extraction_unit
+            if old_extraction_unit != new_extraction_unit:
+                if new_extraction_unit:
+                    # Se atribuiu uma unidade, muda para 'assigned'
+                    if extraction_request.status == ExtractionRequest.REQUEST_STATUS_PENDING:
+                        extraction_request.status = ExtractionRequest.REQUEST_STATUS_ASSIGNED
+                else:
+                    # Se removeu a unidade, volta para 'pending'
+                    if extraction_request.status == ExtractionRequest.REQUEST_STATUS_ASSIGNED:
+                        extraction_request.status = ExtractionRequest.REQUEST_STATUS_PENDING
+            
             extraction_request.save()
             
             messages.success(

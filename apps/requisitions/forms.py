@@ -17,7 +17,6 @@ class ExtractionRequestForm(forms.ModelForm):
         model = ExtractionRequest
         fields = [
             'requester_agency_unit',
-            'requested_at',
             'requested_device_amount',
             'extraction_unit',
             'requester_reply_email',
@@ -26,16 +25,11 @@ class ExtractionRequestForm(forms.ModelForm):
             'request_procedures',
             'crime_category',
             'additional_info',
-            'status',
         ]
         widgets = {
             'requester_agency_unit': forms.Select(attrs={
                 'class': 'form-select',
                 'required': True
-            }),
-            'requested_at': forms.DateTimeInput(attrs={
-                'class': 'form-control',
-                'type': 'datetime-local',
             }),
             'requested_device_amount': forms.NumberInput(attrs={
                 'class': 'form-control',
@@ -58,7 +52,8 @@ class ExtractionRequestForm(forms.ModelForm):
             }),
             'request_procedures': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Ex: IP 123/2024, PJ 456/2024'
+                'placeholder': 'Ex: IP 123/2024, PJ 456/2024',
+                'required': True
             }),
             'crime_category': forms.Select(attrs={
                 'class': 'form-select',
@@ -68,13 +63,9 @@ class ExtractionRequestForm(forms.ModelForm):
                 'rows': 4,
                 'placeholder': 'Informações adicionais sobre a solicitação'
             }),
-            'status': forms.Select(attrs={
-                'class': 'form-select',
-            }),
         }
         labels = {
             'requester_agency_unit': 'Unidade Solicitante',
-            'requested_at': 'Data/Hora da Solicitação',
             'requested_device_amount': 'Quantidade de Dispositivos',
             'extraction_unit': 'Unidade de Extração',
             'requester_reply_email': 'E-mail para Resposta',
@@ -83,51 +74,37 @@ class ExtractionRequestForm(forms.ModelForm):
             'request_procedures': 'Procedimentos',
             'crime_category': 'Categoria de Crime',
             'additional_info': 'Informações Adicionais',
-            'status': 'Status',
         }
         help_texts = {
             'requester_agency_unit': 'Unidade que está fazendo a solicitação',
-            'requested_at': 'Data e hora em que a solicitação foi feita',
             'requested_device_amount': 'Número de dispositivos a serem extraídos',
-            'extraction_unit': 'Unidade responsável pela extração',
+            'extraction_unit': 'Unidade responsável pela extração (opcional)',
             'requester_reply_email': 'E-mail para envio de respostas',
             'requester_authority_name': 'Nome completo da autoridade responsável',
             'requester_authority_position': 'Cargo da autoridade (ex: Delegado, Promotor)',
             'request_procedures': 'Número dos procedimentos relacionados (IP, PJ, etc)',
             'crime_category': 'Tipo de crime relacionado à investigação',
             'additional_info': 'Qualquer informação adicional relevante',
-            'status': 'Status atual da solicitação',
         }
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
-        # Define valor padrão para requested_at se for nova solicitação
-        if not self.instance.pk and not self.initial.get('requested_at'):
-            self.initial['requested_at'] = timezone.now().strftime('%Y-%m-%dT%H:%M')
-        
         # Ordena os querysets
         self.fields['requester_agency_unit'].queryset = AgencyUnit.objects.all().order_by('acronym')
         self.fields['extraction_unit'].queryset = ExtractionUnit.objects.all().order_by('acronym')
         self.fields['requester_authority_position'].queryset = EmployeePosition.objects.all().order_by('-default_selection', 'name')
         self.fields['crime_category'].queryset = CrimeCategory.objects.all().order_by('-default_selection', 'name')
+        
+        # Torna extraction_unit opcional
+        self.fields['extraction_unit'].required = False
 
     def clean_requested_device_amount(self):
         amount = self.cleaned_data.get('requested_device_amount')
         if amount and amount < 1:
             raise forms.ValidationError('A quantidade deve ser no mínimo 1.')
         return amount
-
-    def clean(self):
-        cleaned_data = super().clean()
-        requested_at = cleaned_data.get('requested_at')
-        
-        # Verifica se a data não é futura
-        if requested_at and requested_at > timezone.now():
-            self.add_error('requested_at', 'A data da solicitação não pode ser futura.')
-        
-        return cleaned_data
 
 
 class ExtractionRequestSearchForm(forms.Form):

@@ -1,0 +1,669 @@
+/* ============================================
+   Variáveis CSS - Paleta Azul Marinho e Cinza
+   ============================================ */
+:root {
+    --primary-color: #1e3a5f;
+    --primary-light: #2c5282;
+    --primary-dark: #0f1b2e;
+    --secondary-color: #4a5568;
+    --gray-light: #f7fafc;
+    --gray-medium: #e2e8f0;
+    --gray-dark: #4a5568;
+    --success-color: #198754;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --primary-gradient: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+}
+
+/* ============================================
+   Sobrescrever Cores do Bootstrap
+   ============================================ */
+.bg-primary {
+    background: var(--primary-gradient) !important;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-light);
+    border-color: var(--primary-light);
+}
+
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.border-primary {
+    border-color: var(--primary-color) !important;
+}
+
+/* ============================================
+   Layout Geral
+   ============================================ */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding-top: 56px; /* Compensa a altura da navbar fixa */
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.main-content {
+    flex: 1;
+    padding: 2rem 0;
+}
+
+.main-content-with-navbar {
+    padding-top: 1rem;
+}
+
+/* ============================================
+   Cards
+   ============================================ */
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+    border: none;
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: var(--gray-light);
+    border-bottom: 1px solid var(--gray-medium);
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* ============================================
+   Botões
+   ============================================ */
+.btn-action {
+    margin: 0 0.25rem;
+}
+
+/* ============================================
+   Formulários - Campos Obrigatórios
+   ============================================ */
+/* Adiciona asterisco (*) automaticamente aos labels de campos required */
+
+/* Caso 1: Label vem ANTES do campo (estrutura padrão) */
+label:has(+ input[required])::after,
+label:has(+ select[required])::after,
+label:has(+ textarea[required])::after,
+label:has(input[required])::after,
+label:has(select[required])::after,
+label:has(textarea[required])::after {
+    content: " *";
+    color: var(--danger-color);
+    font-weight: bold;
+    margin-left: 2px;
+}
+
+/* Caso 2: Label vem DEPOIS do campo (checkboxes, radio buttons, etc.) */
+input[required] + label::after,
+input[required] ~ label::after,
+select[required] + label::after,
+select[required] ~ label::after,
+textarea[required] + label::after,
+textarea[required] ~ label::after {
+    content: " *";
+    color: var(--danger-color);
+    font-weight: bold;
+    margin-left: 2px;
+}
+
+/* Caso 3: Floating Labels do Bootstrap (input antes do label dentro de .form-floating) */
+.form-floating > input[required] + label::after,
+.form-floating > select[required] + label::after,
+.form-floating > textarea[required] + label::after {
+    content: " *";
+    color: var(--danger-color);
+    font-weight: bold;
+    margin-left: 2px;
+}
+
+/* ============================================
+   Mensagens de Erro de Formulário (Django errorlist)
+   ============================================ */
+.errorlist {
+    list-style: none;
+    padding: 0;
+    margin: 0.25rem 0 0 0;
+    font-size: 0.875rem;
+    color: var(--danger-color);
+}
+
+.errorlist li {
+    margin: 0.25rem 0;
+    padding: 0.25rem 0.5rem;
+    background-color: #f8d7da;
+    border: 1px solid #f5c2c7;
+    border-radius: 0.375rem;
+}
+
+.errorlist.nonfield {
+    margin-bottom: 1rem;
+}
+
+.errorlist.nonfield li {
+    padding: 0.75rem 1rem;
+    background-color: #f8d7da;
+    border: 1px solid #f5c2c7;
+    border-radius: 0.375rem;
+}
+
+/* ============================================
+   Status Badges - Extrações
+   ============================================ */
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-running {
+    background-color: #cfe2ff;
+    color: #084298;
+}
+
+.status-brute-force {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffc107;
+}
+
+.status-completed {
+    background-color: #d1e7dd;
+    color: #0f5132;
+}
+
+.status-failed {
+    background-color: #f8d7da;
+    color: #842029;
+}
+
+/* ============================================
+   Status Badges - Cases (Processos)
+   ============================================ */
+.status-draft {
+    background-color: var(--gray-medium);
+    color: var(--gray-dark);
+}
+
+.status-waiting_extractor,
+.status-waiting_start,
+.status-waiting_collect {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-in_progress {
+    background-color: #cfe2ff;
+    color: #084298;
+}
+
+.status-paused {
+    background-color: #ffeaa7;
+    color: #6c5ce7;
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+.footer {
+    background-color: var(--gray-light);
+    padding: 1.5rem 0;
+    margin-top: auto;
+    border-top: 1px solid var(--gray-medium);
+    color: var(--gray-dark);
+}
+
+/* ============================================
+   Responsividade
+   ============================================ */
+@media (max-width: 768px) {
+    body {
+        padding-top: 56px; /* Mantém o padding mesmo em telas menores */
+    }
+    
+    .main-content {
+        padding: 1rem 0;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+}
+
+/* ============================================
+   Timeline Horizontal
+   ============================================ */
+.timeline-horizontal {
+    display: flex;
+    overflow-x: auto;
+    padding: 20px 0;
+    gap: 20px;
+    position: relative;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) var(--gray-light);
+}
+
+.timeline-horizontal::-webkit-scrollbar {
+    height: 8px;
+}
+
+.timeline-horizontal::-webkit-scrollbar-track {
+    background: var(--gray-light);
+    border-radius: 4px;
+}
+
+.timeline-horizontal::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+.timeline-horizontal::before {
+    content: '';
+    position: absolute;
+    top: 30px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--gray-medium) 0%, var(--primary-color) 50%, var(--gray-medium) 100%);
+    z-index: 0;
+}
+
+.timeline-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 280px;
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+}
+
+.timeline-marker {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.timeline-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px var(--primary-color);
+    position: relative;
+    z-index: 2;
+}
+
+.timeline-content {
+    background: white;
+    border: 1px solid var(--gray-medium);
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 100%;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.timeline-content:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.timeline-header {
+    margin-bottom: 10px;
+}
+
+.timeline-date {
+    font-size: 0.85rem;
+    color: var(--gray-dark);
+    font-weight: 500;
+}
+
+.timeline-status {
+    margin-bottom: 10px;
+}
+
+.timeline-notes {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--gray-medium);
+    font-size: 0.9rem;
+    color: var(--gray-dark);
+    line-height: 1.4;
+}
+
+.timeline-notes i {
+    margin-right: 5px;
+    color: var(--gray-dark);
+}
+
+/* Responsividade para Timeline */
+@media (max-width: 768px) {
+    .timeline-horizontal {
+        flex-direction: column;
+        overflow-x: visible;
+        padding: 20px 0;
+    }
+    
+    .timeline-horizontal::before {
+        display: none;
+    }
+    
+    .timeline-item {
+        min-width: 100%;
+        margin-bottom: 20px;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+    
+    .timeline-dot {
+        position: relative;
+        left: -8px;
+    }
+    
+    .timeline-content {
+        margin-left: 20px;
+    }
+    
+}
+
+/* ============================================
+   Login Page Styles
+   ============================================ */
+body.login-page {
+    background: var(--gray-light);
+    padding-top: 0; /* Remove padding-top na página de login */
+}
+
+.login-container {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    position: relative;
+}
+
+.login-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(30,58,95,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    opacity: 0.5;
+    z-index: 0;
+}
+
+.login-wrapper {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+}
+
+.login-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(30, 58, 95, 0.15);
+    overflow: hidden;
+    border: 1px solid var(--gray-medium);
+    animation: fadeInUp 0.6s ease;
+}
+
+.login-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 3rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: pulse 4s ease-in-out infinite;
+}
+
+.login-header-content {
+    position: relative;
+    z-index: 1;
+}
+
+.login-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2.5rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.login-header h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.login-header p {
+    font-size: 1.1rem;
+    opacity: 0.95;
+    margin: 0;
+}
+
+.login-body {
+    padding: 2.5rem;
+}
+
+.login-body .form-label {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--primary-color);
+    font-size: 0.95rem;
+}
+
+.login-body .form-control {
+    border: 2px solid var(--gray-medium);
+    border-radius: 10px;
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.login-body .form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(30, 58, 95, 0.15);
+    outline: none;
+}
+
+.input-group-icon {
+    position: relative;
+}
+
+.input-group-icon i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-dark);
+    z-index: 3;
+}
+
+.input-group-icon .form-control {
+    padding-left: 3rem;
+}
+
+.login-body .help-text {
+    font-size: 0.875rem;
+    color: var(--gray-dark);
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.btn-login {
+    background: var(--primary-gradient);
+    border: none;
+    color: white;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 10px;
+    width: 100%;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(30, 58, 95, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-login::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-login:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(30, 58, 95, 0.4);
+}
+
+.btn-login > * {
+    position: relative;
+    z-index: 2;
+}
+
+.login-footer {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--gray-medium);
+    text-align: center;
+}
+
+.login-footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.login-footer-links a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.login-footer-links a:hover {
+    color: var(--primary-light);
+    transform: translateY(-2px);
+}
+
+.info-box {
+    background: var(--gray-light);
+    border-left: 4px solid var(--primary-color);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1.5rem;
+}
+
+.info-box i {
+    color: var(--primary-color);
+    margin-right: 0.5rem;
+}
+
+/* Animações para Login */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+/* Responsividade para Login */
+@media (max-width: 768px) {
+    .login-header {
+        padding: 2rem 1.5rem;
+    }
+
+    .login-body {
+        padding: 2rem 1.5rem;
+    }
+
+    .login-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+    }
+
+    .login-header h2 {
+        font-size: 1.75rem;
+    }
+}
+

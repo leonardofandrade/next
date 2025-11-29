@@ -1,0 +1,26 @@
+[
+    {
+        "id": "extractionRequestUser",
+        "description": "Login name do usuário para auditoria",
+        "default": "admin",
+        "type": "promptString"
+    },
+    {
+        "id": "extractionRequestAmount",
+        "description": "Quantidade de extraction_requests a criar",
+        "default": "13",
+        "type": "promptString"
+    },
+    {
+        "id": "extractionRequestMaxDevices",
+        "description": "Quantidade máxima de dispositivos por request",
+        "default": "1",
+        "type": "promptString"
+    },
+    {
+        "id": "extractionRequestUnitId",
+        "description": "ID da extraction_unit (deixe vazio para randomizar)",
+        "default": "",
+        "type": "promptString"
+    }
+]

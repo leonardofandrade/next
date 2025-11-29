@@ -1,0 +1,33 @@
+
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: next_db
+      MYSQL_USER: next
+      MYSQL_PASSWORD: next123
+      MYSQL_ROOT_PASSWORD: root123
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+  # web:
+  #   build: .
+  #   command: python manage.py runserver 0.0.0.0:8000
+  #   volumes:
+  #     - .:/code
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     - db
+  #   environment:
+  #     - DJANGO_DB_HOST=db
+  #     - DJANGO_DB_NAME=next
+  #     - DJANGO_DB_USER=next
+  #     - DJANGO_DB_PASSWORD=athena123
+
+volumes:
+  db_data:

@@ -63,6 +63,29 @@
                             </li>
                         </ul>
                     </li>
+                    
+                    <!-- Processos -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="casesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-folder-open me-1"></i>
+                            Processos
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="casesDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'cases:list' %}">
+                                    <i class="fas fa-list me-2"></i>
+                                    Todos os Processos
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'cases:create' %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Novo Processo
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
                 {% endif %}
             </ul>
             <ul class="navbar-nav ms-auto">

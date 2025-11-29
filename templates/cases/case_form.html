@@ -1,0 +1,260 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-2">
+                        <i class="fas {{ page_icon }} text-primary me-2"></i>
+                        {{ page_title }}
+                    </h1>
+                    <p class="text-muted mb-0">
+                        {% if action == 'create' %}
+                            Preencha os dados para criar um novo processo
+                        {% else %}
+                            Atualize os dados do processo
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <a href="{% url 'cases:list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row">
+        <div class="col-12">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <!-- Informações Básicas -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Informações do Processo
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            {% if action == 'create' %}
+                            <div class="col-md-12">
+                                <label for="{{ form.extraction_request.id_for_label }}" class="form-label">
+                                    {{ form.extraction_request.label }}
+                                </label>
+                                {{ form.extraction_request }}
+                                {% if form.extraction_request.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.extraction_request.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    {{ form.extraction_request.help_text }}
+                                </small>
+                            </div>
+                            {% endif %}
+
+                            <div class="col-md-6">
+                                <label for="{{ form.requester_agency_unit.id_for_label }}" class="form-label">
+                                    {{ form.requester_agency_unit.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.requester_agency_unit }}
+                                {% if form.requester_agency_unit.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.requester_agency_unit.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    {{ form.requester_agency_unit.help_text }}
+                                </small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="{{ form.request_procedures.id_for_label }}" class="form-label">
+                                    {{ form.request_procedures.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.request_procedures }}
+                                {% if form.request_procedures.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.request_procedures.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    {{ form.request_procedures.help_text }}
+                                </small>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="{{ form.crime_category.id_for_label }}" class="form-label">
+                                    {{ form.crime_category.label }}
+                                </label>
+                                {{ form.crime_category }}
+                                {% if form.crime_category.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.crime_category.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="{{ form.requested_device_amount.id_for_label }}" class="form-label">
+                                    {{ form.requested_device_amount.label }}
+                                </label>
+                                {{ form.requested_device_amount }}
+                                {% if form.requested_device_amount.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.requested_device_amount.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="{{ form.requester_reply_email.id_for_label }}" class="form-label">
+                                    {{ form.requester_reply_email.label }}
+                                </label>
+                                {{ form.requester_reply_email }}
+                                {% if form.requester_reply_email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.requester_reply_email.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Autoridade -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-user-tie me-2"></i>
+                            Informações da Autoridade
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.requester_authority_name.id_for_label }}" class="form-label">
+                                    {{ form.requester_authority_name.label }}
+                                </label>
+                                {{ form.requester_authority_name }}
+                                {% if form.requester_authority_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.requester_authority_name.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="{{ form.requester_authority_position.id_for_label }}" class="form-label">
+                                    {{ form.requester_authority_position.label }}
+                                </label>
+                                {{ form.requester_authority_position }}
+                                {% if form.requester_authority_position.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.requester_authority_position.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gerenciamento -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-cogs me-2"></i>
+                            Gerenciamento do Processo
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="{{ form.extraction_unit.id_for_label }}" class="form-label">
+                                    {{ form.extraction_unit.label }}
+                                </label>
+                                {{ form.extraction_unit }}
+                                {% if form.extraction_unit.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.extraction_unit.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="{{ form.priority.id_for_label }}" class="form-label">
+                                    {{ form.priority.label }}
+                                </label>
+                                {{ form.priority }}
+                                {% if form.priority.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.priority.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="{{ form.assigned_to.id_for_label }}" class="form-label">
+                                    {{ form.assigned_to.label }}
+                                </label>
+                                {{ form.assigned_to }}
+                                {% if form.assigned_to.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.assigned_to.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-12">
+                                <label for="{{ form.additional_info.id_for_label }}" class="form-label">
+                                    {{ form.additional_info.label }}
+                                </label>
+                                {{ form.additional_info }}
+                                {% if form.additional_info.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.additional_info.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>
+                                    {% if action == 'create' %}
+                                        Criar Processo
+                                    {% else %}
+                                        Salvar Alterações
+                                    {% endif %}
+                                </button>
+                            </div>
+                            <a href="{% url 'cases:list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>
+                                Cancelar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

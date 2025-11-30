@@ -8,7 +8,7 @@ from django.utils import timezone
 from apps.base_tables.models import (
     Organization, Agency, Department, AgencyUnit,
     EmployeePosition, CrimeCategory, DeviceCategory,
-    DeviceBrand, DeviceModel
+    DeviceBrand, DeviceModel, ProcedureCategory
 )
 from apps.users.models import UserProfile
 from apps.core.models import ExtractionAgency, ExtractionUnit, ExtractorUser
@@ -72,6 +72,7 @@ class Command(BaseCommand):
         DeviceBrand.objects.all().delete()
         DeviceCategory.objects.all().delete()
         CrimeCategory.objects.all().delete()
+        ProcedureCategory.objects.all().delete()
         EmployeePosition.objects.all().delete()
         AgencyUnit.objects.all().delete()
         Department.objects.all().delete()
@@ -90,6 +91,7 @@ class Command(BaseCommand):
             '06_crime_category.json',
             '07_device_category.json',
             '08_device_brands_models.json',
+            '09_procedure_category.json',
         ]
 
         for file_name in files:
@@ -123,6 +125,8 @@ class Command(BaseCommand):
             self.load_device_categories(data)
         elif file_name == '08_device_brands_models.json':
             self.load_device_brands_models(data)
+        elif file_name == '09_procedure_category.json':
+            self.load_procedure_categories(data)
 
     def load_employee_positions(self, data):
         """Carrega cargos de funcionários"""
@@ -435,3 +439,19 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f'  {brand_count} marcas, {model_count} modelos de dispositivo criados'
         ))
+
+    def load_procedure_categories(self, data):
+        """Carrega categorias de procedimento"""
+        count = 0
+        for item in data:
+            _, created = ProcedureCategory.objects.get_or_create(
+                acronym=item['acronym'],
+                defaults={
+                    'name': item['name'],
+                    'description': item.get('description', ''),
+                    'default_selection': item.get('default_selection', False)
+                }
+            )
+            if created:
+                count += 1
+        self.stdout.write(self.style.SUCCESS(f'  {count} categorias de procedimento criadas'))

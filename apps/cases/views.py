@@ -187,7 +187,7 @@ def case_update(request, pk):
     Atualiza um processo de extração existente
     """
     case = get_object_or_404(
-        Case.objects.filter(deleted_at__isnull=True),
+        Case.objects.filter(deleted_at__isnull=True).prefetch_related('procedures__procedure_category'),
         pk=pk
     )
     

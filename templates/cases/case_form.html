@@ -256,5 +256,88 @@
             </form>
         </div>
     </div>
+
+    <!-- Procedimentos do Caso -->
+    {% if action == 'update' and case %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-gavel me-2"></i>
+                        Procedimentos do Processo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if case.procedures.all %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="20%">Categoria</th>
+                                    <th width="30%">Número</th>
+                                    <th width="25%">Arquivo</th>
+                                    <th width="15%">Criado em</th>
+                                    <th width="10%" class="text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for procedure in case.procedures.all %}
+                                <tr>
+                                    <td>
+                                        {% if procedure.procedure_category %}
+                                            <span class="badge bg-primary">
+                                                {{ procedure.procedure_category.acronym }}
+                                            </span>
+                                            <small class="text-muted d-block">
+                                                {{ procedure.procedure_category.name }}
+                                            </small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>{{ procedure.number|default:"-" }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if procedure.original_filename %}
+                                            <i class="fas fa-file me-1"></i>
+                                            <small>{{ procedure.original_filename|truncatechars:30 }}</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ procedure.created_at|date:"d/m/Y H:i"|default:"-" }}</small>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            {% if procedure.document_file %}
+                                            <a href="#" 
+                                               class="btn btn-outline-primary" 
+                                               title="Download"
+                                               onclick="alert('Funcionalidade de download em desenvolvimento'); return false;">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">Nenhum procedimento cadastrado.</p>
+                        <small class="text-muted">Os procedimentos são criados automaticamente ao criar o processo a partir de uma solicitação.</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

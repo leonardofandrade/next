@@ -165,6 +165,23 @@
                                            title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </a>
+                                        {% if view_type == 'not_received' %}
+                                            {% if not request.case or request.case.deleted_at %}
+                                            <button type="button" 
+                                                    class="btn btn-outline-success" 
+                                                    title="Criar Processo"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#createCaseModal{{ request.pk }}">
+                                                <i class="fas fa-folder-plus"></i>
+                                            </button>
+                                            {% else %}
+                                            <a href="{% url 'cases:detail' request.case.pk %}" 
+                                               class="btn btn-outline-info" 
+                                               title="Ver Processo Criado">
+                                                <i class="fas fa-folder-open"></i>
+                                            </a>
+                                            {% endif %}
+                                        {% endif %}
                                         <a href="{% url 'requisitions:delete' request.pk %}" 
                                            class="btn btn-outline-danger" 
                                            title="Excluir">
@@ -197,4 +214,56 @@
         </div>
     </div>
 </div>
+
+{% if view_type == 'not_received' %}
+    {% for request in page_obj %}
+        {% if not request.case or request.case.deleted_at %}
+        <!-- Modal de Confirmação para Criar Processo -->
+        <div class="modal fade" id="createCaseModal{{ request.pk }}" tabindex="-1" aria-labelledby="createCaseModalLabel{{ request.pk }}" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createCaseModalLabel{{ request.pk }}">
+                        <i class="fas fa-folder-plus text-success me-2"></i>
+                        Criar Processo a partir da Solicitação
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja criar um processo a partir da solicitação <strong>#{{ request.pk }}</strong>?</p>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Atenção:</strong> Esta ação irá:
+                        <ul class="mb-0 mt-2">
+                            <li>Criar um novo processo com os dados da solicitação</li>
+                            <li>Marcar a solicitação como recebida automaticamente</li>
+                            <li>Tentar criar procedimentos do caso baseado nos procedimentos informados</li>
+                            <li>Redirecionar para a edição do processo criado</li>
+                        </ul>
+                    </div>
+                    {% if request.request_procedures %}
+                    <div class="mb-2">
+                        <strong>Procedimentos:</strong> {{ request.request_procedures }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>
+                        Cancelar
+                    </button>
+                    <form method="post" action="{% url 'requisitions:create_case' request.pk %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check me-2"></i>
+                            Confirmar e Criar Processo
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
 {% endblock %}

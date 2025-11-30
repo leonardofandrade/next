@@ -100,7 +100,7 @@ class Command(BaseCommand):
                         proc_num = f"{procedure_cat.acronym} {random.randint(1, 9999):04d}/{timezone.now().year}"
                     else:
                         # Valores padrão se não houver categorias de procedimento
-                        proc_types = ['IP', 'PJ', 'IC', 'PA']
+                        proc_types = ['IP', 'PJ', 'TCO', 'APF', 'BO', 'DJ', 'TA', 'AAA']
                         proc_num = f"{random.choice(proc_types)} {random.randint(1, 9999):04d}/{timezone.now().year}"
                     procedures.append(proc_num)
                 

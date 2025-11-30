@@ -9,4 +9,5 @@ urlpatterns = [
     path('create/', views.case_create, name='create'),
     path('<int:pk>/update/', views.case_update, name='update'),
     path('<int:pk>/delete/', views.case_delete, name='delete'),
+    path('<int:pk>/devices/', views.case_devices, name='devices'),
 ]

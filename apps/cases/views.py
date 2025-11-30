@@ -263,3 +263,25 @@ def case_delete(request, pk):
     }
     
     return render(request, 'cases/case_confirm_delete.html', context)
+
+
+@login_required
+def case_devices(request, pk):
+    """
+    Exibe os dispositivos de um processo de extração
+    """
+    case = get_object_or_404(
+        Case.objects.filter(deleted_at__isnull=True).prefetch_related(
+            'case_devices__device_category',
+            'case_devices__device_model__brand'
+        ),
+        pk=pk
+    )
+    
+    context = {
+        'page_title': f'Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}',
+        'page_icon': 'fa-mobile-alt',
+        'case': case,
+    }
+    
+    return render(request, 'cases/case_devices.html', context)

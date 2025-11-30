@@ -1,0 +1,220 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-2">
+                        <i class="fas {{ page_icon }} text-primary me-2"></i>
+                        {{ page_title }}
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Dispositivos do processo
+                    </p>
+                </div>
+                <div>
+                    <a href="{% url 'cases:detail' case.pk %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informações do Processo -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Informações do Processo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <strong>Número:</strong><br>
+                            <span class="badge bg-secondary fs-6">{{ case.number|default:"Rascunho" }}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Status:</strong><br>
+                            <span class="badge {{ case.status_badge_class }} fs-6">
+                                {{ case.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Prioridade:</strong><br>
+                            <span class="badge bg-{{ case.get_priority_color }} fs-6">
+                                {{ case.get_priority_display }}
+                            </span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Dispositivos Solicitados:</strong><br>
+                            {{ case.requested_device_amount|default:"-" }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Unidade Solicitante:</strong><br>
+                            {% if case.requester_agency_unit %}
+                                {{ case.requester_agency_unit.name }}
+                                <span class="badge bg-info">{{ case.requester_agency_unit.acronym }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Unidade de Extração:</strong><br>
+                            {% if case.extraction_unit %}
+                                <span class="badge bg-info">{{ case.extraction_unit.acronym }}</span>
+                                {{ case.extraction_unit.name }}
+                            {% else %}
+                                <span class="text-muted">Não atribuída</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Autoridade:</strong><br>
+                            {{ case.requester_authority_name|default:"-" }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Data da Solicitação:</strong><br>
+                            {% if case.requested_at %}
+                                {{ case.requested_at|date:"d/m/Y H:i" }}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </div>
+                        {% if case.request_procedures %}
+                        <div class="col-md-12">
+                            <strong>Procedimentos:</strong><br>
+                            {{ case.request_procedures }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Dispositivos -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-mobile-alt me-2"></i>
+                            Dispositivos do Processo
+                        </h5>
+                        <span class="badge bg-secondary">
+                            {{ case.case_devices.count }} dispositivo{{ case.case_devices.count|pluralize }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if case.case_devices.all %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="5%">#</th>
+                                    <th width="15%">Categoria</th>
+                                    <th width="20%">Modelo</th>
+                                    <th width="10%">Cor</th>
+                                    <th width="15%">IMEI</th>
+                                    <th width="15%">Proprietário</th>
+                                    <th width="10%">Armazenamento</th>
+                                    <th width="10%" class="text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for device in case.case_devices.all %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ forloop.counter }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if device.device_category %}
+                                            <span class="badge bg-primary">
+                                                {{ device.device_category.name }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if device.device_model %}
+                                            <strong>{{ device.device_model.brand.name }}</strong><br>
+                                            <small class="text-muted">{{ device.device_model.name }}</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ device.color|default:"-" }}
+                                    </td>
+                                    <td>
+                                        {% if device.is_imei_unknown %}
+                                            <span class="badge bg-warning">Desconhecido</span>
+                                        {% else %}
+                                            {% if device.imei_01 %}
+                                                <small>{{ device.imei_01 }}</small>
+                                                {% if device.imei_02 %}
+                                                    <br><small class="text-muted">{{ device.imei_02 }}</small>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ device.owner_name|default:"-" }}
+                                    </td>
+                                    <td>
+                                        {% if device.internal_storage %}
+                                            {{ device.internal_storage }} GB
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex flex-column gap-1">
+                                            {% if device.is_turned_on is not None %}
+                                                {% if device.is_turned_on %}
+                                                    <span class="badge bg-success">Ligado</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Desligado</span>
+                                                {% endif %}
+                                            {% endif %}
+                                            {% if device.is_locked is not None %}
+                                                {% if device.is_locked %}
+                                                    <span class="badge bg-warning">Bloqueado</span>
+                                                {% else %}
+                                                    <span class="badge bg-info">Desbloqueado</span>
+                                                {% endif %}
+                                            {% endif %}
+                                            {% if device.is_sealed %}
+                                                <span class="badge bg-primary">Lacrado</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-mobile-alt fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Nenhum dispositivo cadastrado para este processo.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

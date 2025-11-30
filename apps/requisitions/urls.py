@@ -1,13 +1,20 @@
 from django.urls import path
-from apps.requisitions import views
+from apps.requisitions.views import (
+    ExtractionRequestListView,
+    ExtractionRequestDetailView,
+    ExtractionRequestCreateView,
+    ExtractionRequestUpdateView,
+    ExtractionRequestDeleteView,
+    ExtractionRequestNotReceivedView,
+)
 
 app_name = 'requisitions'
 
 urlpatterns = [
-    path('', views.extraction_request_list, name='list'),
-    path('not-received/', views.extraction_request_not_received, name='not_received'),
-    path('<int:pk>/', views.extraction_request_detail, name='detail'),
-    path('create/', views.extraction_request_create, name='create'),
-    path('<int:pk>/update/', views.extraction_request_update, name='update'),
-    path('<int:pk>/delete/', views.extraction_request_delete, name='delete'),
+    path('', ExtractionRequestListView.as_view(), name='list'),
+    path('not-received/', ExtractionRequestNotReceivedView.as_view(), name='not_received'),
+    path('<int:pk>/', ExtractionRequestDetailView.as_view(), name='detail'),
+    path('create/', ExtractionRequestCreateView.as_view(), name='create'),
+    path('<int:pk>/update/', ExtractionRequestUpdateView.as_view(), name='update'),
+    path('<int:pk>/delete/', ExtractionRequestDeleteView.as_view(), name='delete'),
 ]

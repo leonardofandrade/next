@@ -168,3 +168,231 @@ class AbstractCaseModel(AuditedModel):
     class Meta:
         abstract = True
 
+
+class AbstractDeviceModel(AuditedModel):
+    """Abstract model for Device Models"""
+        
+    """ Device information """
+    device_category = models.ForeignKey(
+        'base_tables.DeviceCategory',
+        null=False,
+        blank=False,
+        on_delete=models.PROTECT,
+        related_name='devices',
+        verbose_name=_('Categoria'),
+        help_text=_('Categoria do dispositivo')
+    )
+    device_model = models.ForeignKey(
+        'base_tables.DeviceModel',
+        null=True,
+        verbose_name=_('Modelo'),
+        related_name='devices',
+        on_delete=models.PROTECT
+    )
+    color = models.CharField(
+        _('Cor'),
+        null=True,
+        max_length=50, blank=True
+    )
+
+    is_imei_unknown = models.BooleanField(
+        _('IMEI Desconhecido'),
+        null=True,
+        blank=True,
+    )
+
+    imei_01 = models.CharField(
+        _('IMEI 01'),
+        null=True,
+        max_length=50, 
+        blank=True)
+    imei_02 = models.CharField(
+        _('IMEI 02'),
+        null=True,
+        max_length=50, 
+        blank=True)
+    imei_03 = models.CharField(
+        _('IMEI 03'),
+        null=True,
+        max_length=50, 
+        blank=True)
+    imei_04 = models.CharField(
+        _('IMEI 04'),
+        null=True,
+        max_length=50, 
+        blank=True)
+    imei_05 = models.CharField(
+        _('IMEI 05'),
+        null=True,
+        max_length=50, 
+        blank=True)
+
+    owner_name = models.CharField(
+        _('Nome do Proprietário'),
+        null=True,
+        max_length=200,
+        help_text=_('Nome do Proprietário'),
+    )
+
+    internal_storage = models.PositiveIntegerField(
+        _('Armazenamento Interno (GB)'),
+        null=True,
+        blank=True,
+        help_text=_('Capacidade de armazenamento interna do dispositivo em GB (ex: iPhone 512GB)')
+    )
+
+    """ Device status information """
+    is_turned_on = models.BooleanField(
+        _('Ligado'),
+        null=True,
+        blank=True,
+    )
+    is_locked = models.BooleanField(
+        _('Bloqueado'),
+        null=True,
+        blank=True,
+    )
+
+    """ Device password information """
+    is_password_known = models.BooleanField(
+        _('Senha Conhecida'),
+        null=True,
+        blank=True,
+    )
+    PASSWORD_CHOICES = (
+        ('pin', 'PIN'),
+        ('password', 'Senha'),
+        ('pattern', 'Padrão'),
+        ('bio', 'Biometria'),
+        ('none', 'Nenhum'),
+    )
+    password_type = models.CharField(
+        _('Tipo de Senha'),
+        null=True,
+        blank=True,
+        max_length=20,
+        choices=PASSWORD_CHOICES,
+        help_text=_('Tipo')
+    )
+    password = models.CharField(
+        _('Senha'),
+        max_length=100,
+        null=True,
+        blank=True,
+        help_text=_('Senha')
+    )
+    """ Device physical condition information """
+    is_damaged = models.BooleanField(
+        _('Danificado'),
+        null=True,
+        blank=True,
+    )
+    damage_description = models.CharField(
+        _('Descrição dos danos'),
+        max_length=200,
+        null=True,
+        blank=True,
+        help_text=_('Descrição dos danos')
+    )
+    has_fluids = models.BooleanField(
+        _('Presença de Fluidos'),
+        null=True,
+        blank=True,
+        help_text=_('Indica se há presença de fluidos no dispositivo')
+    )
+    fluids_description = models.CharField(
+        _('Descrição dos flúidos'),
+        max_length=200,
+        null=True,
+        blank=True,
+        help_text=_('Descreva os fluidos. Ex.: sangue, água, óleo, etc.')
+    )
+    """ Device accessories information """
+    has_sim_card = models.BooleanField(
+        _('Chip SIM'),
+        null=True,
+        blank=True,
+        help_text=_('Indica se há presença de chip SIM no dispositivo')
+    )
+    sim_card_info = models.CharField(
+        _('Informações do Chip'),
+        max_length=200,
+        null=True,
+        blank=True,
+        help_text=_('Informações sobre o chip, se houver')
+    )
+
+    has_memory_card = models.BooleanField(
+        _('Cartão de Memória'),
+        null=True,
+        blank=True,
+        help_text=_('Indica se há presença de cartão de memória no dispositivo')
+    )
+    memory_card_info = models.CharField(
+        _('Informações do Cartão de Memória'),
+        max_length=200,
+        null=True,
+        blank=True,
+        help_text=_('Informações sobre o cartão de memória, se houver')
+    )
+    has_other_accessories = models.BooleanField(
+        _('Outros Acessórios'),
+        null=True,
+        blank=True,
+        help_text=_('Indica se há presença de outros acessórios no dispositivo')
+    )
+    other_accessories_info = models.CharField(
+        _('Informações dos Outros Acessórios'),
+        max_length=200,
+        null=True,
+        blank=True,
+        help_text=_('Ex.: Capa, Carregador, etc.')
+    )
+
+    """ Device security information """
+    is_sealed = models.BooleanField(
+        _('Lacrado'),
+        null=True,
+        blank=True,
+    )
+    security_seal = models.CharField(
+        _('Número do Lacre'),
+        max_length=100,
+        null=True,
+        blank=True,
+        help_text=_('Número do lacre')
+    )
+
+    additional_info = models.TextField(
+        _('Informações Adicionais'),
+        null=True,
+        blank=True,
+        help_text=_('Informações adicionais sobre o dispositivo')
+    )
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return f"{self.device_model}" if self.device_model else f"{self.type}"
+
+    def get_device_imei_as_list(self):
+        """
+        Retorna o IMEI do dispositivo como uma string.
+        """
+        imei_list = []
+        if not self.imei_01 and not self.imei_02 and not self.imei_03 and not self.imei_04 and not self.imei_05:
+            return "IMEI Não Informado"
+        else:
+            if self.imei_01:
+                imei_list.append(self.imei_01)
+            if self.imei_02:
+                imei_list.append(self.imei_02)
+            if self.imei_03:
+                imei_list.append(self.imei_03)
+            if self.imei_04:
+                imei_list.append(self.imei_04)
+            if self.imei_05:
+                imei_list.append(self.imei_05)
+        
+        return ", ".join(imei_list)

@@ -5,6 +5,7 @@ from django.utils import timezone
 from apps.core.models import AuditedModel, AbstractCaseModel, ExtractionUnit
 from apps.base_tables.models import ProcedureCategory
 from apps.requisitions.models import ExtractionRequest
+from apps.core.models import AbstractDeviceModel
 
 
 class Case(AbstractCaseModel):
@@ -269,5 +270,28 @@ class CaseProcedure(AuditedModel):
         unique_together = ('case', 'number', 'procedure_category')
         indexes = [
             models.Index(fields=['case']),
+            models.Index(fields=['created_at']),
+        ]
+        
+
+class CaseDevice(AbstractDeviceModel):
+    """Model for Case Devices"""
+    case = models.ForeignKey(
+        Case,
+        on_delete=models.PROTECT,
+        related_name='case_devices',
+        null=False,
+        blank=False,
+        help_text=_("Processo relacionado a este dispositivo")
+    )
+
+    class Meta:
+        db_table = 'case_device'
+        verbose_name = _('Dispositivo do Processo')
+        verbose_name_plural = _('Dispositivos do Processo')
+        unique_together = ('case', 'device_model', 'color')
+        indexes = [
+            models.Index(fields=['case']),
+            models.Index(fields=['device_model']),
             models.Index(fields=['created_at']),
         ]

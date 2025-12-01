@@ -7,9 +7,10 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.utils import timezone
+from django.http import JsonResponse
 
-from apps.cases.models import Case
-from apps.cases.forms import CaseForm, CaseSearchForm
+from apps.cases.models import Case, CaseDevice
+from apps.cases.forms import CaseForm, CaseSearchForm, CaseDeviceForm
 
 
 @login_required
@@ -271,17 +272,167 @@ def case_devices(request, pk):
     Exibe os dispositivos de um processo de extração
     """
     case = get_object_or_404(
-        Case.objects.filter(deleted_at__isnull=True).prefetch_related(
-            'case_devices__device_category',
-            'case_devices__device_model__brand'
-        ),
+        Case.objects.filter(deleted_at__isnull=True),
         pk=pk
+    )
+    
+    # Filtra apenas dispositivos não deletados
+    devices = case.case_devices.filter(deleted_at__isnull=True).select_related(
+        'device_category',
+        'device_model__brand'
     )
     
     context = {
         'page_title': f'Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}',
         'page_icon': 'fa-mobile-alt',
         'case': case,
+        'devices': devices,
     }
     
     return render(request, 'cases/case_devices.html', context)
+
+
+@login_required
+def case_device_create(request, case_pk):
+    """
+    Cria um novo dispositivo para um processo
+    """
+    case = get_object_or_404(
+        Case.objects.filter(deleted_at__isnull=True),
+        pk=case_pk
+    )
+    
+    if request.method == 'POST':
+        form = CaseDeviceForm(request.POST, case=case)
+        if form.is_valid():
+            device = form.save(commit=False)
+            device.case = case
+            device.created_by = request.user
+            device.save()
+            
+            messages.success(
+                request,
+                'Dispositivo adicionado com sucesso!'
+            )
+            return redirect('cases:devices', pk=case.pk)
+    else:
+        form = CaseDeviceForm(case=case)
+    
+    context = {
+        'page_title': f'Adicionar Dispositivo - Processo {case.number if case.number else f"#{case.pk}"}',
+        'page_icon': 'fa-plus',
+        'form': form,
+        'case': case,
+        'action': 'create',
+    }
+    
+    return render(request, 'cases/case_device_form.html', context)
+
+
+@login_required
+def case_device_update(request, case_pk, device_pk):
+    """
+    Atualiza um dispositivo existente
+    """
+    case = get_object_or_404(
+        Case.objects.filter(deleted_at__isnull=True),
+        pk=case_pk
+    )
+    device = get_object_or_404(
+        CaseDevice.objects.filter(
+            case=case,
+            deleted_at__isnull=True
+        ),
+        pk=device_pk
+    )
+    
+    if request.method == 'POST':
+        form = CaseDeviceForm(request.POST, instance=device, case=case)
+        if form.is_valid():
+            device = form.save(commit=False)
+            device.updated_by = request.user
+            device.version += 1
+            device.save()
+            
+            messages.success(
+                request,
+                'Dispositivo atualizado com sucesso!'
+            )
+            return redirect('cases:devices', pk=case.pk)
+    else:
+        form = CaseDeviceForm(instance=device, case=case)
+    
+    context = {
+        'page_title': f'Editar Dispositivo - Processo {case.number if case.number else f"#{case.pk}"}',
+        'page_icon': 'fa-edit',
+        'form': form,
+        'case': case,
+        'device': device,
+        'action': 'update',
+    }
+    
+    return render(request, 'cases/case_device_form.html', context)
+
+
+@login_required
+def case_device_delete(request, case_pk, device_pk):
+    """
+    Realiza soft delete de um dispositivo
+    """
+    case = get_object_or_404(
+        Case.objects.filter(deleted_at__isnull=True),
+        pk=case_pk
+    )
+    device = get_object_or_404(
+        CaseDevice.objects.filter(
+            case=case,
+            deleted_at__isnull=True
+        ).select_related(
+            'device_category',
+            'device_model__brand'
+        ),
+        pk=device_pk
+    )
+    
+    if request.method == 'POST':
+        device.deleted_at = timezone.now()
+        device.deleted_by = request.user
+        device.save()
+        
+        messages.success(
+            request,
+            'Dispositivo excluído com sucesso!'
+        )
+        
+        # Se for requisição AJAX, retorna JSON
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': 'Dispositivo excluído com sucesso!'
+            })
+        
+        return redirect('cases:devices', pk=case.pk)
+    
+    # Se for requisição AJAX para GET, retorna dados do dispositivo em JSON
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'device': {
+                'id': device.pk,
+                'category': device.device_category.name if device.device_category else None,
+                'model': f"{device.device_model.brand.name} - {device.device_model.name}" if device.device_model else None,
+                'color': device.color or '-',
+                'imei': 'Desconhecido' if device.is_imei_unknown else (device.imei_01 or '-'),
+                'owner': device.owner_name or '-',
+                'case_number': case.number or 'Rascunho',
+                'created_at': device.created_at.strftime('%d/%m/%Y %H:%M') if device.created_at else '-',
+            }
+        })
+    
+    context = {
+        'page_title': f'Excluir Dispositivo - Processo {case.number if case.number else f"#{case.pk}"}',
+        'page_icon': 'fa-trash',
+        'case': case,
+        'device': device,
+    }
+    
+    return render(request, 'cases/case_device_confirm_delete.html', context)

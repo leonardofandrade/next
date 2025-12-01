@@ -108,13 +108,19 @@
                             <i class="fas fa-mobile-alt me-2"></i>
                             Dispositivos do Processo
                         </h5>
+                        <div class="d-flex align-items-center gap-2">
                         <span class="badge bg-secondary">
-                            {{ case.case_devices.count }} dispositivo{{ case.case_devices.count|pluralize }}
+                            {{ devices.count }} dispositivo{{ devices.count|pluralize }}
                         </span>
+                            <a href="{% url 'cases:device_create' case.pk %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus me-1"></i>
+                                Adicionar Dispositivo
+                            </a>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body">
-                    {% if case.case_devices.all %}
+                    {% if devices %}
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
@@ -127,10 +133,11 @@
                                     <th width="15%">Proprietário</th>
                                     <th width="10%">Armazenamento</th>
                                     <th width="10%" class="text-center">Status</th>
+                                    <th width="10%" class="text-center">Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for device in case.case_devices.all %}
+                                {% for device in devices %}
                                 <tr>
                                     <td>
                                         <strong>{{ forloop.counter }}</strong>
@@ -200,6 +207,23 @@
                                             {% endif %}
                                         </div>
                                     </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'cases:device_update' case.pk device.pk %}" 
+                                               class="btn btn-outline-primary" 
+                                               title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" 
+                                                    class="btn btn-outline-danger delete-device-btn" 
+                                                    title="Excluir"
+                                                    data-case-pk="{{ case.pk }}"
+                                                    data-device-pk="{{ device.pk }}"
+                                                    data-device-info="{{ device.device_model.brand.name|default:'' }} - {{ device.device_model.name|default:'Sem modelo' }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -208,7 +232,11 @@
                     {% else %}
                     <div class="text-center py-5">
                         <i class="fas fa-mobile-alt fa-3x text-muted mb-3"></i>
-                        <p class="text-muted">Nenhum dispositivo cadastrado para este processo.</p>
+                        <p class="text-muted mb-3">Nenhum dispositivo cadastrado para este processo.</p>
+                        <a href="{% url 'cases:device_create' case.pk %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>
+                            Adicionar Primeiro Dispositivo
+                        </a>
                     </div>
                     {% endif %}
                 </div>
@@ -216,5 +244,156 @@
         </div>
     </div>
 </div>
+
+<!-- Modal de Confirmação de Exclusão de Dispositivo -->
+<div class="modal fade" id="deleteDeviceModal" tabindex="-1" aria-labelledby="deleteDeviceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteDeviceModalLabel">
+                    <i class="fas fa-trash me-2"></i>
+                    Excluir Dispositivo
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Atenção!</strong> Esta ação não pode ser desfeita.
+                </div>
+
+                <p class="mb-3">Você tem certeza que deseja excluir o dispositivo:</p>
+
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <dl class="row mb-0" id="deviceInfo">
+                            <dt class="col-sm-4">Categoria:</dt>
+                            <dd class="col-sm-8" id="deviceCategory">-</dd>
+
+                            <dt class="col-sm-4">Modelo:</dt>
+                            <dd class="col-sm-8" id="deviceModel">-</dd>
+
+                            <dt class="col-sm-4">Cor:</dt>
+                            <dd class="col-sm-8" id="deviceColor">-</dd>
+
+                            <dt class="col-sm-4">IMEI:</dt>
+                            <dd class="col-sm-8" id="deviceImei">-</dd>
+
+                            <dt class="col-sm-4">Proprietário:</dt>
+                            <dd class="col-sm-8" id="deviceOwner">-</dd>
+
+                            <dt class="col-sm-4">Processo:</dt>
+                            <dd class="col-sm-8">
+                                <strong>{{ case.number|default:"Rascunho" }}</strong>
+                            </dd>
+
+                            <dt class="col-sm-4">Criado em:</dt>
+                            <dd class="col-sm-8" id="deviceCreatedAt">-</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>
+                    Cancelar
+                </button>
+                <form id="deleteDeviceForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>
+                        Confirmar Exclusão
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteButtons = document.querySelectorAll('.delete-device-btn');
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteDeviceModal'));
+    const deleteForm = document.getElementById('deleteDeviceForm');
+    let currentDevicePk = null;
+    let currentCasePk = null;
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            currentDevicePk = this.getAttribute('data-device-pk');
+            currentCasePk = this.getAttribute('data-case-pk');
+            
+            // Carrega informações do dispositivo via AJAX
+            fetch(`/cases/${currentCasePk}/devices/${currentDevicePk}/delete/`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Preenche o modal com as informações do dispositivo
+                document.getElementById('deviceCategory').innerHTML = data.device.category 
+                    ? `<span class="badge bg-primary">${data.device.category}</span>` 
+                    : '<span class="text-muted">-</span>';
+                
+                document.getElementById('deviceModel').innerHTML = data.device.model 
+                    ? `<strong>${data.device.model}</strong>` 
+                    : '<span class="text-muted">-</span>';
+                
+                document.getElementById('deviceColor').textContent = data.device.color;
+                document.getElementById('deviceImei').innerHTML = data.device.imei === 'Desconhecido'
+                    ? '<span class="badge bg-warning">Desconhecido</span>'
+                    : data.device.imei;
+                document.getElementById('deviceOwner').textContent = data.device.owner;
+                document.getElementById('deviceCreatedAt').textContent = data.device.created_at;
+                
+                // Atualiza a action do form
+                deleteForm.action = `/cases/${currentCasePk}/devices/${currentDevicePk}/delete/`;
+                
+                // Abre o modal
+                deleteModal.show();
+            })
+            .catch(error => {
+                console.error('Erro ao carregar informações do dispositivo:', error);
+                alert('Erro ao carregar informações do dispositivo.');
+            });
+        });
+    });
+
+    // Submete o formulário de exclusão
+    deleteForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Obtém o CSRF token do formulário
+        const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        fetch(this.action, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken,
+            },
+            body: new FormData(this)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Fecha o modal
+                deleteModal.hide();
+                
+                // Recarrega a página para atualizar a lista
+                window.location.reload();
+            } else {
+                alert('Erro ao excluir dispositivo.');
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao excluir dispositivo:', error);
+            alert('Erro ao excluir dispositivo.');
+        });
+    });
+});
+</script>
 {% endblock %}
 

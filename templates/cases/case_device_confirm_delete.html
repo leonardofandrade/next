@@ -1,0 +1,96 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas {{ page_icon }} me-2"></i>
+                        {{ page_title }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Atenção!</strong> Esta ação não pode ser desfeita.
+                    </div>
+
+                    <p class="mb-3">Você tem certeza que deseja excluir o dispositivo:</p>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">Categoria:</dt>
+                                <dd class="col-sm-8">
+                                    {% if device.device_category %}
+                                        <span class="badge bg-primary">
+                                            {{ device.device_category.name }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-sm-4">Modelo:</dt>
+                                <dd class="col-sm-8">
+                                    {% if device.device_model %}
+                                        <strong>{{ device.device_model.brand.name }}</strong><br>
+                                        <small class="text-muted">{{ device.device_model.name }}</small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-sm-4">Cor:</dt>
+                                <dd class="col-sm-8">{{ device.color|default:"-" }}</dd>
+
+                                <dt class="col-sm-4">IMEI:</dt>
+                                <dd class="col-sm-8">
+                                    {% if device.is_imei_unknown %}
+                                        <span class="badge bg-warning">Desconhecido</span>
+                                    {% else %}
+                                        {% if device.imei_01 %}
+                                            {{ device.imei_01 }}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-sm-4">Proprietário:</dt>
+                                <dd class="col-sm-8">{{ device.owner_name|default:"-" }}</dd>
+
+                                <dt class="col-sm-4">Processo:</dt>
+                                <dd class="col-sm-8">
+                                    <strong>{{ case.number|default:"Rascunho" }}</strong>
+                                </dd>
+
+                                <dt class="col-sm-4">Criado em:</dt>
+                                <dd class="col-sm-8">{{ device.created_at|date:"d/m/Y H:i" }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'cases:devices' case.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>
+                                Confirmar Exclusão
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

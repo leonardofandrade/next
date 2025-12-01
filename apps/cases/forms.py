@@ -3,8 +3,8 @@ Formulários para o app cases
 """
 from django import forms
 from django.utils import timezone
-from apps.cases.models import Case
-from apps.base_tables.models import AgencyUnit, EmployeePosition, CrimeCategory
+from apps.cases.models import Case, CaseDevice
+from apps.base_tables.models import AgencyUnit, EmployeePosition, CrimeCategory, DeviceCategory, DeviceModel
 from apps.core.models import ExtractionUnit
 from apps.requisitions.models import ExtractionRequest
 from django.contrib.auth.models import User
@@ -218,3 +218,233 @@ class CaseSearchForm(forms.Form):
             'type': 'date'
         })
     )
+
+
+class CaseDeviceForm(forms.ModelForm):
+    """
+    Formulário para criar e editar dispositivos de um processo
+    """
+    
+    class Meta:
+        model = CaseDevice
+        fields = [
+            'device_category',
+            'device_model',
+            'color',
+            'is_imei_unknown',
+            'imei_01',
+            'imei_02',
+            'imei_03',
+            'imei_04',
+            'imei_05',
+            'owner_name',
+            'internal_storage',
+            'is_turned_on',
+            'is_locked',
+            'is_password_known',
+            'password_type',
+            'password',
+            'is_damaged',
+            'damage_description',
+            'has_fluids',
+            'fluids_description',
+            'has_sim_card',
+            'sim_card_info',
+            'has_memory_card',
+            'memory_card_info',
+            'has_other_accessories',
+            'other_accessories_info',
+            'is_sealed',
+            'security_seal',
+            'additional_info',
+        ]
+        widgets = {
+            'device_category': forms.Select(attrs={
+                'class': 'form-select',
+                'required': True
+            }),
+            'device_model': forms.Select(attrs={
+                'class': 'form-select',
+            }),
+            'color': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ex: Preto, Branco, Azul...'
+            }),
+            'is_imei_unknown': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+            'imei_01': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'IMEI 01',
+                'maxlength': '50'
+            }),
+            'imei_02': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'IMEI 02',
+                'maxlength': '50'
+            }),
+            'imei_03': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'IMEI 03',
+                'maxlength': '50'
+            }),
+            'imei_04': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'IMEI 04',
+                'maxlength': '50'
+            }),
+            'imei_05': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'IMEI 05',
+                'maxlength': '50'
+            }),
+            'owner_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nome do proprietário',
+                'maxlength': '200'
+            }),
+            'internal_storage': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ex: 128, 256, 512',
+                'min': '1'
+            }),
+            'is_turned_on': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+            'is_locked': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+            'is_password_known': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+            'password_type': forms.Select(attrs={
+                'class': 'form-select',
+            }),
+            'password': forms.TextInput(attrs={
+                'class': 'form-control',
+                'maxlength': '100'
+            }),
+            'is_damaged': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+            'damage_description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Descreva os danos',
+                'maxlength': '200'
+            }),
+            'has_fluids': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+            'fluids_description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ex: sangue, água, óleo...',
+                'maxlength': '200'
+            }),
+            'has_sim_card': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+            'sim_card_info': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informações do chip',
+                'maxlength': '200'
+            }),
+            'has_memory_card': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+            'memory_card_info': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informações do cartão de memória',
+                'maxlength': '200'
+            }),
+            'has_other_accessories': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+            'other_accessories_info': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ex: Capa, Carregador...',
+                'maxlength': '200'
+            }),
+            'is_sealed': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+            'security_seal': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Número do lacre',
+                'maxlength': '100'
+            }),
+            'additional_info': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Informações adicionais sobre o dispositivo'
+            }),
+        }
+        labels = {
+            'device_category': 'Categoria',
+            'device_model': 'Modelo',
+            'color': 'Cor',
+            'is_imei_unknown': 'IMEI Desconhecido',
+            'imei_01': 'IMEI 01',
+            'imei_02': 'IMEI 02',
+            'imei_03': 'IMEI 03',
+            'imei_04': 'IMEI 04',
+            'imei_05': 'IMEI 05',
+            'owner_name': 'Nome do Proprietário',
+            'internal_storage': 'Armazenamento Interno (GB)',
+            'is_turned_on': 'Ligado',
+            'is_locked': 'Bloqueado',
+            'is_password_known': 'Senha Conhecida',
+            'password_type': 'Tipo de Senha',
+            'password': 'Senha',
+            'is_damaged': 'Danificado',
+            'damage_description': 'Descrição dos Danos',
+            'has_fluids': 'Presença de Fluidos',
+            'fluids_description': 'Descrição dos Fluidos',
+            'has_sim_card': 'Chip SIM',
+            'sim_card_info': 'Informações do Chip',
+            'has_memory_card': 'Cartão de Memória',
+            'memory_card_info': 'Informações do Cartão de Memória',
+            'has_other_accessories': 'Outros Acessórios',
+            'other_accessories_info': 'Informações dos Outros Acessórios',
+            'is_sealed': 'Lacrado',
+            'security_seal': 'Número do Lacre',
+            'additional_info': 'Informações Adicionais',
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.case = kwargs.pop('case', None)
+        super().__init__(*args, **kwargs)
+        
+        # Ordena os querysets
+        self.fields['device_category'].queryset = DeviceCategory.objects.filter(
+            deleted_at__isnull=True
+        ).order_by('-default_selection', 'name')
+        self.fields['device_model'].queryset = DeviceModel.objects.filter(
+            deleted_at__isnull=True
+        ).select_related('brand').order_by('brand__name', 'name')
+        
+        # Torna campos opcionais
+        self.fields['owner_name'].required = False
+        self.fields['password_type'].required = False
+        
+        # Configura campos booleanos para não serem obrigatórios
+        boolean_fields = [
+            'is_turned_on', 'is_locked', 'is_password_known', 'is_damaged',
+            'has_fluids', 'has_sim_card', 'has_memory_card', 
+            'has_other_accessories', 'is_sealed', 'is_imei_unknown'
+        ]
+        for field_name in boolean_fields:
+            if field_name in self.fields:
+                self.fields[field_name].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        is_imei_unknown = cleaned_data.get('is_imei_unknown')
+        imei_01 = cleaned_data.get('imei_01')
+        
+        # Se IMEI não é desconhecido, pelo menos um IMEI deve ser informado
+        if not is_imei_unknown and not imei_01:
+            raise forms.ValidationError({
+                'imei_01': 'Informe pelo menos um IMEI ou marque "IMEI Desconhecido".'
+            })
+        
+        return cleaned_data

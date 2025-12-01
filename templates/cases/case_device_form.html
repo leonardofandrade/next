@@ -52,11 +52,7 @@
                                     <span class="text-danger">*</span>
                                 </label>
                                 {{ form.device_category }}
-                                {% if form.device_category.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.device_category.errors }}
-                                    </div>
-                                {% endif %}
+                                {{ form.device_category.errors }}
                             </div>
 
                             <div class="col-md-6">
@@ -65,11 +61,7 @@
                                     <span class="text-danger">*</span>
                                 </label>
                                 {{ form.device_model }}
-                                {% if form.device_model.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.device_model.errors }}
-                                    </div>
-                                {% endif %}
+                                {{ form.device_model.errors }}
                             </div>
 
                             <div class="col-md-6">

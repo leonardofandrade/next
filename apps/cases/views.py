@@ -9,6 +9,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.utils import timezone
 from django.http import JsonResponse
+from django.urls import reverse
 
 from apps.cases.models import Case, CaseDevice, Extraction
 from apps.cases.forms import CaseForm, CaseSearchForm, CaseDeviceForm
@@ -676,3 +677,81 @@ class CreateExtractionsView(LoginRequiredMixin, View):
                 'message': str(e),
                 'traceback': traceback.format_exc()
             }, status=500)
+
+
+class CaseAssignToMeView(LoginRequiredMixin, View):
+    """
+    Atribui o processo ao usuário logado
+    """
+    
+    def post(self, request, pk):
+        """
+        Atribui o processo ao usuário logado
+        """
+        case = get_object_or_404(
+            Case.objects.filter(deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        # Verifica se o caso já está atribuído ao usuário
+        if case.assigned_to == request.user:
+            messages.warning(
+                request,
+                'Este processo já está atribuído a você.'
+            )
+        else:
+            # Atribui o caso ao usuário
+            case.assigned_to = request.user
+            case.assigned_at = timezone.now()
+            case.assigned_by = request.user
+            case.save()
+            
+            messages.success(
+                request,
+                f'Processo atribuído a você com sucesso!'
+            )
+        
+        # Redireciona de acordo com o referer ou para detalhes
+        referer = request.META.get('HTTP_REFERER')
+        if referer and 'cases/list' in referer:
+            return redirect('cases:list')
+        return redirect('cases:detail', pk=case.pk)
+
+
+class CaseUnassignFromMeView(LoginRequiredMixin, View):
+    """
+    Remove a atribuição do processo do usuário logado
+    """
+    
+    def post(self, request, pk):
+        """
+        Remove a atribuição do processo do usuário logado
+        """
+        case = get_object_or_404(
+            Case.objects.filter(deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        # Verifica se o caso está atribuído ao usuário
+        if case.assigned_to != request.user:
+            messages.warning(
+                request,
+                'Este processo não está atribuído a você.'
+            )
+        else:
+            # Remove a atribuição
+            case.assigned_to = None
+            case.assigned_at = None
+            case.assigned_by = None
+            case.save()
+            
+            messages.success(
+                request,
+                'Atribuição removida com sucesso!'
+            )
+        
+        # Redireciona de acordo com o referer ou para detalhes
+        referer = request.META.get('HTTP_REFERER')
+        if referer and 'cases/list' in referer:
+            return redirect('cases:list')
+        return redirect('cases:detail', pk=case.pk)

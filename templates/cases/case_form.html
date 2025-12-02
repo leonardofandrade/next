@@ -245,6 +245,25 @@
                                         Salvar Alterações
                                     {% endif %}
                                 </button>
+                                {% if action == 'update' and case %}
+                                    {% if case.assigned_to == request.user %}
+                                        <button type="button" 
+                                                class="btn btn-warning" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#unassignModal">
+                                            <i class="fas fa-user-times me-2"></i>
+                                            Desatribuir-me
+                                        </button>
+                                    {% elif not case.assigned_to %}
+                                        <button type="button" 
+                                                class="btn btn-success" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#assignModal">
+                                            <i class="fas fa-user-check me-2"></i>
+                                            Atribuir-me
+                                        </button>
+                                    {% endif %}
+                                {% endif %}
                             </div>
                             <a href="{% url 'cases:list' %}" class="btn btn-secondary">
                                 <i class="fas fa-times me-2"></i>
@@ -340,4 +359,127 @@
     </div>
     {% endif %}
 </div>
+
+<!-- Modais de Confirmação -->
+{% if action == 'update' and case %}
+    <!-- Modal Atribuir-me -->
+    <div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="assignModalLabel">
+                        <i class="fas fa-user-check me-2"></i>
+                        Atribuir Processo a Mim
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Você está prestes a se tornar responsável por este processo.
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <strong>Processo:</strong> {{ case.number|default:"Rascunho" }}
+                        </div>
+                        <div class="col-12">
+                            <strong>Procedimentos:</strong> {{ case.request_procedures|truncatechars:100 }}
+                        </div>
+                        <div class="col-6">
+                            <strong>Prioridade:</strong> 
+                            <span class="badge bg-{{ case.get_priority_color }}">{{ case.get_priority_display }}</span>
+                        </div>
+                        <div class="col-6">
+                            <strong>Status:</strong> 
+                            <span class="badge {{ case.status_badge_class }}">{{ case.get_status_display }}</span>
+                        </div>
+                        {% if case.requester_agency_unit %}
+                        <div class="col-12">
+                            <strong>Solicitante:</strong> {{ case.requester_agency_unit.acronym }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <hr>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Após confirmar, você será o responsável por este processo.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>
+                        Cancelar
+                    </button>
+                    <form method="post" action="{% url 'cases:assign_to_me' case.pk %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-user-check me-2"></i>
+                            Confirmar Atribuição
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Desatribuir-me -->
+    <div class="modal fade" id="unassignModal" tabindex="-1" aria-labelledby="unassignModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="unassignModalLabel">
+                        <i class="fas fa-user-times me-2"></i>
+                        Desatribuir Processo de Mim
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning mb-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Você está prestes a remover sua responsabilidade sobre este processo.
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <strong>Processo:</strong> {{ case.number|default:"Rascunho" }}
+                        </div>
+                        <div class="col-12">
+                            <strong>Procedimentos:</strong> {{ case.request_procedures|truncatechars:100 }}
+                        </div>
+                        <div class="col-6">
+                            <strong>Prioridade:</strong> 
+                            <span class="badge bg-{{ case.get_priority_color }}">{{ case.get_priority_display }}</span>
+                        </div>
+                        <div class="col-6">
+                            <strong>Status:</strong> 
+                            <span class="badge {{ case.status_badge_class }}">{{ case.get_status_display }}</span>
+                        </div>
+                        {% if case.assigned_at %}
+                        <div class="col-12">
+                            <strong>Atribuído em:</strong> {{ case.assigned_at|date:"d/m/Y H:i" }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <hr>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        O processo ficará sem responsável após esta ação.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>
+                        Cancelar
+                    </button>
+                    <form method="post" action="{% url 'cases:unassign_from_me' case.pk %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-user-times me-2"></i>
+                            Confirmar Desatribuição
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
 {% endblock %}

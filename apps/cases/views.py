@@ -226,6 +226,22 @@ class CaseUpdateView(LoginRequiredMixin, UpdateView):
             deleted_at__isnull=True
         ).prefetch_related('procedures__procedure_category')
     
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Verifica se o usuário tem permissão para editar o processo
+        """
+        case = self.get_object()
+        
+        # Permite edição se o usuário for o responsável ou se o processo não tiver responsável
+        if case.assigned_to and case.assigned_to != request.user:
+            messages.error(
+                request,
+                'Você não tem permissão para editar este processo. Apenas o responsável pode editá-lo.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        return super().dispatch(request, *args, **kwargs)
+    
     def get_form_kwargs(self):
         """
         Passa o usuário atual para o formulário
@@ -286,6 +302,22 @@ class CaseDeleteView(LoginRequiredMixin, DeleteView):
         Filtra apenas casos não deletados
         """
         return Case.objects.filter(deleted_at__isnull=True)
+    
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Verifica se o usuário tem permissão para excluir o processo
+        """
+        case = self.get_object()
+        
+        # Permite exclusão apenas se o usuário for o responsável ou se o processo não tiver responsável
+        if case.assigned_to and case.assigned_to != request.user:
+            messages.error(
+                request,
+                'Você não tem permissão para excluir este processo. Apenas o responsável pode excluí-lo.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        return super().dispatch(request, *args, **kwargs)
     
     def delete(self, request, *args, **kwargs):
         """
@@ -356,12 +388,21 @@ class CaseDeviceCreateView(LoginRequiredMixin, CreateView):
     
     def dispatch(self, request, *args, **kwargs):
         """
-        Verifica se o caso existe e não está deletado
+        Verifica se o caso existe, não está deletado e se o usuário tem permissão
         """
         self.case = get_object_or_404(
             Case.objects.filter(deleted_at__isnull=True),
             pk=kwargs['case_pk']
         )
+        
+        # Verifica se o usuário tem permissão para adicionar dispositivos
+        if self.case.assigned_to and self.case.assigned_to != request.user:
+            messages.error(
+                request,
+                'Você não tem permissão para adicionar dispositivos a este processo. Apenas o responsável pode fazer isso.'
+            )
+            return redirect('cases:devices', pk=self.case.pk)
+        
         return super().dispatch(request, *args, **kwargs)
     
     def get_form_kwargs(self):
@@ -409,12 +450,21 @@ class CaseDeviceUpdateView(LoginRequiredMixin, UpdateView):
     
     def dispatch(self, request, *args, **kwargs):
         """
-        Verifica se o caso e o dispositivo existem e não estão deletados
+        Verifica se o caso e o dispositivo existem, não estão deletados e se o usuário tem permissão
         """
         self.case = get_object_or_404(
             Case.objects.filter(deleted_at__isnull=True),
             pk=kwargs['case_pk']
         )
+        
+        # Verifica se o usuário tem permissão para editar dispositivos
+        if self.case.assigned_to and self.case.assigned_to != request.user:
+            messages.error(
+                request,
+                'Você não tem permissão para editar dispositivos deste processo. Apenas o responsável pode fazer isso.'
+            )
+            return redirect('cases:devices', pk=self.case.pk)
+        
         return super().dispatch(request, *args, **kwargs)
     
     def get_queryset(self):
@@ -471,12 +521,21 @@ class CaseDeviceDeleteView(LoginRequiredMixin, DeleteView):
     
     def dispatch(self, request, *args, **kwargs):
         """
-        Verifica se o caso e o dispositivo existem e não estão deletados
+        Verifica se o caso e o dispositivo existem, não estão deletados e se o usuário tem permissão
         """
         self.case = get_object_or_404(
             Case.objects.filter(deleted_at__isnull=True),
             pk=kwargs['case_pk']
         )
+        
+        # Verifica se o usuário tem permissão para excluir dispositivos
+        if self.case.assigned_to and self.case.assigned_to != request.user:
+            messages.error(
+                request,
+                'Você não tem permissão para excluir dispositivos deste processo. Apenas o responsável pode fazer isso.'
+            )
+            return redirect('cases:devices', pk=self.case.pk)
+        
         return super().dispatch(request, *args, **kwargs)
     
     def get_queryset(self):
@@ -732,11 +791,11 @@ class CaseUnassignFromMeView(LoginRequiredMixin, View):
             pk=pk
         )
         
-        # Verifica se o caso está atribuído ao usuário
+        # Verifica se o caso está atribuído ao usuário (apenas o responsável pode se desatribuir)
         if case.assigned_to != request.user:
-            messages.warning(
+            messages.error(
                 request,
-                'Este processo não está atribuído a você.'
+                'Você não tem permissão para desatribuir este processo. Apenas o responsável pode se desatribuir.'
             )
         else:
             # Remove a atribuição

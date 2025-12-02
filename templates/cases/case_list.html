@@ -177,11 +177,19 @@
                                            title="Ver extrações">
                                             <i class="fas fa-database"></i>
                                         </a>
+                                        {% if not case.assigned_to or case.assigned_to == request.user %}
                                         <a href="{% url 'cases:update' case.pk %}" 
                                            class="btn btn-outline-secondary" 
                                            title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </a>
+                                        {% else %}
+                                        <button class="btn btn-outline-secondary" 
+                                                title="Apenas o responsável pode editar" 
+                                                disabled>
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        {% endif %}
                                         {% if case.assigned_to == request.user %}
                                         <button type="button" 
                                                 class="btn btn-outline-warning btn-sm" 
@@ -203,11 +211,19 @@
                                             <i class="fas fa-user-check"></i>
                                         </button>
                                         {% endif %}
+                                        {% if not case.assigned_to or case.assigned_to == request.user %}
                                         <a href="{% url 'cases:delete' case.pk %}" 
                                            class="btn btn-outline-danger" 
                                            title="Excluir">
                                             <i class="fas fa-trash"></i>
                                         </a>
+                                        {% else %}
+                                        <button class="btn btn-outline-danger" 
+                                                title="Apenas o responsável pode excluir" 
+                                                disabled>
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        {% endif %}
                                     </div>
                                 </td>
                             </tr>

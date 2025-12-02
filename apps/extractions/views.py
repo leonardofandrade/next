@@ -1,15 +1,15 @@
 """
 Views para o app extractions
 """
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import DetailView, ListView, View
 from django.db.models import Q
 from django.contrib import messages
 from django.utils import timezone
 from apps.cases.models import Case, Extraction
-from apps.extractions.forms import ExtractionSearchForm
-from apps.core.models import ExtractorUser
+from apps.extractions.forms import ExtractionSearchForm, ExtractionFinishForm
+from apps.core.models import ExtractorUser, ExtractionUnitStorageMedia
 
 
 class ExtractionListView(LoginRequiredMixin, ListView):
@@ -362,6 +362,340 @@ class ExtractionStartView(LoginRequiredMixin, View):
         messages.success(
             request,
             'Extração iniciada com sucesso!'
+        )
+        
+        return self._redirect_back(request, extraction)
+    
+    def _redirect_back(self, request, extraction):
+        """
+        Redireciona de acordo com o referer ou para as extrações do caso
+        """
+        referer = request.META.get('HTTP_REFERER')
+        if referer and 'extractions/list' in referer:
+            return redirect('extractions:list')
+        return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
+
+
+class ExtractionPauseView(LoginRequiredMixin, View):
+    """
+    Pausa uma extração em andamento
+    """
+    
+    def post(self, request, pk):
+        """
+        Pausa a extração
+        """
+        extraction = get_object_or_404(
+            Extraction.objects.filter(deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        # Verifica se o usuário é um extrator
+        try:
+            extractor_user = ExtractorUser.objects.get(
+                user=request.user,
+                deleted_at__isnull=True
+            )
+        except ExtractorUser.DoesNotExist:
+            messages.error(
+                request,
+                'Você não é um usuário extrator.'
+            )
+            return self._redirect_back(request, extraction)
+        
+        # Verifica se a extração está em andamento
+        if extraction.status != Extraction.STATUS_IN_PROGRESS:
+            messages.error(
+                request,
+                'Apenas extrações em andamento podem ser pausadas.'
+            )
+            return self._redirect_back(request, extraction)
+        
+        # Verifica se o usuário é o responsável pela extração
+        if extraction.assigned_to != extractor_user:
+            messages.error(
+                request,
+                'Apenas o responsável pela extração pode pausá-la.'
+            )
+            return self._redirect_back(request, extraction)
+        
+        # Pausa a extração
+        extraction.status = Extraction.STATUS_PAUSED
+        extraction.save()
+        
+        messages.success(
+            request,
+            'Extração pausada com sucesso!'
+        )
+        
+        return self._redirect_back(request, extraction)
+    
+    def _redirect_back(self, request, extraction):
+        """
+        Redireciona de acordo com o referer ou para as extrações do caso
+        """
+        referer = request.META.get('HTTP_REFERER')
+        if referer and 'extractions/list' in referer:
+            return redirect('extractions:list')
+        return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
+
+
+class ExtractionResumeView(LoginRequiredMixin, View):
+    """
+    Retoma uma extração pausada
+    """
+    
+    def post(self, request, pk):
+        """
+        Retoma a extração
+        """
+        extraction = get_object_or_404(
+            Extraction.objects.filter(deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        # Verifica se o usuário é um extrator
+        try:
+            extractor_user = ExtractorUser.objects.get(
+                user=request.user,
+                deleted_at__isnull=True
+            )
+        except ExtractorUser.DoesNotExist:
+            messages.error(
+                request,
+                'Você não é um usuário extrator.'
+            )
+            return self._redirect_back(request, extraction)
+        
+        # Verifica se a extração está pausada
+        if extraction.status != Extraction.STATUS_PAUSED:
+            messages.error(
+                request,
+                'Apenas extrações pausadas podem ser retomadas.'
+            )
+            return self._redirect_back(request, extraction)
+        
+        # Verifica se o usuário é o responsável pela extração
+        if extraction.assigned_to != extractor_user:
+            messages.error(
+                request,
+                'Apenas o responsável pela extração pode retomá-la.'
+            )
+            return self._redirect_back(request, extraction)
+        
+        # Retoma a extração
+        extraction.status = Extraction.STATUS_IN_PROGRESS
+        extraction.save()
+        
+        messages.success(
+            request,
+            'Extração retomada com sucesso!'
+        )
+        
+        return self._redirect_back(request, extraction)
+    
+    def _redirect_back(self, request, extraction):
+        """
+        Redireciona de acordo com o referer ou para as extrações do caso
+        """
+        referer = request.META.get('HTTP_REFERER')
+        if referer and 'extractions/list' in referer:
+            return redirect('extractions:list')
+        return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
+
+
+class ExtractionFinishFormView(LoginRequiredMixin, DetailView):
+    """
+    Exibe o formulário de finalização da extração
+    """
+    model = Extraction
+    template_name = 'extractions/extraction_finish_form.html'
+    context_object_name = 'extraction'
+    
+    def get_queryset(self):
+        """
+        Filtra apenas extrações não deletadas
+        """
+        return Extraction.objects.filter(deleted_at__isnull=True)
+    
+    def get(self, request, *args, **kwargs):
+        """
+        Exibe o formulário de finalização
+        """
+        extraction = self.get_object()
+        
+        # Verifica se o usuário é um extrator
+        try:
+            extractor_user = ExtractorUser.objects.get(
+                user=request.user,
+                deleted_at__isnull=True
+            )
+        except ExtractorUser.DoesNotExist:
+            messages.error(
+                request,
+                'Você não é um usuário extrator.'
+            )
+            return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
+        
+        # Verifica se a extração pode ser finalizada
+        if extraction.status not in [Extraction.STATUS_IN_PROGRESS, Extraction.STATUS_PAUSED]:
+            messages.error(
+                request,
+                'Apenas extrações em andamento ou pausadas podem ser finalizadas.'
+            )
+            return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
+        
+        # Verifica se o usuário é o responsável pela extração
+        if extraction.assigned_to != extractor_user:
+            messages.error(
+                request,
+                'Apenas o responsável pela extração pode finalizá-la.'
+            )
+            return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
+        
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        """
+        Adiciona o formulário ao contexto
+        """
+        context = super().get_context_data(**kwargs)
+        extraction = self.get_object()
+        
+        # Cria o formulário com dados iniciais da extração
+        initial_data = {
+            'extraction_result': extraction.extraction_result,
+            'finished_notes': extraction.finished_notes,
+            'extraction_results_notes': extraction.extraction_results_notes,
+            'logical_extraction': extraction.logical_extraction,
+            'logical_extraction_notes': extraction.logical_extraction_notes,
+            'physical_extraction': extraction.physical_extraction,
+            'physical_extraction_notes': extraction.physical_extraction_notes,
+            'full_file_system_extraction': extraction.full_file_system_extraction,
+            'full_file_system_extraction_notes': extraction.full_file_system_extraction_notes,
+            'cloud_extraction': extraction.cloud_extraction,
+            'cloud_extraction_notes': extraction.cloud_extraction_notes,
+            'cellebrite_premium': extraction.cellebrite_premium,
+            'cellebrite_premium_notes': extraction.cellebrite_premium_notes,
+            'cellebrite_premium_support': extraction.cellebrite_premium_support,
+            'cellebrite_premium_support_notes': extraction.cellebrite_premium_support_notes,
+            'extraction_size': extraction.extraction_size,
+            'storage_media': extraction.storage_media,
+        }
+        
+        context['form'] = ExtractionFinishForm(
+            initial=initial_data,
+            extraction_unit=extraction.case_device.case.extraction_unit
+        )
+        context['page_title'] = f'Finalizar Extração #{extraction.pk}'
+        context['page_icon'] = 'fa-check-circle'
+        
+        return context
+
+
+class ExtractionFinishView(LoginRequiredMixin, View):
+    """
+    Finaliza uma extração
+    """
+    
+    def post(self, request, pk):
+        """
+        Finaliza a extração
+        """
+        extraction = get_object_or_404(
+            Extraction.objects.filter(deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        # Verifica se o usuário é um extrator
+        try:
+            extractor_user = ExtractorUser.objects.get(
+                user=request.user,
+                deleted_at__isnull=True
+            )
+        except ExtractorUser.DoesNotExist:
+            messages.error(
+                request,
+                'Você não é um usuário extrator.'
+            )
+            return self._redirect_back(request, extraction)
+        
+        # Verifica se a extração pode ser finalizada
+        if extraction.status not in [Extraction.STATUS_IN_PROGRESS, Extraction.STATUS_PAUSED]:
+            messages.error(
+                request,
+                'Apenas extrações em andamento ou pausadas podem ser finalizadas.'
+            )
+            return self._redirect_back(request, extraction)
+        
+        # Verifica se o usuário é o responsável pela extração
+        if extraction.assigned_to != extractor_user:
+            messages.error(
+                request,
+                'Apenas o responsável pela extração pode finalizá-la.'
+            )
+            return self._redirect_back(request, extraction)
+        
+        # Valida o formulário
+        form = ExtractionFinishForm(
+            request.POST,
+            extraction_unit=extraction.case_device.case.extraction_unit
+        )
+        
+        if not form.is_valid():
+            # Se o formulário não for válido, renderiza novamente com erros
+            messages.error(
+                request,
+                'Por favor, corrija os erros no formulário.'
+            )
+            return render(request, 'extractions/extraction_finish_form.html', {
+                'extraction': extraction,
+                'form': form,
+                'page_title': f'Finalizar Extração #{extraction.pk}',
+                'page_icon': 'fa-check-circle'
+            })
+        
+        # Finaliza a extração
+        extraction.status = Extraction.STATUS_COMPLETED
+        extraction.finished_at = timezone.now()
+        extraction.finished_by = extractor_user
+        
+        # Obtém os dados do formulário validado
+        extraction.extraction_result = form.cleaned_data['extraction_result']
+        extraction.finished_notes = form.cleaned_data['finished_notes']
+        extraction.extraction_results_notes = form.cleaned_data['extraction_results_notes']
+        
+        # Dados de tipo de extração
+        extraction.logical_extraction = form.cleaned_data['logical_extraction']
+        extraction.logical_extraction_notes = form.cleaned_data['logical_extraction_notes']
+        
+        extraction.physical_extraction = form.cleaned_data['physical_extraction']
+        extraction.physical_extraction_notes = form.cleaned_data['physical_extraction_notes']
+        
+        extraction.full_file_system_extraction = form.cleaned_data['full_file_system_extraction']
+        extraction.full_file_system_extraction_notes = form.cleaned_data['full_file_system_extraction_notes']
+        
+        extraction.cloud_extraction = form.cleaned_data['cloud_extraction']
+        extraction.cloud_extraction_notes = form.cleaned_data['cloud_extraction_notes']
+        
+        # Dados de Cellebrite Premium
+        extraction.cellebrite_premium = form.cleaned_data['cellebrite_premium']
+        extraction.cellebrite_premium_notes = form.cleaned_data['cellebrite_premium_notes']
+        extraction.cellebrite_premium_support = form.cleaned_data['cellebrite_premium_support']
+        extraction.cellebrite_premium_support_notes = form.cleaned_data['cellebrite_premium_support_notes']
+        
+        # Tamanho e mídia de armazenamento
+        if form.cleaned_data['extraction_size']:
+            extraction.extraction_size = form.cleaned_data['extraction_size']
+        
+        if form.cleaned_data['storage_media']:
+            extraction.storage_media = form.cleaned_data['storage_media']
+        
+        extraction.save()
+        
+        messages.success(
+            request,
+            'Extração finalizada com sucesso!'
         )
         
         return self._redirect_back(request, extraction)

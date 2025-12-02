@@ -241,6 +241,15 @@
                                                 <i class="fas fa-user-check"></i>
                                             </button>
                                             {% endif %}
+                                            {% if extraction.status == 'pending' or extraction.status == 'assigned' or extraction.status == 'paused' %}
+                                            <button type="button" 
+                                                    class="btn btn-outline-primary btn-sm" 
+                                                    title="Iniciar Extração"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#startModal{{ extraction.pk }}">
+                                                <i class="fas fa-play"></i>
+                                            </button>
+                                            {% endif %}
                                         </div>
                                     </td>
                                 </tr>
@@ -404,6 +413,85 @@
                             Confirmar Desatribuição
                         </button>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Iniciar Extração -->
+    <div class="modal fade" id="startModal{{ extraction.pk }}" tabindex="-1" aria-labelledby="startModalLabel{{ extraction.pk }}" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="startModalLabel{{ extraction.pk }}">
+                        <i class="fas fa-play me-2"></i>
+                        Iniciar Extração
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Você está prestes a iniciar esta extração.
+                        {% if not extraction.assigned_to %}
+                        <br><strong>A extração será automaticamente atribuída a você.</strong>
+                        {% endif %}
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <strong>Extração:</strong> #{{ extraction.pk }}
+                        </div>
+                        <div class="col-12">
+                            <strong>Dispositivo:</strong> 
+                            {% if extraction.case_device.device_model %}
+                                {{ extraction.case_device.device_model.brand.name }} - {{ extraction.case_device.device_model.name }}
+                            {% else %}
+                                Sem modelo
+                            {% endif %}
+                        </div>
+                        <div class="col-12">
+                            <strong>Processo:</strong> {{ extraction.case_device.case.number|default:"Rascunho" }}
+                        </div>
+                        <div class="col-6">
+                            <strong>Status Atual:</strong> 
+                            <span class="badge bg-{{ extraction.get_status_color }}">{{ extraction.get_status_display }}</span>
+                        </div>
+                        {% if extraction.assigned_to %}
+                        <div class="col-12">
+                            <strong>Atribuído a:</strong> {{ extraction.assigned_to.user.get_full_name|default:extraction.assigned_to.user.username }}
+                        </div>
+                        {% endif %}
+                        {% if extraction.case_device.device_category %}
+                        <div class="col-12">
+                            <strong>Categoria:</strong> {{ extraction.case_device.device_category.name }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <hr>
+                    <form id="startForm{{ extraction.pk }}" method="post" action="{% url 'extractions:start' extraction.pk %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="notes{{ extraction.pk }}" class="form-label">
+                                <i class="fas fa-sticky-note me-1"></i>
+                                Observações (Opcional)
+                            </label>
+                            <textarea class="form-control" id="notes{{ extraction.pk }}" name="notes" rows="3" 
+                                      placeholder="Adicione observações sobre o início da extração..."></textarea>
+                            <small class="form-text text-muted">
+                                Ex: condição do dispositivo, método de extração, etc.
+                            </small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>
+                        Cancelar
+                    </button>
+                    <button type="submit" form="startForm{{ extraction.pk }}" class="btn btn-primary">
+                        <i class="fas fa-play me-2"></i>
+                        Iniciar Extração
+                    </button>
                 </div>
             </div>
         </div>

@@ -284,3 +284,93 @@ class ExtractionUnassignFromMeView(LoginRequiredMixin, View):
         if referer and 'extractions/list' in referer:
             return redirect('extractions:list')
         return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
+
+
+class ExtractionStartView(LoginRequiredMixin, View):
+    """
+    Inicia uma extração, atribuindo ao usuário se necessário
+    """
+    
+    def post(self, request, pk):
+        """
+        Inicia a extração, fazendo atribuição automática se necessário
+        """
+        extraction = get_object_or_404(
+            Extraction.objects.filter(deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        # Verifica se o usuário é um extrator
+        try:
+            extractor_user = ExtractorUser.objects.get(
+                user=request.user,
+                deleted_at__isnull=True
+            )
+        except ExtractorUser.DoesNotExist:
+            messages.error(
+                request,
+                'Você não é um usuário extrator. Apenas extratores podem iniciar extrações.'
+            )
+            return self._redirect_back(request, extraction)
+        
+        # Verifica se a extração já está em andamento ou finalizada
+        if extraction.status == Extraction.STATUS_IN_PROGRESS:
+            messages.warning(
+                request,
+                'Esta extração já está em andamento.'
+            )
+            return self._redirect_back(request, extraction)
+        
+        if extraction.status == Extraction.STATUS_COMPLETED:
+            messages.error(
+                request,
+                'Esta extração já foi finalizada e não pode ser iniciada novamente.'
+            )
+            return self._redirect_back(request, extraction)
+        
+        # Se não estiver atribuída, atribui automaticamente ao usuário
+        if not extraction.assigned_to:
+            extraction.assigned_to = extractor_user
+            extraction.assigned_at = timezone.now()
+            extraction.assigned_by = request.user
+            messages.info(
+                request,
+                'Extração atribuída automaticamente a você.'
+            )
+        else:
+            # Verifica se está atribuída a outro usuário
+            if extraction.assigned_to != extractor_user:
+                messages.error(
+                    request,
+                    f'Esta extração está atribuída a {extraction.assigned_to.user.get_full_name() or extraction.assigned_to.user.username}. '
+                    'Apenas o responsável pode iniciá-la.'
+                )
+                return self._redirect_back(request, extraction)
+        
+        # Inicia a extração
+        extraction.status = Extraction.STATUS_IN_PROGRESS
+        extraction.started_at = timezone.now()
+        extraction.started_by = extractor_user
+        
+        # Obtém as notas do formulário se fornecidas
+        notes = request.POST.get('notes', '')
+        if notes:
+            extraction.started_notes = notes
+        
+        extraction.save()
+        
+        messages.success(
+            request,
+            'Extração iniciada com sucesso!'
+        )
+        
+        return self._redirect_back(request, extraction)
+    
+    def _redirect_back(self, request, extraction):
+        """
+        Redireciona de acordo com o referer ou para as extrações do caso
+        """
+        referer = request.META.get('HTTP_REFERER')
+        if referer and 'extractions/list' in referer:
+            return redirect('extractions:list')
+        return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)

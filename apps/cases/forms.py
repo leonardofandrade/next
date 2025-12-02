@@ -3,6 +3,7 @@ Formulários para o app cases
 """
 from django import forms
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 from apps.cases.models import Case, CaseDevice
 from apps.base_tables.models import AgencyUnit, EmployeePosition, CrimeCategory, DeviceCategory, DeviceModel
 from apps.core.models import ExtractionUnit
@@ -448,3 +449,28 @@ class CaseDeviceForm(forms.ModelForm):
             })
         
         return cleaned_data
+
+
+class CaseCompleteRegistrationForm(forms.Form):
+    """
+    Formulário para finalizar o cadastro de um processo
+    """
+    create_extractions = forms.BooleanField(
+        required=False,
+        initial=True,
+        label='Criar extrações automaticamente',
+        help_text='Marca esta opção para criar automaticamente as extrações para todos os dispositivos cadastrados.',
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input'
+        })
+    )
+    
+    notes = forms.CharField(
+        required=False,
+        label='Observações',
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Observações sobre a finalização do cadastro (opcional)...'
+        })
+    )

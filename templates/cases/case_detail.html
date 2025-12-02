@@ -14,6 +14,22 @@
                     </h1>
                 </div>
                 <div>
+                    {% if not case.registration_completed_at %}
+                        {% if not case.assigned_to or case.assigned_to == request.user %}
+                            {% if devices_count > 0 and procedures_count > 0 %}
+                                <a href="{% url 'cases:complete_registration' case.pk %}" class="btn btn-success">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    Finalizar Cadastro
+                                </a>
+                            {% else %}
+                                <button type="button" class="btn btn-success" disabled 
+                                        title="{% if devices_count == 0 and procedures_count == 0 %}É necessário cadastrar pelo menos 1 dispositivo e 1 procedimento{% elif devices_count == 0 %}É necessário cadastrar pelo menos 1 dispositivo{% else %}É necessário cadastrar pelo menos 1 procedimento{% endif %}">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    Finalizar Cadastro
+                                </button>
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
                     {% if case.assigned_to == request.user %}
                         <button type="button" 
                                 class="btn btn-warning" 
@@ -52,6 +68,42 @@
     </div>
 
     <div class="row">
+        <!-- Alerta de Cadastro Incompleto -->
+        {% if not case.registration_completed_at %}
+        <div class="col-12 mb-3">
+            <div class="alert alert-warning" role="alert">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                        <div>
+                            <h5 class="alert-heading mb-2">Cadastro Pendente</h5>
+                            <p class="mb-2">
+                                O cadastro deste processo ainda não foi finalizado.
+                            </p>
+                            {% if devices_count == 0 %}
+                            <p class="mb-0">
+                                <strong>Atenção:</strong> É necessário cadastrar pelo menos um dispositivo antes de finalizar o cadastro.
+                            </p>
+                            {% else %}
+                            <p class="mb-0">
+                                <strong>{{ devices_count }} dispositivo(s)</strong> cadastrado(s). Você já pode finalizar o cadastro.
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if devices_count > 0 %}
+                    <div>
+                        <a href="{% url 'cases:complete_registration' case.pk %}" class="btn btn-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Finalizar Cadastro
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
         <!-- Informações Principais -->
         <div class="col-md-8">
             <!-- Status e Prioridade -->

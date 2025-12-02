@@ -1,7 +1,7 @@
 """
 Views para o app cases
 """
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, render
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, View
@@ -12,7 +12,7 @@ from django.http import JsonResponse
 from django.urls import reverse
 
 from apps.cases.models import Case, CaseDevice, Extraction
-from apps.cases.forms import CaseForm, CaseSearchForm, CaseDeviceForm
+from apps.cases.forms import CaseForm, CaseSearchForm, CaseDeviceForm, CaseCompleteRegistrationForm
 
 
 class CaseListView(LoginRequiredMixin, ListView):
@@ -121,6 +121,11 @@ class CaseDetailView(LoginRequiredMixin, DetailView):
         case = self.get_object()
         context['page_title'] = f'Processo {case.number if case.number else f"#{case.pk}"}'
         context['page_icon'] = 'fa-file-alt'
+        
+        # Adiciona a contagem de dispositivos e procedimentos para controlar exibição do botão de finalizar cadastro
+        context['devices_count'] = case.case_devices.filter(deleted_at__isnull=True).count()
+        context['procedures_count'] = case.procedures.filter(deleted_at__isnull=True).count()
+        
         return context
 
 
@@ -287,6 +292,11 @@ class CaseUpdateView(LoginRequiredMixin, UpdateView):
         context['page_icon'] = 'fa-edit'
         context['case'] = case
         context['action'] = 'update'
+        
+        # Adiciona contagens para controlar exibição do botão de finalizar cadastro
+        context['devices_count'] = case.case_devices.filter(deleted_at__isnull=True).count()
+        context['procedures_count'] = case.procedures.filter(deleted_at__isnull=True).count()
+        
         return context
 
 
@@ -343,6 +353,187 @@ class CaseDeleteView(LoginRequiredMixin, DeleteView):
         context['page_title'] = f'Excluir Processo {case.number if case.number else f"#{case.pk}"}'
         context['page_icon'] = 'fa-trash'
         return context
+
+
+class CaseCompleteRegistrationView(LoginRequiredMixin, View):
+    """
+    Finaliza o cadastro de um processo e opcionalmente cria extrações
+    """
+    template_name = 'cases/case_complete_registration.html'
+    
+    def get(self, request, pk):
+        """
+        Exibe o formulário de finalização de cadastro
+        """
+        case = get_object_or_404(
+            Case.objects.filter(deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        # Verifica se o usuário tem permissão
+        if case.assigned_to and case.assigned_to != request.user:
+            messages.error(
+                request,
+                'Você não tem permissão para finalizar o cadastro deste processo. Apenas o responsável pode fazer isso.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        # Verifica se o cadastro já foi finalizado
+        if case.registration_completed_at:
+            messages.warning(
+                request,
+                'O cadastro deste processo já foi finalizado.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        # Verifica se há dispositivos cadastrados
+        devices_count = case.case_devices.filter(deleted_at__isnull=True).count()
+        if devices_count == 0:
+            messages.error(
+                request,
+                'É necessário cadastrar pelo menos um dispositivo antes de finalizar o cadastro do processo.'
+            )
+            return redirect('cases:devices', pk=case.pk)
+        
+        # Verifica se há procedimentos cadastrados
+        procedures_count = case.procedures.filter(deleted_at__isnull=True).count()
+        if procedures_count == 0:
+            messages.error(
+                request,
+                'É necessário cadastrar pelo menos um procedimento antes de finalizar o cadastro do processo.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        # Verifica quantos dispositivos não têm extração
+        devices_without_extraction = case.case_devices.filter(
+            deleted_at__isnull=True,
+            device_extraction__isnull=True
+        ).count()
+        
+        form = CaseCompleteRegistrationForm(initial={
+            'create_extractions': devices_without_extraction > 0
+        })
+        
+        return render(request, self.template_name, {
+            'case': case,
+            'form': form,
+            'devices_count': devices_count,
+            'procedures_count': procedures_count,
+            'devices_without_extraction': devices_without_extraction,
+            'page_title': f'Finalizar Cadastro - Processo {case.number if case.number else f"#{case.pk}"}',
+            'page_icon': 'fa-check-circle',
+        })
+    
+    def post(self, request, pk):
+        """
+        Processa a finalização do cadastro
+        """
+        case = get_object_or_404(
+            Case.objects.filter(deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        # Verifica se o usuário tem permissão
+        if case.assigned_to and case.assigned_to != request.user:
+            messages.error(
+                request,
+                'Você não tem permissão para finalizar o cadastro deste processo.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        # Verifica se o cadastro já foi finalizado
+        if case.registration_completed_at:
+            messages.warning(
+                request,
+                'O cadastro deste processo já foi finalizado.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        # Verifica se há dispositivos cadastrados
+        devices_count = case.case_devices.filter(deleted_at__isnull=True).count()
+        if devices_count == 0:
+            messages.error(
+                request,
+                'É necessário cadastrar pelo menos um dispositivo antes de finalizar o cadastro do processo.'
+            )
+            return redirect('cases:devices', pk=case.pk)
+        
+        # Verifica se há procedimentos cadastrados
+        procedures_count = case.procedures.filter(deleted_at__isnull=True).count()
+        if procedures_count == 0:
+            messages.error(
+                request,
+                'É necessário cadastrar pelo menos um procedimento antes de finalizar o cadastro do processo.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        form = CaseCompleteRegistrationForm(request.POST)
+        
+        if not form.is_valid():
+            devices_without_extraction = case.case_devices.filter(
+                deleted_at__isnull=True,
+                device_extraction__isnull=True
+            ).count()
+            
+            return render(request, self.template_name, {
+                'case': case,
+                'form': form,
+                'devices_count': devices_count,
+                'procedures_count': procedures_count,
+                'devices_without_extraction': devices_without_extraction,
+                'page_title': f'Finalizar Cadastro - Processo {case.number if case.number else f"#{case.pk}"}',
+                'page_icon': 'fa-check-circle',
+            })
+        
+        # Finaliza o cadastro
+        case.registration_completed_at = timezone.now()
+        case.updated_by = request.user
+        case.version += 1
+        
+        # Adiciona observações se fornecidas
+        notes = form.cleaned_data.get('notes')
+        if notes:
+            if case.additional_info:
+                case.additional_info += f"\n\n[Finalização de Cadastro - {timezone.now().strftime('%d/%m/%Y %H:%M')}]\n{notes}"
+            else:
+                case.additional_info = f"[Finalização de Cadastro - {timezone.now().strftime('%d/%m/%Y %H:%M')}]\n{notes}"
+        
+        case.save()
+        
+        # Cria extrações se solicitado
+        create_extractions = form.cleaned_data.get('create_extractions', False)
+        created_extractions = 0
+        
+        if create_extractions:
+            devices_without_extraction = case.case_devices.filter(
+                deleted_at__isnull=True,
+                device_extraction__isnull=True
+            ).select_related('device_category', 'device_model__brand')
+            
+            for device in devices_without_extraction:
+                Extraction.objects.create(
+                    case_device=device,
+                    status=Extraction.STATUS_PENDING,
+                    created_by=request.user
+                )
+                created_extractions += 1
+        
+        # Atualiza o status do Case baseado nas extrações
+        case.update_status_based_on_extractions()
+        
+        # Mensagem de sucesso
+        if created_extractions > 0:
+            messages.success(
+                request,
+                f'Cadastro finalizado com sucesso! {created_extractions} extração(ões) criada(s) automaticamente.'
+            )
+        else:
+            messages.success(
+                request,
+                'Cadastro finalizado com sucesso!'
+            )
+        
+        return redirect('cases:detail', pk=case.pk)
 
 
 class CaseDevicesView(LoginRequiredMixin, DetailView):

@@ -246,6 +246,20 @@
                                     {% endif %}
                                 </button>
                                 {% if action == 'update' and case %}
+                                    {% if not case.registration_completed_at %}
+                                        {% if devices_count > 0 and procedures_count > 0 %}
+                                            <a href="{% url 'cases:complete_registration' case.pk %}" class="btn btn-success">
+                                                <i class="fas fa-check-circle me-2"></i>
+                                                Finalizar Cadastro
+                                            </a>
+                                        {% else %}
+                                            <button type="button" class="btn btn-success" disabled 
+                                                    title="{% if devices_count == 0 and procedures_count == 0 %}É necessário cadastrar pelo menos 1 dispositivo e 1 procedimento{% elif devices_count == 0 %}É necessário cadastrar pelo menos 1 dispositivo{% else %}É necessário cadastrar pelo menos 1 procedimento{% endif %}">
+                                                <i class="fas fa-check-circle me-2"></i>
+                                                Finalizar Cadastro
+                                            </button>
+                                        {% endif %}
+                                    {% endif %}
                                     {% if case.assigned_to == request.user %}
                                         <button type="button" 
                                                 class="btn btn-warning" 

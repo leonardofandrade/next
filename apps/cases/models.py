@@ -687,6 +687,9 @@ class Extraction(AuditedModel):
         if notes:
             self.started_notes = notes
         self.save()
+        
+        # Atualiza o status do Case baseado nas extrações
+        self.case_device.case.update_status_based_on_extractions()
 
     def start_extraction(self, user, notes=None):
         """Inicia a extração"""
@@ -699,6 +702,9 @@ class Extraction(AuditedModel):
         if notes:
             self.started_notes = notes
         self.save()
+        
+        # Atualiza o status do Case baseado nas extrações
+        self.case_device.case.update_status_based_on_extractions()
 
     def pause_extraction(self, user, notes=None):
         """Pausa a extração"""
@@ -709,6 +715,9 @@ class Extraction(AuditedModel):
         if notes:
             self.started_notes = notes
         self.save()
+        
+        # Atualiza o status do Case baseado nas extrações
+        self.case_device.case.update_status_based_on_extractions()
 
     def complete_extraction(self, user, success=True, notes=None):
         """Finaliza a extração"""
@@ -722,6 +731,9 @@ class Extraction(AuditedModel):
         if notes:
             self.finished_notes = notes
         self.save()
+        
+        # Atualiza o status do Case baseado nas extrações
+        self.case_device.case.update_status_based_on_extractions()
     
     # Propriedades calculadas
     @property

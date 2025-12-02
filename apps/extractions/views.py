@@ -1,12 +1,15 @@
 """
 Views para o app extractions
 """
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import DetailView, ListView
+from django.views.generic import DetailView, ListView, View
 from django.db.models import Q
+from django.contrib import messages
+from django.utils import timezone
 from apps.cases.models import Case, Extraction
 from apps.extractions.forms import ExtractionSearchForm
+from apps.core.models import ExtractorUser
 
 
 class ExtractionListView(LoginRequiredMixin, ListView):
@@ -150,3 +153,134 @@ class CaseExtractionsView(LoginRequiredMixin, DetailView):
         context['extractions'] = extractions
         context['has_devices_without_extractions'] = devices_without_extraction
         return context
+
+
+class ExtractionAssignToMeView(LoginRequiredMixin, View):
+    """
+    Atribui a extração ao usuário extrator logado
+    """
+    
+    def post(self, request, pk):
+        """
+        Atribui a extração ao usuário extrator logado
+        """
+        extraction = get_object_or_404(
+            Extraction.objects.filter(deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        # Verifica se o usuário é um extrator
+        try:
+            extractor_user = ExtractorUser.objects.get(
+                user=request.user,
+                deleted_at__isnull=True
+            )
+        except ExtractorUser.DoesNotExist:
+            messages.error(
+                request,
+                'Você não é um usuário extrator. Apenas extratores podem se atribuir a extrações.'
+            )
+            return self._redirect_back(request, extraction)
+        
+        # Verifica se a extração já está atribuída ao usuário
+        if extraction.assigned_to == extractor_user:
+            messages.warning(
+                request,
+                'Esta extração já está atribuída a você.'
+            )
+        else:
+            # Atribui a extração ao usuário
+            extraction.assigned_to = extractor_user
+            extraction.assigned_at = timezone.now()
+            extraction.assigned_by = request.user
+            
+            # Atualiza o status se estiver pending
+            if extraction.status == Extraction.STATUS_PENDING:
+                extraction.status = Extraction.STATUS_ASSIGNED
+            
+            extraction.save()
+            
+            messages.success(
+                request,
+                f'Extração atribuída a você com sucesso!'
+            )
+        
+        return self._redirect_back(request, extraction)
+    
+    def _redirect_back(self, request, extraction):
+        """
+        Redireciona de acordo com o referer ou para as extrações do caso
+        """
+        referer = request.META.get('HTTP_REFERER')
+        if referer and 'extractions/list' in referer:
+            return redirect('extractions:list')
+        return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
+
+
+class ExtractionUnassignFromMeView(LoginRequiredMixin, View):
+    """
+    Remove a atribuição da extração do usuário extrator logado
+    """
+    
+    def post(self, request, pk):
+        """
+        Remove a atribuição da extração do usuário extrator logado
+        """
+        extraction = get_object_or_404(
+            Extraction.objects.filter(deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        # Verifica se o usuário é um extrator
+        try:
+            extractor_user = ExtractorUser.objects.get(
+                user=request.user,
+                deleted_at__isnull=True
+            )
+        except ExtractorUser.DoesNotExist:
+            messages.error(
+                request,
+                'Você não é um usuário extrator.'
+            )
+            return self._redirect_back(request, extraction)
+        
+        # Verifica se a extração está atribuída ao usuário (apenas o responsável pode se desatribuir)
+        if extraction.assigned_to != extractor_user:
+            messages.error(
+                request,
+                'Você não tem permissão para desatribuir esta extração. Apenas o responsável pode se desatribuir.'
+            )
+        else:
+            # Verifica se a extração já foi iniciada
+            if extraction.status in [Extraction.STATUS_IN_PROGRESS, Extraction.STATUS_COMPLETED]:
+                messages.error(
+                    request,
+                    'Não é possível desatribuir uma extração que já foi iniciada ou finalizada.'
+                )
+            else:
+                # Remove a atribuição
+                extraction.assigned_to = None
+                extraction.assigned_at = None
+                extraction.assigned_by = None
+                
+                # Volta o status para pending se estiver assigned
+                if extraction.status == Extraction.STATUS_ASSIGNED:
+                    extraction.status = Extraction.STATUS_PENDING
+                
+                extraction.save()
+                
+                messages.success(
+                    request,
+                    'Atribuição removida com sucesso!'
+                )
+        
+        return self._redirect_back(request, extraction)
+    
+    def _redirect_back(self, request, extraction):
+        """
+        Redireciona de acordo com o referer ou para as extrações do caso
+        """
+        referer = request.META.get('HTTP_REFERER')
+        if referer and 'extractions/list' in referer:
+            return redirect('extractions:list')
+        return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)

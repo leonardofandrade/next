@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from apps.core.middleware import get_current_user
 
 
 class AuditedModel(models.Model):
@@ -70,6 +71,25 @@ class AuditedModel(models.Model):
         blank=True,
     )
     version = models.IntegerField(_('Versão do Registro'), default=1)
+
+    def save(self, *args, **kwargs):
+        """
+        Sobrescreve o método save para preencher automaticamente
+        os campos created_by e updated_by usando o usuário atual do contexto.
+        """
+        current_user = get_current_user()
+        
+        # Se é uma nova instância (ainda não tem PK)
+        if not self.pk:
+            # Preenche created_by se ainda não estiver preenchido e houver usuário atual
+            if current_user and not self.created_by:
+                self.created_by = current_user
+        
+        # Sempre atualiza updated_by se houver usuário atual
+        if current_user:
+            self.updated_by = current_user
+        
+        super().save(*args, **kwargs)
 
     class Meta:
         abstract = True

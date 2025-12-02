@@ -4,13 +4,13 @@ Views para o app cases
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, View
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.utils import timezone
 from django.http import JsonResponse
 
-from apps.cases.models import Case, CaseDevice
+from apps.cases.models import Case, CaseDevice, Extraction
 from apps.cases.forms import CaseForm, CaseSearchForm, CaseDeviceForm
 
 
@@ -545,3 +545,130 @@ class CaseDeviceDeleteView(LoginRequiredMixin, DeleteView):
         context['page_icon'] = 'fa-trash'
         context['case'] = self.case
         return context
+
+
+class CreateExtractionsView(LoginRequiredMixin, View):
+    """
+    Cria extrações para todos os dispositivos do caso que não possuem extração
+    """
+    
+    def post(self, request, pk):
+        """
+        Cria extrações com status 'pending' para dispositivos sem extração
+        """
+        case = get_object_or_404(
+            Case.objects.filter(deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        # Busca dispositivos do caso que não têm extração associada
+        # Para OneToOneField reverso, precisamos usar exclude com valores existentes
+        devices_without_extraction = case.case_devices.filter(
+            deleted_at__isnull=True
+        ).exclude(
+            pk__in=Extraction.objects.values_list('case_device_id', flat=True)
+        ).select_related(
+            'device_category',
+            'device_model__brand'
+        )
+        
+        created_count = 0
+        devices_info = []
+        
+        for device in devices_without_extraction:
+            # Cria extração com status pending
+            extraction = Extraction.objects.create(
+                case_device=device,
+                status=Extraction.STATUS_PENDING,
+                created_by=request.user
+            )
+            created_count += 1
+            
+            # Coleta informações do dispositivo para resposta
+            device_info = {
+                'id': device.pk,
+                'model': f"{device.device_model.brand.name} - {device.device_model.name}" if device.device_model and device.device_model.brand else 'Sem modelo',
+                'category': device.device_category.name if device.device_category else '-',
+            }
+            devices_info.append(device_info)
+        
+        # Adiciona mensagem de sucesso
+        if created_count > 0:
+            messages.success(
+                request,
+                f'{created_count} extração(ões) criada(s) com sucesso!'
+            )
+        else:
+            messages.info(
+                request,
+                'Nenhuma extração foi criada. Todos os dispositivos já possuem extração.'
+            )
+        
+        # Retorna resposta JSON
+        return JsonResponse({
+            'success': True,
+            'created_count': created_count,
+            'devices': devices_info,
+            'message': f'{created_count} extração(ões) criada(s) com sucesso!' if created_count > 0 else 'Nenhuma extração foi criada. Todos os dispositivos já possuem extração.'
+        })
+    
+    def get(self, request, pk):
+        """
+        Retorna informações sobre quantos dispositivos precisam de extração
+        """
+        try:
+            case = get_object_or_404(
+                Case.objects.filter(deleted_at__isnull=True),
+                pk=pk
+            )
+            
+            # Busca dispositivos do caso que não têm extração associada
+            # Para OneToOneField reverso, precisamos usar exclude com valores existentes
+            devices_without_extraction = case.case_devices.filter(
+                deleted_at__isnull=True
+            ).exclude(
+                pk__in=Extraction.objects.values_list('case_device_id', flat=True)
+            ).select_related(
+                'device_category',
+                'device_model__brand'
+            )
+            
+            devices_info = []
+            for device in devices_without_extraction:
+                try:
+                    model_str = 'Sem modelo'
+                    if device.device_model:
+                        if device.device_model.brand:
+                            model_str = f"{device.device_model.brand.name} - {device.device_model.name}"
+                        else:
+                            model_str = device.device_model.name or 'Sem modelo'
+                    
+                    device_info = {
+                        'id': device.pk,
+                        'model': model_str,
+                        'category': device.device_category.name if device.device_category else '-',
+                        'imei': 'Desconhecido' if device.is_imei_unknown else (device.imei_01 or '-'),
+                    }
+                    devices_info.append(device_info)
+                except Exception as e:
+                    # Se houver erro ao processar um dispositivo, continua com os outros
+                    device_info = {
+                        'id': device.pk,
+                        'model': 'Erro ao carregar',
+                        'category': '-',
+                        'imei': '-',
+                    }
+                    devices_info.append(device_info)
+            
+            return JsonResponse({
+                'devices_count': devices_without_extraction.count(),
+                'devices': devices_info,
+                'case_number': case.number or 'Rascunho'
+            })
+        except Exception as e:
+            import traceback
+            return JsonResponse({
+                'error': True,
+                'message': str(e),
+                'traceback': traceback.format_exc()
+            }, status=500)

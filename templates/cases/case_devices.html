@@ -112,6 +112,14 @@
                         <span class="badge bg-secondary">
                             {{ devices.count }} dispositivo{{ devices.count|pluralize }}
                         </span>
+                            <button type="button" 
+                                    class="btn btn-sm btn-success" 
+                                    id="createExtractionsBtn"
+                                    data-case-pk="{{ case.pk }}"
+                                    data-create-extractions-url="{% url 'cases:create_extractions' case.pk %}">
+                                <i class="fas fa-plus-circle me-1"></i>
+                                Criar Extrações
+                            </button>
                             <a href="{% url 'cases:device_create' case.pk %}" class="btn btn-sm btn-primary">
                                 <i class="fas fa-plus me-1"></i>
                                 Adicionar Dispositivo
@@ -245,6 +253,55 @@
     </div>
 </div>
 
+<!-- Modal de Confirmação de Criação de Extrações -->
+<div class="modal fade" id="createExtractionsModal" tabindex="-1" aria-labelledby="createExtractionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="createExtractionsModalLabel">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Criar Extrações
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Informação:</strong> Serão criadas extrações com status "Aguardando Extrator" apenas para dispositivos que ainda não possuem extração associada.
+                </div>
+
+                <p class="mb-3">Os seguintes dispositivos receberão uma nova extração:</p>
+
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div id="devicesToCreateList" class="mb-0">
+                            <div class="text-center py-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
+                                </div>
+                                <p class="mt-2 mb-0">Carregando informações...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>
+                    Cancelar
+                </button>
+                <form id="createExtractionsForm" method="post" style="display: inline;" action="{% url 'cases:create_extractions' case.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-2"></i>
+                        Confirmar Criação
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal de Confirmação de Exclusão de Dispositivo -->
 <div class="modal fade" id="deleteDeviceModal" tabindex="-1" aria-labelledby="deleteDeviceModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -312,6 +369,150 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // ===== CRIAÇÃO DE EXTRAÇÕES =====
+    const createExtractionsBtn = document.getElementById('createExtractionsBtn');
+    const createExtractionsModal = new bootstrap.Modal(document.getElementById('createExtractionsModal'));
+    const createExtractionsForm = document.getElementById('createExtractionsForm');
+    const devicesToCreateList = document.getElementById('devicesToCreateList');
+    let currentCasePkForExtractions = null;
+
+    if (createExtractionsBtn) {
+        createExtractionsBtn.addEventListener('click', function() {
+            currentCasePkForExtractions = this.getAttribute('data-case-pk');
+            const createExtractionsUrl = this.getAttribute('data-create-extractions-url');
+            
+            // Reseta o conteúdo e mostra loading
+            devicesToCreateList.innerHTML = `
+                <div class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p class="mt-2 mb-0">Carregando informações...</p>
+                </div>
+            `;
+            
+            // Abre o modal primeiro para mostrar o loading
+            createExtractionsModal.show();
+            
+            // Carrega informações dos dispositivos que precisam de extração
+            fetch(createExtractionsUrl, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.message || `HTTP error! status: ${response.status}`);
+                    }).catch(() => {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Verifica se há erro na resposta
+                if (data.error) {
+                    throw new Error(data.message || 'Erro desconhecido');
+                }
+                
+                // Atualiza a action do form
+                createExtractionsForm.action = createExtractionsUrl;
+                
+                // Preenche a lista de dispositivos
+                if (data.devices_count === 0) {
+                    devicesToCreateList.innerHTML = `
+                        <div class="alert alert-warning mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Todos os dispositivos já possuem extração associada.
+                        </div>
+                    `;
+                    createExtractionsForm.querySelector('button[type="submit"]').disabled = true;
+                } else {
+                    let devicesHtml = `<p class="mb-2"><strong>${data.devices_count} dispositivo(s) sem extração:</strong></p>`;
+                    devicesHtml += '<ul class="list-group list-group-flush">';
+                    data.devices.forEach(device => {
+                        devicesHtml += `
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${device.model}</strong><br>
+                                        <small class="text-muted">Categoria: ${device.category} | IMEI: ${device.imei}</small>
+                                    </div>
+                                </div>
+                            </li>
+                        `;
+                    });
+                    devicesHtml += '</ul>';
+                    devicesToCreateList.innerHTML = devicesHtml;
+                    createExtractionsForm.querySelector('button[type="submit"]').disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar informações dos dispositivos:', error);
+                devicesToCreateList.innerHTML = `
+                    <div class="alert alert-danger mb-0">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>Erro ao carregar informações dos dispositivos.</strong><br>
+                        <small>Detalhes: ${error.message}</small>
+                    </div>
+                `;
+                if (createExtractionsForm) {
+                    createExtractionsForm.querySelector('button[type="submit"]').disabled = true;
+                }
+            });
+        });
+    }
+
+    // Submete o formulário de criação de extrações
+    if (createExtractionsForm) {
+        createExtractionsForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Obtém o CSRF token do formulário
+            const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: new FormData(this)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Fecha o modal
+                    createExtractionsModal.hide();
+                    
+                    // Recarrega a página para atualizar a lista
+                    // A mensagem de sucesso será exibida via Django messages após o reload
+                    window.location.reload();
+                } else {
+                    console.error('Erro ao criar extrações:', data);
+                    devicesToCreateList.innerHTML = `
+                        <div class="alert alert-danger mb-0">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <strong>Erro ao criar extrações.</strong>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao criar extrações:', error);
+                devicesToCreateList.innerHTML = `
+                    <div class="alert alert-danger mb-0">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>Erro ao criar extrações.</strong>
+                    </div>
+                `;
+            });
+        });
+    }
+
+    // ===== EXCLUSÃO DE DISPOSITIVOS =====
     const deleteButtons = document.querySelectorAll('.delete-device-btn');
     const deleteModal = new bootstrap.Modal(document.getElementById('deleteDeviceModal'));
     const deleteForm = document.getElementById('deleteDeviceForm');

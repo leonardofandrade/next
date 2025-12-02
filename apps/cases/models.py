@@ -225,6 +225,81 @@ class Case(AbstractCaseModel):
         """Returns complete Bootstrap badge class for status"""
         return f"bg-{self.get_status_color()}"
     
+    def update_status_based_on_extractions(self):
+        """
+        Atualiza o status do Case baseado no status das extrações
+        
+        Regras:
+        - Se não houver extrações ou todas forem 'pending': WAITING_EXTRACTOR
+        - Se pelo menos uma estiver 'assigned': WAITING_START
+        - Se pelo menos uma estiver 'in_progress': IN_PROGRESS
+        - Se todas estiverem 'paused': PAUSED
+        - Se todas estiverem 'completed': COMPLETED
+        - Mix de estados: IN_PROGRESS (estado predominante quando há atividade)
+        """
+        # Busca todas as extrações não deletadas do case
+        extractions = self.case_devices.filter(
+            deleted_at__isnull=True
+        ).exclude(
+            device_extraction__isnull=True
+        ).values_list(
+            'device_extraction__status', 
+            flat=True
+        )
+        
+        # Se não houver extrações, mantém o status atual ou volta para draft
+        if not extractions:
+            if self.status not in [self.CASE_STATUS_DRAFT, self.CASE_STATUS_WAITING_COLLECT]:
+                self.status = self.CASE_STATUS_DRAFT
+                self.save(update_fields=['status'])
+            return
+        
+        extraction_statuses = list(extractions)
+        total = len(extraction_statuses)
+        
+        # Conta quantas extrações estão em cada status
+        pending_count = extraction_statuses.count('pending')
+        assigned_count = extraction_statuses.count('assigned')
+        in_progress_count = extraction_statuses.count('in_progress')
+        paused_count = extraction_statuses.count('paused')
+        completed_count = extraction_statuses.count('completed')
+        
+        # Lógica de decisão do status do Case
+        new_status = None
+        
+        # Se todas estiverem completas
+        if completed_count == total:
+            new_status = self.CASE_STATUS_COMPLETED
+        
+        # Se alguma estiver em progresso (prioridade alta)
+        elif in_progress_count > 0:
+            new_status = self.CASE_STATUS_IN_PROGRESS
+        
+        # Se todas estiverem pausadas
+        elif paused_count == total:
+            new_status = self.CASE_STATUS_PAUSED
+        
+        # Se todas estiverem pausadas e/ou completas, mas pelo menos uma pausada
+        elif paused_count > 0 and (paused_count + completed_count) == total:
+            new_status = self.CASE_STATUS_PAUSED
+        
+        # Se alguma estiver atribuída (aguardando início)
+        elif assigned_count > 0:
+            new_status = self.CASE_STATUS_WAITING_START
+        
+        # Se todas estiverem pendentes (aguardando extrator)
+        elif pending_count == total:
+            new_status = self.CASE_STATUS_WAITING_EXTRACTOR
+        
+        # Caso padrão: mix de estados, considera em progresso
+        else:
+            new_status = self.CASE_STATUS_IN_PROGRESS
+        
+        # Atualiza o status se houver mudança
+        if new_status and self.status != new_status:
+            self.status = new_status
+            self.save(update_fields=['status'])
+    
 
 class CaseProcedure(AuditedModel):
     """ Model for Case Procedures """

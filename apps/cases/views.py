@@ -654,6 +654,9 @@ class CreateExtractionsView(LoginRequiredMixin, View):
         
         # Adiciona mensagem de sucesso
         if created_count > 0:
+            # Atualiza o status do Case baseado nas extrações
+            case.update_status_based_on_extractions()
+            
             messages.success(
                 request,
                 f'{created_count} extração(ões) criada(s) com sucesso!'

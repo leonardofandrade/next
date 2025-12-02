@@ -200,6 +200,9 @@ class ExtractionAssignToMeView(LoginRequiredMixin, View):
             
             extraction.save()
             
+            # Atualiza o status do Case baseado nas extrações
+            extraction.case_device.case.update_status_based_on_extractions()
+            
             messages.success(
                 request,
                 f'Extração atribuída a você com sucesso!'
@@ -268,6 +271,9 @@ class ExtractionUnassignFromMeView(LoginRequiredMixin, View):
                     extraction.status = Extraction.STATUS_PENDING
                 
                 extraction.save()
+                
+                # Atualiza o status do Case baseado nas extrações
+                extraction.case_device.case.update_status_based_on_extractions()
                 
                 messages.success(
                     request,
@@ -359,6 +365,9 @@ class ExtractionStartView(LoginRequiredMixin, View):
         
         extraction.save()
         
+        # Atualiza o status do Case baseado nas extrações
+        extraction.case_device.case.update_status_based_on_extractions()
+        
         messages.success(
             request,
             'Extração iniciada com sucesso!'
@@ -423,6 +432,9 @@ class ExtractionPauseView(LoginRequiredMixin, View):
         extraction.status = Extraction.STATUS_PAUSED
         extraction.save()
         
+        # Atualiza o status do Case baseado nas extrações
+        extraction.case_device.case.update_status_based_on_extractions()
+        
         messages.success(
             request,
             'Extração pausada com sucesso!'
@@ -486,6 +498,9 @@ class ExtractionResumeView(LoginRequiredMixin, View):
         # Retoma a extração
         extraction.status = Extraction.STATUS_IN_PROGRESS
         extraction.save()
+        
+        # Atualiza o status do Case baseado nas extrações
+        extraction.case_device.case.update_status_based_on_extractions()
         
         messages.success(
             request,
@@ -692,6 +707,9 @@ class ExtractionFinishView(LoginRequiredMixin, View):
             extraction.storage_media = form.cleaned_data['storage_media']
         
         extraction.save()
+        
+        # Atualiza o status do Case baseado nas extrações
+        extraction.case_device.case.update_status_based_on_extractions()
         
         messages.success(
             request,

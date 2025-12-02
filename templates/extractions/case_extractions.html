@@ -1,0 +1,239 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-2">
+                        <i class="fas {{ page_icon }} text-primary me-2"></i>
+                        {{ page_title }}
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Extrações do processo
+                    </p>
+                </div>
+                <div>
+                    <a href="{% url 'cases:detail' case.pk %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informações do Processo -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Informações do Processo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <strong>Número:</strong><br>
+                            <span class="badge bg-secondary fs-6">{{ case.number|default:"Rascunho" }}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Status:</strong><br>
+                            <span class="badge {{ case.status_badge_class }} fs-6">
+                                {{ case.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Prioridade:</strong><br>
+                            <span class="badge bg-{{ case.get_priority_color }} fs-6">
+                                {{ case.get_priority_display }}
+                            </span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Dispositivos Solicitados:</strong><br>
+                            {{ case.requested_device_amount|default:"-" }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Unidade Solicitante:</strong><br>
+                            {% if case.requester_agency_unit %}
+                                {{ case.requester_agency_unit.name }}
+                                <span class="badge bg-info">{{ case.requester_agency_unit.acronym }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Unidade de Extração:</strong><br>
+                            {% if case.extraction_unit %}
+                                <span class="badge bg-info">{{ case.extraction_unit.acronym }}</span>
+                                {{ case.extraction_unit.name }}
+                            {% else %}
+                                <span class="text-muted">Não atribuída</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Autoridade:</strong><br>
+                            {{ case.requester_authority_name|default:"-" }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Data da Solicitação:</strong><br>
+                            {% if case.requested_at %}
+                                {{ case.requested_at|date:"d/m/Y H:i" }}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </div>
+                        {% if case.request_procedures %}
+                        <div class="col-md-12">
+                            <strong>Procedimentos:</strong><br>
+                            {{ case.request_procedures }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Extrações -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-database me-2"></i>
+                            Extrações do Processo
+                        </h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-secondary">
+                                {{ extractions.count }} extração{{ extractions.count|pluralize }}
+                            </span>
+                            <a href="{% url 'cases:devices' case.pk %}" class="btn btn-sm btn-info">
+                                <i class="fas fa-mobile-alt me-1"></i>
+                                Ver Dispositivos
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if extractions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="5%">#</th>
+                                    <th width="15%">Dispositivo</th>
+                                    <th width="10%">Status</th>
+                                    <th width="15%">Atribuído a</th>
+                                    <th width="12%">Iniciado em</th>
+                                    <th width="12%">Finalizado em</th>
+                                    <th width="10%">Resultado</th>
+                                    <th width="10%">Tamanho</th>
+                                    <th width="11%" class="text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for extraction in extractions %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ forloop.counter }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if extraction.case_device.device_model %}
+                                            <strong>{{ extraction.case_device.device_model.brand.name }}</strong><br>
+                                            <small class="text-muted">{{ extraction.case_device.device_model.name }}</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                        {% if extraction.case_device.device_category %}
+                                            <br><span class="badge bg-primary">{{ extraction.case_device.device_category.name }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ extraction.get_status_color }}">
+                                            {{ extraction.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if extraction.assigned_to %}
+                                            <i class="fas fa-user me-1"></i>
+                                            {{ extraction.assigned_to.user.get_full_name|default:extraction.assigned_to.user.username }}
+                                        {% else %}
+                                            <span class="text-muted">Não atribuído</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if extraction.started_at %}
+                                            {{ extraction.started_at|date:"d/m/Y H:i" }}
+                                            {% if extraction.started_by %}
+                                                <br><small class="text-muted">por {{ extraction.started_by.user.get_full_name|default:extraction.started_by.user.username }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if extraction.finished_at %}
+                                            {{ extraction.finished_at|date:"d/m/Y H:i" }}
+                                            {% if extraction.finished_by %}
+                                                <br><small class="text-muted">por {{ extraction.finished_by.user.get_full_name|default:extraction.finished_by.user.username }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if extraction.extraction_result %}
+                                            {% if extraction.extraction_result == 'success' %}
+                                                <span class="badge bg-success">Bem-Sucedida</span>
+                                            {% elif extraction.extraction_result == 'failed' %}
+                                                <span class="badge bg-danger">Falhou</span>
+                                            {% elif extraction.extraction_result == 'partial' %}
+                                                <span class="badge bg-warning">Parcial</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if extraction.extraction_size %}
+                                            {{ extraction.extraction_size }} GB
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'cases:device_update' case.pk extraction.case_device.pk %}" 
+                                               class="btn btn-outline-primary" 
+                                               title="Ver Dispositivo">
+                                                <i class="fas fa-mobile-alt"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-database fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-3">Nenhuma extração encontrada para este processo.</p>
+                        <a href="{% url 'cases:devices' case.pk %}" class="btn btn-primary">
+                            <i class="fas fa-mobile-alt me-2"></i>
+                            Ver Dispositivos
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

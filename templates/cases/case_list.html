@@ -172,6 +172,11 @@
                                            title="Ver dispositivos">
                                             <i class="fas fa-mobile-alt"></i>
                                         </a>
+                                        <a href="{% url 'extractions:case_extractions' case.pk %}" 
+                                           class="btn btn-outline-success" 
+                                           title="Ver extrações">
+                                            <i class="fas fa-database"></i>
+                                        </a>
                                         <a href="{% url 'cases:update' case.pk %}" 
                                            class="btn btn-outline-secondary" 
                                            title="Editar">

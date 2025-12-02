@@ -189,6 +189,20 @@
                         </a>
                     </div>
                     {% endif %}
+                    <div class="mb-3">
+                        <strong>Dispositivos:</strong><br>
+                        <a href="{% url 'cases:devices' case.pk %}" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-mobile-alt me-1"></i>
+                            Ver Dispositivos
+                        </a>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Extrações:</strong><br>
+                        <a href="{% url 'extractions:case_extractions' case.pk %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-database me-1"></i>
+                            Ver Extrações
+                        </a>
+                    </div>
                 </div>
             </div>
 

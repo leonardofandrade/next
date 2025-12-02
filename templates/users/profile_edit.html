@@ -1,0 +1,241 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+
+{% block title %}Editar Perfil - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-edit me-2"></i>Editar Perfil
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Foto de Perfil -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-camera me-2"></i>Foto de Perfil
+                                </h6>
+                            </div>
+                            <div class="col-md-3 text-center mb-3 mb-md-0">
+                                <div class="mb-3">
+                                    {% if profile.has_profile_image %}
+                                        <img src="{% url 'users:profile_image' profile.pk %}" 
+                                             alt="Foto atual" 
+                                             class="rounded-circle img-fluid" 
+                                             style="width: 150px; height: 150px; object-fit: cover;"
+                                             id="current-image">
+                                    {% else %}
+                                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center mx-auto" 
+                                             style="width: 150px; height: 150px; font-size: 3rem;"
+                                             id="placeholder-image">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">Imagem atual</small>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="mb-3">
+                                    <label for="{{ form.profile_image_file.id_for_label }}" class="form-label">
+                                        {{ form.profile_image_file.label }}
+                                    </label>
+                                    {{ form.profile_image_file }}
+                                    {% if form.profile_image_file.help_text %}
+                                        <div class="form-text">{{ form.profile_image_file.help_text }}</div>
+                                    {% endif %}
+                                    {% if form.profile_image_file.errors %}
+                                        <div class="text-danger">{{ form.profile_image_file.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if profile.has_profile_image %}
+                                <div class="mb-3 form-check">
+                                    {{ form.remove_image }}
+                                    <label for="{{ form.remove_image.id_for_label }}" class="form-check-label">
+                                        {{ form.remove_image.label }}
+                                    </label>
+                                    {% if form.remove_image.errors %}
+                                        <div class="text-danger">{{ form.remove_image.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Informações Pessoais -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-user me-2"></i>Informações Pessoais
+                                </h6>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                    {{ form.first_name.label }}
+                                </label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <div class="text-danger">{{ form.first_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                    {{ form.last_name.label }}
+                                </label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <div class="text-danger">{{ form.last_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">
+                                    {{ form.email.label }}
+                                </label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger">{{ form.email.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.personal_id.id_for_label }}" class="form-label">
+                                    {{ form.personal_id.label }}
+                                </label>
+                                {{ form.personal_id }}
+                                {% if form.personal_id.errors %}
+                                    <div class="text-danger">{{ form.personal_id.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Informações de Contato -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-phone me-2"></i>Informações de Contato
+                                </h6>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.phone_number.id_for_label }}" class="form-label">
+                                    {{ form.phone_number.label }}
+                                </label>
+                                {{ form.phone_number }}
+                                {% if form.phone_number.errors %}
+                                    <div class="text-danger">{{ form.phone_number.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.mobile_number.id_for_label }}" class="form-label">
+                                    {{ form.mobile_number.label }}
+                                </label>
+                                {{ form.mobile_number }}
+                                {% if form.mobile_number.errors %}
+                                    <div class="text-danger">{{ form.mobile_number.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Informações Profissionais -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-briefcase me-2"></i>Informações Profissionais
+                                </h6>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.employee_id.id_for_label }}" class="form-label">
+                                    {{ form.employee_id.label }}
+                                </label>
+                                {{ form.employee_id }}
+                                {% if form.employee_id.errors %}
+                                    <div class="text-danger">{{ form.employee_id.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.employee_position.id_for_label }}" class="form-label">
+                                    {{ form.employee_position.label }}
+                                </label>
+                                {{ form.employee_position }}
+                                {% if form.employee_position.errors %}
+                                    <div class="text-danger">{{ form.employee_position.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.agency_unit.id_for_label }}" class="form-label">
+                                    {{ form.agency_unit.label }}
+                                </label>
+                                {{ form.agency_unit }}
+                                {% if form.agency_unit.errors %}
+                                    <div class="text-danger">{{ form.agency_unit.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Preferências -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-cog me-2"></i>Preferências
+                                </h6>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.theme.id_for_label }}" class="form-label">
+                                    {{ form.theme.label }}
+                                </label>
+                                {{ form.theme }}
+                                {% if form.theme.errors %}
+                                    <div class="text-danger">{{ form.theme.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'users:profile_view' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Salvar Alterações
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Preview da imagem antes do upload
+document.getElementById('{{ form.profile_image_file.id_for_label }}').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const currentImg = document.getElementById('current-image');
+            const placeholder = document.getElementById('placeholder-image');
+            
+            if (currentImg) {
+                currentImg.src = e.target.result;
+            } else if (placeholder) {
+                placeholder.outerHTML = '<img src="' + e.target.result + '" alt="Preview" class="rounded-circle img-fluid" style="width: 150px; height: 150px; object-fit: cover;" id="current-image">';
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %}

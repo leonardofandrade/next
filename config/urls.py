@@ -32,5 +32,6 @@ urlpatterns = [
         path('', include('apps.core.urls')),
         path('requisitions/', include('apps.requisitions.urls')),
         path('cases/', include('apps.cases.urls')),
+        path('extractions/', include('apps.extractions.urls')),
     ])),
 ]

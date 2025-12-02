@@ -1,0 +1,263 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-2">
+                        <i class="fas {{ page_icon }} text-primary me-2"></i>
+                        {{ page_title }}
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Gerencie todas as extrações realizadas
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-filter me-2"></i>
+                Filtros de Pesquisa
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    {{ form.search.label_tag }}
+                    {{ form.search }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.case_number.label_tag }}
+                    {{ form.case_number }}
+                </div>
+                <div class="col-md-2">
+                    {{ form.status.label_tag }}
+                    {{ form.status }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.extraction_result.label_tag }}
+                    {{ form.extraction_result }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.extraction_unit.label_tag }}
+                    {{ form.extraction_unit }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.assigned_to.label_tag }}
+                    {{ form.assigned_to }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.date_from.label_tag }}
+                    {{ form.date_from }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.date_to.label_tag }}
+                    {{ form.date_to }}
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>
+                        Filtrar
+                    </button>
+                    <a href="{% url 'extractions:list' %}" class="btn btn-secondary">
+                        <i class="fas fa-times me-2"></i>
+                        Limpar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Summary -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <p class="text-muted mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>{{ total_count }}</strong> extração(ões) encontrada(s)
+            </p>
+        </div>
+    </div>
+
+    <!-- Extractions Table -->
+    <div class="card">
+        <div class="card-body">
+            {% if page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 80px;">ID</th>
+                                <th>Dispositivo</th>
+                                <th style="width: 150px;">Processo</th>
+                                <th style="width: 120px;">Status</th>
+                                <th style="width: 150px;">Atribuído a</th>
+                                <th style="width: 120px;">Iniciado em</th>
+                                <th style="width: 120px;">Finalizado em</th>
+                                <th style="width: 100px;">Resultado</th>
+                                <th style="width: 100px;">Tamanho</th>
+                                <th style="width: 150px;" class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for extraction in page_obj %}
+                            <tr>
+                                <td>
+                                    <strong>#{{ extraction.pk }}</strong>
+                                </td>
+                                <td>
+                                    {% if extraction.case_device.device_model %}
+                                        <strong>{{ extraction.case_device.device_model.brand.name }}</strong><br>
+                                        <small class="text-muted">{{ extraction.case_device.device_model.name }}</small>
+                                    {% else %}
+                                        <span class="text-muted">Sem modelo</span>
+                                    {% endif %}
+                                    {% if extraction.case_device.device_category %}
+                                        <br><span class="badge bg-primary">{{ extraction.case_device.device_category.name }}</span>
+                                    {% endif %}
+                                    {% if extraction.case_device.imei_01 %}
+                                        <br><small class="text-muted">IMEI: {{ extraction.case_device.imei_01 }}</small>
+                                    {% elif extraction.case_device.is_imei_unknown %}
+                                        <br><small class="badge bg-warning">IMEI Desconhecido</small>
+                                    {% endif %}
+                                    {% if extraction.case_device.owner_name %}
+                                        <br><small class="text-muted">Proprietário: {{ extraction.case_device.owner_name }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" 
+                                       class="text-decoration-none">
+                                        <strong>{{ extraction.case_device.case.number|default:"Rascunho" }}</strong>
+                                    </a>
+                                    {% if extraction.case_device.case.extraction_unit %}
+                                        <br><small class="badge bg-info">{{ extraction.case_device.case.extraction_unit.acronym }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ extraction.get_status_color }}">
+                                        {{ extraction.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if extraction.assigned_to %}
+                                        <i class="fas fa-user me-1"></i>
+                                        {{ extraction.assigned_to.user.get_full_name|default:extraction.assigned_to.user.username }}
+                                    {% else %}
+                                        <span class="text-muted">Não atribuído</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if extraction.started_at %}
+                                        {{ extraction.started_at|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if extraction.finished_at %}
+                                        {{ extraction.finished_at|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if extraction.extraction_result %}
+                                        {% if extraction.extraction_result == 'success' %}
+                                            <span class="badge bg-success">Bem-Sucedida</span>
+                                        {% elif extraction.extraction_result == 'failed' %}
+                                            <span class="badge bg-danger">Falhou</span>
+                                        {% elif extraction.extraction_result == 'partial' %}
+                                            <span class="badge bg-warning">Parcial</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if extraction.extraction_size %}
+                                        {{ extraction.extraction_size }} GB
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'cases:device_update' extraction.case_device.case.pk extraction.case_device.pk %}" 
+                                           class="btn btn-outline-primary" 
+                                           title="Ver Dispositivo">
+                                            <i class="fas fa-mobile-alt"></i>
+                                        </a>
+                                        <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" 
+                                           class="btn btn-outline-info" 
+                                           title="Ver Processo">
+                                            <i class="fas fa-folder-open"></i>
+                                        </a>
+                                        <a href="{% url 'extractions:case_extractions' extraction.case_device.case.pk %}" 
+                                           class="btn btn-outline-success" 
+                                           title="Ver Extrações do Processo">
+                                            <i class="fas fa-database"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-database fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Nenhuma extração encontrada</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,70 @@
+{% extends '_global/layout/base.html' %}
+
+{% block title %}Unidades Operacionais - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-home me-2"></i>Unidades Operacionais</h2>
+                <a href="{% url 'base_tables:agency_unit_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Nova Unidade
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if units %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Agência</th>
+                                        <th>Sigla</th>
+                                        <th>Nome</th>
+                                        <th>Telefone</th>
+                                        <th>Cidade</th>
+                                        <th class="text-end">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for unit in units %}
+                                    <tr>
+                                        <td>{{ unit.agency.acronym|default:"-" }}</td>
+                                        <td><strong>{{ unit.acronym }}</strong></td>
+                                        <td>{{ unit.name }}</td>
+                                        <td>{{ unit.phone_number|default:"-" }}</td>
+                                        <td>{{ unit.city|default:"-" }}</td>
+                                        <td class="text-end">
+                                            <a href="{% url 'base_tables:agency_unit_edit' unit.pk %}" class="btn btn-sm btn-warning" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'base_tables:agency_unit_delete' unit.pk %}" class="btn btn-sm btn-danger" title="Excluir">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-home fa-4x text-muted mb-3"></i>
+                            <p class="text-muted">Nenhuma unidade operacional cadastrada.</p>
+                            <a href="{% url 'base_tables:agency_unit_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Cadastrar primeira unidade
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

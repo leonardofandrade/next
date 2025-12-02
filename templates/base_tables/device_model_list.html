@@ -1,0 +1,68 @@
+{% extends '_global/layout/base.html' %}
+
+{% block title %}Modelos de Dispositivo - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-mobile-alt me-2"></i>Modelos de Dispositivo</h2>
+                <a href="{% url 'base_tables:device_model_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Novo Modelo
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if models %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Marca</th>
+                                        <th>Nome</th>
+                                        <th>Nome Comercial</th>
+                                        <th>Código</th>
+                                        <th class="text-end">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for model in models %}
+                                    <tr>
+                                        <td><strong>{{ model.brand.name }}</strong></td>
+                                        <td>{{ model.name }}</td>
+                                        <td>{{ model.commercial_name|default:"-" }}</td>
+                                        <td>{{ model.code|default:"-" }}</td>
+                                        <td class="text-end">
+                                            <a href="{% url 'base_tables:device_model_edit' model.pk %}" class="btn btn-sm btn-warning" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'base_tables:device_model_delete' model.pk %}" class="btn btn-sm btn-danger" title="Excluir">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-mobile-alt fa-4x text-muted mb-3"></i>
+                            <p class="text-muted">Nenhum modelo cadastrado.</p>
+                            <a href="{% url 'base_tables:device_model_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Cadastrar primeiro modelo
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

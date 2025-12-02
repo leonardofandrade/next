@@ -95,6 +95,105 @@
                         </a>
                     </li>
                     
+                    <!-- Tabelas Base -->
+                    {% if user.is_staff or user.is_superuser %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="baseTablesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-table me-1"></i>
+                            Tabelas Base
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="baseTablesDropdown">
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="fas fa-building me-2"></i>
+                                    Organizações
+                                </h6>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'base_tables:organization_list' %}">
+                                    <i class="fas fa-university me-2"></i>
+                                    Instituições
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'base_tables:agency_list' %}">
+                                    <i class="fas fa-building me-2"></i>
+                                    Agências
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'base_tables:department_list' %}">
+                                    <i class="fas fa-sitemap me-2"></i>
+                                    Departamentos
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'base_tables:agency_unit_list' %}">
+                                    <i class="fas fa-home me-2"></i>
+                                    Unidades Operacionais
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="fas fa-tags me-2"></i>
+                                    Categorias
+                                </h6>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'base_tables:procedure_category_list' %}">
+                                    <i class="fas fa-clipboard-list me-2"></i>
+                                    Categorias de Procedimento
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'base_tables:crime_category_list' %}">
+                                    <i class="fas fa-gavel me-2"></i>
+                                    Categorias de Crime
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'base_tables:device_category_list' %}">
+                                    <i class="fas fa-laptop me-2"></i>
+                                    Categorias de Dispositivo
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="fas fa-mobile-alt me-2"></i>
+                                    Dispositivos
+                                </h6>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'base_tables:device_brand_list' %}">
+                                    <i class="fas fa-tag me-2"></i>
+                                    Marcas de Dispositivo
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'base_tables:device_model_list' %}">
+                                    <i class="fas fa-mobile-alt me-2"></i>
+                                    Modelos de Dispositivo
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="fas fa-user-tie me-2"></i>
+                                    Recursos Humanos
+                                </h6>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'base_tables:employee_position_list' %}">
+                                    <i class="fas fa-user-tie me-2"></i>
+                                    Cargos
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    
                     <!-- Configurações -->
                     {% if user.is_staff or user.is_superuser %}
                     <li class="nav-item dropdown">

@@ -1,0 +1,69 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+
+{% block title %}Departamentos - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-sitemap me-2"></i>Departamentos</h2>
+                <a href="{% url 'base_tables:department_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Novo Departamento
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if departments %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Agência</th>
+                                        <th>Sigla</th>
+                                        <th>Nome</th>
+                                        <th>Departamento Pai</th>
+                                        <th class="text-end">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for department in departments %}
+                                    <tr>
+                                        <td>{{ department.agency.acronym }}</td>
+                                        <td><strong>{{ department.acronym }}</strong></td>
+                                        <td>{{ department.name }}</td>
+                                        <td>{{ department.parent_department.name|default:"-" }}</td>
+                                        <td class="text-end">
+                                            <a href="{% url 'base_tables:department_edit' department.pk %}" class="btn btn-sm btn-warning" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'base_tables:department_delete' department.pk %}" class="btn btn-sm btn-danger" title="Excluir">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-sitemap fa-4x text-muted mb-3"></i>
+                            <p class="text-muted">Nenhum departamento cadastrado.</p>
+                            <a href="{% url 'base_tables:department_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Cadastrar primeiro departamento
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

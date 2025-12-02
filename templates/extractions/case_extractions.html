@@ -116,6 +116,15 @@
                                 <i class="fas fa-mobile-alt me-1"></i>
                                 Ver Dispositivos
                             </a>
+                            {% if has_devices_without_extractions %}
+                            <form method="post" action="{% url 'cases:create_extractions' case.pk %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success" title="Criar extrações para dispositivos sem extração">
+                                    <i class="fas fa-plus-circle me-1"></i>
+                                    Criar Extrações
+                                </button>
+                            </form>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -224,6 +233,21 @@
                     <div class="text-center py-5">
                         <i class="fas fa-database fa-3x text-muted mb-3"></i>
                         <p class="text-muted mb-3">Nenhuma extração encontrada para este processo.</p>
+                        {% if has_devices_without_extractions %}
+                        <div class="alert alert-info d-inline-block mb-3" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Existem dispositivos cadastrados sem extração. Clique em "Criar Extrações" para gerá-las automaticamente.
+                        </div>
+                        <div class="d-block mb-3">
+                            <form method="post" action="{% url 'cases:create_extractions' case.pk %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success me-2">
+                                    <i class="fas fa-plus-circle me-2"></i>
+                                    Criar Extrações
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
                         <a href="{% url 'cases:devices' case.pk %}" class="btn btn-primary">
                             <i class="fas fa-mobile-alt me-2"></i>
                             Ver Dispositivos

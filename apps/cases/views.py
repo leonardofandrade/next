@@ -604,13 +604,17 @@ class CreateExtractionsView(LoginRequiredMixin, View):
                 'Nenhuma extração foi criada. Todos os dispositivos já possuem extração.'
             )
         
-        # Retorna resposta JSON
-        return JsonResponse({
-            'success': True,
-            'created_count': created_count,
-            'devices': devices_info,
-            'message': f'{created_count} extração(ões) criada(s) com sucesso!' if created_count > 0 else 'Nenhuma extração foi criada. Todos os dispositivos já possuem extração.'
-        })
+        # Se a requisição espera JSON, retorna JSON
+        if request.headers.get('Accept') == 'application/json' or request.GET.get('format') == 'json':
+            return JsonResponse({
+                'success': True,
+                'created_count': created_count,
+                'devices': devices_info,
+                'message': f'{created_count} extração(ões) criada(s) com sucesso!' if created_count > 0 else 'Nenhuma extração foi criada. Todos os dispositivos já possuem extração.'
+            })
+        
+        # Caso contrário, redireciona para a página de extrações do caso
+        return redirect('extractions:case_extractions', pk=case.pk)
     
     def get(self, request, pk):
         """

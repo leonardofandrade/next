@@ -138,7 +138,15 @@ class CaseExtractionsView(LoginRequiredMixin, DetailView):
             'storage_media'
         ).order_by('-created_at')
         
+        # Verifica se há dispositivos sem extração
+        devices_without_extraction = case.case_devices.filter(
+            deleted_at__isnull=True
+        ).exclude(
+            pk__in=Extraction.objects.values_list('case_device_id', flat=True)
+        ).exists()
+        
         context['page_title'] = f'Extrações - Processo {case.number if case.number else f"#{case.pk}"}'
         context['page_icon'] = 'fa-database'
         context['extractions'] = extractions
+        context['has_devices_without_extractions'] = devices_without_extraction
         return context

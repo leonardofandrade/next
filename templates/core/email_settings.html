@@ -1,0 +1,86 @@
+{% extends '_global/layout/base.html' %}
+
+{% block title %}Configurações de E-mail - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="fas fa-envelope me-2"></i>Configurações de E-mail</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.extraction_agency.id_for_label }}" class="form-label">{{ form.extraction_agency.label }}</label>
+                            {{ form.extraction_agency }}
+                        </div>
+
+                        <h5 class="mb-3"><i class="fas fa-server me-2"></i>Servidor SMTP</h5>
+
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.email_host.id_for_label }}" class="form-label">{{ form.email_host.label }}</label>
+                                {{ form.email_host }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.email_port.id_for_label }}" class="form-label">{{ form.email_port.label }}</label>
+                                {{ form.email_port }}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.email_use_tls }}
+                                    <label class="form-check-label" for="{{ form.email_use_tls.id_for_label }}">
+                                        {{ form.email_use_tls.label }}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.email_use_ssl }}
+                                    <label class="form-check-label" for="{{ form.email_use_ssl.id_for_label }}">
+                                        {{ form.email_use_ssl.label }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+                        <h5 class="mb-3"><i class="fas fa-key me-2"></i>Autenticação</h5>
+
+                        <div class="mb-3">
+                            <label for="{{ form.email_host_user.id_for_label }}" class="form-label">{{ form.email_host_user.label }}</label>
+                            {{ form.email_host_user }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.email_host_password.id_for_label }}" class="form-label">{{ form.email_host_password.label }}</label>
+                            {{ form.email_host_password }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.email_from_name.id_for_label }}" class="form-label">{{ form.email_from_name.label }}</label>
+                            {{ form.email_from_name }}
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Salvar Configurações
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

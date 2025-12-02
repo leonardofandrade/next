@@ -94,6 +94,86 @@
                             Extrações
                         </a>
                     </li>
+                    
+                    <!-- Configurações -->
+                    {% if user.is_staff or user.is_superuser %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-cog me-1"></i>
+                            Configurações
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="settingsDropdown">
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="fas fa-building me-2"></i>
+                                    Organização
+                                </h6>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'core:extraction_agency_list' %}">
+                                    <i class="fas fa-shield-alt me-2"></i>
+                                    Agências de Extração
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'core:extraction_unit_list' %}">
+                                    <i class="fas fa-home me-2"></i>
+                                    Unidades de Extração
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'core:extractor_user_list' %}">
+                                    <i class="fas fa-user-shield me-2"></i>
+                                    Usuários Extratores
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="fas fa-warehouse me-2"></i>
+                                    Armazenamento
+                                </h6>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'core:storage_media_list' %}">
+                                    <i class="fas fa-hdd me-2"></i>
+                                    Meios de Armazenamento
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'core:evidence_location_list' %}">
+                                    <i class="fas fa-archive me-2"></i>
+                                    Locais de Evidências
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="fas fa-sliders-h me-2"></i>
+                                    Sistema
+                                </h6>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'core:general_settings' %}">
+                                    <i class="fas fa-wrench me-2"></i>
+                                    Configurações Gerais
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'core:email_settings' %}">
+                                    <i class="fas fa-envelope me-2"></i>
+                                    Configurações de E-mail
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'core:reports_settings' %}">
+                                    <i class="fas fa-file-pdf me-2"></i>
+                                    Configurações de Relatórios
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    {% endif %}
                 {% endif %}
             </ul>
             <ul class="navbar-nav ms-auto">

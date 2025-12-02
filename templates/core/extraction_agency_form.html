@@ -1,0 +1,101 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'core:extraction_agency_list' %}">Agências</a></li>
+                    <li class="breadcrumb-item active">{{ title }}</li>
+                </ol>
+            </nav>
+            <h2><i class="fas fa-shield-alt me-2"></i>{{ title }}</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.acronym.id_for_label }}" class="form-label">{{ form.acronym.label }}</label>
+                                {{ form.acronym }}
+                                {% if form.acronym.errors %}
+                                    <div class="text-danger small">{{ form.acronym.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small">{{ form.name.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.incharge_name.id_for_label }}" class="form-label">{{ form.incharge_name.label }}</label>
+                                {{ form.incharge_name }}
+                                {% if form.incharge_name.errors %}
+                                    <div class="text-danger small">{{ form.incharge_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.incharge_position.id_for_label }}" class="form-label">{{ form.incharge_position.label }}</label>
+                                {{ form.incharge_position }}
+                                {% if form.incharge_position.errors %}
+                                    <div class="text-danger small">{{ form.incharge_position.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.main_logo_file.id_for_label }}" class="form-label">{{ form.main_logo_file.label }}</label>
+                            {{ form.main_logo_file }}
+                            {% if form.main_logo_file.help_text %}
+                                <div class="form-text">{{ form.main_logo_file.help_text }}</div>
+                            {% endif %}
+                            {% if form.main_logo_file.errors %}
+                                <div class="text-danger small">{{ form.main_logo_file.errors }}</div>
+                            {% endif %}
+                            {% if agency and agency.has_main_logo %}
+                                <div class="mt-2">
+                                    <small class="text-muted">Logo atual:</small><br>
+                                    <img src="data:{{ agency.get_main_logo_mime_type }};base64,{{ agency.get_main_logo_base64 }}" 
+                                         alt="Logo atual" 
+                                         class="mt-1"
+                                         style="max-height: 60px; max-width: 150px; object-fit: contain;">
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'core:extraction_agency_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Voltar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Salvar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

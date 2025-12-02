@@ -1,0 +1,68 @@
+{% extends '_global/layout/base.html' %}
+
+{% block title %}Meios de Armazenamento - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-hdd me-2"></i>Meios de Armazenamento</h2>
+                <a href="{% url 'core:storage_media_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Novo Meio
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if media_list %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Sigla</th>
+                                        <th>Nome</th>
+                                        <th>Unidade</th>
+                                        <th>Descrição</th>
+                                        <th class="text-end">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for media in media_list %}
+                                    <tr>
+                                        <td><strong>{{ media.acronym }}</strong></td>
+                                        <td>{{ media.name }}</td>
+                                        <td>{{ media.extraction_unit.acronym }}</td>
+                                        <td>{{ media.description|default:"-"|truncatewords:10 }}</td>
+                                        <td class="text-end">
+                                            <a href="{% url 'core:storage_media_edit' media.pk %}" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'core:storage_media_delete' media.pk %}" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-hdd fa-4x text-muted mb-3"></i>
+                            <p class="text-muted">Nenhum meio de armazenamento cadastrado.</p>
+                            <a href="{% url 'core:storage_media_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Cadastrar primeiro meio
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

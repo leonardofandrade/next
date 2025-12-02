@@ -1,6 +1,42 @@
 from django.urls import path
+from . import views
 
 app_name = 'core'
 
 urlpatterns = [
+    # Extraction Agency URLs
+    path('agencies/', views.extraction_agency_list, name='extraction_agency_list'),
+    path('agencies/create/', views.extraction_agency_create, name='extraction_agency_create'),
+    path('agencies/<int:pk>/', views.extraction_agency_detail, name='extraction_agency_detail'),
+    path('agencies/<int:pk>/edit/', views.extraction_agency_edit, name='extraction_agency_edit'),
+    path('agencies/<int:pk>/delete/', views.extraction_agency_delete, name='extraction_agency_delete'),
+    
+    # Extraction Unit URLs
+    path('units/', views.extraction_unit_list, name='extraction_unit_list'),
+    path('units/create/', views.extraction_unit_create, name='extraction_unit_create'),
+    path('units/<int:pk>/', views.extraction_unit_detail, name='extraction_unit_detail'),
+    path('units/<int:pk>/edit/', views.extraction_unit_edit, name='extraction_unit_edit'),
+    path('units/<int:pk>/delete/', views.extraction_unit_delete, name='extraction_unit_delete'),
+    
+    # Extractor User URLs
+    path('extractors/', views.extractor_user_list, name='extractor_user_list'),
+    path('extractors/create/', views.extractor_user_create, name='extractor_user_create'),
+    path('extractors/<int:pk>/delete/', views.extractor_user_delete, name='extractor_user_delete'),
+    
+    # Storage Media URLs
+    path('storage-media/', views.storage_media_list, name='storage_media_list'),
+    path('storage-media/create/', views.storage_media_create, name='storage_media_create'),
+    path('storage-media/<int:pk>/edit/', views.storage_media_edit, name='storage_media_edit'),
+    path('storage-media/<int:pk>/delete/', views.storage_media_delete, name='storage_media_delete'),
+    
+    # Evidence Location URLs
+    path('evidence-locations/', views.evidence_location_list, name='evidence_location_list'),
+    path('evidence-locations/create/', views.evidence_location_create, name='evidence_location_create'),
+    path('evidence-locations/<int:pk>/edit/', views.evidence_location_edit, name='evidence_location_edit'),
+    path('evidence-locations/<int:pk>/delete/', views.evidence_location_delete, name='evidence_location_delete'),
+    
+    # Settings URLs
+    path('settings/general/', views.general_settings, name='general_settings'),
+    path('settings/email/', views.email_settings, name='email_settings'),
+    path('settings/reports/', views.reports_settings, name='reports_settings'),
 ]

@@ -55,7 +55,6 @@ class Organization(BaseTable):
         # Note: MySQL performs case-insensitive string comparisons by default,
         # so we don't need a conditional unique constraint
 
-
 class Agency(BaseTable):
     """
     Agency model represents an agency of an organization.
@@ -111,7 +110,6 @@ class Department(BaseTable):
         return f"{self.acronym} - {self.name}" \
             if self.acronym else self.name
         
-
 class AgencyUnit(BaseTable):
     """
     AgencyUnit model represents a unit of an agency.
@@ -223,7 +221,6 @@ class AgencyUnit(BaseTable):
         # Note: MySQL performs case-insensitive string comparisons by default
         unique_together = ['agency', 'name']
 
-
 class EmployeePosition(BaseTable):
     """
     EmployeePosition model represents a position of an employee.
@@ -247,7 +244,6 @@ class EmployeePosition(BaseTable):
 
     def __str__(self):
         return f"{self.name}"
-
 
 class ProcedureCategory(BaseTable):
     """
@@ -296,7 +292,6 @@ class CrimeCategory(BaseTable):
     def __str__(self):
         return self.name
 
-
 class DeviceCategory(BaseTable):
     """
     DeviceCategory model represents a category of a device.
@@ -322,8 +317,6 @@ class DeviceCategory(BaseTable):
         verbose_name_plural = 'Categorias de Dispositivo'
         ordering = ['-default_selection', 'name']
 
-
-
 class DeviceBrand(BaseTable):
     """
     DeviceBrand model represents a brand of a device.
@@ -336,7 +329,6 @@ class DeviceBrand(BaseTable):
         verbose_name = _('Marca')
         verbose_name_plural = _('Marcas')
         ordering = ['name']
-
 
 class DeviceModel(AuditedModel):
     brand = models.ForeignKey(

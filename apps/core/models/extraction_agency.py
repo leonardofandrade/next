@@ -110,7 +110,6 @@ class ExtractionAgency(AuditedModel):
         except Exception:
             return 'image/png'  # Default em caso de erro
 
-
 class ExtractionUnit(AuditedModel):
     """
     Modelo para unidades de extração de dados.
@@ -270,7 +269,6 @@ class ExtractionUnit(AuditedModel):
         """Retorna uma representação legível da unidade de extração."""
         return self.acronym if self.acronym else self.name
 
-
 class ExtractionUnitSettings(AuditedModel):
     """
     Modelo para configurações de uma unidade de extração.
@@ -309,7 +307,6 @@ class ExtractionUnitSettings(AuditedModel):
         """Retorna uma representação legível da configuração da unidade de extração."""
         return f"{self.extraction_unit.acronym} - {self.name}"
 
-
 class ExtractorUser(AuditedModel):
     """
     Modelo para usuários extratores de dados.
@@ -341,7 +338,6 @@ class ExtractorUser(AuditedModel):
     def __str__(self):
         """Retorna uma representação legível do usuário extrator."""
         return f"{self.user.get_full_name()} - {self.extraction_agency.acronym}"
-
 
 class ExtractionUnitExtractor(AuditedModel):
     """
@@ -375,7 +371,6 @@ class ExtractionUnitExtractor(AuditedModel):
     def __str__(self):
         """Retorna uma representação legível do extrator de extração de dados."""
         return f"{self.extractor.user.get_full_name()} - {self.extraction_unit.acronym}"
-
 
 class ExtractionUnitStorageMedia(AuditedModel):
     """
@@ -422,7 +417,6 @@ class ExtractionUnitStorageMedia(AuditedModel):
     def __str__(self):
         """Retorna uma representação legível do meio de armazenamento."""
         return self.name
-
 
 class ExtractionUnitEvidenceLocation(AuditedModel):
     """

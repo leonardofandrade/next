@@ -7,6 +7,7 @@ from apps.requisitions.views import (
     ExtractionRequestDeleteView,
     ExtractionRequestNotReceivedView,
     CreateCaseFromRequestView,
+    GenerateReplyEmailView,
 )
 
 app_name = 'requisitions'
@@ -19,4 +20,5 @@ urlpatterns = [
     path('<int:pk>/update/', ExtractionRequestUpdateView.as_view(), name='update'),
     path('<int:pk>/delete/', ExtractionRequestDeleteView.as_view(), name='delete'),
     path('<int:pk>/create-case/', CreateCaseFromRequestView.as_view(), name='create_case'),
+    path('<int:pk>/generate-reply-email/', GenerateReplyEmailView.as_view(), name='generate_reply_email'),
 ]

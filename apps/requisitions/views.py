@@ -2,13 +2,14 @@
 Views para o app requisitions
 """
 import re
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, render
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.views import View
 from django.db.models import Q
 from django.utils import timezone
+from django.http import JsonResponse
 
 from apps.requisitions.models import ExtractionRequest
 from apps.requisitions.forms import ExtractionRequestForm, ExtractionRequestSearchForm
@@ -467,3 +468,114 @@ class CreateCaseFromRequestView(LoginRequiredMixin, View):
                 f'Erro ao criar processo: {str(e)}'
             )
             return redirect('requisitions:not_received')
+
+
+class GenerateReplyEmailView(LoginRequiredMixin, View):
+    """
+    Gera o texto de email de resposta baseado no template da extraction_unit
+    """
+    def get(self, request, pk):
+        extraction_request = get_object_or_404(
+            ExtractionRequest.objects.filter(deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        # Verifica se há uma extraction_unit associada
+        if not extraction_request.extraction_unit:
+            # Se for requisição AJAX, retorna JSON de erro
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'error': 'Esta solicitação não possui uma unidade de extração associada.'
+                }, status=400)
+            # Caso contrário, redireciona com mensagem
+            messages.error(
+                request,
+                'Esta solicitação não possui uma unidade de extração associada.'
+            )
+            return redirect('requisitions:detail', pk=pk)
+        
+        extraction_unit = extraction_request.extraction_unit
+        
+        # Tenta obter o template das configurações primeiro, depois do modelo direto
+        template = None
+        subject_template = None
+        
+        # Tenta obter das configurações (ExtractionUnitSettings) primeiro
+        try:
+            if hasattr(extraction_unit, 'extraction_unit_settings'):
+                settings = extraction_unit.extraction_unit_settings
+                if settings and hasattr(settings, 'reply_email_template') and settings.reply_email_template:
+                    template = settings.reply_email_template
+                if settings and hasattr(settings, 'reply_email_subject') and settings.reply_email_subject:
+                    subject_template = settings.reply_email_subject
+        except Exception:
+            pass
+        
+        # Se não encontrou nas configurações, tenta no modelo direto
+        if not template and extraction_unit.reply_email_template:
+            template = extraction_unit.reply_email_template
+        
+        if not subject_template and extraction_unit.reply_email_subject:
+            subject_template = extraction_unit.reply_email_subject
+        
+        if not template:
+            # Se for requisição AJAX, retorna JSON de erro
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'error': 'A unidade de extração não possui um template de email de resposta configurado.'
+                }, status=400)
+            # Caso contrário, redireciona com mensagem
+            messages.error(
+                request,
+                'A unidade de extração não possui um template de email de resposta configurado.'
+            )
+            return redirect('requisitions:detail', pk=pk)
+        
+        # Prepara os dados para substituição
+        requested_device_amount_str = str(extraction_request.requested_device_amount) if extraction_request.requested_device_amount else 'N/A'
+        
+        context_data = {
+            'procedures': extraction_request.request_procedures or 'N/A',
+            'extraction_unit_name': extraction_unit.name or '',
+            'extraction_unit_acronym': extraction_unit.acronym or '',
+            'extraction_unit_city': extraction_unit.city_name or '',
+            'extraction_unit_state': extraction_unit.state_name or '',
+            'extraction_unit_postal_code': extraction_unit.postal_code or '',
+            'extraction_unit_address': extraction_unit.address_line1 or '',
+            'extraction_unit_phone': extraction_unit.primary_phone or '',
+            'extraction_unit_secondary_phone': extraction_unit.secondary_phone or '',
+            'extraction_unit_email': extraction_unit.primary_email or '',
+            'requested_device_amount': requested_device_amount_str,
+            'requested_authority_position': requested_device_amount_str,  # Compatibilidade com templates antigos
+            'requester_authority_name': extraction_request.requester_authority_name or '',
+            'requester_authority_position': extraction_request.requester_authority_position.name if extraction_request.requester_authority_position else '',
+            'requester_agency_unit': extraction_request.requester_agency_unit.name if extraction_request.requester_agency_unit else '',
+        }
+        
+        # Substitui os placeholders no template
+        email_body = template
+        for key, value in context_data.items():
+            placeholder = '{' + key + '}'
+            email_body = email_body.replace(placeholder, str(value))
+        
+        # Substitui no assunto também
+        email_subject = subject_template or 'Resposta à Solicitação de Extração'
+        for key, value in context_data.items():
+            placeholder = '{' + key + '}'
+            email_subject = email_subject.replace(placeholder, str(value))
+        
+        # Se for requisição AJAX, retorna JSON
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'subject': email_subject,
+                'body': email_body,
+                'to': extraction_request.requester_reply_email or '',
+            })
+        
+        # Caso contrário, renderiza uma página com o texto
+        return render(request, 'requisitions/generate_reply_email.html', {
+            'extraction_request': extraction_request,
+            'email_subject': email_subject,
+            'email_body': email_body,
+            'email_to': extraction_request.requester_reply_email or '',
+        })

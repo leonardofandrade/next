@@ -20,11 +20,17 @@
                         {% endif %}
                     </p>
                 </div>
-                <div>
+                <div class="btn-group" role="group">
                     <a href="{% url 'requisitions:list' %}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left me-2"></i>
                         Voltar
                     </a>
+                    {% if action == 'update' and object.extraction_unit %}
+                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#emailModal" onclick="loadEmailContent({{ object.pk }})">
+                        <i class="fas fa-envelope me-2"></i>
+                        Gerar Email de Resposta
+                    </button>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -238,6 +244,57 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para Email de Resposta -->
+{% if action == 'update' %}
+<div class="modal fade" id="emailModal" tabindex="-1" aria-labelledby="emailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="emailModalLabel">
+                    <i class="fas fa-envelope me-2"></i>
+                    Email de Resposta - Solicitação #{{ object.pk }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="emailLoading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Gerando email...</p>
+                </div>
+                <div id="emailContent" style="display: none;">
+                    <div class="mb-3">
+                        <label class="text-muted small d-block mb-2">Visualização do Email</label>
+                        <div class="border p-4 bg-white rounded" style="max-height: 400px; overflow-y: auto; background-color: #f8f9fa !important;">
+                            <div id="emailPreview" style="font-family: Arial, sans-serif;"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small d-block mb-2">Texto do Email (para copiar)</label>
+                        <textarea id="emailTextCopy" class="form-control" rows="10" readonly style="font-family: monospace; white-space: pre-wrap; word-wrap: break-word;"></textarea>
+                        <small class="text-muted">Clique no texto acima e pressione Ctrl+C (ou Cmd+C no Mac) para copiar</small>
+                    </div>
+                </div>
+                <div id="emailError" style="display: none;">
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <span id="errorMessage"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" id="copyBtn" onclick="copyEmailText()" style="display: none;">
+                    <i class="fas fa-copy me-2"></i>
+                    Copiar Texto
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
@@ -279,5 +336,111 @@ $(document).ready(function() {
         closeOnSelect: true
     });
 });
+    
+{% if action == 'update' %}
+// Função para carregar conteúdo do email
+function loadEmailContent(pk) {
+        // Reset modal
+        document.getElementById('emailLoading').style.display = 'block';
+        document.getElementById('emailContent').style.display = 'none';
+        document.getElementById('emailError').style.display = 'none';
+        document.getElementById('copyBtn').style.display = 'none';
+        
+        // Faz requisição AJAX
+        const url = '{% url "requisitions:generate_reply_email" 0 %}'.replace('0', pk);
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(async response => {
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Erro ao gerar email');
+            }
+            return data;
+        })
+        .then(data => {
+            // Exibe o HTML formatado na visualização
+            document.getElementById('emailPreview').innerHTML = data.body || '';
+            
+            // Converte HTML para texto plano para o textarea (mantendo quebras de linha)
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data.body || '';
+            
+            // Função para converter HTML para texto mantendo formatação básica
+            function htmlToText(html) {
+                const div = document.createElement('div');
+                div.innerHTML = html;
+                
+                // Preserva quebras de linha de <br> e <p>
+                let text = div.innerHTML
+                    .replace(/<br\s*\/?>/gi, '\n')
+                    .replace(/<\/p>/gi, '\n\n')
+                    .replace(/<p[^>]*>/gi, '')
+                    .replace(/<\/div>/gi, '\n')
+                    .replace(/<div[^>]*>/gi, '')
+                    .replace(/<\/li>/gi, '\n')
+                    .replace(/<li[^>]*>/gi, '• ')
+                    .replace(/<\/ul>/gi, '\n')
+                    .replace(/<ul[^>]*>/gi, '')
+                    .replace(/<\/ol>/gi, '\n')
+                    .replace(/<ol[^>]*>/gi, '');
+                
+                // Remove tags HTML restantes
+                const tempDiv2 = document.createElement('div');
+                tempDiv2.innerHTML = text;
+                text = tempDiv2.textContent || tempDiv2.innerText || '';
+                
+                // Limpa espaços em branco extras mas mantém quebras de linha
+                text = text.replace(/\n{3,}/g, '\n\n').trim();
+                
+                return text;
+            }
+            
+            const plainText = htmlToText(data.body || '');
+            
+            // Preenche o textarea com o texto do email completo
+            const emailText = `Para: ${data.to || 'Não informado'}\n\nAssunto: ${data.subject || 'Resposta à Solicitação de Extração'}\n\n${plainText}`;
+            document.getElementById('emailTextCopy').value = emailText;
+            
+            // Seleciona automaticamente o texto para facilitar a cópia
+            setTimeout(() => {
+                document.getElementById('emailTextCopy').select();
+            }, 100);
+            
+            // Mostra o conteúdo e esconde o loading
+            document.getElementById('emailLoading').style.display = 'none';
+            document.getElementById('emailContent').style.display = 'block';
+            document.getElementById('copyBtn').style.display = 'inline-block';
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            document.getElementById('emailLoading').style.display = 'none';
+            document.getElementById('emailError').style.display = 'block';
+            document.getElementById('errorMessage').textContent = error.message || 'Erro ao gerar o email. Verifique se a unidade de extração possui um template configurado.';
+        });
+    }
+    
+    // Função para copiar texto
+    function copyEmailText() {
+        const textArea = document.getElementById('emailTextCopy');
+        textArea.select();
+        document.execCommand('copy');
+        
+        // Feedback visual
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-2"></i>Copiado!';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-success');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-primary');
+        }, 2000);
+    }
+    {% endif %}
 </script>
 {% endblock %}

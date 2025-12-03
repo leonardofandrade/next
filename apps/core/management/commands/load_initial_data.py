@@ -1,4 +1,5 @@
 import json
+import base64
 from pathlib import Path
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -11,7 +12,10 @@ from apps.base_tables.models import (
     DeviceBrand, DeviceModel, ProcedureCategory
 )
 from apps.users.models import UserProfile
-from apps.core.models import ExtractionAgency, ExtractionUnit, ExtractorUser
+from apps.core.models import (
+    ExtractionAgency, ExtractionUnit, ExtractorUser,
+    GeneralSettings, EmailSettings, ReportsSettings
+)
 
 
 class Command(BaseCommand):
@@ -63,6 +67,9 @@ class Command(BaseCommand):
     def clear_existing_data(self):
         """Limpa dados existentes (cuidado em produção!)"""
         # A ordem importa devido às foreign keys
+        ReportsSettings.objects.all().delete()
+        EmailSettings.objects.all().delete()
+        GeneralSettings.objects.all().delete()
         ExtractorUser.objects.all().delete()
         ExtractionUnit.objects.all().delete()
         ExtractionAgency.objects.all().delete()
@@ -92,6 +99,7 @@ class Command(BaseCommand):
             '07_device_category.json',
             '08_device_brands_models.json',
             '09_procedure_category.json',
+            'extraction_agency_and_settings.json',
         ]
 
         for file_name in files:
@@ -127,6 +135,8 @@ class Command(BaseCommand):
             self.load_device_brands_models(data)
         elif file_name == '09_procedure_category.json':
             self.load_procedure_categories(data)
+        elif file_name == 'extraction_agency_and_settings.json':
+            self.load_extraction_agency_and_settings(data)
 
     def load_employee_positions(self, data):
         """Carrega cargos de funcionários"""
@@ -342,12 +352,31 @@ class Command(BaseCommand):
             defaults={'name': agency_data['name']}
         )
         
+        # Atualiza campos adicionais se não foi criado agora
+        if not created:
+            extraction_agency.name = agency_data['name']
+            extraction_agency.incharge_name = agency_data.get('incharge_name')
+            extraction_agency.incharge_position = agency_data.get('incharge_position')
+            extraction_agency.save()
+        
+        # Carrega logo se existir
+        if agency_data.get('main_logo_base64'):
+            try:
+                logo_bytes = base64.b64decode(agency_data['main_logo_base64'])
+                extraction_agency.main_logo = logo_bytes
+                extraction_agency.save()
+                self.stdout.write(self.style.SUCCESS('  Logo da agência carregado'))
+            except Exception as e:
+                self.stdout.write(self.style.WARNING(f'  Erro ao carregar logo: {str(e)}'))
+        
         if created:
             self.stdout.write(self.style.SUCCESS(f'  Agência de extração criada: {extraction_agency}'))
+        else:
+            self.stdout.write(self.style.SUCCESS(f'  Agência de extração atualizada: {extraction_agency}'))
 
         # Carrega unidades de extração
         unit_count = 0
-        for unit_data in data['extraction_units']:
+        for unit_data in data.get('extraction_units', []):
             unit, unit_created = ExtractionUnit.objects.get_or_create(
                 agency=extraction_agency,
                 acronym=unit_data['acronym'],
@@ -455,3 +484,172 @@ class Command(BaseCommand):
             if created:
                 count += 1
         self.stdout.write(self.style.SUCCESS(f'  {count} categorias de procedimento criadas'))
+
+    def load_extraction_agency_and_settings(self, data):
+        """Carrega ExtractionAgency e Settings do arquivo exportado"""
+        # Carrega ExtractionAgency
+        if data.get('extraction_agency'):
+            agency_data = data['extraction_agency']
+            
+            # Busca ou cria a agência
+            extraction_agency, created = ExtractionAgency.objects.get_or_create(
+                acronym=agency_data['acronym'],
+                defaults={'name': agency_data['name']}
+            )
+            
+            # Atualiza campos
+            extraction_agency.name = agency_data['name']
+            extraction_agency.incharge_name = agency_data.get('incharge_name')
+            extraction_agency.incharge_position = agency_data.get('incharge_position')
+            
+            # Carrega logo se existir
+            if agency_data.get('main_logo_base64'):
+                try:
+                    logo_bytes = base64.b64decode(agency_data['main_logo_base64'])
+                    extraction_agency.main_logo = logo_bytes
+                except Exception as e:
+                    self.stdout.write(self.style.WARNING(f'  Erro ao carregar logo da agência: {str(e)}'))
+            
+            extraction_agency.save()
+            
+            if created:
+                self.stdout.write(self.style.SUCCESS(f'  Agência de extração criada: {extraction_agency}'))
+            else:
+                self.stdout.write(self.style.SUCCESS(f'  Agência de extração atualizada: {extraction_agency}'))
+        else:
+            self.stdout.write(self.style.WARNING('  Nenhuma ExtractionAgency encontrada no arquivo'))
+            return
+
+        # Carrega Settings
+        settings_data = data.get('settings', {})
+        
+        # GeneralSettings
+        if settings_data.get('general'):
+            self.load_general_settings(settings_data['general'], extraction_agency)
+        else:
+            self.stdout.write(self.style.WARNING('  Nenhum GeneralSettings encontrado no arquivo'))
+        
+        # EmailSettings
+        if settings_data.get('email'):
+            self.load_email_settings(settings_data['email'], extraction_agency)
+        else:
+            self.stdout.write(self.style.WARNING('  Nenhum EmailSettings encontrado no arquivo'))
+        
+        # ReportsSettings
+        if settings_data.get('reports'):
+            self.load_reports_settings(settings_data['reports'], extraction_agency)
+        else:
+            self.stdout.write(self.style.WARNING('  Nenhum ReportsSettings encontrado no arquivo'))
+
+    def load_general_settings(self, data, extraction_agency):
+        """Carrega GeneralSettings"""
+        settings, created = GeneralSettings.objects.get_or_create(
+            extraction_agency=extraction_agency,
+            defaults={
+                'system_name': data.get('system_name'),
+                'system_version': data.get('system_version'),
+                'system_description': data.get('system_description'),
+                'primary_color': data.get('primary_color'),
+                'secondary_color': data.get('secondary_color'),
+                'maintenance_mode': data.get('maintenance_mode', False),
+                'maintenance_message': data.get('maintenance_message'),
+                'backup_enabled': data.get('backup_enabled', False),
+                'backup_frequency': data.get('backup_frequency', 'daily'),
+            }
+        )
+        
+        # Atualiza se já existia
+        if not created:
+            settings.system_name = data.get('system_name')
+            settings.system_version = data.get('system_version')
+            settings.system_description = data.get('system_description')
+            settings.primary_color = data.get('primary_color')
+            settings.secondary_color = data.get('secondary_color')
+            settings.maintenance_mode = data.get('maintenance_mode', False)
+            settings.maintenance_message = data.get('maintenance_message')
+            settings.backup_enabled = data.get('backup_enabled', False)
+            settings.backup_frequency = data.get('backup_frequency', 'daily')
+            settings.save()
+        
+        if created:
+            self.stdout.write(self.style.SUCCESS('  GeneralSettings criado'))
+        else:
+            self.stdout.write(self.style.SUCCESS('  GeneralSettings atualizado'))
+
+    def load_email_settings(self, data, extraction_agency):
+        """Carrega EmailSettings"""
+        settings, created = EmailSettings.objects.get_or_create(
+            extraction_agency=extraction_agency,
+            defaults={
+                'email_host': data.get('email_host', 'localhost'),
+                'email_port': data.get('email_port', 587),
+                'email_use_tls': data.get('email_use_tls', True),
+                'email_use_ssl': data.get('email_use_ssl', False),
+                'email_host_user': data.get('email_host_user', ''),
+                'email_host_password': data.get('email_host_password', ''),
+                'email_from_name': data.get('email_from_name', 'Sistema'),
+            }
+        )
+        
+        # Atualiza se já existia
+        if not created:
+            settings.email_host = data.get('email_host', 'localhost')
+            settings.email_port = data.get('email_port', 587)
+            settings.email_use_tls = data.get('email_use_tls', True)
+            settings.email_use_ssl = data.get('email_use_ssl', False)
+            settings.email_host_user = data.get('email_host_user', '')
+            settings.email_host_password = data.get('email_host_password', '')
+            settings.email_from_name = data.get('email_from_name', 'Sistema')
+            settings.save()
+        
+        if created:
+            self.stdout.write(self.style.SUCCESS('  EmailSettings criado'))
+        else:
+            self.stdout.write(self.style.SUCCESS('  EmailSettings atualizado'))
+
+    def load_reports_settings(self, data, extraction_agency):
+        """Carrega ReportsSettings"""
+        settings, created = ReportsSettings.objects.get_or_create(
+            extraction_agency=extraction_agency,
+            defaults={
+                'reports_enabled': data.get('reports_enabled', True),
+                'distribution_report_notes': data.get('distribution_report_notes'),
+                'report_cover_header_line_1': data.get('report_cover_header_line_1'),
+                'report_cover_header_line_2': data.get('report_cover_header_line_2'),
+                'report_cover_header_line_3': data.get('report_cover_header_line_3'),
+                'report_cover_footer_line_1': data.get('report_cover_footer_line_1'),
+                'report_cover_footer_line_2': data.get('report_cover_footer_line_2'),
+            }
+        )
+        
+        # Atualiza se já existia
+        if not created:
+            settings.reports_enabled = data.get('reports_enabled', True)
+            settings.distribution_report_notes = data.get('distribution_report_notes')
+            settings.report_cover_header_line_1 = data.get('report_cover_header_line_1')
+            settings.report_cover_header_line_2 = data.get('report_cover_header_line_2')
+            settings.report_cover_header_line_3 = data.get('report_cover_header_line_3')
+            settings.report_cover_footer_line_1 = data.get('report_cover_footer_line_1')
+            settings.report_cover_footer_line_2 = data.get('report_cover_footer_line_2')
+        
+        # Carrega logos se existirem
+        if data.get('default_report_header_logo_base64'):
+            try:
+                logo_bytes = base64.b64decode(data['default_report_header_logo_base64'])
+                settings.default_report_header_logo = logo_bytes
+            except Exception as e:
+                self.stdout.write(self.style.WARNING(f'  Erro ao carregar logo padrão: {str(e)}'))
+        
+        if data.get('secondary_report_header_logo_base64'):
+            try:
+                logo_bytes = base64.b64decode(data['secondary_report_header_logo_base64'])
+                settings.secondary_report_header_logo = logo_bytes
+            except Exception as e:
+                self.stdout.write(self.style.WARNING(f'  Erro ao carregar logo secundário: {str(e)}'))
+        
+        settings.save()
+        
+        if created:
+            self.stdout.write(self.style.SUCCESS('  ReportsSettings criado'))
+        else:
+            self.stdout.write(self.style.SUCCESS('  ReportsSettings atualizado'))

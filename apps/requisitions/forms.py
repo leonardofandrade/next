@@ -28,8 +28,8 @@ class ExtractionRequestForm(forms.ModelForm):
         ]
         widgets = {
             'requester_agency_unit': forms.Select(attrs={
-                'class': 'form-select',
-                'required': True
+                'class': 'form-select select2',
+                'data-placeholder': 'Digite para pesquisar...',
             }),
             'requested_device_amount': forms.NumberInput(attrs={
                 'class': 'form-control',
@@ -53,7 +53,6 @@ class ExtractionRequestForm(forms.ModelForm):
             'request_procedures': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Ex: IP 123/2024, PJ 456/2024',
-                'required': True
             }),
             'crime_category': forms.Select(attrs={
                 'class': 'form-select',
@@ -78,7 +77,7 @@ class ExtractionRequestForm(forms.ModelForm):
         help_texts = {
             'requester_agency_unit': 'Unidade que está fazendo a solicitação',
             'requested_device_amount': 'Número de dispositivos a serem extraídos',
-            'extraction_unit': 'Unidade responsável pela extração (opcional)',
+            'extraction_unit': 'Unidade responsável pela extração',
             'requester_reply_email': 'E-mail para envio de respostas',
             'requester_authority_name': 'Nome completo da autoridade responsável',
             'requester_authority_position': 'Cargo da autoridade (ex: Delegado, Promotor)',
@@ -97,8 +96,34 @@ class ExtractionRequestForm(forms.ModelForm):
         self.fields['requester_authority_position'].queryset = EmployeePosition.objects.all().order_by('-default_selection', 'name')
         self.fields['crime_category'].queryset = CrimeCategory.objects.all().order_by('-default_selection', 'name')
         
-        # Torna extraction_unit opcional
-        self.fields['extraction_unit'].required = False
+        # Define campos obrigatórios
+        self.fields['requester_agency_unit'].required = True
+        self.fields['requested_device_amount'].required = True
+        self.fields['request_procedures'].required = True
+        self.fields['extraction_unit'].required = True
+
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Valida campos obrigatórios
+        requester_agency_unit = cleaned_data.get('requester_agency_unit')
+        requested_device_amount = cleaned_data.get('requested_device_amount')
+        request_procedures = cleaned_data.get('request_procedures')
+        extraction_unit = cleaned_data.get('extraction_unit')
+        
+        if not requester_agency_unit:
+            self.add_error('requester_agency_unit', 'Este campo é obrigatório.')
+        
+        if not requested_device_amount:
+            self.add_error('requested_device_amount', 'Este campo é obrigatório.')
+        
+        if not request_procedures:
+            self.add_error('request_procedures', 'Este campo é obrigatório.')
+        
+        if not extraction_unit:
+            self.add_error('extraction_unit', 'Este campo é obrigatório.')
+        
+        return cleaned_data
 
     def clean_requested_device_amount(self):
         amount = self.cleaned_data.get('requested_device_amount')

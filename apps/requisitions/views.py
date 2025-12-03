@@ -118,8 +118,9 @@ class ExtractionRequestCreateView(LoginRequiredMixin, CreateView):
         extraction_request = form.save(commit=False)
         extraction_request.created_by = self.request.user
         
-        # Define requested_at automaticamente
-        extraction_request.requested_at = timezone.now()
+        # Define requested_at automaticamente se não estiver preenchido
+        if not extraction_request.requested_at:
+            extraction_request.requested_at = timezone.now()
         
         # Define status baseado na extraction_unit
         if extraction_request.extraction_unit:
@@ -188,6 +189,10 @@ class ExtractionRequestUpdateView(LoginRequiredMixin, UpdateView):
         
         extraction_request.updated_by = self.request.user
         extraction_request.version += 1
+        
+        # Define requested_at automaticamente se não estiver preenchido
+        if not extraction_request.requested_at:
+            extraction_request.requested_at = timezone.now()
         
         # Atualiza status se extraction_unit mudou
         new_extraction_unit = extraction_request.extraction_unit

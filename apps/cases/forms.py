@@ -37,8 +37,8 @@ class CaseForm(forms.ModelForm):
                 'class': 'form-select',
             }),
             'requester_agency_unit': forms.Select(attrs={
-                'class': 'form-select',
-                'required': True
+                'class': 'form-select select2',
+                'data-placeholder': 'Digite para pesquisar...',
             }),
             'request_procedures': forms.TextInput(attrs={
                 'class': 'form-control',

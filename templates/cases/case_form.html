@@ -497,3 +497,45 @@
     </div>
 {% endif %}
 {% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Inicializa Select2 para requester_agency_unit com busca e tema Bootstrap 5
+    $('#{{ form.requester_agency_unit.id_for_label }}').select2({
+        theme: 'bootstrap-5',
+        language: {
+            noResults: function() {
+                return "Nenhum resultado encontrado";
+            },
+            searching: function() {
+                return "Buscando...";
+            }
+        },
+        placeholder: 'Digite para pesquisar a unidade solicitante...',
+        allowClear: true,
+        width: '100%',
+        minimumInputLength: 0,
+        closeOnSelect: true
+    });
+    
+    // Também inicializa para extraction_unit se necessário
+    $('#{{ form.extraction_unit.id_for_label }}').select2({
+        theme: 'bootstrap-5',
+        language: {
+            noResults: function() {
+                return "Nenhum resultado encontrado";
+            },
+            searching: function() {
+                return "Buscando...";
+            }
+        },
+        placeholder: 'Selecione uma unidade de extração...',
+        allowClear: true,
+        width: '100%',
+        minimumInputLength: 0,
+        closeOnSelect: true
+    });
+});
+</script>
+{% endblock %}

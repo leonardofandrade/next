@@ -155,7 +155,7 @@ class ExtractionRequestCreateView(LoginRequiredMixin, CreateView):
             context['keep_data_checked'] = True
             return self.render_to_response(context)
         
-        return redirect('requisitions:detail', pk=extraction_request.pk)
+        return redirect('requisitions:update', pk=extraction_request.pk)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

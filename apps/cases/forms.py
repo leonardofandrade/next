@@ -265,7 +265,8 @@ class CaseDeviceForm(forms.ModelForm):
                 'required': True
             }),
             'device_model': forms.Select(attrs={
-                'class': 'form-select',
+                'class': 'form-select select2',
+                'data-placeholder': 'Digite para pesquisar...',
             }),
             'color': forms.TextInput(attrs={
                 'class': 'form-control',

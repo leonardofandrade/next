@@ -509,9 +509,47 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+$(document).ready(function() {
+    // Inicializa Select2 para device_model com busca e tema Bootstrap 5
+    $('#{{ form.device_model.id_for_label }}').select2({
+        theme: 'bootstrap-5',
+        language: {
+            noResults: function() {
+                return "Nenhum resultado encontrado";
+            },
+            searching: function() {
+                return "Buscando...";
+            }
+        },
+        placeholder: 'Digite para pesquisar o modelo do dispositivo...',
+        allowClear: true,
+        width: '100%',
+        minimumInputLength: 0,
+        closeOnSelect: true
+    });
+    
+    // Também inicializa para device_category se necessário
+    $('#{{ form.device_category.id_for_label }}').select2({
+        theme: 'bootstrap-5',
+        language: {
+            noResults: function() {
+                return "Nenhum resultado encontrado";
+            },
+            searching: function() {
+                return "Buscando...";
+            }
+        },
+        placeholder: 'Selecione uma categoria...',
+        allowClear: true,
+        width: '100%',
+        minimumInputLength: 0,
+        closeOnSelect: true
+    });
+    
     // Função para habilitar/desabilitar campos condicionais
     function toggleField(checkboxId, fieldId) {
         const checkbox = document.getElementById(checkboxId);

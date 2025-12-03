@@ -6,7 +6,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, View
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
@@ -47,6 +47,8 @@ class CaseListView(LoginRequiredMixin, ListView):
             'created_by',
             'assigned_to',
             'extraction_request'
+        ).annotate(
+            devices_count=Count('case_devices', filter=Q(case_devices__deleted_at__isnull=True))
         ).order_by('-priority', '-created_at')
         
         form = CaseSearchForm(self.request.GET or None)
@@ -498,6 +500,13 @@ class CaseCompleteRegistrationView(LoginRequiredMixin, View):
         case.registration_completed_at = timezone.now()
         case.updated_by = request.user
         case.version += 1
+        
+        # Gera o número do processo se ainda não tiver sido gerado
+        if not case.number and case.extraction_unit:
+            case_number = case.generate_case_number()
+            if case_number:
+                case.number = case_number
+                case.year = timezone.now().year
         
         # Adiciona observações se fornecidas
         notes = form.cleaned_data.get('notes')

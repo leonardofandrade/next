@@ -225,6 +225,59 @@ class Case(AbstractCaseModel):
         """Returns complete Bootstrap badge class for status"""
         return f"bg-{self.get_status_color()}"
     
+    def generate_case_number(self):
+        """
+        Gera o número do processo no formato: AAAA.UUU.NNNN
+        Onde:
+        - AAAA = Ano corrente (4 dígitos)
+        - UUU = ID da extraction_unit (3 dígitos preenchidos com zeros)
+        - NNNN = Próximo número sequencial da extraction_unit (reiniciado todo ano)
+        
+        Retorna o número gerado ou None se não houver extraction_unit
+        """
+        if not self.extraction_unit:
+            return None
+        
+        current_year = timezone.now().year
+        extraction_unit_id = self.extraction_unit.pk
+        
+        # Busca todos os casos da extraction_unit no ano corrente para encontrar o maior número sequencial
+        cases = Case.objects.filter(
+            extraction_unit=self.extraction_unit,
+            year=current_year,
+            number__isnull=False,
+            deleted_at__isnull=True
+        ).exclude(
+            pk=self.pk  # Exclui o próprio caso se estiver sendo atualizado
+        ).values_list('number', flat=True)
+        
+        # Extrai o maior número sequencial dos casos existentes
+        max_sequential = 0
+        for case_number in cases:
+            if case_number:
+                # Formato esperado: AAAA.UUU.NNNN
+                # Extrai apenas a parte sequencial (NNNN)
+                parts = case_number.split('.')
+                if len(parts) == 3:
+                    try:
+                        # Verifica se o ano e extraction_unit correspondem
+                        case_year = int(parts[0])
+                        case_unit_id = int(parts[1])
+                        if case_year == current_year and case_unit_id == extraction_unit_id:
+                            sequential = int(parts[2])
+                            if sequential > max_sequential:
+                                max_sequential = sequential
+                    except (ValueError, IndexError):
+                        continue
+        
+        # Próximo número sequencial
+        next_sequential = max_sequential + 1
+        
+        # Formata o número: AAAA.UUU.NNNN
+        case_number = f"{current_year}.{extraction_unit_id:03d}.{next_sequential:04d}"
+        
+        return case_number
+    
     def update_status_based_on_extractions(self):
         """
         Atualiza o status do Case baseado no status das extrações

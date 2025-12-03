@@ -8,11 +8,20 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.utils import timezone
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
+from django.template.loader import render_to_string
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import cm
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
+from io import BytesIO
 
 from apps.cases.models import Case, CaseDevice, Extraction
 from apps.cases.forms import CaseForm, CaseSearchForm, CaseDeviceForm, CaseCompleteRegistrationForm
+from apps.core.models import ReportsSettings
 
 
 class CaseListView(LoginRequiredMixin, ListView):
@@ -1008,3 +1017,569 @@ class CaseUnassignFromMeView(LoginRequiredMixin, View):
         if referer and 'cases/list' in referer:
             return redirect('cases:list')
         return redirect('cases:detail', pk=case.pk)
+
+
+class CaseCoverPDFView(LoginRequiredMixin, View):
+    """
+    Gera PDF da capa do processo para impressão
+    """
+    
+    def get(self, request, pk):
+        """
+        Gera o PDF da capa do processo
+        """
+        case = get_object_or_404(
+            Case.objects.filter(deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        # Verifica se o cadastro foi finalizado
+        if not case.registration_completed_at:
+            messages.error(
+                request,
+                'A capa do processo só pode ser gerada após a finalização do cadastro.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        # Busca dispositivos do caso
+        devices = case.case_devices.filter(deleted_at__isnull=True).select_related(
+            'device_category',
+            'device_model__brand'
+        )
+        
+        # Busca procedimentos do caso
+        procedures = case.procedures.filter(deleted_at__isnull=True).select_related(
+            'procedure_category'
+        )
+        
+        # Prepara dados para tramitações (baseado em eventos do processo)
+        tramitacoes = []
+        
+        # Tramitação inicial: recebimento do processo (da delegacia para NEXT)
+        if case.created_at:
+            origem_nome = case.requester_agency_unit.name if case.requester_agency_unit else 'DM BARREIRA'
+            # Se a unidade solicitante tem sigla, usa ela, senão usa o nome completo
+            if case.requester_agency_unit and case.requester_agency_unit.acronym:
+                origem_nome = case.requester_agency_unit.acronym
+            tramitacoes.append({
+                'de': origem_nome,
+                'para': case.extraction_unit.acronym if case.extraction_unit else 'NEXT/COIN',
+                'data': case.created_at.strftime('%d/%m/%Y'),
+                'responsavel': case.created_by.get_full_name() if case.created_by and case.created_by.get_full_name() else (case.created_by.username if case.created_by else 'N/A')
+            })
+        
+        # Tramitação: devolução/finalização (de NEXT para a delegacia)
+        if case.finished_at:
+            destino_nome = case.requester_agency_unit.name if case.requester_agency_unit else 'BARREIRA'
+            # Se a unidade solicitante tem sigla, usa ela, senão usa o nome completo
+            if case.requester_agency_unit and case.requester_agency_unit.acronym:
+                destino_nome = case.requester_agency_unit.acronym
+            elif case.requester_agency_unit:
+                # Tenta extrair sigla do nome se possível
+                destino_nome = case.requester_agency_unit.name
+            tramitacoes.append({
+                'de': 'NEXT',
+                'para': destino_nome,
+                'data': case.finished_at.strftime('%d/%m/%Y'),
+                'responsavel': case.finished_by.get_full_name() if case.finished_by and case.finished_by.get_full_name() else (case.finished_by.username if case.finished_by else 'N/A')
+            })
+        elif case.assigned_at and case.assigned_to:
+            # Se não foi finalizado mas foi atribuído, mostra tramitação de atribuição
+            destino_nome = case.requester_agency_unit.name if case.requester_agency_unit else 'BARREIRA'
+            if case.requester_agency_unit and case.requester_agency_unit.acronym:
+                destino_nome = case.requester_agency_unit.acronym
+            tramitacoes.append({
+                'de': 'NEXT',
+                'para': destino_nome,
+                'data': case.assigned_at.strftime('%d/%m/%Y'),
+                'responsavel': case.assigned_to.get_full_name() if case.assigned_to.get_full_name() else case.assigned_to.username
+            })
+        
+        # Prepara contexto
+        context = {
+            'case': case,
+            'devices': devices,
+            'procedures': procedures,
+            'tramitacoes': tramitacoes,
+            'extraction_unit': case.extraction_unit,
+            'requester_agency_unit': case.requester_agency_unit,
+        }
+        
+        # Busca configurações de relatórios
+        try:
+            reports_settings = ReportsSettings.objects.first()
+        except ReportsSettings.DoesNotExist:
+            reports_settings = None
+        
+        # Gera o PDF usando reportlab diretamente
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, 
+                               rightMargin=1.5*cm, leftMargin=1.5*cm,
+                               topMargin=1.5*cm, bottomMargin=1.5*cm)
+        
+        # Container para os elementos do PDF
+        elements = []
+        styles = getSampleStyleSheet()
+        
+        # Estilos customizados
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=12,
+            textColor=colors.black,
+            alignment=TA_CENTER,
+            spaceAfter=5,
+        )
+        
+        header_style = ParagraphStyle(
+            'CustomHeader',
+            parent=styles['Normal'],
+            fontSize=10,
+            textColor=colors.black,
+            alignment=TA_CENTER,
+            spaceAfter=3,
+        )
+        
+        subtitle_style = ParagraphStyle(
+            'CustomSubtitle',
+            parent=styles['Normal'],
+            fontSize=9,
+            textColor=colors.black,
+            alignment=TA_CENTER,
+            spaceAfter=15,
+        )
+        
+        normal_style = ParagraphStyle(
+            'CustomNormal',
+            parent=styles['Normal'],
+            fontSize=11,
+            textColor=colors.black,
+            alignment=TA_LEFT,
+            spaceAfter=8,
+        )
+        
+        bold_style = ParagraphStyle(
+            'CustomBold',
+            parent=styles['Normal'],
+            fontSize=11,
+            textColor=colors.black,
+            alignment=TA_LEFT,
+            fontName='Helvetica-Bold',
+            spaceAfter=8,
+        )
+        
+        # Cabeçalho - usando configurações de relatórios se disponível
+        # Cabeçalho em 3 colunas: logo principal | dados do header | logo secundário
+        
+        # Primeira coluna: Logo principal
+        logo_principal = Spacer(1, 0.1*cm)
+        if reports_settings and reports_settings.default_report_header_logo:
+            try:
+                from reportlab.platypus import Image
+                from PIL import Image as PILImage
+                # Carrega a imagem para obter dimensões originais
+                pil_img = PILImage.open(BytesIO(reports_settings.default_report_header_logo))
+                original_width, original_height = pil_img.size
+                # Calcula proporção mantendo altura máxima de 2cm
+                max_height = 2*cm
+                aspect_ratio = original_width / original_height
+                calculated_width = max_height * aspect_ratio
+                # Limita largura máxima a 2.5cm
+                if calculated_width > 2.5*cm:
+                    calculated_width = 2.5*cm
+                    calculated_height = calculated_width / aspect_ratio
+                else:
+                    calculated_height = max_height
+                # Recria o BytesIO para usar no reportlab
+                logo_bytes = BytesIO(reports_settings.default_report_header_logo)
+                logo_principal = Image(logo_bytes, width=calculated_width, height=calculated_height)
+            except Exception:
+                pass
+        
+        # Segunda coluna: Dados do header (mais larga) - criar uma lista de elementos
+        header_elements = []
+        if reports_settings:
+            if reports_settings.report_cover_header_line_1:
+                header_elements.append(Paragraph(reports_settings.report_cover_header_line_1, title_style))
+            if reports_settings.report_cover_header_line_2:
+                header_elements.append(Paragraph(reports_settings.report_cover_header_line_2, header_style))
+            if reports_settings.report_cover_header_line_3:
+                header_elements.append(Paragraph(reports_settings.report_cover_header_line_3, subtitle_style))
+        else:
+            # Cabeçalho padrão se não houver configurações
+            header_elements.append(Paragraph("S.S.P.D.S. CEARÁ", title_style))
+            header_elements.append(Paragraph("SECRETARIA DA SEGURANÇA PÚBLICA E DEFESA SOCIAL", header_style))
+            header_elements.append(Paragraph("COORDENADORIA DE INTELIGÊNCIA", header_style))
+            header_elements.append(Paragraph("Célula de Inteligência de Sinais - Núcleo de Extrações", subtitle_style))
+        
+        # Criar uma tabela interna para a coluna do meio com os textos empilhados
+        header_middle_data = [[elem] for elem in header_elements]
+        header_middle_table = Table(header_middle_data, colWidths=[10*cm])
+        header_middle_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+            ('TOPPADDING', (0, 0), (-1, -1), 2),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+        ]))
+        
+        # Terceira coluna: Logo secundário
+        logo_secundario = Spacer(1, 0.1*cm)
+        if reports_settings and reports_settings.secondary_report_header_logo:
+            try:
+                from reportlab.platypus import Image
+                from PIL import Image as PILImage
+                # Carrega a imagem para obter dimensões originais
+                pil_img = PILImage.open(BytesIO(reports_settings.secondary_report_header_logo))
+                original_width, original_height = pil_img.size
+                # Calcula proporção mantendo altura máxima de 2cm
+                max_height = 2*cm
+                aspect_ratio = original_width / original_height
+                calculated_width = max_height * aspect_ratio
+                # Limita largura máxima a 2.5cm
+                if calculated_width > 2.5*cm:
+                    calculated_width = 2.5*cm
+                    calculated_height = calculated_width / aspect_ratio
+                else:
+                    calculated_height = max_height
+                # Recria o BytesIO para usar no reportlab
+                logo_bytes = BytesIO(reports_settings.secondary_report_header_logo)
+                logo_secundario = Image(logo_bytes, width=calculated_width, height=calculated_height)
+            except Exception:
+                pass
+        
+        # Criar tabela de 3 colunas para o cabeçalho
+        header_table_data = [[logo_principal, header_middle_table, logo_secundario]]
+        header_table = Table(header_table_data, colWidths=[3*cm, 10*cm, 3*cm])
+        header_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),  # Logo principal à esquerda
+            ('ALIGN', (1, 0), (1, 0), 'CENTER'),  # Header centralizado
+            ('ALIGN', (2, 0), (2, 0), 'RIGHT'),  # Logo secundário à direita
+            ('LEFTPADDING', (0, 0), (-1, -1), 5),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        
+        elements.append(header_table)
+        elements.append(Spacer(1, 0.5*cm))
+        
+        # Número do documento
+        doc_year = case.year if case.year else timezone.now().year
+        doc_number = f"{case.number or case.pk}/{doc_year} - NEXT"
+        doc_number_style = ParagraphStyle(
+            'DocNumber',
+            parent=styles['Normal'],
+            fontSize=12,
+            textColor=colors.black,
+            alignment=TA_CENTER,
+            backColor=colors.lightgrey,
+            borderPadding=8,
+            spaceAfter=15,
+        )
+        elements.append(Paragraph(doc_number, doc_number_style))
+        elements.append(Spacer(1, 0.5*cm))
+        
+        # Informações do processo
+        if case.request_procedures:
+            elements.append(Paragraph(f"<b>INQUÉRITO POLICIAL N°:</b> {case.request_procedures}", normal_style))
+        
+        if case.extraction_request and case.extraction_request.request_procedures:
+            elements.append(Paragraph(f"<b>PROCESSO JUDICIAL Nº:</b> {case.extraction_request.request_procedures}", normal_style))
+        
+        elements.append(Spacer(1, 0.3*cm))
+        
+        # Duas colunas
+        # Coluna esquerda
+        left_data = []
+        left_data.append([Paragraph("<b>Origem:</b>", bold_style), 
+                         Paragraph(case.requester_agency_unit.name if case.requester_agency_unit else "-", normal_style)])
+        
+        if case.extraction_request and case.extraction_request.request_procedures:
+            left_data.append([Paragraph("<b>Ofício nº:</b>", bold_style), 
+                             Paragraph(case.extraction_request.request_procedures, normal_style)])
+        
+        solicitante_text = ""
+        if case.requester_authority_name:
+            solicitante_text = case.requester_authority_name
+            if case.requester_authority_position:
+                solicitante_text += f"<br/>{case.requester_authority_position.name}"
+        else:
+            solicitante_text = "-"
+        
+        left_data.append([Paragraph("<b>Solicitante:</b>", bold_style), 
+                         Paragraph(solicitante_text, normal_style)])
+        
+        # Coluna direita
+        right_data = []
+        docs_text = "Ofício;<br/>"
+        if procedures:
+            for procedure in procedures:
+                if procedure.procedure_category:
+                    docs_text += f"{procedure.procedure_category.name}"
+                    if procedure.number:
+                        docs_text += f" - {procedure.number}"
+                    docs_text += ";<br/>"
+        docs_text += "Termo de Autorização;<br/>Auto de Apresentação e Apreensão;<br/>Formulário de Entrega de Aparelho."
+        
+        right_data.append([Paragraph("<b>Documentos em anexo:</b>", bold_style), 
+                          Paragraph(docs_text, normal_style)])
+        
+        right_data.append([Spacer(1, 0.2*cm), Spacer(1, 0.2*cm)])
+        
+        devices_text = "<b>APARELHOS:</b><br/>"
+        for idx, device in enumerate(devices, 1):
+            device_name = ""
+            if device.device_model:
+                device_name = f"{device.device_model.brand.name.upper()} {device.device_model.name.upper()}"
+            else:
+                device_name = "DISPOSITIVO"
+            
+            devices_text += f"{idx}. {device_name}<br/>"
+            
+            imeis = []
+            if device.imei_01:
+                imeis.append(f"({device.imei_01})")
+            if device.imei_02:
+                imeis.append(f"({device.imei_02})")
+            if device.imei_03:
+                imeis.append(f"({device.imei_03})")
+            if device.imei_04:
+                imeis.append(f"({device.imei_04})")
+            if device.imei_05:
+                imeis.append(f"({device.imei_05})")
+            
+            if imeis:
+                devices_text += "<br/>".join(imeis) + "<br/>"
+            devices_text += "<br/>"
+        
+        if not devices:
+            devices_text += "Nenhum dispositivo cadastrado."
+        
+        right_data.append([Paragraph(devices_text, normal_style)])
+        
+        # Tabela de duas colunas - usando uma única tabela com 4 colunas
+        two_col_data = []
+        
+        # Linha 1: Origem e Documentos
+        two_col_data.append([
+            Paragraph("<b>Origem:</b>", bold_style),
+            Paragraph(case.requester_agency_unit.name if case.requester_agency_unit else "-", normal_style),
+            Paragraph("<b>Documentos em anexo:</b>", bold_style),
+            Paragraph("Ofício;", normal_style)
+        ])
+        
+        # Linha 2: Ofício e continuação dos documentos
+        oficio_text = "-"
+        if case.extraction_request and case.extraction_request.request_procedures:
+            oficio_text = case.extraction_request.request_procedures
+        
+        docs_list = []
+        if procedures:
+            for procedure in procedures:
+                if procedure.procedure_category:
+                    proc_text = procedure.procedure_category.name
+                    if procedure.number:
+                        proc_text += f" - {procedure.number}"
+                    docs_list.append(proc_text + ";")
+        
+        docs_text = "<br/>".join(docs_list) if docs_list else ""
+        if docs_text:
+            docs_text += "<br/>"
+        docs_text += "Termo de Autorização;<br/>Auto de Apresentação e Apreensão;<br/>Formulário de Entrega de Aparelho."
+        
+        two_col_data.append([
+            Paragraph("<b>Ofício nº:</b>", bold_style),
+            Paragraph(oficio_text, normal_style),
+            Spacer(1, 0.1*cm),
+            Paragraph(docs_text, normal_style)
+        ])
+        
+        # Linha 3: Solicitante e cabeçalho dos Aparelhos
+        solicitante_text = ""
+        if case.requester_authority_name:
+            solicitante_text = case.requester_authority_name
+            if case.requester_authority_position:
+                solicitante_text += f"<br/>{case.requester_authority_position.name}"
+        else:
+            solicitante_text = "-"
+        
+        two_col_data.append([
+            Paragraph("<b>Solicitante:</b>", bold_style),
+            Paragraph(solicitante_text, normal_style),
+            Spacer(1, 0.1*cm),
+            Spacer(1, 0.1*cm)
+        ])
+        
+        # Tabela de duas colunas com 4 colunas para dados do processo
+        two_col_table = Table(two_col_data, colWidths=[2.5*cm, 5.5*cm, 2.5*cm, 5.5*cm])
+        two_col_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 2),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 2),
+            ('TOPPADDING', (0, 0), (-1, -1), 2),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+        ]))
+        
+        elements.append(two_col_table)
+        elements.append(Spacer(1, 0.5*cm))
+        
+        # Tabela de aparelhos em 2 colunas
+        elements.append(Paragraph("<b>APARELHOS:</b>", bold_style))
+        elements.append(Spacer(1, 0.2*cm))
+        
+        if devices:
+            # Preparar dados dos aparelhos para tabela de 2 colunas
+            devices_table_data = []
+            # Dividir dispositivos em pares (2 colunas)
+            for i in range(0, len(devices), 2):
+                row = []
+                # Primeira coluna
+                device1 = devices[i]
+                device1_name = ""
+                if device1.device_model:
+                    device1_name = f"{device1.device_model.brand.name.upper()} {device1.device_model.name.upper()}"
+                else:
+                    device1_name = "DISPOSITIVO"
+                
+                device1_text = f"{i + 1}. {device1_name}"
+                imeis1 = []
+                if device1.imei_01:
+                    imeis1.append(f"({device1.imei_01})")
+                if device1.imei_02:
+                    imeis1.append(f"({device1.imei_02})")
+                if device1.imei_03:
+                    imeis1.append(f"({device1.imei_03})")
+                if device1.imei_04:
+                    imeis1.append(f"({device1.imei_04})")
+                if device1.imei_05:
+                    imeis1.append(f"({device1.imei_05})")
+                
+                if imeis1:
+                    device1_text += "<br/>" + "<br/>".join(imeis1)
+                
+                row.append(Paragraph(device1_text, normal_style))
+                
+                # Segunda coluna (se houver segundo dispositivo)
+                if i + 1 < len(devices):
+                    device2 = devices[i + 1]
+                    device2_name = ""
+                    if device2.device_model:
+                        device2_name = f"{device2.device_model.brand.name.upper()} {device2.device_model.name.upper()}"
+                    else:
+                        device2_name = "DISPOSITIVO"
+                    
+                    device2_text = f"{i + 2}. {device2_name}"
+                    imeis2 = []
+                    if device2.imei_01:
+                        imeis2.append(f"({device2.imei_01})")
+                    if device2.imei_02:
+                        imeis2.append(f"({device2.imei_02})")
+                    if device2.imei_03:
+                        imeis2.append(f"({device2.imei_03})")
+                    if device2.imei_04:
+                        imeis2.append(f"({device2.imei_04})")
+                    if device2.imei_05:
+                        imeis2.append(f"({device2.imei_05})")
+                    
+                    if imeis2:
+                        device2_text += "<br/>" + "<br/>".join(imeis2)
+                    
+                    row.append(Paragraph(device2_text, normal_style))
+                else:
+                    # Se não houver segundo dispositivo, deixa vazio
+                    row.append(Spacer(1, 0.1*cm))
+                
+                devices_table_data.append(row)
+            
+            # Criar tabela de 2 colunas para aparelhos
+            devices_table = Table(devices_table_data, colWidths=[8*cm, 8*cm])
+            devices_table.setStyle(TableStyle([
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('LEFTPADDING', (0, 0), (-1, -1), 5),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+                ('TOPPADDING', (0, 0), (-1, -1), 3),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ]))
+            
+            elements.append(devices_table)
+        else:
+            elements.append(Paragraph("Nenhum dispositivo cadastrado.", normal_style))
+        elements.append(Spacer(1, 0.5*cm))
+        
+        # Assunto
+        elements.append(Paragraph("<b>Assunto:</b>", bold_style))
+        elements.append(Paragraph("Extração de dados", normal_style))
+        elements.append(Spacer(1, 0.5*cm))
+        
+        # Tabela de tramitações
+        tramitacoes_data = [
+            ['DE', 'PARA', 'DATA', 'RESPONSÁVEL PELO TRAMITE']
+        ]
+        
+        for tramitacao in tramitacoes:
+            tramitacoes_data.append([
+                tramitacao['de'],
+                tramitacao['para'],
+                tramitacao['data'],
+                tramitacao['responsavel']
+            ])
+        
+        if not tramitacoes:
+            tramitacoes_data.append(['', '', '', 'Nenhuma tramitação registrada.'])
+        
+        tramitacoes_table = Table(tramitacoes_data, colWidths=[4*cm, 4*cm, 3*cm, 5*cm])
+        tramitacoes_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ]))
+        
+        elements.append(Paragraph("<b>TRAMITAÇÕES DO PROCESSO</b>", bold_style))
+        elements.append(Spacer(1, 0.2*cm))
+        elements.append(tramitacoes_table)
+        
+        # Rodapé - usando configurações de relatórios se disponível
+        if reports_settings:
+            elements.append(Spacer(1, 1*cm))
+            footer_style = ParagraphStyle(
+                'CustomFooter',
+                parent=styles['Normal'],
+                fontSize=9,
+                textColor=colors.black,
+                alignment=TA_CENTER,
+                spaceAfter=3,
+            )
+            if reports_settings.report_cover_footer_line_1:
+                elements.append(Paragraph(reports_settings.report_cover_footer_line_1, footer_style))
+            if reports_settings.report_cover_footer_line_2:
+                elements.append(Paragraph(reports_settings.report_cover_footer_line_2, footer_style))
+        
+        # Gera o PDF
+        try:
+            doc.build(elements)
+            pdf = buffer.getvalue()
+            buffer.close()
+            
+            # Retorna o PDF como resposta HTTP
+            response = HttpResponse(pdf, content_type='application/pdf')
+            filename = f'capa_processo_{case.number or case.pk}.pdf'
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+        except Exception as e:
+            messages.error(
+                request,
+                f'Erro ao gerar o PDF da capa: {str(e)}'
+            )
+            return redirect('cases:detail', pk=case.pk)

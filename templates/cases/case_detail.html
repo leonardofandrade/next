@@ -29,6 +29,11 @@
                                 </button>
                             {% endif %}
                         {% endif %}
+                    {% else %}
+                        <a href="{% url 'cases:cover_pdf' case.pk %}" class="btn btn-info" target="_blank">
+                            <i class="fas fa-file-pdf me-2"></i>
+                            Gerar Capa PDF
+                        </a>
                     {% endif %}
                     {% if case.assigned_to == request.user %}
                         <button type="button" 

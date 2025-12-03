@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capa do Processo - {{ case.number|default:case.pk }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #000;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .header-logo {
+            font-weight: bold;
+            font-size: 12pt;
+            margin-bottom: 5px;
+        }
+        
+        .header-title {
+            font-size: 10pt;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .header-subtitle {
+            font-size: 9pt;
+            margin-bottom: 15px;
+        }
+        
+        .document-number {
+            background-color: #d3d3d3;
+            padding: 8px 15px;
+            font-weight: bold;
+            font-size: 12pt;
+            text-align: center;
+            margin: 15px 0;
+            border: 1px solid #999;
+        }
+        
+        .info-section {
+            margin-bottom: 15px;
+        }
+        
+        .info-row {
+            margin-bottom: 8px;
+            clear: both;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            width: 120px;
+            display: inline-block;
+            vertical-align: top;
+        }
+        
+        .info-value {
+            display: inline-block;
+            vertical-align: top;
+        }
+        
+        .two-columns {
+            margin-bottom: 15px;
+        }
+        
+        .column {
+            width: 48%;
+            display: inline-block;
+            vertical-align: top;
+            margin-right: 2%;
+        }
+        
+        .column:last-child {
+            margin-right: 0;
+        }
+        
+        .devices-list {
+            margin-top: 8px;
+        }
+        
+        .device-item {
+            margin-bottom: 8px;
+            padding-left: 20px;
+        }
+        
+        .device-item strong {
+            display: block;
+            margin-bottom: 3px;
+        }
+        
+        .imei-list {
+            padding-left: 20px;
+            font-size: 10pt;
+        }
+        
+        .subject {
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .subject-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .tramitacoes-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 10pt;
+        }
+        
+        .tramitacoes-table th {
+            background-color: #e0e0e0;
+            border: 1px solid #999;
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        .tramitacoes-table td {
+            border: 1px solid #999;
+            padding: 8px;
+        }
+        
+        .procedures-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .procedures-list li {
+            margin-bottom: 3px;
+        }
+        
+        .procedures-list li:before {
+            content: "• ";
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-logo">S.S.P.D.S. CEARÁ</div>
+        <div class="header-title">SECRETARIA DA SEGURANÇA PÚBLICA E DEFESA SOCIAL</div>
+        <div class="header-title">COORDENADORIA DE INTELIGÊNCIA</div>
+        <div class="header-subtitle">Célula de Inteligência de Sinais - Núcleo de Extrações</div>
+    </div>
+    
+    <div class="document-number">
+        {{ case.number|default:case.pk }}/{% if case.year %}{{ case.year }}{% else %}{{ "now"|date:"Y" }}{% endif %} - NEXT
+    </div>
+    
+    <div class="info-section">
+        <div class="info-row">
+            <span class="info-label">INQUÉRITO POLICIAL N°:</span>
+            <span class="info-value">{{ case.request_procedures|default:"-" }}</span>
+        </div>
+        {% if case.extraction_request %}
+        <div class="info-row">
+            <span class="info-label">PROCESSO JUDICIAL Nº:</span>
+            <span class="info-value">{{ case.extraction_request.request_procedures|default:"-" }}</span>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="two-columns">
+        <div class="column">
+            <div class="info-section">
+                <div class="info-row">
+                    <span class="info-label">Origem:</span>
+                    <span class="info-value">{{ case.requester_agency_unit.name|default:"-" }}</span>
+                </div>
+                {% if case.extraction_request %}
+                <div class="info-row">
+                    <span class="info-label">Ofício nº:</span>
+                    <span class="info-value">{{ case.extraction_request.request_procedures|default:"-" }}</span>
+                </div>
+                {% endif %}
+                <div class="info-row">
+                    <span class="info-label">Solicitante:</span>
+                    <span class="info-value">
+                        {% if case.requester_authority_name %}
+                            {{ case.requester_authority_name }}
+                            {% if case.requester_authority_position %}
+                                <br>{{ case.requester_authority_position.name }}
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="column">
+            <div class="info-section">
+                <div class="info-label">Documentos em anexo:</div>
+                <ul class="procedures-list">
+                    <li>Ofício;</li>
+                    {% if procedures %}
+                        {% for procedure in procedures %}
+                            {% if procedure.procedure_category %}
+                                <li>{{ procedure.procedure_category.name }}{% if procedure.number %} - {{ procedure.number }}{% endif %};</li>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    <li>Termo de Autorização;</li>
+                    <li>Auto de Apresentação e Apreensão;</li>
+                    <li>Formulário de Entrega de Aparelho.</li>
+                </ul>
+                
+                <div class="info-label" style="margin-top: 15px;">APARELHOS:</div>
+                <div class="devices-list">
+                    {% for device in devices %}
+                    <div class="device-item">
+                        <strong>{{ forloop.counter }}. 
+                            {% if device.device_model %}
+                                {{ device.device_model.brand.name|upper }} {{ device.device_model.name|upper }}
+                            {% else %}
+                                DISPOSITIVO
+                            {% endif %}
+                        </strong>
+                        {% if device.imei_01 or device.imei_02 %}
+                        <div class="imei-list">
+                            {% if device.imei_01 %}({{ device.imei_01 }}){% endif %}
+                            {% if device.imei_02 %}<br>({{ device.imei_02 }}){% endif %}
+                            {% if device.imei_03 %}<br>({{ device.imei_03 }}){% endif %}
+                            {% if device.imei_04 %}<br>({{ device.imei_04 }}){% endif %}
+                            {% if device.imei_05 %}<br>({{ device.imei_05 }}){% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="device-item">Nenhum dispositivo cadastrado.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="subject">
+        <div class="subject-label">Assunto:</div>
+        <div>Extração de dados</div>
+    </div>
+    
+    <div class="info-section">
+        <div class="info-label" style="margin-bottom: 10px;">TRAMITAÇÕES DO PROCESSO</div>
+        <table class="tramitacoes-table">
+            <thead>
+                <tr>
+                    <th>DE</th>
+                    <th>PARA</th>
+                    <th>DATA</th>
+                    <th>RESPONSÁVEL PELO TRAMITE</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tramitacao in tramitacoes %}
+                <tr>
+                    <td>{{ tramitacao.de }}</td>
+                    <td>{{ tramitacao.para }}</td>
+                    <td>{{ tramitacao.data }}</td>
+                    <td>{{ tramitacao.responsavel }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center;">Nenhuma tramitação registrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+

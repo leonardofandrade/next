@@ -10,6 +10,7 @@ urlpatterns = [
     path('<int:pk>/update/', views.CaseUpdateView.as_view(), name='update'),
     path('<int:pk>/delete/', views.CaseDeleteView.as_view(), name='delete'),
     path('<int:pk>/complete-registration/', views.CaseCompleteRegistrationView.as_view(), name='complete_registration'),
+    path('<int:pk>/cover-pdf/', views.CaseCoverPDFView.as_view(), name='cover_pdf'),
     path('<int:pk>/assign-to-me/', views.CaseAssignToMeView.as_view(), name='assign_to_me'),
     path('<int:pk>/unassign-from-me/', views.CaseUnassignFromMeView.as_view(), name='unassign_from_me'),
     path('<int:pk>/devices/', views.CaseDevicesView.as_view(), name='devices'),

@@ -1,41 +1,34 @@
 {% extends '_global/layout/base.html' %}
 {% load static %}
 
+{% block page_title %}
+<i class="fas {{ page_icon }} text-primary me-2"></i>
+{{ page_title }}
+{% endblock page_title %}
+
+{% block page_description %}
+{% if action == 'create' %}
+    Preencha os dados para criar uma nova solicitação
+{% else %}
+    Atualize os dados da solicitação
+{% endif %}
+{% endblock page_description %}
+
+{% block page_actions %}
+<a href="{% url 'requisitions:list' %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left me-2"></i>
+    Voltar
+</a>
+{% if action == 'update' and object.extraction_unit %}
+<button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#emailModal" onclick="loadEmailContent({{ object.pk }})">
+    <i class="fas fa-envelope me-2"></i>
+    Gerar Email de Resposta
+</button>
+{% endif %}
+{% endblock page_actions %}
+
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 mb-2">
-                        <i class="fas {{ page_icon }} text-primary me-2"></i>
-                        {{ page_title }}
-                    </h1>
-                    <p class="text-muted mb-0">
-                        {% if action == 'create' %}
-                            Preencha os dados para criar uma nova solicitação
-                        {% else %}
-                            Atualize os dados da solicitação
-                        {% endif %}
-                    </p>
-                </div>
-                <div class="btn-group" role="group">
-                    <a href="{% url 'requisitions:list' %}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>
-                        Voltar
-                    </a>
-                    {% if action == 'update' and object.extraction_unit %}
-                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#emailModal" onclick="loadEmailContent({{ object.pk }})">
-                        <i class="fas fa-envelope me-2"></i>
-                        Gerar Email de Resposta
-                    </button>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Form -->
     <div class="row">
         <div class="col-12">

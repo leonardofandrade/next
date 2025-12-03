@@ -3,20 +3,21 @@
 
 {% block title %}{{ title }} - {{ block.super }}{% endblock %}
 
+{% block page_title %}
+<i class="fas fa-shield-alt me-2"></i>{{ title }}
+{% endblock page_title %}
+
+{% block page_description %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'core:extraction_agency_list' %}">Agências</a></li>
+        <li class="breadcrumb-item active">{{ title }}</li>
+    </ol>
+</nav>
+{% endblock page_description %}
+
 {% block content %}
 <div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'core:extraction_agency_list' %}">Agências</a></li>
-                    <li class="breadcrumb-item active">{{ title }}</li>
-                </ol>
-            </nav>
-            <h2><i class="fas fa-shield-alt me-2"></i>{{ title }}</h2>
-        </div>
-    </div>
-
     <div class="row">
         <div class="col-lg-8">
             <div class="card">

@@ -1,46 +1,39 @@
 {% extends '_global/layout/base.html' %}
 {% load static %}
 
+{% block page_title %}
+<i class="fas {{ page_icon }} text-primary me-2"></i>
+{{ page_title }}
+{% endblock page_title %}
+
+{% block page_description %}
+{% if view_type == 'not_received' %}
+    Solicitações pendentes ou aguardando material (não recebidas)
+{% else %}
+    Gerencie todas as solicitações de extração
+{% endif %}
+{% endblock page_description %}
+
+{% block page_actions %}
+{% if view_type == 'not_received' %}
+    <a href="{% url 'requisitions:list' %}" class="btn btn-outline-secondary me-2">
+        <i class="fas fa-list me-2"></i>
+        Todas
+    </a>
+{% else %}
+    <a href="{% url 'requisitions:not_received' %}" class="btn btn-outline-warning me-2">
+        <i class="fas fa-inbox me-2"></i>
+        Não Recebidas
+    </a>
+{% endif %}
+<a href="{% url 'requisitions:create' %}" class="btn btn-primary">
+    <i class="fas fa-plus me-2"></i>
+    Nova Solicitação
+</a>
+{% endblock page_actions %}
+
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 mb-2">
-                        <i class="fas {{ page_icon }} text-primary me-2"></i>
-                        {{ page_title }}
-                    </h1>
-                    <p class="text-muted mb-0">
-                        {% if view_type == 'not_received' %}
-                            Solicitações pendentes ou aguardando material (não recebidas)
-                        {% else %}
-                            Gerencie todas as solicitações de extração
-                        {% endif %}
-                    </p>
-                </div>
-                <div>
-                    {% if view_type == 'not_received' %}
-                        <a href="{% url 'requisitions:list' %}" class="btn btn-outline-secondary me-2">
-                            <i class="fas fa-list me-2"></i>
-                            Todas
-                        </a>
-                    {% else %}
-                        <a href="{% url 'requisitions:not_received' %}" class="btn btn-outline-warning me-2">
-                            <i class="fas fa-inbox me-2"></i>
-                            Não Recebidas
-                        </a>
-                    {% endif %}
-                    <a href="{% url 'requisitions:create' %}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>
-                        Nova Solicitação
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Filters -->
     <div class="card mb-4">
         <div class="card-header">

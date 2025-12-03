@@ -2,19 +2,18 @@
 
 {% block title %}Unidades Operacionais - {{ block.super }}{% endblock %}
 
+{% block page_title %}
+<i class="fas fa-home me-2"></i>Unidades Operacionais
+{% endblock page_title %}
+
+{% block page_actions %}
+<a href="{% url 'base_tables:agency_unit_create' %}" class="btn btn-primary">
+    <i class="fas fa-plus me-2"></i>Nova Unidade
+</a>
+{% endblock page_actions %}
+
 {% block content %}
 <div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col">
-            <div class="d-flex justify-content-between align-items-center">
-                <h2><i class="fas fa-home me-2"></i>Unidades Operacionais</h2>
-                <a href="{% url 'base_tables:agency_unit_create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>Nova Unidade
-                </a>
-            </div>
-        </div>
-    </div>
-
     <div class="row">
         <div class="col-12">
             <div class="card">

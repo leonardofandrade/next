@@ -1,35 +1,28 @@
 {% extends '_global/layout/base.html' %}
 {% load static %}
 
+{% block page_title %}
+<i class="fas {{ page_icon }} text-primary me-2"></i>
+{{ page_title }}
+{% endblock page_title %}
+
+{% block page_description %}
+{% if action == 'create' %}
+    Preencha os dados para criar um novo processo
+{% else %}
+    Atualize os dados do processo
+{% endif %}
+{% endblock page_description %}
+
+{% block page_actions %}
+<a href="{% url 'cases:list' %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left me-2"></i>
+    Voltar
+</a>
+{% endblock page_actions %}
+
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 mb-2">
-                        <i class="fas {{ page_icon }} text-primary me-2"></i>
-                        {{ page_title }}
-                    </h1>
-                    <p class="text-muted mb-0">
-                        {% if action == 'create' %}
-                            Preencha os dados para criar um novo processo
-                        {% else %}
-                            Atualize os dados do processo
-                        {% endif %}
-                    </p>
-                </div>
-                <div>
-                    <a href="{% url 'cases:list' %}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>
-                        Voltar
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Form -->
     <div class="row">
         <div class="col-12">

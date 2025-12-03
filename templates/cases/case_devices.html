@@ -1,31 +1,24 @@
 {% extends '_global/layout/base.html' %}
 {% load static %}
 
+{% block page_title %}
+<i class="fas {{ page_icon }} text-primary me-2"></i>
+{{ page_title }}
+{% endblock page_title %}
+
+{% block page_description %}
+Dispositivos do processo
+{% endblock page_description %}
+
+{% block page_actions %}
+<a href="{% url 'cases:detail' case.pk %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left me-2"></i>
+    Voltar
+</a>
+{% endblock page_actions %}
+
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 mb-2">
-                        <i class="fas {{ page_icon }} text-primary me-2"></i>
-                        {{ page_title }}
-                    </h1>
-                    <p class="text-muted mb-0">
-                        Dispositivos do processo
-                    </p>
-                </div>
-                <div>
-                    <a href="{% url 'cases:detail' case.pk %}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>
-                        Voltar
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="row">
         <!-- Informações do Processo -->
         <div class="col-12 mb-4">

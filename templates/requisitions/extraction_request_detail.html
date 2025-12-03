@@ -1,43 +1,38 @@
 {% extends '_global/layout/base.html' %}
 {% load static %}
 
+{% block page_title %}
+<i class="fas {{ page_icon }} text-primary me-2"></i>
+{{ page_title }}
+{% endblock page_title %}
+
+{% block page_description %}
+Detalhes da solicitação de extração
+{% endblock page_description %}
+
+{% block page_actions %}
+<a href="{% url 'requisitions:list' %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left me-2"></i>
+    Voltar
+</a>
+{% if extraction_request.extraction_unit %}
+<button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#emailModal" onclick="loadEmailContent({{ extraction_request.pk }})">
+    <i class="fas fa-envelope me-2"></i>
+    Gerar Email de Resposta
+</button>
+{% endif %}
+<a href="{% url 'requisitions:update' extraction_request.pk %}" class="btn btn-warning">
+    <i class="fas fa-edit me-2"></i>
+    Editar
+</a>
+<a href="{% url 'requisitions:delete' extraction_request.pk %}" class="btn btn-danger">
+    <i class="fas fa-trash me-2"></i>
+    Excluir
+</a>
+{% endblock page_actions %}
+
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 mb-2">
-                        <i class="fas {{ page_icon }} text-primary me-2"></i>
-                        {{ page_title }}
-                    </h1>
-                    <p class="text-muted mb-0">Detalhes da solicitação de extração</p>
-                </div>
-                <div class="btn-group" role="group">
-                    <a href="{% url 'requisitions:list' %}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>
-                        Voltar
-                    </a>
-                    {% if extraction_request.extraction_unit %}
-                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#emailModal" onclick="loadEmailContent({{ extraction_request.pk }})">
-                        <i class="fas fa-envelope me-2"></i>
-                        Gerar Email de Resposta
-                    </button>
-                    {% endif %}
-                    <a href="{% url 'requisitions:update' extraction_request.pk %}" class="btn btn-warning">
-                        <i class="fas fa-edit me-2"></i>
-                        Editar
-                    </a>
-                    <a href="{% url 'requisitions:delete' extraction_request.pk %}" class="btn btn-danger">
-                        <i class="fas fa-trash me-2"></i>
-                        Excluir
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="row">
         <div class="col-lg-8">
             <!-- Informações Principais -->

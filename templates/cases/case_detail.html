@@ -1,76 +1,69 @@
 {% extends '_global/layout/base.html' %}
 {% load static %}
 
+{% block page_title %}
+<i class="fas {{ page_icon }} text-primary me-2"></i>
+{{ page_title }}
+{% endblock page_title %}
+
+{% block page_actions %}
+{% if not case.registration_completed_at %}
+    {% if not case.assigned_to or case.assigned_to == request.user %}
+        {% if devices_count > 0 and procedures_count > 0 %}
+            <a href="{% url 'cases:complete_registration' case.pk %}" class="btn btn-success">
+                <i class="fas fa-check-circle me-2"></i>
+                Finalizar Cadastro
+            </a>
+        {% else %}
+            <button type="button" class="btn btn-success" disabled 
+                    title="{% if devices_count == 0 and procedures_count == 0 %}É necessário cadastrar pelo menos 1 dispositivo e 1 procedimento{% elif devices_count == 0 %}É necessário cadastrar pelo menos 1 dispositivo{% else %}É necessário cadastrar pelo menos 1 procedimento{% endif %}">
+                <i class="fas fa-check-circle me-2"></i>
+                Finalizar Cadastro
+            </button>
+        {% endif %}
+    {% endif %}
+{% else %}
+    <a href="{% url 'cases:cover_pdf' case.pk %}" class="btn btn-info" target="_blank">
+        <i class="fas fa-file-pdf me-2"></i>
+        Gerar Capa PDF
+    </a>
+{% endif %}
+{% if case.assigned_to == request.user %}
+    <button type="button" 
+            class="btn btn-warning" 
+            data-bs-toggle="modal" 
+            data-bs-target="#unassignModal">
+        <i class="fas fa-user-times me-2"></i>
+        Desatribuir-me
+    </button>
+{% elif not case.assigned_to %}
+    <button type="button" 
+            class="btn btn-success" 
+            data-bs-toggle="modal" 
+            data-bs-target="#assignModal">
+        <i class="fas fa-user-check me-2"></i>
+        Atribuir-me
+    </button>
+{% endif %}
+{% if not case.assigned_to or case.assigned_to == request.user %}
+<a href="{% url 'cases:update' case.pk %}" class="btn btn-primary">
+    <i class="fas fa-edit me-2"></i>
+    Editar
+</a>
+{% else %}
+<button class="btn btn-primary" disabled title="Apenas o responsável pode editar este processo">
+    <i class="fas fa-edit me-2"></i>
+    Editar
+</button>
+{% endif %}
+<a href="{% url 'cases:list' %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left me-2"></i>
+    Voltar
+</a>
+{% endblock page_actions %}
+
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 mb-2">
-                        <i class="fas {{ page_icon }} text-primary me-2"></i>
-                        {{ page_title }}
-                    </h1>
-                </div>
-                <div>
-                    {% if not case.registration_completed_at %}
-                        {% if not case.assigned_to or case.assigned_to == request.user %}
-                            {% if devices_count > 0 and procedures_count > 0 %}
-                                <a href="{% url 'cases:complete_registration' case.pk %}" class="btn btn-success">
-                                    <i class="fas fa-check-circle me-2"></i>
-                                    Finalizar Cadastro
-                                </a>
-                            {% else %}
-                                <button type="button" class="btn btn-success" disabled 
-                                        title="{% if devices_count == 0 and procedures_count == 0 %}É necessário cadastrar pelo menos 1 dispositivo e 1 procedimento{% elif devices_count == 0 %}É necessário cadastrar pelo menos 1 dispositivo{% else %}É necessário cadastrar pelo menos 1 procedimento{% endif %}">
-                                    <i class="fas fa-check-circle me-2"></i>
-                                    Finalizar Cadastro
-                                </button>
-                            {% endif %}
-                        {% endif %}
-                    {% else %}
-                        <a href="{% url 'cases:cover_pdf' case.pk %}" class="btn btn-info" target="_blank">
-                            <i class="fas fa-file-pdf me-2"></i>
-                            Gerar Capa PDF
-                        </a>
-                    {% endif %}
-                    {% if case.assigned_to == request.user %}
-                        <button type="button" 
-                                class="btn btn-warning" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#unassignModal">
-                            <i class="fas fa-user-times me-2"></i>
-                            Desatribuir-me
-                        </button>
-                    {% elif not case.assigned_to %}
-                        <button type="button" 
-                                class="btn btn-success" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#assignModal">
-                            <i class="fas fa-user-check me-2"></i>
-                            Atribuir-me
-                        </button>
-                    {% endif %}
-                    {% if not case.assigned_to or case.assigned_to == request.user %}
-                    <a href="{% url 'cases:update' case.pk %}" class="btn btn-primary">
-                        <i class="fas fa-edit me-2"></i>
-                        Editar
-                    </a>
-                    {% else %}
-                    <button class="btn btn-primary" disabled title="Apenas o responsável pode editar este processo">
-                        <i class="fas fa-edit me-2"></i>
-                        Editar
-                    </button>
-                    {% endif %}
-                    <a href="{% url 'cases:list' %}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>
-                        Voltar
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <div class="row">
         <!-- Alerta de Cadastro Incompleto -->

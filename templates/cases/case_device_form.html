@@ -269,7 +269,7 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <button type="submit" class="btn btn-primary">
+                                <button type="submit" class="btn btn-primary" id="submit-btn">
                                     <i class="fas fa-save me-2"></i>
                                     {% if action == 'create' %}
                                         Adicionar Dispositivo
@@ -277,6 +277,12 @@
                                         Salvar Alterações
                                     {% endif %}
                                 </button>
+                                {% if action == 'create' %}
+                                <button type="submit" name="save_and_add_another" value="1" class="btn btn-success ms-2" id="submit-and-add-btn">
+                                    <i class="fas fa-plus-circle me-2"></i>
+                                    Criar e Adicionar outro
+                                </button>
+                                {% endif %}
                             </div>
                             <a href="{% url 'cases:devices' case.pk %}" class="btn btn-secondary">
                                 <i class="fas fa-times me-2"></i>
@@ -337,7 +343,41 @@ $(document).ready(function() {
         const field = document.getElementById(fieldId);
         
         if (checkbox && field) {
-            const input = field.querySelector('input, textarea');
+            // Tenta encontrar o input/textarea de diferentes formas, excluindo checkboxes e hidden
+            // Busca primeiro diretamente na div
+            let input = field.querySelector('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea, select');
+            
+            // Se não encontrou, busca em toda a estrutura incluindo elementos filhos
+            if (!input) {
+                const allInputs = field.querySelectorAll('input, textarea, select');
+                for (let i = 0; i < allInputs.length; i++) {
+                    const elem = allInputs[i];
+                    const type = elem.type ? elem.type.toLowerCase() : '';
+                    if (type !== 'checkbox' && type !== 'radio' && type !== 'hidden') {
+                        input = elem;
+                        break;
+                    }
+                }
+            }
+            
+            // Se ainda não encontrou, tenta buscar pelo primeiro elemento que não seja o checkbox
+            if (!input) {
+                const allElements = field.querySelectorAll('*');
+                for (let i = 0; i < allElements.length; i++) {
+                    const elem = allElements[i];
+                    if ((elem.tagName === 'INPUT' || elem.tagName === 'TEXTAREA' || elem.tagName === 'SELECT') && 
+                        elem.id !== checkboxId) {
+                        const type = elem.type ? elem.type.toLowerCase() : '';
+                        if (type !== 'checkbox' && type !== 'radio' && type !== 'hidden') {
+                            input = elem;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Armazena o estado anterior para detectar mudanças
+            let previousState = checkbox.checked;
             
             function updateFieldState() {
                 const isChecked = checkbox.checked;
@@ -349,10 +389,28 @@ $(document).ready(function() {
                     if (isChecked) {
                         input.classList.remove('bg-light');
                         field.style.opacity = '1';
+                        
+                        // Define o foco no campo quando ele é habilitado
+                        // Apenas se o estado mudou de desabilitado para habilitado
+                        if (!previousState && isChecked) {
+                            // Usa setTimeout para garantir que o campo esteja totalmente habilitado
+                            setTimeout(function() {
+                                if (input && !input.disabled) {
+                                    try {
+                                        input.focus();
+                                    } catch(e) {
+                                        // Ignora erros de foco (pode acontecer em alguns casos)
+                                    }
+                                }
+                            }, 50);
+                        }
                     } else {
                         input.classList.add('bg-light');
                         field.style.opacity = '0.6';
                     }
+                    
+                    // Atualiza o estado anterior
+                    previousState = isChecked;
                 }
             }
             
@@ -364,13 +422,99 @@ $(document).ready(function() {
         }
     }
     
+    // Função para habilitar/desabilitar múltiplos campos condicionais
+    // Se invertLogic for true, quando o checkbox estiver marcado, os campos serão desabilitados
+    function toggleMultipleFields(checkboxId, fieldIds, invertLogic) {
+        const checkbox = document.getElementById(checkboxId);
+        invertLogic = invertLogic || false;
+        
+        if (checkbox && Array.isArray(fieldIds) && fieldIds.length > 0) {
+            const inputs = [];
+            
+            // Busca todos os campos
+            fieldIds.forEach(function(fieldId) {
+                const input = document.getElementById(fieldId);
+                if (input) {
+                    inputs.push(input);
+                }
+            });
+            
+            if (inputs.length > 0) {
+                // Armazena o estado anterior para detectar mudanças
+                let previousState = checkbox.checked;
+                
+                function updateFieldsState() {
+                    const isChecked = checkbox.checked;
+                    // Se invertLogic for true, inverte a lógica
+                    const shouldEnable = invertLogic ? !isChecked : isChecked;
+                    
+                    inputs.forEach(function(input) {
+                        input.disabled = !shouldEnable;
+                        
+                        // Adiciona classe visual para indicar estado desabilitado
+                        if (shouldEnable) {
+                            input.classList.remove('bg-light');
+                            input.style.opacity = '1';
+                        } else {
+                            input.classList.add('bg-light');
+                            input.style.opacity = '0.6';
+                        }
+                    });
+                    
+                    // Define o foco no primeiro campo quando são habilitados
+                    // Apenas se o estado mudou de desabilitado para habilitado
+                    if (previousState !== isChecked && shouldEnable && inputs.length > 0) {
+                        setTimeout(function() {
+                            if (inputs[0] && !inputs[0].disabled) {
+                                try {
+                                    inputs[0].focus();
+                                } catch(e) {
+                                    // Ignora erros de foco
+                                }
+                            }
+                        }, 50);
+                    }
+                    
+                    // Atualiza o estado anterior
+                    previousState = isChecked;
+                }
+                
+                // Atualiza na inicialização
+                updateFieldsState();
+                
+                // Adiciona listener para mudanças
+                checkbox.addEventListener('change', updateFieldsState);
+            }
+        }
+    }
+    
     // Configurar campos condicionais
     toggleField('{{ form.is_sealed.id_for_label }}', 'security_seal_field');
+    toggleField('{{ form.is_password_known.id_for_label }}', 'password_field');
     toggleField('{{ form.is_damaged.id_for_label }}', 'damage_description_field');
     toggleField('{{ form.has_fluids.id_for_label }}', 'fluids_description_field');
     toggleField('{{ form.has_sim_card.id_for_label }}', 'sim_card_info_field');
     toggleField('{{ form.has_memory_card.id_for_label }}', 'memory_card_info_field');
     toggleField('{{ form.has_other_accessories.id_for_label }}', 'other_accessories_info_field');
+    
+    // Configurar campos de IMEI (múltiplos campos controlados por um checkbox)
+    // Quando "IMEI desconhecido" está marcado, os campos são desabilitados (lógica invertida)
+    toggleMultipleFields('{{ form.is_imei_unknown.id_for_label }}', [
+        '{{ form.imei_01.id_for_label }}',
+        '{{ form.imei_02.id_for_label }}',
+        '{{ form.imei_03.id_for_label }}'
+    ], true);
+    
+    // Debug: verificar se o botão está sendo renderizado
+    const submitAndAddBtn = document.getElementById('submit-and-add-btn');
+    if (submitAndAddBtn) {
+        console.log('Botão "Criar e Adicionar outro" encontrado');
+        submitAndAddBtn.addEventListener('click', function(e) {
+            console.log('Botão clicado, valor:', this.value, 'name:', this.name);
+        });
+    } else {
+        console.log('Botão "Criar e Adicionar outro" NÃO encontrado');
+    }
 });
 </script>
 {% endblock %}

@@ -646,11 +646,20 @@ class CaseDeviceCreateView(LoginRequiredMixin, CreateView):
         device.created_by = self.request.user
         device.save()
         
-        messages.success(
-            self.request,
-            'Dispositivo adicionado com sucesso!'
-        )
-        return redirect('cases:devices', pk=self.case.pk)
+        # Verifica se deve criar e adicionar outro
+        save_and_add_another = self.request.POST.get('save_and_add_another')
+        if save_and_add_another == '1':
+            messages.success(
+                self.request,
+                'Dispositivo adicionado com sucesso! Você pode adicionar outro dispositivo abaixo.'
+            )
+            return redirect('cases:device_create', case_pk=self.case.pk)
+        else:
+            messages.success(
+                self.request,
+                'Dispositivo adicionado com sucesso!'
+            )
+            return redirect('cases:devices', pk=self.case.pk)
     
     def get_context_data(self, **kwargs):
         """

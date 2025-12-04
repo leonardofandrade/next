@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extrato de Distribuição - Impressão</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm 0.5cm;
+        }
+        
+        body {
+            font-size: 12px;
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container-fluid {
+            padding-left: 0;
+            padding-right: 0;
+        }
+        
+        /* Capa */
+        .cover-page {
+            page-break-after: always;
+            min-height: 100vh;
+        }
+        
+        .chart-container {
+            height: 300px;
+        }
+        
+        .chart-container canvas {
+            max-height: 350px;
+            height: 350px;
+        }
+        
+        /* Lista de solicitações */
+        .requests-section {
+            page-break-before: always;
+        }
+        
+        .requests-table {
+            font-size: 10px;
+        }
+        
+        .requests-table th {
+            font-size: 9px;
+        }
+        
+        /* Tabela resumo mais compacta */
+        .summary-table {
+            font-size: 11px;
+        }
+        
+        .summary-table th,
+        .summary-table td {
+            padding: 0.25rem 0.5rem !important;
+            vertical-align: middle !important;
+        }
+        
+        .summary-table thead th {
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .summary-table tbody td {
+            font-size: 11px;
+        }
+        
+        .summary-table .table-dark td {
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-badge {
+            font-size: 8px;
+            text-transform: uppercase;
+        }
+        
+        /* Header específico para impressão */
+        .report-header {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            flex-wrap: nowrap !important;
+        }
+        
+        .report-header .logo-start,
+        .report-header .logo-end {
+            flex: 0 0 20% !important;
+            max-width: 20% !important;
+        }
+        
+        .report-header .agency-info {
+            flex: 0 0 60% !important;
+            max-width: 60% !important;
+        }
+        
+        /* Impressão */
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                margin: 0;
+                padding: 0;
+            }
+            
+            .container-fluid {
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+                margin: 0 !important;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .report-header {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-wrap: nowrap !important;
+            }
+            
+            .row {
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+            }
+            
+            .col-md-6 {
+                padding-left: 0.5rem !important;
+                padding-right: 0.5rem !important;
+            }
+        }
+        
+        /* Botão de impressão (não aparece na impressão) */
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <button class="btn btn-primary print-button no-print" onclick="window.print()">
+        <i class="fas fa-print me-1"></i>Imprimir
+    </button>
+    
+    <div class="container-fluid">
+        <!-- Capa -->
+        <div class="cover-page text-center py-2">
+
+            <!-- Report Header -->
+            <div class="report-header mb-4">
+                <!-- Logo Início -->
+                <div class="logo-start text-center">
+                    {% if report_settings and report_settings.get_default_logo_base64 %}
+                        <img src="data:image/png;base64,{{ report_settings.get_default_logo_base64 }}" 
+                            alt="Logo Principal" 
+                            class="img-fluid"
+                            style="max-height: 80px; max-width: 150px;">
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center border border-dashed rounded p-2 text-muted" style="height: 80px;">
+                            <small>Logo principal não configurado</small>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Dados da Agência (Centro) -->
+                <div class="agency-info text-center">
+                    {% if report_settings and report_settings.report_cover_header_line_1 %}
+                        <!-- Usar linhas do report_settings se estiverem preenchidas -->
+                        {% if report_settings.report_cover_header_line_1 %}
+                            <h2 class="fw-bold text-dark mb-1">{{ report_settings.report_cover_header_line_1 }}</h2>
+                        {% endif %}
+                        {% if report_settings.report_cover_header_line_2 %}
+                            <h5 class="text-muted mb-2">{{ report_settings.report_cover_header_line_2 }}</h5>
+                        {% endif %}
+                        {% if report_settings.report_cover_header_line_3 %}
+                            <h5 class="text-muted mb-2">{{ report_settings.report_cover_header_line_3 }}</h5>
+                        {% endif %}
+                    {% else %}
+                        <!-- Usar informações da agência central se não houver linhas configuradas -->
+                        <h2 class="fw-bold text-dark mb-1">{{ central_agency.name|default:"Agência Central" }}</h2>
+                        {% if central_agency.acronym %}
+                            <h5 class="text-muted mb-2">({{ central_agency.acronym }})</h5>
+                        {% endif %}
+                    {% endif %}
+                    
+                    <h4 class="text-primary mb-0">SOLICITAÇÕES DE EXTRAÇÃO
+
+                        <p class="mb-0">
+                            {% if report_data.filters_applied.year %}
+                            Ano: {{ report_data.filters_applied.year }}
+                            {% endif %}
+                            {% if report_data.filters_applied.date_range %}
+                            Período: {{ report_data.filters_applied.date_range.start_date|date:"d/m/Y" }} - {{ report_data.filters_applied.date_range.end_date|date:"d/m/Y" }}
+                            {% endif %}
+                        </p>
+                    </h4>
+                </div>
+                
+                <!-- Logo Final -->
+                <div class="logo-end text-center">
+                    {% if report_settings and report_settings.get_secondary_logo_base64 %}
+                        <img src="data:image/png;base64,{{ report_settings.get_secondary_logo_base64 }}" 
+                            alt="Logo Secundário" 
+                            class="img-fluid"
+                            style="max-height: 80px; max-width: 150px;">
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center border border-dashed rounded p-2 text-muted" style="height: 80px;">
+                            <small>Logo secundário não configurado</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quadro Resumo por Unidades de Extração -->
+            <div class="row">
+                <div class="col-md-6">
+                    <h4 class="text-center text-dark mb-2">RESUMO POR UNIDADES DE EXTRAÇÃO
+                    </h4>
+                    <div class="table-responsive">
+                        <table class="table table-md table-bordered table-striped summary-table">
+                            <thead class="table table-dark">                                
+                                <tr>
+                                    <th class="text-start">UNIDADE</th>
+                                    <th class="text-center">SOLICITAÇÕES</th>
+                                    <th class="text-center">DISPOSITIVOS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for unit_data in report_data.summary_by_unit %}
+                                <tr>
+                                    <td class="text-start">
+                                        <strong>{% if unit_data.unit.acronym %}{{ unit_data.unit.acronym }}{% else %}{{ unit_data.unit.name }}{% endif %}</strong>
+                                        
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="fw-bold">{{ unit_data.total_requests }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="fw-bold">{{ unit_data.total_devices }}</span>
+                                    </td>
+                                    
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">Nenhuma unidade de extração encontrada.</td>
+                                </tr>
+                                {% endfor %}
+                                <!-- Linha de Totais -->
+                                {% if report_data.summary_by_unit %}
+                                <tr class="table-dark fw-bold fs-5">
+                                    <td>TOTAIS</td>
+                                    <td class="text-center">
+                                        <span class="">{{ report_data.statistics.total_requests|default:0 }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="">{{ report_data.statistics.total_devices|default:0 }}</span>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>                    
+                </div>
+                <div class="col-md-6">
+                    <h4 class="text-center text-dark mb-2">DISTRIBUIÇÕES POR APARELHO
+                        
+                    </h4>
+                    <div class="d-flex justify-content-center">
+                        <canvas id="deviceDistributionChart" width="500" height="350"></canvas>
+                    </div>                    
+                </div>
+            </div>
+            {% comment %}
+            <div class="row">
+                <div class="col-md-6 d-flex align-items-center justify-content-center">
+                    <div class="table-responsive">
+                        <table class="table table-md table-bordered table-striped summary-table">
+                            <thead class="table table-dark">
+                                
+                                <tr>
+                                    <th class="text-start">UNIDADE</th>
+                                    <th class="text-center">SOLICITAÇÕES</th>
+                                    <th class="text-center">DISPOSITIVOS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for unit_data in report_data.summary_by_unit %}
+                                <tr>
+                                    <td class="text-start">
+                                        <strong>{% if unit_data.unit.acronym %}{{ unit_data.unit.acronym }}{% else %}{{ unit_data.unit.name }}{% endif %}</strong>
+                                        {% if unit_data.unit.acronym %}
+                                            <br><small class="text-muted">{{ unit_data.unit.name }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="fw-bold">{{ unit_data.total_requests }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="fw-bold">{{ unit_data.total_devices }}</span>
+                                    </td>
+                                    
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">Nenhuma unidade de extração encontrada.</td>
+                                </tr>
+                                {% endfor %}
+                                <!-- Linha de Totais -->
+                                {% if report_data.summary_by_unit %}
+                                <tr class="table-dark fw-bold fs-5">
+                                    <td>TOTAIS</td>
+                                    <td class="text-center">
+                                        <span class="">{{ report_data.statistics.total_requests|default:0 }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="">{{ report_data.statistics.total_devices|default:0 }}</span>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-center">
+                        <canvas id="deviceDistributionChart" width="500" height="350"></canvas>
+                    </div>
+                </div>
+            </div>
+            {% endcomment %}
+            
+            <!-- Seção de Observações -->
+            <div class="row">
+                <div class="col-md-1"></div>
+                <div class="col-md-10">
+                    <h4 class="text-dark mb-2">Observações</h4>
+                    <div class="card border-primary">
+                        <div class="card-body">
+                            {% if report_settings and report_settings.distribution_report_notes %}
+                                <p class="mb-0 fs-6">{{ report_settings.distribution_report_notes|linebreaks }}</p>
+                            {% else %}
+                                <p class="text-muted mb-0 fs-6">Nenhuma observação configurada para este relatório.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-1"></div>
+            </div>
+        </div>
+        
+        <!-- Lista de Solicitações -->
+        <div class="requests-section">
+            <div class="mb-4">
+                <h2 class="text-dark border-bottom border-primary pb-2">HISTÓRICO DE DISTRIBUIÇÕES
+                    {% if report_data.filters_applied.year %}
+                        - Ano: {{ report_data.filters_applied.year }}
+                    {% endif %}
+                    {% if report_data.filters_applied.date_range %}
+                        - Período: {{ report_data.filters_applied.date_range.start_date|date:"d/m/Y" }} - {{ report_data.filters_applied.date_range.end_date|date:"d/m/Y" }}
+                    {% endif %}
+                </h2>
+                
+                {% if report_data.requests_list %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover requests-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-center">ORD</th>
+                                <th class="text-center">SOLICITANTE</th>
+                                <th class="text-center">DATA</th>
+                                <th class="text-center">UNIDADE DE EXTRAÇÃO</th>
+                                <th class="text-center">Nº DE DISPOSITIVOS</th>
+                                <th class="text-center">PROCEDIMENTOS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for request_item in report_data.requests_list %}
+                            <tr>
+                                <td class="text-start">
+                                    <span class="fw-bold">{{ forloop.counter }}</span>
+                                </td>
+                                <td class="text-start">
+                                    <div>
+                                        <strong>{{ request_item.requester_agency_unit__acronym|default:request_item.requester_agency_unit__name }}</strong>
+                                        {% if request_item.requester_agency_unit__acronym %}
+                                            <br><small class="text-muted">{{ request_item.requester_agency_unit__name }}</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <small>{{ request_item.requested_at|date:"d/m/Y H:i" }}</small>
+                                </td>
+                                <td>
+                                    {% if request_item.extraction_unit__acronym %}
+                                        <strong>{{ request_item.extraction_unit__acronym }}</strong>
+                                        
+                                    {% else %}
+                                        <span class="text-danger fst-italic">Não atribuída</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <span class="fw-medium fs-6">{{ request_item.requested_device_amount }}</span>
+                                </td>
+                                <td>
+                                    <small>{{ request_item.request_procedures|default:'N/A' }}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Nenhuma solicitação encontrada com os filtros aplicados.
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Footer do Relatório -->
+        {% if report_settings %}
+            {% if report_settings.report_cover_footer_line_1 or report_settings.report_cover_footer_line_2 %}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="text-center border-top pt-3">
+                        {% if report_settings.report_cover_footer_line_1 %}
+                            <p class="mb-1 fw-bold text-dark">{{ report_settings.report_cover_footer_line_1 }}</p>
+                        {% endif %}
+                        {% if report_settings.report_cover_footer_line_2 %}
+                            <p class="mb-0 fw-bold text-dark">{{ report_settings.report_cover_footer_line_2 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    
+    <script>
+        // Register the datalabels plugin
+        Chart.register(ChartDataLabels);
+        
+        // Initialize chart when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initDeviceDistributionChart();
+        });
+
+        function initDeviceDistributionChart() {
+            const ctx = document.getElementById('deviceDistributionChart');
+            if (!ctx) return;
+
+            // Get data from Django context
+            const chartData = {{ chart_data_json|safe }};
+            
+            if (chartData.unit_devices_distribution && chartData.unit_devices_distribution.length > 0) {
+                const labels = chartData.unit_devices_distribution.map(item => 
+                    item.extraction_unit__acronym || item.extraction_unit__name || 'Unidade'
+                );
+                const data = chartData.unit_devices_distribution.map(item => item.devices || 0);
+                
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: [
+                                '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1',
+                                '#17a2b8', '#fd7e14', '#20c997', '#e83e8c', '#6c757d'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: false,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                top: 10,
+                                bottom: 10,
+                                left: 10,
+                                right: 10
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: false
+                            },
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: {
+                                        size: 8
+                                    },
+                                    padding: 5,
+                                    boxWidth: 10
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                        return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                                    }
+                                }
+                            },
+                            datalabels: {
+                                display: true,
+                                color: '#fff',
+                                font: {
+                                    size: 10,
+                                    weight: 'bold'
+                                },
+                                formatter: function(value, context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return percentage + '%';
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                // Show message if no data
+                ctx.style.display = 'none';
+                const container = ctx.parentElement;
+                container.innerHTML = '<p style="color: #666; font-style: italic;">Nenhum dado disponível para exibir o gráfico</p>';
+            }
+        }
+    </script>
+</body>
+</html>

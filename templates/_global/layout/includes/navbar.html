@@ -56,6 +56,25 @@
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
+                                <h6 class="dropdown-header">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    Relatórios e Análises
+                                </h6>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'requisitions:distribution_list' %}">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Distribuição por Unidade
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'requisitions:distribution_report' %}">
+                                    <i class="fas fa-chart-line me-2"></i>
+                                    Extrato de Distribuições
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
                                 <a class="dropdown-item" href="{% url 'requisitions:create' %}">
                                     <i class="fas fa-plus me-2"></i>
                                     Nova Solicitação

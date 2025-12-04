@@ -8,12 +8,18 @@ from apps.requisitions.views import (
     ExtractionRequestNotReceivedView,
     CreateCaseFromRequestView,
     GenerateReplyEmailView,
+    ExtractionRequestDistributionListView,
+    DistributionReportView,
+    DistributionReportPrintView,
 )
 
 app_name = 'requisitions'
 
 urlpatterns = [
     path('', ExtractionRequestListView.as_view(), name='list'),
+    path('distribution/', ExtractionRequestDistributionListView.as_view(), name='distribution_list'),
+    path('distribution-report/', DistributionReportView.as_view(), name='distribution_report'),
+    path('distribution-report/print/', DistributionReportPrintView.as_view(), name='distribution_report_print'),
     path('not-received/', ExtractionRequestNotReceivedView.as_view(), name='not_received'),
     path('<int:pk>/', ExtractionRequestDetailView.as_view(), name='detail'),
     path('create/', ExtractionRequestCreateView.as_view(), name='create'),

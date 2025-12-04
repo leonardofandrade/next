@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.views import View
-from django.db.models import Q
+from django.db.models import Q, Count, Case, When, IntegerField
 from django.utils import timezone
 from django.http import JsonResponse
 
@@ -583,3 +583,138 @@ class GenerateReplyEmailView(LoginRequiredMixin, View):
             'email_body': email_body,
             'email_to': extraction_request.requester_reply_email or '',
         })
+
+
+class ExtractionRequestDistributionListView(LoginRequiredMixin, ListView):
+    """
+    Lista solicitações de extração agrupadas por extraction_unit com resumo (distribuição)
+    """
+    model = ExtractionRequest
+    template_name = 'requisitions/extraction_request_distribution_list.html'
+    context_object_name = 'summary_data'
+    
+    def get_queryset(self):
+        # Busca todas as solicitações não deletadas
+        queryset = ExtractionRequest.objects.filter(
+            deleted_at__isnull=True
+        ).select_related(
+            'extraction_unit',
+            'requester_agency_unit'
+        )
+        
+        # Aplica filtros se houver
+        form = ExtractionRequestSearchForm(self.request.GET or None)
+        
+        if form.is_valid():
+            search = form.cleaned_data.get('search')
+            if search:
+                queryset = queryset.filter(
+                    Q(request_procedures__icontains=search) |
+                    Q(requester_authority_name__icontains=search) |
+                    Q(additional_info__icontains=search)
+                )
+            
+            status = form.cleaned_data.get('status')
+            if status:
+                queryset = queryset.filter(status=status)
+            
+            requester_agency_unit = form.cleaned_data.get('requester_agency_unit')
+            if requester_agency_unit:
+                queryset = queryset.filter(requester_agency_unit=requester_agency_unit)
+            
+            extraction_unit = form.cleaned_data.get('extraction_unit')
+            if extraction_unit:
+                queryset = queryset.filter(extraction_unit=extraction_unit)
+            
+            crime_category = form.cleaned_data.get('crime_category')
+            if crime_category:
+                queryset = queryset.filter(crime_category=crime_category)
+            
+            date_from = form.cleaned_data.get('date_from')
+            if date_from:
+                queryset = queryset.filter(requested_at__date__gte=date_from)
+            
+            date_to = form.cleaned_data.get('date_to')
+            if date_to:
+                queryset = queryset.filter(requested_at__date__lte=date_to)
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        queryset = self.get_queryset()
+        
+        # Agrupa por extraction_unit e calcula estatísticas
+        from django.db.models import Count, Q
+        
+        # Annotate com contagens por status
+        summary_data = []
+        
+        # Busca todas as extraction_units que têm solicitações
+        extraction_units = queryset.exclude(
+            extraction_unit__isnull=True
+        ).values_list('extraction_unit', flat=True).distinct()
+        
+        from apps.core.models import ExtractionUnit
+        
+        for unit_id in extraction_units:
+            unit_requests = queryset.filter(extraction_unit_id=unit_id)
+            unit = unit_requests.first().extraction_unit
+            
+            # Conta por status
+            status_counts = {}
+            for status_code, status_label in ExtractionRequest.REQUEST_STATUS_CHOICES:
+                status_counts[status_code] = unit_requests.filter(status=status_code).count()
+            
+            # Total de solicitações
+            total = unit_requests.count()
+            
+            # Solicitações não recebidas
+            not_received = unit_requests.filter(
+                received_at__isnull=True,
+                status__in=[
+                    ExtractionRequest.REQUEST_STATUS_PENDING,
+                    ExtractionRequest.REQUEST_STATUS_ASSIGNED
+                ]
+            ).count()
+            
+            summary_data.append({
+                'extraction_unit': unit,
+                'total': total,
+                'not_received': not_received,
+                'status_counts': status_counts,
+                'requests': unit_requests.order_by('-requested_at', '-created_at')[:10]  # Últimas 10
+            })
+        
+        # Ordena por total (maior primeiro)
+        summary_data.sort(key=lambda x: x['total'], reverse=True)
+        
+        # Solicitações sem extraction_unit
+        requests_without_unit = queryset.filter(extraction_unit__isnull=True)
+        if requests_without_unit.exists():
+            status_counts_no_unit = {}
+            for status_code, status_label in ExtractionRequest.REQUEST_STATUS_CHOICES:
+                status_counts_no_unit[status_code] = requests_without_unit.filter(status=status_code).count()
+            
+            summary_data.append({
+                'extraction_unit': None,
+                'total': requests_without_unit.count(),
+                'not_received': requests_without_unit.filter(
+                    received_at__isnull=True,
+                    status__in=[
+                        ExtractionRequest.REQUEST_STATUS_PENDING,
+                        ExtractionRequest.REQUEST_STATUS_ASSIGNED
+                    ]
+                ).count(),
+                'status_counts': status_counts_no_unit,
+                'requests': requests_without_unit.order_by('-requested_at', '-created_at')[:10]
+            })
+        
+        context['summary_data'] = summary_data
+        context['page_title'] = 'Distribuição por Unidade de Extração'
+        context['page_icon'] = 'fa-chart-bar'
+        context['form'] = ExtractionRequestSearchForm(self.request.GET or None)
+        context['total_count'] = queryset.count()
+        
+        return context

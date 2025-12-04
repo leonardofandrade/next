@@ -45,44 +45,49 @@
                     </div>
                     <div class="card-body">
                         <div class="row g-3 mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 {{ form.requester_agency_unit|form_label_class }}
                                 {{ form.requester_agency_unit }}
                                 {{ form.requester_agency_unit.errors }}
                             </div>
+                         
 
+                        </div>
+                        <div class="row g-3 mb-3">                            
+                               
                             <div class="col-md-2">
                                 {{ form.requested_device_amount|form_label_class }}
                                 {{ form.requested_device_amount }}
                                 {{ form.requested_device_amount.errors }}
                             </div>
 
-                            <div class="col-md-4">
+                            <div class="col-md-7">
                                 {{ form.request_procedures|form_label_class }}
                                 {{ form.request_procedures }}
                                 {{ form.request_procedures.errors }}
                             </div>
-
-                            <div class="col-md-8">
+                            <div class="col-md-3">
                                 {{ form.extraction_unit|form_label_class }}
                                 {{ form.extraction_unit }}
                                 {{ form.extraction_unit.errors }}
                             </div>
 
-                            <div class="col-md-4">
-                                {{ form.crime_category|form_label_class }}
-                                {{ form.crime_category }}
-                                {{ form.crime_category.errors }}
-                            </div>
 
                         </div>
-                        <div class="row g-3 mb-3">
-        
-                            <div class="col-md-4">
+                        <div class="row g-3 mb-3">        
+                            <div class="col-md-6">
                                 {{ form.requester_reply_email|form_label_class }}
                                 {{ form.requester_reply_email }}
                                 {{ form.requester_reply_email.errors }}
                             </div>
+                            
+                            <div class="col-md-6">
+                                {{ form.crime_category|form_label_class }}
+                                {{ form.crime_category }}
+                                {{ form.crime_category.errors }}
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-3">        
 
                             <div class="col-md-6">
                                 {{ form.requester_authority_name|form_label_class }}
@@ -90,7 +95,7 @@
                                 {{ form.requester_authority_name.errors }}
                             </div>
         
-                            <div class="col-md-2">
+                            <div class="col-md-6">
                                 {{ form.requester_authority_position|form_label_class }}
                                 {{ form.requester_authority_position }}
                                 {{ form.requester_authority_position.errors }}

@@ -11,8 +11,7 @@ from apps.core.models import ExtractionUnit
 class ExtractionRequestForm(forms.ModelForm):
     """
     Formulário para criar e editar solicitações de extração
-    """
-    
+    """    
     class Meta:
         model = ExtractionRequest
         fields = [
@@ -60,14 +59,14 @@ class ExtractionRequestForm(forms.ModelForm):
             }),
             'additional_info': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 4,
+                'rows': 2,
                 'placeholder': 'Informações adicionais sobre a solicitação'
             }),
         }
         labels = {
             'requester_agency_unit': 'Unidade Solicitante',
-            'requested_device_amount': 'Quantidade de Dispositivos',
-            'extraction_unit': 'Unidade de Extração',
+            'requested_device_amount': 'Dispositivos',
+            'extraction_unit': 'Distribuir para',
             'requester_reply_email': 'E-mail para Resposta',
             'requester_authority_name': 'Nome da Autoridade',
             'requester_authority_position': 'Cargo da Autoridade',

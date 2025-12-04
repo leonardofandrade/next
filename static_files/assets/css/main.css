@@ -667,3 +667,12 @@ body.login-page {
     }
 }
 
+/* bootstrap overrides */
+
+.form-label {
+    font-weight: bold;
+    margin-bottom: 0.75rem;
+    color: var(--primary-color);
+    font-size: 0.95rem;
+}
+

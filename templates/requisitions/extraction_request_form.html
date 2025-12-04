@@ -29,10 +29,10 @@
 {% endblock page_actions %}
 
 {% block content %}
-<div class="{% if distribution_summary %}container-fluid py-4{% else %}container-block justify-content-center{% endif %}">
+<div class="{% if action == 'update' %}container py-4{% elif distribution_summary %}container-fluid py-4{% else %}container py-4{% endif %}">
     <!-- Form -->
-    <div class="row">
-        <div class="col-lg-8">
+    <div class="row {% if action == 'update' %}justify-content-center{% endif %}">
+        <div class="{% if action == 'update' %}col-lg-10 col-xl-8{% elif distribution_summary %}col-lg-8{% else %}col-lg-10 col-xl-8{% endif %}">
             <form method="post" novalidate>
                 {% csrf_token %}
                 
@@ -157,7 +157,7 @@
         </div>
         
         <!-- Resumo de Distribuição - Coluna Lateral -->
-        {% if distribution_summary %}
+        {% if action == 'create' and distribution_summary %}
         <div class="col-lg-4">
             <div class="card h-100">
                 <div class="card-header">
@@ -221,7 +221,7 @@
                         </div>
                         
                         <!-- Gráfico Compacto -->
-                        {% if distribution_summary %}
+                        {% if action == 'create' and distribution_summary %}
                         <div class="p-3 border-top">
                             <h6 class="mb-3">
                                 <i class="fas fa-chart-pie me-2"></i>
@@ -573,7 +573,7 @@ function loadEmailContent(pk) {
     }
     {% endif %}
     
-    {% if distribution_summary %}
+    {% if action == 'create' and distribution_summary %}
     // Distribution Summary Charts
     document.addEventListener('DOMContentLoaded', function() {
         initDistributionCharts();
@@ -613,7 +613,7 @@ function loadEmailContent(pk) {
             return;
         }
         
-        {% if distribution_summary %}
+        {% if action == 'create' and distribution_summary %}
         const distributionData = [
             {% for unit_data in distribution_summary %}
             {

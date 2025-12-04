@@ -347,9 +347,10 @@ class CaseDeleteView(LoginRequiredMixin, DeleteView):
         
         return super().dispatch(request, *args, **kwargs)
     
-    def delete(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         """
         Realiza soft delete ao invés de deletar permanentemente
+        Override post() para evitar que Django tente fazer hard delete
         """
         case = self.get_object()
         case.deleted_at = timezone.now()
@@ -361,6 +362,13 @@ class CaseDeleteView(LoginRequiredMixin, DeleteView):
             f'Processo excluído com sucesso!'
         )
         return redirect('cases:list')
+    
+    def delete(self, request, *args, **kwargs):
+        """
+        Realiza soft delete ao invés de deletar permanentemente
+        Mantido para compatibilidade, mas post() é o método principal
+        """
+        return self.post(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
         """

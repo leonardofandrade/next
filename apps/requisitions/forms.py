@@ -49,6 +49,7 @@ class ExtractionRequestForm(forms.ModelForm):
             }),
             'requester_authority_position': forms.Select(attrs={
                 'class': 'form-select',
+                'empty_label': None,
             }),
             'request_procedures': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -101,6 +102,8 @@ class ExtractionRequestForm(forms.ModelForm):
         self.fields['requested_device_amount'].required = True
         self.fields['request_procedures'].required = True
         self.fields['extraction_unit'].required = True
+
+        self.fields['requester_authority_position'].empty_label = None
 
     def clean(self):
         cleaned_data = super().clean()

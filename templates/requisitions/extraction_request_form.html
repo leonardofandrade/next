@@ -44,132 +44,71 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <div class="row g-3">
+                        <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 {{ form.requester_agency_unit|form_label_class }}
                                 {{ form.requester_agency_unit }}
-                                {% if form.requester_agency_unit.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.requester_agency_unit.errors }}
-                                    </div>
-                                {% endif %}
-                                <small class="form-text text-muted">
-                                    {{ form.requester_agency_unit.help_text }}
-                                </small>
+                                {{ form.requester_agency_unit.errors }}
                             </div>
 
-                            <div class="col-md-6">
-                                {{ form.request_procedures|form_label_class }}
-                                {{ form.request_procedures }}
-                                {% if form.request_procedures.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.request_procedures.errors }}
-                                    </div>
-                                {% endif %}
-                                <small class="form-text text-muted">
-                                    {{ form.request_procedures.help_text }}
-                                </small>
+                            <div class="col-md-2">
+                                {{ form.requested_device_amount|form_label_class }}
+                                {{ form.requested_device_amount }}
+                                {{ form.requested_device_amount.errors }}
                             </div>
 
                             <div class="col-md-4">
-                                {{ form.requested_device_amount|form_label_class }}
-                                {{ form.requested_device_amount }}
-                                {% if form.requested_device_amount.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.requested_device_amount.errors }}
-                                    </div>
-                                {% endif %}
+                                {{ form.request_procedures|form_label_class }}
+                                {{ form.request_procedures }}
+                                {{ form.request_procedures.errors }}
                             </div>
 
                             <div class="col-md-8">
                                 {{ form.extraction_unit|form_label_class }}
                                 {{ form.extraction_unit }}
-                                {% if form.extraction_unit.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.extraction_unit.errors }}
-                                    </div>
-                                {% endif %}
-                                <small class="form-text text-muted">
-                                    {{ form.extraction_unit.help_text }}
-                                </small>
+                                {{ form.extraction_unit.errors }}
                             </div>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-user-tie me-2"></i>
-                            Informações da Autoridade
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
+                            <div class="col-md-4">
+                                {{ form.crime_category|form_label_class }}
+                                {{ form.crime_category }}
+                                {{ form.crime_category.errors }}
+                            </div>
+
+                        </div>
+                        <div class="row g-3 mb-3">
+        
+                            <div class="col-md-4">
+                                {{ form.requester_reply_email|form_label_class }}
+                                {{ form.requester_reply_email }}
+                                {{ form.requester_reply_email.errors }}
+                            </div>
+
                             <div class="col-md-6">
                                 {{ form.requester_authority_name|form_label_class }}
                                 {{ form.requester_authority_name }}
-                                {% if form.requester_authority_name.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.requester_authority_name.errors }}
-                                    </div>
-                                {% endif %}
+                                {{ form.requester_authority_name.errors }}
                             </div>
-
-                            <div class="col-md-6">
+        
+                            <div class="col-md-2">
                                 {{ form.requester_authority_position|form_label_class }}
                                 {{ form.requester_authority_position }}
-                                {% if form.requester_authority_position.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.requester_authority_position.errors }}
-                                    </div>
-                                {% endif %}
+                                {{ form.requester_authority_position.errors }}
                             </div>
 
-                            <div class="col-md-12">
-                                {{ form.requester_reply_email|form_label_class }}
-                                {{ form.requester_reply_email }}
-                                {% if form.requester_reply_email.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.requester_reply_email.errors }}
-                                    </div>
-                                {% endif %}
-                            </div>
                         </div>
-                    </div>
-                </div>
 
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-gavel me-2"></i>
-                            Informações do Processo
-                        </h5>
-                    </div>
-                    <div class="card-body">
                         <div class="row g-3">
-                            <div class="col-md-12">
-                                {{ form.crime_category|form_label_class }}
-                                {{ form.crime_category }}
-                                {% if form.crime_category.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.crime_category.errors }}
-                                    </div>
-                                {% endif %}
-                            </div>
-
                             <div class="col-md-12">
                                 {{ form.additional_info|form_label_class }}
                                 {{ form.additional_info }}
-                                {% if form.additional_info.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.additional_info.errors }}
-                                    </div>
-                                {% endif %}
+                                {{ form.additional_info.errors }}
                             </div>
                         </div>
                     </div>
+
                 </div>
+
 
                 <!-- Form Actions -->
                 <div class="card">

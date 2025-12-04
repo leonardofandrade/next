@@ -63,6 +63,7 @@ def form_label(field, attrs=None, label_suffix=None):
         classes = attrs['class'].split()
         if 'form-label' not in classes:
             classes.append('form-label')
+            
         attrs['class'] = ' '.join(classes)
     else:
         attrs['class'] = 'form-label'
@@ -96,7 +97,8 @@ def form_label_class(field):
     if not hasattr(field, 'label_tag'):
         return ''
     
-    # Renderiza o label_tag com a classe form-label
+    # Renderiza o label_tag com a classe form-label e fw-bold
     attrs = {'class': 'form-label'}
+    # attrs = {'class': 'form-label fw-bold'}
     return mark_safe(field.label_tag(attrs=attrs))
 

@@ -324,7 +324,8 @@ class CaseDeviceForm(forms.ModelForm):
             }),
             'password': forms.TextInput(attrs={
                 'class': 'form-control',
-                'maxlength': '100'
+                'maxlength': '100',
+                'placeholder': 'Digite a senha'
             }),
             'is_damaged': forms.CheckboxInput(attrs={
                 'class': 'form-check-input',
@@ -437,6 +438,8 @@ class CaseDeviceForm(forms.ModelForm):
         for field_name in boolean_fields:
             if field_name in self.fields:
                 self.fields[field_name].required = False
+
+        self.fields['device_category'].empty_label = None
 
     def clean(self):
         cleaned_data = super().clean()

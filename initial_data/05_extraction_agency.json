@@ -103,6 +103,26 @@
         "reply_email_subject": "Distribuição de Solicitação de Extração - {procedures}",
         "incharge_name": null,
         "incharge_position": null
+      },
+      {
+        "acronym": "PCCE/DIP",
+        "name": "Departamento de Inteligência Policial",
+        "primary_phone": "(85) 3101-7409",
+        "secondary_email": "(85) 3101-2511",
+        "primary_email": "saex.dip@pc.ce.gov.br",
+        "secondary_phone": null,
+        "address_line1": "Rua Professor Guilhon",
+        "address_number": "S/N",
+        "address_line2": null,
+        "neighborhood": "Aeroporto",
+        "city_name": "Fortaleza",
+        "postal_code": "60415-330",
+        "state_name": "CE",
+        "country_name": "Brasil",
+        "reply_email_template": "<p>Prezados,</p><p>Informamos que a solicitação em apreço (<strong>{procedures}</strong>) foi distribuída para a <strong>{extraction_unit_name}</strong> de <strong>{extraction_unit_city}</strong>.</p><p><strong>Nº de objetos:</strong> {device_amount}.</p><p>A autoridade solicitante deve encaminhar ofício com os dispositivos à <strong>{extraction_unit_acronym}</strong> de <strong>{extraction_unit_city}</strong>, conforme recomendações abaixo:</p><ol><li>Enviar dispositivos com lacres devidamente preenchidos e com a respectiva numeração discriminada no corpo do ofício;</li><li>Anexar cópia do auto de apreensão e da Decisão judicial específica de extração e compartilhamento com a COIN/SSPDS e com o DIP/PCCE ou autorização expressa do investigado, vítima ou familiar;</li><li>Especificar no corpo do ofício a natureza do crime, IP, proprietários dos dispositivos, dados que individualizam os dispositivos;</li><li>Preencher Formulário de Entrega para cada Dispositivo;</li><li>Seguir as demais orientações da <strong>Portaria nº 2218/2020 GS</strong>;</li></ol><p><strong>{extraction_unit_name} de {extraction_unit_city}</strong><br>{extraction_unit_address}, {extraction_unit_city}-{extraction_unit_state}, Cep {extraction_unit_postal_code}.<br><strong>Fone:</strong> {extraction_unit_phone} ou {extraction_unit_secondary_phone}<br><strong>E-mail:</strong> {extraction_unit_email}</p><p><strong>Por favor, exibir cópia deste e-mail no ato de entrega.</strong></p>",
+        "reply_email_subject": "Distribuição de Solicitação de Extração - {procedures}",
+        "incharge_name": null,
+        "incharge_position": null
       }
     ]
   }

@@ -1,5 +1,5 @@
 <!-- Bootstrap 5 Pagination Component -->
-{% if is_paginated %}
+{% if is_paginated or page_obj.has_other_pages %}
 <nav aria-label="Navegação de páginas" class="mt-4 p-2 border-top">
     <div class="row align-items-center">
         <!-- Results info -->

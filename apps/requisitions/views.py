@@ -140,8 +140,8 @@ class ExtractionRequestCreateView(LoginRequiredMixin, CreateView):
         save_and_add_another = self.request.POST.get('save_and_add_another')
         keep_data = self.request.POST.get('keep_data_for_new')
         
-        if save_and_add_another or keep_data:
-            # Botão "Criar e Adicionar Outra" ou checkbox marcado - mantém dados comuns
+        if keep_data:
+            # Checkbox marcado - mantém dados comuns
             initial_data = {
                 'requester_agency_unit': extraction_request.requester_agency_unit.pk if extraction_request.requester_agency_unit else None,
                 'requester_reply_email': extraction_request.requester_reply_email,
@@ -155,6 +155,10 @@ class ExtractionRequestCreateView(LoginRequiredMixin, CreateView):
             context = self.get_context_data(form=form)
             context['keep_data_checked'] = True
             return self.render_to_response(context)
+        
+        if save_and_add_another:
+            # Botão "Criar e Adicionar Outra" - redireciona para formulário vazio
+            return redirect('requisitions:create')
         
         return redirect('requisitions:update', pk=extraction_request.pk)
     

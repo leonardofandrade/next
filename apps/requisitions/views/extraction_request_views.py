@@ -167,6 +167,11 @@ class ExtractionRequestCreateView(LoginRequiredMixin, CreateView):
         context['page_title'] = 'Nova Solicitação'
         context['page_icon'] = 'fa-plus'
         context['action'] = 'create'
+        
+        # Add distribution summary for sidebar
+        from apps.requisitions.services import get_distribution_summary
+        context['distribution_summary'] = get_distribution_summary()
+        
         return context
 
 

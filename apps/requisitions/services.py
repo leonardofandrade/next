@@ -57,6 +57,115 @@ def list_agency_units():
     return AgencyUnit.objects.filter(deleted_at__isnull=True).order_by('acronym', 'name')
 
 
+def get_distribution_summary():
+    """
+    Get distribution summary for extraction requests by unit.
+    Returns data in format expected by extraction_request_form.html template.
+    
+    Returns:
+        List of dicts with:
+            - unit: ExtractionUnit object
+            - total_requests: int
+            - total_devices: int
+            - pending_requests: int
+            - in_progress_requests: int
+            - received_requests: int
+            - pending_devices: int
+            - is_overloaded: bool
+            - is_available: bool
+    """
+    queryset = ExtractionRequest.objects.filter(deleted_at__isnull=True)
+    
+    summary_data = []
+    
+    # Get all extraction units that have requests
+    units_data = queryset.exclude(
+        extraction_unit__isnull=True
+    ).values('extraction_unit').annotate(
+        total_requests=Count('id'),
+        total_devices=Sum('requested_device_amount'),
+        pending_requests=Count(
+            Case(
+                When(
+                    status__in=[
+                        ExtractionRequest.REQUEST_STATUS_PENDING,
+                        ExtractionRequest.REQUEST_STATUS_ASSIGNED
+                    ],
+                    then=1
+                ),
+                output_field=IntegerField()
+            )
+        ),
+        in_progress_requests=Count(
+            Case(
+                When(
+                    status__in=[
+                        ExtractionRequest.REQUEST_STATUS_IN_PROGRESS,
+                        ExtractionRequest.REQUEST_STATUS_WAITING_START
+                    ],
+                    then=1
+                ),
+                output_field=IntegerField()
+            )
+        ),
+        received_requests=Count(
+            Case(
+                When(
+                    status=ExtractionRequest.REQUEST_STATUS_RECEIVED,
+                    then=1
+                ),
+                output_field=IntegerField()
+            )
+        )
+    ).order_by('-total_requests')
+    
+    for unit_data in units_data:
+        unit_id = unit_data['extraction_unit']
+        if unit_id:
+            try:
+                unit = ExtractionUnit.objects.get(pk=unit_id)
+                unit_requests = queryset.filter(extraction_unit_id=unit_id)
+                
+                # Calculate pending devices (from pending/assigned requests)
+                pending_devices = unit_requests.filter(
+                    status__in=[
+                        ExtractionRequest.REQUEST_STATUS_PENDING,
+                        ExtractionRequest.REQUEST_STATUS_ASSIGNED
+                    ]
+                ).aggregate(
+                    total=Sum('requested_device_amount')
+                )['total'] or 0
+                
+                total_requests = unit_data['total_requests']
+                total_devices = unit_data['total_devices'] or 0
+                
+                # Determine if unit is overloaded or available
+                # Overloaded: more than 50 pending devices or more than 30 pending requests
+                is_overloaded = pending_devices > 50 or unit_data['pending_requests'] > 30
+                
+                # Available: less than 10 pending devices and less than 5 pending requests
+                is_available = pending_devices < 10 and unit_data['pending_requests'] < 5
+                
+                summary_data.append({
+                    'unit': unit,
+                    'total_requests': total_requests,
+                    'total_devices': total_devices,
+                    'pending_requests': unit_data['pending_requests'],
+                    'in_progress_requests': unit_data['in_progress_requests'],
+                    'received_requests': unit_data['received_requests'],
+                    'pending_devices': pending_devices,
+                    'is_overloaded': is_overloaded,
+                    'is_available': is_available
+                })
+            except ExtractionUnit.DoesNotExist:
+                continue
+    
+    # Sort by total requests (descending)
+    summary_data.sort(key=lambda x: x['total_requests'], reverse=True)
+    
+    return summary_data
+
+
 def get_distribution_report(filters=None):
     """
     Generate distribution report data

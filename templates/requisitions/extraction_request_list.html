@@ -1,5 +1,6 @@
 {% extends '_global/layout/base.html' %}
 {% load static %}
+{% load form_tags %}
 
 {% block page_title %}
 <i class="fas {{ page_icon }} text-primary me-2"></i>
@@ -45,33 +46,33 @@
         <div class="card-body">
             <form method="get" class="row g-3">
                 <div class="{% if view_type == 'not_received' %}col-md-4{% else %}col-md-4{% endif %}">
-                    {{ form.search.label_tag }}
+                    {{ form.search|form_label_class }}
                     {{ form.search }}
                 </div>
                 {% if view_type != 'not_received' %}
                 <div class="col-md-2">
-                    {{ form.status.label_tag }}
+                    {{ form.status|form_label_class }}
                     {{ form.status }}
                 </div>
                 {% endif %}
                 <div class="{% if view_type == 'not_received' %}col-md-4{% else %}col-md-3{% endif %}">
-                    {{ form.requester_agency_unit.label_tag }}
+                    {{ form.requester_agency_unit|form_label_class }}
                     {{ form.requester_agency_unit }}
                 </div>
                 <div class="{% if view_type == 'not_received' %}col-md-4{% else %}col-md-3{% endif %}">
-                    {{ form.extraction_unit.label_tag }}
+                    {{ form.extraction_unit|form_label_class }}
                     {{ form.extraction_unit }}
                 </div>
                 <div class="col-md-3">
-                    {{ form.crime_category.label_tag }}
+                    {{ form.crime_category|form_label_class }}
                     {{ form.crime_category }}
                 </div>
                 <div class="col-md-2">
-                    {{ form.date_from.label_tag }}
+                    {{ form.date_from|form_label_class }}
                     {{ form.date_from }}
                 </div>
                 <div class="col-md-2">
-                    {{ form.date_to.label_tag }}
+                    {{ form.date_to|form_label_class }}
                     {{ form.date_to }}
                 </div>
                 <div class="col-md-5 d-flex align-items-end gap-2">

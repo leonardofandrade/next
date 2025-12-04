@@ -317,6 +317,9 @@ class DeviceCategory(BaseTable):
         verbose_name_plural = 'Categorias de Dispositivo'
         ordering = ['-default_selection', 'name']
 
+    def __str__(self):
+        return self.name
+
 class DeviceBrand(BaseTable):
     """
     DeviceBrand model represents a brand of a device.

@@ -179,15 +179,13 @@
                 </div>
                 <div id="emailContent" style="display: none;">
                     <div class="mb-3">
-                        <label class="text-muted small d-block mb-2">Visualização do Email</label>
-                        <div class="border p-4 bg-white rounded" style="max-height: 400px; overflow-y: auto; background-color: #f8f9fa !important;">
+                        <label class="text-muted small d-block mb-2">Email Formatado (texto já selecionado - pressione Ctrl+C para copiar)</label>
+                        <div class="border p-4 bg-white rounded" style="max-height: 400px; overflow-y: auto; background-color: #f8f9fa !important; user-select: text; -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; cursor: text;">
                             <div id="emailPreview" style="font-family: Arial, sans-serif;"></div>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="text-muted small d-block mb-2">Texto do Email (para copiar)</label>
-                        <textarea id="emailTextCopy" class="form-control" rows="10" readonly style="font-family: monospace; white-space: pre-wrap; word-wrap: break-word;"></textarea>
-                        <small class="text-muted">Clique no texto acima e pressione Ctrl+C (ou Cmd+C no Mac) para copiar</small>
+                        <small class="text-muted d-block mt-2">O texto já está selecionado. Pressione Ctrl+C (ou Cmd+C no Mac) para copiar</small>
+                        <!-- Textarea oculto com HTML completo para cópia -->
+                        <textarea id="emailTextCopy" style="position: absolute; left: -9999px; opacity: 0; width: 1px; height: 1px;" readonly></textarea>
                     </div>
                 </div>
                 <div id="emailError" style="display: none;">
@@ -199,10 +197,6 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                <button type="button" class="btn btn-primary" id="copyBtn" onclick="copyEmailText()" style="display: none;">
-                    <i class="fas fa-copy me-2"></i>
-                    Copiar Texto
-                </button>
             </div>
         </div>
     </div>
@@ -251,13 +245,104 @@ $(document).ready(function() {
 });
     
 {% if action == 'update' %}
+// Função para selecionar texto do textarea
+function selectEmailText() {
+    const textArea = document.getElementById('emailTextCopy');
+    const emailPreview = document.getElementById('emailPreview');
+    
+    if (textArea && textArea.value) {
+        // Tenta selecionar o conteúdo visual do preview primeiro
+        try {
+            const range = document.createRange();
+            range.selectNodeContents(emailPreview);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            // Se a seleção funcionou, também seleciona o textarea oculto para garantir cópia
+            setTimeout(() => {
+                textArea.focus();
+                textArea.select();
+                textArea.setSelectionRange(0, textArea.value.length);
+            }, 50);
+        } catch (e) {
+            // Se falhar, seleciona apenas o textarea
+            textArea.focus();
+            textArea.select();
+            textArea.setSelectionRange(0, textArea.value.length);
+        }
+        
+        // Tenta novamente após um pequeno delay para garantir
+        setTimeout(() => {
+            textArea.focus();
+            textArea.setSelectionRange(0, textArea.value.length);
+        }, 100);
+    }
+}
+
+// Configura evento do modal para garantir seleção quando totalmente aberto
+$(document).ready(function() {
+    $('#emailModal').on('shown.bs.modal', function() {
+        // Quando o modal estiver totalmente visível, tenta selecionar o texto
+        setTimeout(() => {
+            selectEmailText();
+        }, 200);
+        
+        // Adiciona listener para Ctrl+C para copiar HTML formatado
+        const modalElement = this;
+        const copyHandler = function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+                const emailPreview = document.getElementById('emailPreview');
+                const textArea = document.getElementById('emailTextCopy');
+                
+                if (emailPreview && textArea) {
+                    const htmlContent = textArea.getAttribute('data-html') || textArea.value;
+                    
+                    if (htmlContent) {
+                        e.preventDefault();
+                        
+                        // Tenta usar a API Clipboard moderna para copiar HTML formatado
+                        if (navigator.clipboard && window.ClipboardItem) {
+                            const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
+                            const textBlob = new Blob([emailPreview.textContent || htmlContent], { type: 'text/plain' });
+                            
+                            const clipboardItem = new ClipboardItem({
+                                'text/html': htmlBlob,
+                                'text/plain': textBlob
+                            });
+                            
+                            navigator.clipboard.write([clipboardItem]).catch(() => {
+                                // Fallback: copia HTML do textarea
+                                textArea.focus();
+                                textArea.select();
+                                document.execCommand('copy');
+                            });
+                        } else {
+                            // Fallback: usa método tradicional (copia HTML)
+                            textArea.focus();
+                            textArea.select();
+                            document.execCommand('copy');
+                        }
+                    }
+                }
+            }
+        };
+        
+        modalElement.addEventListener('keydown', copyHandler);
+        
+        // Remove listener quando modal fechar
+        $('#emailModal').on('hidden.bs.modal', function() {
+            modalElement.removeEventListener('keydown', copyHandler);
+        });
+    });
+});
+
 // Função para carregar conteúdo do email
 function loadEmailContent(pk) {
         // Reset modal
         document.getElementById('emailLoading').style.display = 'block';
         document.getElementById('emailContent').style.display = 'none';
         document.getElementById('emailError').style.display = 'none';
-        document.getElementById('copyBtn').style.display = 'none';
         
         // Faz requisição AJAX
         const url = '{% url "requisitions:generate_reply_email" 0 %}'.replace('0', pk);
@@ -275,57 +360,28 @@ function loadEmailContent(pk) {
         })
         .then(data => {
             // Exibe o HTML formatado na visualização
-            document.getElementById('emailPreview').innerHTML = data.body || '';
+            const emailPreview = document.getElementById('emailPreview');
+            emailPreview.innerHTML = data.body || '';
             
-            // Converte HTML para texto plano para o textarea (mantendo quebras de linha)
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = data.body || '';
+            // Prepara o HTML completo para cópia (mantém as tags HTML)
+            const htmlBody = data.body || '';
+            const textArea = document.getElementById('emailTextCopy');
             
-            // Função para converter HTML para texto mantendo formatação básica
-            function htmlToText(html) {
-                const div = document.createElement('div');
-                div.innerHTML = html;
-                
-                // Preserva quebras de linha de <br> e <p>
-                let text = div.innerHTML
-                    .replace(/<br\s*\/?>/gi, '\n')
-                    .replace(/<\/p>/gi, '\n\n')
-                    .replace(/<p[^>]*>/gi, '')
-                    .replace(/<\/div>/gi, '\n')
-                    .replace(/<div[^>]*>/gi, '')
-                    .replace(/<\/li>/gi, '\n')
-                    .replace(/<li[^>]*>/gi, '• ')
-                    .replace(/<\/ul>/gi, '\n')
-                    .replace(/<ul[^>]*>/gi, '')
-                    .replace(/<\/ol>/gi, '\n')
-                    .replace(/<ol[^>]*>/gi, '');
-                
-                // Remove tags HTML restantes
-                const tempDiv2 = document.createElement('div');
-                tempDiv2.innerHTML = text;
-                text = tempDiv2.textContent || tempDiv2.innerText || '';
-                
-                // Limpa espaços em branco extras mas mantém quebras de linha
-                text = text.replace(/\n{3,}/g, '\n\n').trim();
-                
-                return text;
-            }
+            // Armazena o HTML completo no textarea para cópia
+            // O HTML será copiado preservando a formatação quando o usuário pressionar Ctrl+C
+            textArea.value = htmlBody;
             
-            const plainText = htmlToText(data.body || '');
-            
-            // Preenche o textarea com o texto do email completo
-            const emailText = `Para: ${data.to || 'Não informado'}\n\nAssunto: ${data.subject || 'Resposta à Solicitação de Extração'}\n\n${plainText}`;
-            document.getElementById('emailTextCopy').value = emailText;
-            
-            // Seleciona automaticamente o texto para facilitar a cópia
-            setTimeout(() => {
-                document.getElementById('emailTextCopy').select();
-            }, 100);
+            // Também armazena em um atributo data para uso na cópia
+            textArea.setAttribute('data-html', htmlBody);
             
             // Mostra o conteúdo e esconde o loading
             document.getElementById('emailLoading').style.display = 'none';
             document.getElementById('emailContent').style.display = 'block';
-            document.getElementById('copyBtn').style.display = 'inline-block';
+            
+            // Seleciona automaticamente o texto após um delay para garantir que o DOM está atualizado
+            setTimeout(() => {
+                selectEmailText();
+            }, 500);
         })
         .catch(error => {
             console.error('Erro:', error);
@@ -333,26 +389,6 @@ function loadEmailContent(pk) {
             document.getElementById('emailError').style.display = 'block';
             document.getElementById('errorMessage').textContent = error.message || 'Erro ao gerar o email. Verifique se a unidade de extração possui um template configurado.';
         });
-    }
-    
-    // Função para copiar texto
-    function copyEmailText() {
-        const textArea = document.getElementById('emailTextCopy');
-        textArea.select();
-        document.execCommand('copy');
-        
-        // Feedback visual
-        const btn = event.target.closest('button');
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check me-2"></i>Copiado!';
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-success');
-        
-        setTimeout(() => {
-            btn.innerHTML = originalHTML;
-            btn.classList.remove('btn-success');
-            btn.classList.add('btn-primary');
-        }, 2000);
     }
     {% endif %}
 </script>

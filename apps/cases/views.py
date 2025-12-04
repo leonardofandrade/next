@@ -317,6 +317,13 @@ class CaseDeleteView(LoginRequiredMixin, DeleteView):
     """
     model = Case
     template_name = 'cases/case_confirm_delete.html'
+    success_url = None  # Will be set dynamically in get_success_url
+    
+    def get_success_url(self):
+        """
+        Retorna a URL de redirecionamento após exclusão
+        """
+        return reverse('cases:list')
     
     def get_queryset(self):
         """

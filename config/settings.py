@@ -89,6 +89,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'apps.core.context_processors.extraction_agency',
+                'apps.core.context_processors.is_extractor_user',
             ],
         },
     },

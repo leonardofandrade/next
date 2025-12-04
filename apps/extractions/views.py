@@ -104,6 +104,120 @@ class ExtractionListView(LoginRequiredMixin, ListView):
         return context
 
 
+class MyExtractionsView(LoginRequiredMixin, ListView):
+    """
+    Lista as extrações atribuídas ao usuário extrator logado
+    """
+    model = Extraction
+    template_name = 'extractions/my_extractions.html'
+    context_object_name = 'page_obj'
+    paginate_by = 25
+    
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Verifica se o usuário é um extrator antes de permitir acesso
+        """
+        try:
+            extractor_user = ExtractorUser.objects.get(
+                user=request.user,
+                deleted_at__isnull=True
+            )
+        except ExtractorUser.DoesNotExist:
+            messages.error(
+                request,
+                'Você não é um usuário extrator. Apenas extratores podem acessar esta página.'
+            )
+            return redirect('extractions:list')
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        """
+        Retorna apenas as extrações atribuídas ao usuário extrator logado
+        """
+        # Obtém o ExtractorUser do usuário logado
+        try:
+            extractor_user = ExtractorUser.objects.get(
+                user=self.request.user,
+                deleted_at__isnull=True
+            )
+        except ExtractorUser.DoesNotExist:
+            return Extraction.objects.none()
+        
+        queryset = Extraction.objects.filter(
+            assigned_to=extractor_user,
+            deleted_at__isnull=True,
+            case_device__deleted_at__isnull=True,
+            case_device__case__deleted_at__isnull=True
+        ).select_related(
+            'case_device__device_category',
+            'case_device__device_model__brand',
+            'case_device__case',
+            'assigned_to__user',
+            'assigned_by',
+            'started_by__user',
+            'finished_by__user',
+            'storage_media'
+        ).order_by('-created_at')
+        
+        form = ExtractionSearchForm(self.request.GET or None)
+        
+        if form.is_valid():
+            search = form.cleaned_data.get('search')
+            if search:
+                # Busca por modelo, IMEI ou proprietário
+                queryset = queryset.filter(
+                    Q(case_device__device_model__name__icontains=search) |
+                    Q(case_device__device_model__brand__name__icontains=search) |
+                    Q(case_device__imei_01__icontains=search) |
+                    Q(case_device__imei_02__icontains=search) |
+                    Q(case_device__imei_03__icontains=search) |
+                    Q(case_device__imei_04__icontains=search) |
+                    Q(case_device__imei_05__icontains=search) |
+                    Q(case_device__owner_name__icontains=search)
+                )
+            
+            case_number = form.cleaned_data.get('case_number')
+            if case_number:
+                queryset = queryset.filter(
+                    case_device__case__number__icontains=case_number
+                )
+            
+            status = form.cleaned_data.get('status')
+            if status:
+                queryset = queryset.filter(status=status)
+            
+            extraction_unit = form.cleaned_data.get('extraction_unit')
+            if extraction_unit:
+                queryset = queryset.filter(
+                    case_device__case__extraction_unit=extraction_unit
+                )
+            
+            extraction_result = form.cleaned_data.get('extraction_result')
+            if extraction_result:
+                queryset = queryset.filter(extraction_result=extraction_result)
+            
+            date_from = form.cleaned_data.get('date_from')
+            if date_from:
+                queryset = queryset.filter(created_at__date__gte=date_from)
+            
+            date_to = form.cleaned_data.get('date_to')
+            if date_to:
+                queryset = queryset.filter(created_at__date__lte=date_to)
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        """
+        Adiciona o formulário de busca e total_count ao contexto
+        """
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Minhas Extrações'
+        context['page_icon'] = 'fa-user-check'
+        context['form'] = ExtractionSearchForm(self.request.GET or None)
+        context['total_count'] = self.get_queryset().count()
+        return context
+
+
 class CaseExtractionsView(LoginRequiredMixin, DetailView):
     """
     Exibe as extrações de um processo de extração
@@ -215,8 +329,11 @@ class ExtractionAssignToMeView(LoginRequiredMixin, View):
         Redireciona de acordo com o referer ou para as extrações do caso
         """
         referer = request.META.get('HTTP_REFERER')
-        if referer and 'extractions/list' in referer:
-            return redirect('extractions:list')
+        if referer:
+            if 'extractions/my-extractions' in referer:
+                return redirect('extractions:my_extractions')
+            if 'extractions/list' in referer:
+                return redirect('extractions:list')
         return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
 
 
@@ -287,8 +404,11 @@ class ExtractionUnassignFromMeView(LoginRequiredMixin, View):
         Redireciona de acordo com o referer ou para as extrações do caso
         """
         referer = request.META.get('HTTP_REFERER')
-        if referer and 'extractions/list' in referer:
-            return redirect('extractions:list')
+        if referer:
+            if 'extractions/my-extractions' in referer:
+                return redirect('extractions:my_extractions')
+            if 'extractions/list' in referer:
+                return redirect('extractions:list')
         return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
 
 
@@ -380,8 +500,11 @@ class ExtractionStartView(LoginRequiredMixin, View):
         Redireciona de acordo com o referer ou para as extrações do caso
         """
         referer = request.META.get('HTTP_REFERER')
-        if referer and 'extractions/list' in referer:
-            return redirect('extractions:list')
+        if referer:
+            if 'extractions/my-extractions' in referer:
+                return redirect('extractions:my_extractions')
+            if 'extractions/list' in referer:
+                return redirect('extractions:list')
         return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
 
 
@@ -447,8 +570,11 @@ class ExtractionPauseView(LoginRequiredMixin, View):
         Redireciona de acordo com o referer ou para as extrações do caso
         """
         referer = request.META.get('HTTP_REFERER')
-        if referer and 'extractions/list' in referer:
-            return redirect('extractions:list')
+        if referer:
+            if 'extractions/my-extractions' in referer:
+                return redirect('extractions:my_extractions')
+            if 'extractions/list' in referer:
+                return redirect('extractions:list')
         return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
 
 
@@ -514,8 +640,11 @@ class ExtractionResumeView(LoginRequiredMixin, View):
         Redireciona de acordo com o referer ou para as extrações do caso
         """
         referer = request.META.get('HTTP_REFERER')
-        if referer and 'extractions/list' in referer:
-            return redirect('extractions:list')
+        if referer:
+            if 'extractions/my-extractions' in referer:
+                return redirect('extractions:my_extractions')
+            if 'extractions/list' in referer:
+                return redirect('extractions:list')
         return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
 
 
@@ -723,6 +852,9 @@ class ExtractionFinishView(LoginRequiredMixin, View):
         Redireciona de acordo com o referer ou para as extrações do caso
         """
         referer = request.META.get('HTTP_REFERER')
-        if referer and 'extractions/list' in referer:
-            return redirect('extractions:list')
+        if referer:
+            if 'extractions/my-extractions' in referer:
+                return redirect('extractions:my_extractions')
+            if 'extractions/list' in referer:
+                return redirect('extractions:list')
         return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)

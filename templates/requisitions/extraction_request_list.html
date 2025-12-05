@@ -139,12 +139,12 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <a href="{% url 'requisitions:detail' request.pk %}" 
+                                        <a href="{% url 'requisitions:detail' request.pk %}?next={% url 'requisitions:list' %}" 
                                            class="btn btn-outline-primary" 
                                            title="Ver Detalhes">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{% url 'requisitions:update' request.pk %}" 
+                                        <a href="{% url 'requisitions:update' request.pk %}?next={% url 'requisitions:list' %}" 
                                            class="btn btn-outline-warning" 
                                            title="Editar">
                                             <i class="fas fa-edit"></i>
@@ -159,14 +159,14 @@
                                                 <i class="fas fa-folder-plus"></i>
                                             </button>
                                             {% else %}
-                                            <a href="{% url 'cases:detail' request.case.pk %}" 
+                                            <a href="{% url 'cases:detail' request.case.pk %}?next={% url 'requisitions:list' %}" 
                                                class="btn btn-outline-info" 
                                                title="Ver Processo Criado">
                                                 <i class="fas fa-folder-open"></i>
                                             </a>
                                             {% endif %}
                                         {% endif %}
-                                        <a href="{% url 'requisitions:delete' request.pk %}" 
+                                        <a href="{% url 'requisitions:delete' request.pk %}?next={% url 'requisitions:list' %}" 
                                            class="btn btn-outline-danger" 
                                            title="Excluir">
                                             <i class="fas fa-trash"></i>

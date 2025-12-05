@@ -99,7 +99,7 @@ class Command(BaseCommand):
             '07_device_category.json',
             '08_device_brands_models.json',
             '09_procedure_category.json',
-            'extraction_agency_and_settings.json',
+            '10_extraction_agency_and_settings.json',
         ]
 
         for file_name in files:
@@ -135,7 +135,7 @@ class Command(BaseCommand):
             self.load_device_brands_models(data)
         elif file_name == '09_procedure_category.json':
             self.load_procedure_categories(data)
-        elif file_name == 'extraction_agency_and_settings.json':
+        elif file_name == '10_extraction_agency_and_settings.json':
             self.load_extraction_agency_and_settings(data)
 
     def load_employee_positions(self, data):

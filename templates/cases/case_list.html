@@ -97,22 +97,22 @@ Gerencie todos os processos de extração
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 100px;">Número</th>
+                                <th style="width: 100px;"><i class="fas fa-hashtag me-2"></i>ID/Número</th>
                                 <th> <i class="fas fa-envelope-open-text me-2"></i>Solicitação</th>
-                                <th style="width: 150px;">Unidade</th>
-                                <th style="width: 100px;">Dispositivos</th>
-                                <th style="width: 120px;">Prioridade</th>
-                                <th style="width: 150px;">Status</th>
-                                <th style="width: 150px;">Atribuído a</th>
-                                <th style="width: 120px;">Solicitada em</th>
-                                <th style="width: 150px;" class="text-end">Ações</th>
+                                <th style="width: 150px;"><i class="fas fa-building me-2"></i>Unidade</th>
+                                <th style="width: 100px;"><i class="fas fa-mobile-alt me-2"></i>Dispositivos</th>
+                                <th style="width: 120px;"><i class="fas fa-star me-2"></i>Prioridade</th>
+                                <th style="width: 150px;"><i class="fas fa-circle me-2"></i>Status</th>
+                                <th style="width: 150px;"><i class="fas fa-user me-2"></i>Atribuído a</th>
+                                <th style="width: 120px;"><i class="fas fa-clock me-2"></i>Solicitada em</th>
+                                <th style="width: 150px;" class="text-end"><i class="fas fa-ellipsis-v me-2"></i>Ações</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for case in page_obj %}
                             <tr>
                                 <td>
-                                    <strong>{{ case.number|default:"Rascunho" }}</strong>
+                                    <strong>{{ case.number|default:case.id }}</strong>
                                 </td>
                                 <td>
                                     <div class="text-truncate" style="max-width: 250px;" title="{{ case.request_procedures }}">

@@ -18,4 +18,7 @@ urlpatterns = [
     path('<int:case_pk>/devices/create/', views.CaseDeviceCreateView.as_view(), name='device_create'),
     path('<int:case_pk>/devices/<int:pk>/update/', views.CaseDeviceUpdateView.as_view(), name='device_update'),
     path('<int:case_pk>/devices/<int:pk>/delete/', views.CaseDeviceDeleteView.as_view(), name='device_delete'),
+    path('<int:case_pk>/procedures/create/', views.CaseProcedureCreateView.as_view(), name='procedure_create'),
+    path('<int:case_pk>/procedures/<int:pk>/update/', views.CaseProcedureUpdateView.as_view(), name='procedure_update'),
+    path('<int:case_pk>/procedures/<int:pk>/delete/', views.CaseProcedureDeleteView.as_view(), name='procedure_delete'),
 ]

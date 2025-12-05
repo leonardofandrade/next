@@ -4,8 +4,8 @@ Formulários para o app cases
 from django import forms
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from apps.cases.models import Case, CaseDevice
-from apps.base_tables.models import AgencyUnit, EmployeePosition, CrimeCategory, DeviceCategory, DeviceModel
+from apps.cases.models import Case, CaseDevice, CaseProcedure
+from apps.base_tables.models import AgencyUnit, EmployeePosition, CrimeCategory, DeviceCategory, DeviceModel, ProcedureCategory
 from apps.core.models import ExtractionUnit
 from apps.requisitions.models import ExtractionRequest
 from django.contrib.auth.models import User
@@ -453,6 +453,106 @@ class CaseDeviceForm(forms.ModelForm):
             })
         
         return cleaned_data
+
+
+class CaseProcedureForm(forms.ModelForm):
+    """
+    Formulário para criar e editar procedimentos de um processo
+    """
+    
+    # Campo customizado para upload de arquivo (não é um campo do modelo)
+    document_file = forms.FileField(
+        required=False,
+        label='Arquivo do Documento',
+        help_text='Arquivo do documento relacionado (opcional)',
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': '.pdf,.doc,.docx,.jpg,.jpeg,.png',
+        })
+    )
+    
+    class Meta:
+        model = CaseProcedure
+        fields = [
+            'procedure_category',
+            'number',
+        ]
+        widgets = {
+            'procedure_category': forms.Select(attrs={
+                'class': 'form-select',
+            }),
+            'number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ex: 123/2024',
+            }),
+        }
+        labels = {
+            'procedure_category': 'Categoria',
+            'number': 'Número',
+        }
+        help_texts = {
+            'procedure_category': 'Categoria do procedimento (IP, PJ, etc)',
+            'number': 'Número do procedimento',
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.case = kwargs.pop('case', None)
+        super().__init__(*args, **kwargs)
+        
+        # Ordena os querysets
+        self.fields['procedure_category'].queryset = ProcedureCategory.objects.filter(
+            deleted_at__isnull=True
+        ).order_by('-default_selection', 'acronym')
+        
+        # Torna campos opcionais
+        self.fields['procedure_category'].required = False
+        self.fields['number'].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        procedure_category = cleaned_data.get('procedure_category')
+        number = cleaned_data.get('number')
+        
+        # Validação: se tem categoria, deve ter número
+        if procedure_category and not number:
+            raise forms.ValidationError({
+                'number': 'É necessário informar o número quando uma categoria é selecionada.'
+            })
+        
+        # Validação de unicidade
+        if self.case and procedure_category and number:
+            queryset = CaseProcedure.objects.filter(
+                case=self.case,
+                procedure_category=procedure_category,
+                number=number,
+                deleted_at__isnull=True
+            )
+            if self.instance and self.instance.pk:
+                queryset = queryset.exclude(pk=self.instance.pk)
+            
+            if queryset.exists():
+                raise forms.ValidationError({
+                    'number': f'Já existe um procedimento com categoria {procedure_category.acronym} e número {number} para este processo.'
+                })
+        
+        return cleaned_data
+    
+    def save(self, commit=True):
+        procedure = super().save(commit=False)
+        if self.case:
+            procedure.case = self.case
+        
+        # Processar arquivo se fornecido
+        if 'document_file' in self.cleaned_data and self.cleaned_data['document_file']:
+            file = self.cleaned_data['document_file']
+            procedure.original_filename = file.name
+            procedure.content_type = file.content_type
+            procedure.document_file = file.read()
+        # Se não foi fornecido um novo arquivo, mantém o existente (não altera)
+        
+        if commit:
+            procedure.save()
+        return procedure
 
 
 class CaseCompleteRegistrationForm(forms.Form):

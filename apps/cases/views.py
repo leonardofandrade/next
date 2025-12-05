@@ -23,8 +23,8 @@ from typing import Dict, Any
 from django.db.models import QuerySet
 
 from apps.core.mixins.views import BaseListView, BaseDetailView, BaseCreateView, BaseUpdateView, BaseDeleteView, ServiceMixin
-from apps.cases.models import Case, CaseDevice, Extraction
-from apps.cases.forms import CaseForm, CaseSearchForm, CaseDeviceForm, CaseCompleteRegistrationForm
+from apps.cases.models import Case, CaseDevice, Extraction, CaseProcedure
+from apps.cases.forms import CaseForm, CaseSearchForm, CaseDeviceForm, CaseCompleteRegistrationForm, CaseProcedureForm
 from apps.core.models import ReportsSettings
 from apps.cases.services import CaseService
 from apps.core.services.base import ServiceException
@@ -251,6 +251,9 @@ class CaseUpdateView(BaseUpdateView):
         # Add counts for complete registration button
         context['devices_count'] = case.case_devices.filter(deleted_at__isnull=True).count()
         context['procedures_count'] = case.procedures.filter(deleted_at__isnull=True).count()
+        
+        # Add procedures to context for the template
+        context['procedures'] = case.procedures.filter(deleted_at__isnull=True).select_related('procedure_category')
         
         return context
 
@@ -723,6 +726,202 @@ class CaseDeviceDeleteView(LoginRequiredMixin, DeleteView):
         """
         context = super().get_context_data(**kwargs)
         context['page_title'] = f'Excluir Dispositivo - Processo {self.case.number if self.case.number else f"#{self.case.pk}"}'
+        context['page_icon'] = 'fa-trash'
+        context['case'] = self.case
+        return context
+
+
+class CaseProcedureCreateView(LoginRequiredMixin, CreateView):
+    """
+    Cria um novo procedimento para um processo
+    """
+    model = CaseProcedure
+    form_class = CaseProcedureForm
+    template_name = 'cases/case_procedure_form.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Verifica se o caso existe, não está deletado e se o usuário tem permissão
+        """
+        self.case = get_object_or_404(
+            Case.objects.filter(deleted_at__isnull=True),
+            pk=kwargs['case_pk']
+        )
+        
+        # Verifica se o usuário tem permissão para adicionar procedimentos
+        if self.case.assigned_to and self.case.assigned_to != request.user:
+            messages.error(
+                request,
+                'Você não tem permissão para adicionar procedimentos a este processo. Apenas o responsável pode fazer isso.'
+            )
+            return redirect('cases:update', pk=self.case.pk)
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_form_kwargs(self):
+        """
+        Passa o caso para o formulário
+        """
+        kwargs = super().get_form_kwargs()
+        kwargs['case'] = self.case
+        return kwargs
+    
+    def form_valid(self, form):
+        """
+        Define campos adicionais antes de salvar
+        """
+        procedure = form.save(commit=False)
+        procedure.case = self.case
+        procedure.created_by = self.request.user
+        procedure.save()
+        
+        messages.success(
+            self.request,
+            'Procedimento adicionado com sucesso!'
+        )
+        return redirect('cases:update', pk=self.case.pk)
+    
+    def get_context_data(self, **kwargs):
+        """
+        Adiciona informações de página ao contexto
+        """
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Adicionar Procedimento - Processo {self.case.number if self.case.number else f"#{self.case.pk}"}'
+        context['page_icon'] = 'fa-plus'
+        context['case'] = self.case
+        context['action'] = 'create'
+        return context
+
+
+class CaseProcedureUpdateView(LoginRequiredMixin, UpdateView):
+    """
+    Atualiza um procedimento existente
+    """
+    model = CaseProcedure
+    form_class = CaseProcedureForm
+    template_name = 'cases/case_procedure_form.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Verifica se o caso e o procedimento existem, não estão deletados e se o usuário tem permissão
+        """
+        self.case = get_object_or_404(
+            Case.objects.filter(deleted_at__isnull=True),
+            pk=kwargs['case_pk']
+        )
+        
+        # Verifica se o usuário tem permissão para editar procedimentos
+        if self.case.assigned_to and self.case.assigned_to != request.user:
+            messages.error(
+                request,
+                'Você não tem permissão para editar procedimentos deste processo. Apenas o responsável pode fazer isso.'
+            )
+            return redirect('cases:update', pk=self.case.pk)
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        """
+        Filtra apenas procedimentos não deletados do caso
+        """
+        return CaseProcedure.objects.filter(
+            case=self.case,
+            deleted_at__isnull=True
+        )
+    
+    def get_form_kwargs(self):
+        """
+        Passa o caso para o formulário
+        """
+        kwargs = super().get_form_kwargs()
+        kwargs['case'] = self.case
+        return kwargs
+    
+    def form_valid(self, form):
+        """
+        Atualiza campos adicionais antes de salvar
+        """
+        procedure = form.save(commit=False)
+        procedure.updated_by = self.request.user
+        procedure.version += 1
+        procedure.save()
+        
+        messages.success(
+            self.request,
+            'Procedimento atualizado com sucesso!'
+        )
+        return redirect('cases:update', pk=self.case.pk)
+    
+    def get_context_data(self, **kwargs):
+        """
+        Adiciona informações de página ao contexto
+        """
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Editar Procedimento - Processo {self.case.number if self.case.number else f"#{self.case.pk}"}'
+        context['page_icon'] = 'fa-edit'
+        context['case'] = self.case
+        context['procedure'] = self.get_object()
+        context['action'] = 'update'
+        return context
+
+
+class CaseProcedureDeleteView(LoginRequiredMixin, DeleteView):
+    """
+    Realiza soft delete de um procedimento
+    """
+    model = CaseProcedure
+    template_name = 'cases/case_procedure_confirm_delete.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Verifica se o caso e o procedimento existem, não estão deletados e se o usuário tem permissão
+        """
+        self.case = get_object_or_404(
+            Case.objects.filter(deleted_at__isnull=True),
+            pk=kwargs['case_pk']
+        )
+        
+        # Verifica se o usuário tem permissão para excluir procedimentos
+        if self.case.assigned_to and self.case.assigned_to != request.user:
+            messages.error(
+                request,
+                'Você não tem permissão para excluir procedimentos deste processo. Apenas o responsável pode fazer isso.'
+            )
+            return redirect('cases:update', pk=self.case.pk)
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        """
+        Filtra apenas procedimentos não deletados do caso
+        """
+        return CaseProcedure.objects.filter(
+            case=self.case,
+            deleted_at__isnull=True
+        ).select_related('procedure_category')
+    
+    def delete(self, request, *args, **kwargs):
+        """
+        Realiza soft delete
+        """
+        procedure = self.get_object()
+        procedure.deleted_at = timezone.now()
+        procedure.deleted_by = request.user
+        procedure.save()
+        
+        messages.success(
+            request,
+            'Procedimento excluído com sucesso!'
+        )
+        
+        return redirect('cases:update', pk=self.case.pk)
+    
+    def get_context_data(self, **kwargs):
+        """
+        Adiciona informações de página ao contexto
+        """
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Excluir Procedimento - Processo {self.case.number if self.case.number else f"#{self.case.pk}"}'
         context['page_icon'] = 'fa-trash'
         context['case'] = self.case
         return context

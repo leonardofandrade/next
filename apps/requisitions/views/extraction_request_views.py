@@ -266,7 +266,7 @@ class ExtractionRequestNotReceivedView(LoginRequiredMixin, ListView):
     Lista solicitações não recebidas (pending ou assigned e sem received_at)
     """
     model = ExtractionRequest
-    template_name = 'requisitions/extraction_request_list.html'
+    template_name = 'requisitions/extraction_request_pending_list.html'
     context_object_name = 'extraction_requests'
     paginate_by = settings.PAGINATE_BY
     
@@ -329,7 +329,6 @@ class ExtractionRequestNotReceivedView(LoginRequiredMixin, ListView):
         context['page_icon'] = 'fa-inbox'
         context['form'] = ExtractionRequestSearchForm(self.request.GET or None)
         context['total_count'] = self.get_queryset().count()
-        context['view_type'] = 'not_received'
         return context
 
 

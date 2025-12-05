@@ -8,13 +8,13 @@
 {% endblock page_title %}
 
 {% block page_description %}
-Gerencie todas as solicitações de extração
+Solicitações pendentes ou aguardando material (não recebidas)
 {% endblock page_description %}
 
 {% block page_actions %}
-<a href="{% url 'requisitions:not_received' %}" class="btn btn-outline-warning me-2">
-    <i class="fas fa-inbox me-2"></i>
-    Não Recebidas
+<a href="{% url 'requisitions:list' %}" class="btn btn-outline-secondary me-2">
+    <i class="fas fa-list me-2"></i>
+    Todas
 </a>
 <a href="{% url 'requisitions:create' %}" class="btn btn-primary">
     <i class="fas fa-plus me-2"></i>
@@ -44,10 +44,6 @@ Gerencie todas as solicitações de extração
                         {{ form.extraction_unit }}
                     </div>
                     <div class="col-md-2">
-                        {{ form.status|form_label_class }}
-                        {{ form.status }}
-                    </div>
-                    <div class="col-md-2">
                         {{ form.date_from|form_label_class }}
                         {{ form.date_from }}
                     </div>
@@ -62,7 +58,7 @@ Gerencie todas as solicitações de extração
                     <i class="fas fa-search me-1"></i>
                     Pesquisar
                 </button>
-                <a href="{% url 'requisitions:list' %}" class="btn btn-secondary">
+                <a href="{% url 'requisitions:not_received' %}" class="btn btn-secondary">
                     <i class="fas fa-times me-1"></i>
                     Limpar
                 </a>
@@ -104,7 +100,6 @@ Gerencie todas as solicitações de extração
                                 <td>
                                     <strong class="text-primary">{{ request.requester_agency_unit.acronym|default:"N/A" }}</strong>
                                     <p><small>{{ request.requester_authority_position.acronym|default:"" }} {{ request.requester_authority_name|default:"" }}</small></p>
-
                                 </td>
                                 <td>
                                     {{ request.request_procedures|default:"N/A" }}
@@ -126,17 +121,32 @@ Gerencie todas as solicitações de extração
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <a href="{% url 'requisitions:detail' request.pk %}?next={% url 'requisitions:list' %}" 
+                                        <a href="{% url 'requisitions:detail' request.pk %}?next={% url 'requisitions:not_received' %}" 
                                            class="btn btn-outline-primary" 
                                            title="Ver Detalhes">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{% url 'requisitions:update' request.pk %}?next={% url 'requisitions:list' %}" 
+                                        <a href="{% url 'requisitions:update' request.pk %}?next={% url 'requisitions:not_received' %}" 
                                            class="btn btn-outline-warning" 
                                            title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <a href="{% url 'requisitions:delete' request.pk %}?next={% url 'requisitions:list' %}" 
+                                        {% if not request.case or request.case.deleted_at %}
+                                        <button type="button" 
+                                                class="btn btn-outline-success" 
+                                                title="Criar Processo"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#createCaseModal{{ request.pk }}">
+                                            <i class="fas fa-folder-plus"></i>
+                                        </button>
+                                        {% else %}
+                                        <a href="{% url 'cases:detail' request.case.pk %}?next={% url 'requisitions:not_received' %}" 
+                                           class="btn btn-outline-info" 
+                                           title="Ver Processo Criado">
+                                            <i class="fas fa-folder-open"></i>
+                                        </a>
+                                        {% endif %}
+                                        <a href="{% url 'requisitions:delete' request.pk %}?next={% url 'requisitions:not_received' %}" 
                                            class="btn btn-outline-danger" 
                                            title="Excluir">
                                             <i class="fas fa-trash"></i>
@@ -167,6 +177,56 @@ Gerencie todas as solicitações de extração
     </div>
 </div>
 
+{% for request in page_obj %}
+    {% if not request.case or request.case.deleted_at %}
+    <!-- Modal de Confirmação para Criar Processo -->
+    <div class="modal fade" id="createCaseModal{{ request.pk }}" tabindex="-1" aria-labelledby="createCaseModalLabel{{ request.pk }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createCaseModalLabel{{ request.pk }}">
+                    <i class="fas fa-folder-plus text-success me-2"></i>
+                    Criar Processo a partir da Solicitação
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja criar um processo a partir da solicitação <strong>#{{ request.pk }}</strong>?</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Atenção:</strong> Esta ação irá:
+                    <ul class="mb-0 mt-2">
+                        <li>Criar um novo processo com os dados da solicitação</li>
+                        <li>Marcar a solicitação como recebida automaticamente</li>
+                        <li>Tentar criar procedimentos do caso baseado nos procedimentos informados</li>
+                        <li>Redirecionar para a edição do processo criado</li>
+                    </ul>
+                </div>
+                {% if request.request_procedures %}
+                <div class="mb-2">
+                    <strong>Procedimentos:</strong> {{ request.request_procedures }}
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>
+                    Cancelar
+                </button>
+                <form method="post" action="{% url 'requisitions:create_case' request.pk %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-2"></i>
+                        Confirmar e Criar Processo
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    </div>
+    {% endif %}
+{% endfor %}
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Aguarda um pouco para garantir que o jQuery e Select2 estejam carregados
@@ -193,30 +253,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 allowClear: true,
                 width: '100%'
             });
-            
-            // Destroi instâncias anteriores se existirem
-            var statusSelect = $('#{{ form.status.id_for_label }}');
-            if (statusSelect.data('select2')) {
-                statusSelect.select2('destroy');
-            }
-            
-            // Inicializa Select2 para status (múltipla seleção)
-            statusSelect.select2({
-                theme: 'bootstrap-5',
-                language: {
-                    noResults: function() {
-                        return "Nenhum resultado encontrado";
-                    },
-                    searching: function() {
-                        return "Buscando...";
-                    }
-                },
-                placeholder: 'Selecione um ou mais status...',
-                allowClear: true,
-                width: '100%'
-            });
         }
     }, 100);
 });
 </script>
 {% endblock %}
+

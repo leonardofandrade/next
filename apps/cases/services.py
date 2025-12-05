@@ -357,3 +357,4 @@ class ExtractionService(BaseService):
             queryset = queryset.filter(assigned_to_id=assigned_to)
             
         return queryset
+

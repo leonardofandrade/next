@@ -26,7 +26,7 @@ from apps.core.mixins.views import BaseListView, BaseDetailView, BaseCreateView,
 from apps.cases.models import Case, CaseDevice, Extraction
 from apps.cases.forms import CaseForm, CaseSearchForm, CaseDeviceForm, CaseCompleteRegistrationForm
 from apps.core.models import ReportsSettings
-from apps.core.services.case_services import CaseService
+from apps.cases.services import CaseService
 from apps.core.services.base import ServiceException
 
 

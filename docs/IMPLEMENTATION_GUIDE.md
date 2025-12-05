@@ -48,9 +48,9 @@ class Case(AbstractCaseModel):
 
 ```python
 # apps/cases/services.py
-from apps.core.services.case_services import CaseService
+from apps.cases.services import CaseService
 
-# O service já está implementado em core.services.case_services
+# O service está implementado em apps.cases.services
 # Basta importar e usar
 ```
 
@@ -63,7 +63,7 @@ from apps.core.services.case_services import CaseService
 
 # Imports novos
 from apps.core.mixins.views import BaseListView
-from apps.core.services.case_services import CaseService
+from apps.cases.services import CaseService
 
 # Substituir a view existente
 class CaseListView(BaseListView):
@@ -85,7 +85,7 @@ class CaseListView(BaseListView):
 # tests/test_case_service.py
 from django.test import TestCase
 from django.contrib.auth.models import User
-from apps.core.services.case_services import CaseService
+from apps.cases.services import CaseService
 from apps.cases.models import Case
 
 class CaseServiceTest(TestCase):

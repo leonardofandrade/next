@@ -5,7 +5,7 @@ from apps.core.mixins.views import (
     BaseListView, BaseDetailView, BaseCreateView, 
     BaseUpdateView, BaseDeleteView
 )
-from apps.core.services.case_services import CaseService, ExtractionService
+from apps.cases.services import CaseService, ExtractionService
 from apps.cases.models import Case, Extraction
 from apps.cases.forms import CaseForm, CaseSearchForm
 

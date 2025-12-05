@@ -23,7 +23,7 @@ A infraestrutura base (BaseService, BaseListView, BaseDetailView) está implemen
 - ✅ `BaseService` em `apps/core/services/base.py`
 - ✅ `BaseListView`, `BaseDetailView`, `BaseCreateView`, `BaseUpdateView`, `BaseDeleteView` em `apps/core/mixins/views.py`
 - ✅ `BaseAPIViewSet` em `apps/api/base_views.py`
-- ✅ `CaseService` em `apps/core/services/case_services.py` (exemplo)
+- ✅ `CaseService` em `apps/cases/services.py` (exemplo)
 - ✅ Managers customizados em `apps/core/managers.py`
 - ✅ Exemplos de refatoração em `apps/core/examples/refactored_views.py`
 

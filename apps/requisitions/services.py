@@ -1,8 +1,11 @@
 """
 Services for requisitions app
 """
+import re
+import logging
 from typing import Dict, Any, Optional, List
 from django.db.models import Q, QuerySet, Count, Sum, Case, When, IntegerField
+from django.db import transaction
 from django.utils import timezone
 from django.db.models.functions import TruncMonth
 
@@ -81,13 +84,17 @@ class ExtractionRequestService(BaseService):
             ]
         )
     
+    @transaction.atomic
     def create_case_from_request(self, request_pk: int) -> 'Case':
         """
         Cria um Case a partir de um ExtractionRequest
+        Operação atômica: criação do Case e atualização do ExtractionRequest são executadas
+        em uma única transação. Se falharem, tudo será revertido.
+        
+        Nota: Falhas no parsing de procedimentos (CaseProcedure) não impedem a criação do case.
         """
         from apps.cases.models import Case, CaseProcedure
         from apps.base_tables.models import ProcedureCategory
-        import re
         
         extraction_request = self.get_object(request_pk)
         
@@ -119,8 +126,19 @@ class ExtractionRequestService(BaseService):
         case.save()
         
         # Tenta parsear request_procedures e criar CaseProcedure
+        # Se falhar, não impede a criação do case
         if extraction_request.request_procedures:
-            self._parse_request_procedures(extraction_request.request_procedures, case)
+            try:
+                errors = self._parse_request_procedures(extraction_request.request_procedures, case)
+                # Loga erros se houver, mas não interrompe o fluxo
+                if errors:
+                    logger = logging.getLogger(__name__)
+                    for error in errors:
+                        logger.warning(f"Erro ao parsear procedimentos do Case #{case.pk}: {error}")
+            except Exception as e:
+                # Captura qualquer exceção não tratada e loga, mas não interrompe
+                logger = logging.getLogger(__name__)
+                logger.error(f"Erro inesperado ao parsear procedimentos do Case #{case.pk}: {str(e)}", exc_info=True)
         
         # Atualiza a ExtractionRequest: seta received_at, received_by e status
         if not extraction_request.received_at:

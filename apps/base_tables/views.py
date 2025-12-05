@@ -1,9 +1,12 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib import messages
+"""
+Views para o app base_tables - Refatoradas usando BaseService e BaseViews
+"""
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
 
+from apps.core.mixins.views import (
+    BaseListView, BaseCreateView, BaseUpdateView, BaseDeleteView
+)
 from apps.base_tables.models import (
     Organization,
     Agency,
@@ -28,638 +31,747 @@ from apps.base_tables.forms import (
     DeviceBrandForm,
     DeviceModelForm
 )
-
-
-def is_staff_user(user):
-    """Verifica se o usuário é staff ou superuser"""
-    return user.is_staff or user.is_superuser
+from apps.base_tables.services import (
+    OrganizationService,
+    AgencyService,
+    DepartmentService,
+    AgencyUnitService,
+    EmployeePositionService,
+    ProcedureCategoryService,
+    CrimeCategoryService,
+    DeviceCategoryService,
+    DeviceBrandService,
+    DeviceModelService
+)
 
 
 # ==================== Organization Views ====================
 
-@login_required
-@user_passes_test(is_staff_user)
-def organization_list(request):
+class OrganizationListView(BaseListView):
     """Lista de instituições"""
-    organizations = Organization.objects.filter(deleted_at__isnull=True).order_by('name')
-    return render(request, 'base_tables/organization_list.html', {'organizations': organizations})
+    model = Organization
+    service_class = OrganizationService
+    template_name = 'base_tables/organization_list.html'
+    context_object_name = 'organizations'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['organizations'] = context.get('object_list', [])
+        return context
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def organization_create(request):
+class OrganizationCreateView(BaseCreateView):
     """Criar nova instituição"""
-    if request.method == 'POST':
-        form = OrganizationForm(request.POST)
-        if form.is_valid():
-            organization = form.save()
-            messages.success(request, _('Instituição criada com sucesso!'))
-            return redirect('base_tables:organization_list')
-    else:
-        form = OrganizationForm()
+    model = Organization
+    form_class = OrganizationForm
+    service_class = OrganizationService
+    template_name = 'base_tables/organization_form.html'
+    success_url = None
     
-    return render(request, 'base_tables/organization_form.html', {'form': form, 'title': _('Nova Instituição')})
+    def get_success_url(self):
+        return reverse('base_tables:organization_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Nova Instituição')
+        return context
+    
+    def form_valid(self, form):
+        """Override to use form.save() instead of service.create()"""
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Instituição criada com sucesso!'))
+        return super(BaseCreateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def organization_edit(request, pk):
+class OrganizationUpdateView(BaseUpdateView):
     """Editar instituição"""
-    organization = get_object_or_404(Organization, pk=pk, deleted_at__isnull=True)
+    model = Organization
+    form_class = OrganizationForm
+    service_class = OrganizationService
+    template_name = 'base_tables/organization_form.html'
+    success_url = None
     
-    if request.method == 'POST':
-        form = OrganizationForm(request.POST, instance=organization)
-        if form.is_valid():
-            form.save()
-            messages.success(request, _('Instituição atualizada com sucesso!'))
-            return redirect('base_tables:organization_list')
-    else:
-        form = OrganizationForm(instance=organization)
+    def get_success_url(self):
+        return reverse('base_tables:organization_list')
     
-    return render(request, 'base_tables/organization_form.html', {
-        'form': form, 
-        'organization': organization, 
-        'title': _('Editar Instituição')
-    })
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Editar Instituição')
+        context['organization'] = self.object
+        return context
+    
+    def form_valid(self, form):
+        """Override to use form.save() instead of service.update()"""
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Instituição atualizada com sucesso!'))
+        return super(BaseUpdateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def organization_delete(request, pk):
+class OrganizationDeleteView(BaseDeleteView):
     """Deletar instituição (soft delete)"""
-    organization = get_object_or_404(Organization, pk=pk, deleted_at__isnull=True)
+    model = Organization
+    service_class = OrganizationService
+    template_name = 'base_tables/organization_confirm_delete.html'
+    success_url = None
     
-    if request.method == 'POST':
-        organization.deleted_at = timezone.now()
-        organization.save()
-        messages.success(request, _('Instituição removida com sucesso!'))
-        return redirect('base_tables:organization_list')
-    
-    return render(request, 'base_tables/organization_confirm_delete.html', {'organization': organization})
+    def get_success_url(self):
+        return reverse('base_tables:organization_list')
 
 
 # ==================== Agency Views ====================
 
-@login_required
-@user_passes_test(is_staff_user)
-def agency_list(request):
+class AgencyListView(BaseListView):
     """Lista de agências"""
-    agencies = Agency.objects.filter(deleted_at__isnull=True).select_related('organization').order_by('organization__name', 'name')
-    return render(request, 'base_tables/agency_list.html', {'agencies': agencies})
+    model = Agency
+    service_class = AgencyService
+    template_name = 'base_tables/agency_list.html'
+    context_object_name = 'agencies'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['agencies'] = context.get('object_list', [])
+        return context
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def agency_create(request):
+class AgencyCreateView(BaseCreateView):
     """Criar nova agência"""
-    if request.method == 'POST':
-        form = AgencyForm(request.POST)
-        if form.is_valid():
-            agency = form.save()
-            messages.success(request, _('Agência criada com sucesso!'))
-            return redirect('base_tables:agency_list')
-    else:
-        form = AgencyForm()
+    model = Agency
+    form_class = AgencyForm
+    service_class = AgencyService
+    template_name = 'base_tables/agency_form.html'
+    success_url = None
     
-    return render(request, 'base_tables/agency_form.html', {'form': form, 'title': _('Nova Agência')})
+    def get_success_url(self):
+        return reverse('base_tables:agency_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Nova Agência')
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Agência criada com sucesso!'))
+        return super(BaseCreateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def agency_edit(request, pk):
+class AgencyUpdateView(BaseUpdateView):
     """Editar agência"""
-    agency = get_object_or_404(Agency, pk=pk, deleted_at__isnull=True)
+    model = Agency
+    form_class = AgencyForm
+    service_class = AgencyService
+    template_name = 'base_tables/agency_form.html'
+    success_url = None
     
-    if request.method == 'POST':
-        form = AgencyForm(request.POST, instance=agency)
-        if form.is_valid():
-            form.save()
-            messages.success(request, _('Agência atualizada com sucesso!'))
-            return redirect('base_tables:agency_list')
-    else:
-        form = AgencyForm(instance=agency)
+    def get_success_url(self):
+        return reverse('base_tables:agency_list')
     
-    return render(request, 'base_tables/agency_form.html', {
-        'form': form, 
-        'agency': agency, 
-        'title': _('Editar Agência')
-    })
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Editar Agência')
+        context['agency'] = self.object
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Agência atualizada com sucesso!'))
+        return super(BaseUpdateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def agency_delete(request, pk):
+class AgencyDeleteView(BaseDeleteView):
     """Deletar agência (soft delete)"""
-    agency = get_object_or_404(Agency, pk=pk, deleted_at__isnull=True)
+    model = Agency
+    service_class = AgencyService
+    template_name = 'base_tables/agency_confirm_delete.html'
+    success_url = None
     
-    if request.method == 'POST':
-        agency.deleted_at = timezone.now()
-        agency.save()
-        messages.success(request, _('Agência removida com sucesso!'))
-        return redirect('base_tables:agency_list')
-    
-    return render(request, 'base_tables/agency_confirm_delete.html', {'agency': agency})
+    def get_success_url(self):
+        return reverse('base_tables:agency_list')
 
 
 # ==================== Department Views ====================
 
-@login_required
-@user_passes_test(is_staff_user)
-def department_list(request):
+class DepartmentListView(BaseListView):
     """Lista de departamentos"""
-    departments = Department.objects.filter(deleted_at__isnull=True).select_related('agency', 'parent_department').order_by('agency__name', 'name')
-    return render(request, 'base_tables/department_list.html', {'departments': departments})
+    model = Department
+    service_class = DepartmentService
+    template_name = 'base_tables/department_list.html'
+    context_object_name = 'departments'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['departments'] = context.get('object_list', [])
+        return context
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def department_create(request):
+class DepartmentCreateView(BaseCreateView):
     """Criar novo departamento"""
-    if request.method == 'POST':
-        form = DepartmentForm(request.POST)
-        if form.is_valid():
-            department = form.save()
-            messages.success(request, _('Departamento criado com sucesso!'))
-            return redirect('base_tables:department_list')
-    else:
-        form = DepartmentForm()
+    model = Department
+    form_class = DepartmentForm
+    service_class = DepartmentService
+    template_name = 'base_tables/department_form.html'
+    success_url = None
     
-    return render(request, 'base_tables/department_form.html', {'form': form, 'title': _('Novo Departamento')})
+    def get_success_url(self):
+        return reverse('base_tables:department_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Novo Departamento')
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Departamento criado com sucesso!'))
+        return super(BaseCreateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def department_edit(request, pk):
+class DepartmentUpdateView(BaseUpdateView):
     """Editar departamento"""
-    department = get_object_or_404(Department, pk=pk, deleted_at__isnull=True)
+    model = Department
+    form_class = DepartmentForm
+    service_class = DepartmentService
+    template_name = 'base_tables/department_form.html'
+    success_url = None
     
-    if request.method == 'POST':
-        form = DepartmentForm(request.POST, instance=department)
-        if form.is_valid():
-            form.save()
-            messages.success(request, _('Departamento atualizado com sucesso!'))
-            return redirect('base_tables:department_list')
-    else:
-        form = DepartmentForm(instance=department)
+    def get_success_url(self):
+        return reverse('base_tables:department_list')
     
-    return render(request, 'base_tables/department_form.html', {
-        'form': form, 
-        'department': department, 
-        'title': _('Editar Departamento')
-    })
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Editar Departamento')
+        context['department'] = self.object
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Departamento atualizado com sucesso!'))
+        return super(BaseUpdateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def department_delete(request, pk):
+class DepartmentDeleteView(BaseDeleteView):
     """Deletar departamento (soft delete)"""
-    department = get_object_or_404(Department, pk=pk, deleted_at__isnull=True)
+    model = Department
+    service_class = DepartmentService
+    template_name = 'base_tables/department_confirm_delete.html'
+    success_url = None
     
-    if request.method == 'POST':
-        department.deleted_at = timezone.now()
-        department.save()
-        messages.success(request, _('Departamento removido com sucesso!'))
-        return redirect('base_tables:department_list')
-    
-    return render(request, 'base_tables/department_confirm_delete.html', {'department': department})
+    def get_success_url(self):
+        return reverse('base_tables:department_list')
 
 
 # ==================== AgencyUnit Views ====================
 
-@login_required
-@user_passes_test(is_staff_user)
-def agency_unit_list(request):
+class AgencyUnitListView(BaseListView):
     """Lista de unidades operacionais"""
-    units = AgencyUnit.objects.filter(deleted_at__isnull=True).select_related('agency').order_by('agency__name', 'name')
-    return render(request, 'base_tables/agency_unit_list.html', {'units': units})
+    model = AgencyUnit
+    service_class = AgencyUnitService
+    template_name = 'base_tables/agency_unit_list.html'
+    context_object_name = 'units'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['units'] = context.get('object_list', [])
+        return context
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def agency_unit_create(request):
+class AgencyUnitCreateView(BaseCreateView):
     """Criar nova unidade operacional"""
-    if request.method == 'POST':
-        form = AgencyUnitForm(request.POST)
-        if form.is_valid():
-            unit = form.save()
-            messages.success(request, _('Unidade operacional criada com sucesso!'))
-            return redirect('base_tables:agency_unit_list')
-    else:
-        form = AgencyUnitForm()
+    model = AgencyUnit
+    form_class = AgencyUnitForm
+    service_class = AgencyUnitService
+    template_name = 'base_tables/agency_unit_form.html'
+    success_url = None
     
-    return render(request, 'base_tables/agency_unit_form.html', {'form': form, 'title': _('Nova Unidade Operacional')})
+    def get_success_url(self):
+        return reverse('base_tables:agency_unit_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Nova Unidade Operacional')
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Unidade operacional criada com sucesso!'))
+        return super(BaseCreateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def agency_unit_edit(request, pk):
+class AgencyUnitUpdateView(BaseUpdateView):
     """Editar unidade operacional"""
-    unit = get_object_or_404(AgencyUnit, pk=pk, deleted_at__isnull=True)
+    model = AgencyUnit
+    form_class = AgencyUnitForm
+    service_class = AgencyUnitService
+    template_name = 'base_tables/agency_unit_form.html'
+    success_url = None
     
-    if request.method == 'POST':
-        form = AgencyUnitForm(request.POST, instance=unit)
-        if form.is_valid():
-            form.save()
-            messages.success(request, _('Unidade operacional atualizada com sucesso!'))
-            return redirect('base_tables:agency_unit_list')
-    else:
-        form = AgencyUnitForm(instance=unit)
+    def get_success_url(self):
+        return reverse('base_tables:agency_unit_list')
     
-    return render(request, 'base_tables/agency_unit_form.html', {
-        'form': form, 
-        'unit': unit, 
-        'title': _('Editar Unidade Operacional')
-    })
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Editar Unidade Operacional')
+        context['unit'] = self.object
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Unidade operacional atualizada com sucesso!'))
+        return super(BaseUpdateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def agency_unit_delete(request, pk):
+class AgencyUnitDeleteView(BaseDeleteView):
     """Deletar unidade operacional (soft delete)"""
-    unit = get_object_or_404(AgencyUnit, pk=pk, deleted_at__isnull=True)
+    model = AgencyUnit
+    service_class = AgencyUnitService
+    template_name = 'base_tables/agency_unit_confirm_delete.html'
+    success_url = None
     
-    if request.method == 'POST':
-        unit.deleted_at = timezone.now()
-        unit.save()
-        messages.success(request, _('Unidade operacional removida com sucesso!'))
-        return redirect('base_tables:agency_unit_list')
-    
-    return render(request, 'base_tables/agency_unit_confirm_delete.html', {'unit': unit})
+    def get_success_url(self):
+        return reverse('base_tables:agency_unit_list')
 
 
 # ==================== EmployeePosition Views ====================
 
-@login_required
-@user_passes_test(is_staff_user)
-def employee_position_list(request):
+class EmployeePositionListView(BaseListView):
     """Lista de cargos"""
-    positions = EmployeePosition.objects.filter(deleted_at__isnull=True).order_by('-default_selection', 'name')
-    return render(request, 'base_tables/employee_position_list.html', {'positions': positions})
+    model = EmployeePosition
+    service_class = EmployeePositionService
+    template_name = 'base_tables/employee_position_list.html'
+    context_object_name = 'positions'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['positions'] = context.get('object_list', [])
+        return context
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def employee_position_create(request):
+class EmployeePositionCreateView(BaseCreateView):
     """Criar novo cargo"""
-    if request.method == 'POST':
-        form = EmployeePositionForm(request.POST)
-        if form.is_valid():
-            position = form.save()
-            messages.success(request, _('Cargo criado com sucesso!'))
-            return redirect('base_tables:employee_position_list')
-    else:
-        form = EmployeePositionForm()
+    model = EmployeePosition
+    form_class = EmployeePositionForm
+    service_class = EmployeePositionService
+    template_name = 'base_tables/employee_position_form.html'
+    success_url = None
     
-    return render(request, 'base_tables/employee_position_form.html', {'form': form, 'title': _('Novo Cargo')})
+    def get_success_url(self):
+        return reverse('base_tables:employee_position_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Novo Cargo')
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Cargo criado com sucesso!'))
+        return super(BaseCreateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def employee_position_edit(request, pk):
+class EmployeePositionUpdateView(BaseUpdateView):
     """Editar cargo"""
-    position = get_object_or_404(EmployeePosition, pk=pk, deleted_at__isnull=True)
+    model = EmployeePosition
+    form_class = EmployeePositionForm
+    service_class = EmployeePositionService
+    template_name = 'base_tables/employee_position_form.html'
+    success_url = None
     
-    if request.method == 'POST':
-        form = EmployeePositionForm(request.POST, instance=position)
-        if form.is_valid():
-            form.save()
-            messages.success(request, _('Cargo atualizado com sucesso!'))
-            return redirect('base_tables:employee_position_list')
-    else:
-        form = EmployeePositionForm(instance=position)
+    def get_success_url(self):
+        return reverse('base_tables:employee_position_list')
     
-    return render(request, 'base_tables/employee_position_form.html', {
-        'form': form, 
-        'position': position, 
-        'title': _('Editar Cargo')
-    })
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Editar Cargo')
+        context['position'] = self.object
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Cargo atualizado com sucesso!'))
+        return super(BaseUpdateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def employee_position_delete(request, pk):
+class EmployeePositionDeleteView(BaseDeleteView):
     """Deletar cargo (soft delete)"""
-    position = get_object_or_404(EmployeePosition, pk=pk, deleted_at__isnull=True)
+    model = EmployeePosition
+    service_class = EmployeePositionService
+    template_name = 'base_tables/employee_position_confirm_delete.html'
+    success_url = None
     
-    if request.method == 'POST':
-        position.deleted_at = timezone.now()
-        position.save()
-        messages.success(request, _('Cargo removido com sucesso!'))
-        return redirect('base_tables:employee_position_list')
-    
-    return render(request, 'base_tables/employee_position_confirm_delete.html', {'position': position})
+    def get_success_url(self):
+        return reverse('base_tables:employee_position_list')
 
 
 # ==================== ProcedureCategory Views ====================
 
-@login_required
-@user_passes_test(is_staff_user)
-def procedure_category_list(request):
+class ProcedureCategoryListView(BaseListView):
     """Lista de categorias de procedimento"""
-    categories = ProcedureCategory.objects.filter(deleted_at__isnull=True).order_by('-default_selection', 'name')
-    return render(request, 'base_tables/procedure_category_list.html', {'categories': categories})
+    model = ProcedureCategory
+    service_class = ProcedureCategoryService
+    template_name = 'base_tables/procedure_category_list.html'
+    context_object_name = 'categories'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = context.get('object_list', [])
+        return context
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def procedure_category_create(request):
+class ProcedureCategoryCreateView(BaseCreateView):
     """Criar nova categoria de procedimento"""
-    if request.method == 'POST':
-        form = ProcedureCategoryForm(request.POST)
-        if form.is_valid():
-            category = form.save()
-            messages.success(request, _('Categoria de procedimento criada com sucesso!'))
-            return redirect('base_tables:procedure_category_list')
-    else:
-        form = ProcedureCategoryForm()
+    model = ProcedureCategory
+    form_class = ProcedureCategoryForm
+    service_class = ProcedureCategoryService
+    template_name = 'base_tables/procedure_category_form.html'
+    success_url = None
     
-    return render(request, 'base_tables/procedure_category_form.html', {'form': form, 'title': _('Nova Categoria de Procedimento')})
+    def get_success_url(self):
+        return reverse('base_tables:procedure_category_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Nova Categoria de Procedimento')
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Categoria de procedimento criada com sucesso!'))
+        return super(BaseCreateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def procedure_category_edit(request, pk):
+class ProcedureCategoryUpdateView(BaseUpdateView):
     """Editar categoria de procedimento"""
-    category = get_object_or_404(ProcedureCategory, pk=pk, deleted_at__isnull=True)
+    model = ProcedureCategory
+    form_class = ProcedureCategoryForm
+    service_class = ProcedureCategoryService
+    template_name = 'base_tables/procedure_category_form.html'
+    success_url = None
     
-    if request.method == 'POST':
-        form = ProcedureCategoryForm(request.POST, instance=category)
-        if form.is_valid():
-            form.save()
-            messages.success(request, _('Categoria de procedimento atualizada com sucesso!'))
-            return redirect('base_tables:procedure_category_list')
-    else:
-        form = ProcedureCategoryForm(instance=category)
+    def get_success_url(self):
+        return reverse('base_tables:procedure_category_list')
     
-    return render(request, 'base_tables/procedure_category_form.html', {
-        'form': form, 
-        'category': category, 
-        'title': _('Editar Categoria de Procedimento')
-    })
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Editar Categoria de Procedimento')
+        context['category'] = self.object
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Categoria de procedimento atualizada com sucesso!'))
+        return super(BaseUpdateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def procedure_category_delete(request, pk):
+class ProcedureCategoryDeleteView(BaseDeleteView):
     """Deletar categoria de procedimento (soft delete)"""
-    category = get_object_or_404(ProcedureCategory, pk=pk, deleted_at__isnull=True)
+    model = ProcedureCategory
+    service_class = ProcedureCategoryService
+    template_name = 'base_tables/procedure_category_confirm_delete.html'
+    success_url = None
     
-    if request.method == 'POST':
-        category.deleted_at = timezone.now()
-        category.save()
-        messages.success(request, _('Categoria de procedimento removida com sucesso!'))
-        return redirect('base_tables:procedure_category_list')
-    
-    return render(request, 'base_tables/procedure_category_confirm_delete.html', {'category': category})
+    def get_success_url(self):
+        return reverse('base_tables:procedure_category_list')
 
 
 # ==================== CrimeCategory Views ====================
 
-@login_required
-@user_passes_test(is_staff_user)
-def crime_category_list(request):
+class CrimeCategoryListView(BaseListView):
     """Lista de categorias de crime"""
-    categories = CrimeCategory.objects.filter(deleted_at__isnull=True).order_by('-default_selection', 'name')
-    return render(request, 'base_tables/crime_category_list.html', {'categories': categories})
+    model = CrimeCategory
+    service_class = CrimeCategoryService
+    template_name = 'base_tables/crime_category_list.html'
+    context_object_name = 'categories'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = context.get('object_list', [])
+        return context
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def crime_category_create(request):
+class CrimeCategoryCreateView(BaseCreateView):
     """Criar nova categoria de crime"""
-    if request.method == 'POST':
-        form = CrimeCategoryForm(request.POST)
-        if form.is_valid():
-            category = form.save()
-            messages.success(request, _('Categoria de crime criada com sucesso!'))
-            return redirect('base_tables:crime_category_list')
-    else:
-        form = CrimeCategoryForm()
+    model = CrimeCategory
+    form_class = CrimeCategoryForm
+    service_class = CrimeCategoryService
+    template_name = 'base_tables/crime_category_form.html'
+    success_url = None
     
-    return render(request, 'base_tables/crime_category_form.html', {'form': form, 'title': _('Nova Categoria de Crime')})
+    def get_success_url(self):
+        return reverse('base_tables:crime_category_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Nova Categoria de Crime')
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Categoria de crime criada com sucesso!'))
+        return super(BaseCreateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def crime_category_edit(request, pk):
+class CrimeCategoryUpdateView(BaseUpdateView):
     """Editar categoria de crime"""
-    category = get_object_or_404(CrimeCategory, pk=pk, deleted_at__isnull=True)
+    model = CrimeCategory
+    form_class = CrimeCategoryForm
+    service_class = CrimeCategoryService
+    template_name = 'base_tables/crime_category_form.html'
+    success_url = None
     
-    if request.method == 'POST':
-        form = CrimeCategoryForm(request.POST, instance=category)
-        if form.is_valid():
-            form.save()
-            messages.success(request, _('Categoria de crime atualizada com sucesso!'))
-            return redirect('base_tables:crime_category_list')
-    else:
-        form = CrimeCategoryForm(instance=category)
+    def get_success_url(self):
+        return reverse('base_tables:crime_category_list')
     
-    return render(request, 'base_tables/crime_category_form.html', {
-        'form': form, 
-        'category': category, 
-        'title': _('Editar Categoria de Crime')
-    })
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Editar Categoria de Crime')
+        context['category'] = self.object
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Categoria de crime atualizada com sucesso!'))
+        return super(BaseUpdateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def crime_category_delete(request, pk):
+class CrimeCategoryDeleteView(BaseDeleteView):
     """Deletar categoria de crime (soft delete)"""
-    category = get_object_or_404(CrimeCategory, pk=pk, deleted_at__isnull=True)
+    model = CrimeCategory
+    service_class = CrimeCategoryService
+    template_name = 'base_tables/crime_category_confirm_delete.html'
+    success_url = None
     
-    if request.method == 'POST':
-        category.deleted_at = timezone.now()
-        category.save()
-        messages.success(request, _('Categoria de crime removida com sucesso!'))
-        return redirect('base_tables:crime_category_list')
-    
-    return render(request, 'base_tables/crime_category_confirm_delete.html', {'category': category})
+    def get_success_url(self):
+        return reverse('base_tables:crime_category_list')
 
 
 # ==================== DeviceCategory Views ====================
 
-@login_required
-@user_passes_test(is_staff_user)
-def device_category_list(request):
+class DeviceCategoryListView(BaseListView):
     """Lista de categorias de dispositivo"""
-    categories = DeviceCategory.objects.filter(deleted_at__isnull=True).order_by('-default_selection', 'name')
-    return render(request, 'base_tables/device_category_list.html', {'categories': categories})
+    model = DeviceCategory
+    service_class = DeviceCategoryService
+    template_name = 'base_tables/device_category_list.html'
+    context_object_name = 'categories'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = context.get('object_list', [])
+        return context
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def device_category_create(request):
+class DeviceCategoryCreateView(BaseCreateView):
     """Criar nova categoria de dispositivo"""
-    if request.method == 'POST':
-        form = DeviceCategoryForm(request.POST)
-        if form.is_valid():
-            category = form.save()
-            messages.success(request, _('Categoria de dispositivo criada com sucesso!'))
-            return redirect('base_tables:device_category_list')
-    else:
-        form = DeviceCategoryForm()
+    model = DeviceCategory
+    form_class = DeviceCategoryForm
+    service_class = DeviceCategoryService
+    template_name = 'base_tables/device_category_form.html'
+    success_url = None
     
-    return render(request, 'base_tables/device_category_form.html', {'form': form, 'title': _('Nova Categoria de Dispositivo')})
+    def get_success_url(self):
+        return reverse('base_tables:device_category_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Nova Categoria de Dispositivo')
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Categoria de dispositivo criada com sucesso!'))
+        return super(BaseCreateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def device_category_edit(request, pk):
+class DeviceCategoryUpdateView(BaseUpdateView):
     """Editar categoria de dispositivo"""
-    category = get_object_or_404(DeviceCategory, pk=pk, deleted_at__isnull=True)
+    model = DeviceCategory
+    form_class = DeviceCategoryForm
+    service_class = DeviceCategoryService
+    template_name = 'base_tables/device_category_form.html'
+    success_url = None
     
-    if request.method == 'POST':
-        form = DeviceCategoryForm(request.POST, instance=category)
-        if form.is_valid():
-            form.save()
-            messages.success(request, _('Categoria de dispositivo atualizada com sucesso!'))
-            return redirect('base_tables:device_category_list')
-    else:
-        form = DeviceCategoryForm(instance=category)
+    def get_success_url(self):
+        return reverse('base_tables:device_category_list')
     
-    return render(request, 'base_tables/device_category_form.html', {
-        'form': form, 
-        'category': category, 
-        'title': _('Editar Categoria de Dispositivo')
-    })
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Editar Categoria de Dispositivo')
+        context['category'] = self.object
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Categoria de dispositivo atualizada com sucesso!'))
+        return super(BaseUpdateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def device_category_delete(request, pk):
+class DeviceCategoryDeleteView(BaseDeleteView):
     """Deletar categoria de dispositivo (soft delete)"""
-    category = get_object_or_404(DeviceCategory, pk=pk, deleted_at__isnull=True)
+    model = DeviceCategory
+    service_class = DeviceCategoryService
+    template_name = 'base_tables/device_category_confirm_delete.html'
+    success_url = None
     
-    if request.method == 'POST':
-        category.deleted_at = timezone.now()
-        category.save()
-        messages.success(request, _('Categoria de dispositivo removida com sucesso!'))
-        return redirect('base_tables:device_category_list')
-    
-    return render(request, 'base_tables/device_category_confirm_delete.html', {'category': category})
+    def get_success_url(self):
+        return reverse('base_tables:device_category_list')
 
 
 # ==================== DeviceBrand Views ====================
 
-@login_required
-@user_passes_test(is_staff_user)
-def device_brand_list(request):
+class DeviceBrandListView(BaseListView):
     """Lista de marcas de dispositivo"""
-    brands = DeviceBrand.objects.filter(deleted_at__isnull=True).order_by('name')
-    return render(request, 'base_tables/device_brand_list.html', {'brands': brands})
+    model = DeviceBrand
+    service_class = DeviceBrandService
+    template_name = 'base_tables/device_brand_list.html'
+    context_object_name = 'brands'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['brands'] = context.get('object_list', [])
+        return context
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def device_brand_create(request):
+class DeviceBrandCreateView(BaseCreateView):
     """Criar nova marca de dispositivo"""
-    if request.method == 'POST':
-        form = DeviceBrandForm(request.POST)
-        if form.is_valid():
-            brand = form.save()
-            messages.success(request, _('Marca de dispositivo criada com sucesso!'))
-            return redirect('base_tables:device_brand_list')
-    else:
-        form = DeviceBrandForm()
+    model = DeviceBrand
+    form_class = DeviceBrandForm
+    service_class = DeviceBrandService
+    template_name = 'base_tables/device_brand_form.html'
+    success_url = None
     
-    return render(request, 'base_tables/device_brand_form.html', {'form': form, 'title': _('Nova Marca')})
+    def get_success_url(self):
+        return reverse('base_tables:device_brand_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Nova Marca')
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Marca de dispositivo criada com sucesso!'))
+        return super(BaseCreateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def device_brand_edit(request, pk):
+class DeviceBrandUpdateView(BaseUpdateView):
     """Editar marca de dispositivo"""
-    brand = get_object_or_404(DeviceBrand, pk=pk, deleted_at__isnull=True)
+    model = DeviceBrand
+    form_class = DeviceBrandForm
+    service_class = DeviceBrandService
+    template_name = 'base_tables/device_brand_form.html'
+    success_url = None
     
-    if request.method == 'POST':
-        form = DeviceBrandForm(request.POST, instance=brand)
-        if form.is_valid():
-            form.save()
-            messages.success(request, _('Marca de dispositivo atualizada com sucesso!'))
-            return redirect('base_tables:device_brand_list')
-    else:
-        form = DeviceBrandForm(instance=brand)
+    def get_success_url(self):
+        return reverse('base_tables:device_brand_list')
     
-    return render(request, 'base_tables/device_brand_form.html', {
-        'form': form, 
-        'brand': brand, 
-        'title': _('Editar Marca')
-    })
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Editar Marca')
+        context['brand'] = self.object
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Marca de dispositivo atualizada com sucesso!'))
+        return super(BaseUpdateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def device_brand_delete(request, pk):
+class DeviceBrandDeleteView(BaseDeleteView):
     """Deletar marca de dispositivo (soft delete)"""
-    brand = get_object_or_404(DeviceBrand, pk=pk, deleted_at__isnull=True)
+    model = DeviceBrand
+    service_class = DeviceBrandService
+    template_name = 'base_tables/device_brand_confirm_delete.html'
+    success_url = None
     
-    if request.method == 'POST':
-        brand.deleted_at = timezone.now()
-        brand.save()
-        messages.success(request, _('Marca de dispositivo removida com sucesso!'))
-        return redirect('base_tables:device_brand_list')
-    
-    return render(request, 'base_tables/device_brand_confirm_delete.html', {'brand': brand})
+    def get_success_url(self):
+        return reverse('base_tables:device_brand_list')
 
 
 # ==================== DeviceModel Views ====================
 
-@login_required
-@user_passes_test(is_staff_user)
-def device_model_list(request):
+class DeviceModelListView(BaseListView):
     """Lista de modelos de dispositivo"""
-    models = DeviceModel.objects.filter(deleted_at__isnull=True).select_related('brand').order_by('brand__name', 'name')
-    return render(request, 'base_tables/device_model_list.html', {'models': models})
+    model = DeviceModel
+    service_class = DeviceModelService
+    template_name = 'base_tables/device_model_list.html'
+    context_object_name = 'models'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['models'] = context.get('object_list', [])
+        return context
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def device_model_create(request):
+class DeviceModelCreateView(BaseCreateView):
     """Criar novo modelo de dispositivo"""
-    if request.method == 'POST':
-        form = DeviceModelForm(request.POST)
-        if form.is_valid():
-            model = form.save()
-            messages.success(request, _('Modelo de dispositivo criado com sucesso!'))
-            return redirect('base_tables:device_model_list')
-    else:
-        form = DeviceModelForm()
+    model = DeviceModel
+    form_class = DeviceModelForm
+    service_class = DeviceModelService
+    template_name = 'base_tables/device_model_form.html'
+    success_url = None
     
-    return render(request, 'base_tables/device_model_form.html', {'form': form, 'title': _('Novo Modelo')})
+    def get_success_url(self):
+        return reverse('base_tables:device_model_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Novo Modelo')
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Modelo de dispositivo criado com sucesso!'))
+        return super(BaseCreateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def device_model_edit(request, pk):
+class DeviceModelUpdateView(BaseUpdateView):
     """Editar modelo de dispositivo"""
-    model = get_object_or_404(DeviceModel, pk=pk, deleted_at__isnull=True)
+    model = DeviceModel
+    form_class = DeviceModelForm
+    service_class = DeviceModelService
+    template_name = 'base_tables/device_model_form.html'
+    success_url = None
     
-    if request.method == 'POST':
-        form = DeviceModelForm(request.POST, instance=model)
-        if form.is_valid():
-            form.save()
-            messages.success(request, _('Modelo de dispositivo atualizado com sucesso!'))
-            return redirect('base_tables:device_model_list')
-    else:
-        form = DeviceModelForm(instance=model)
+    def get_success_url(self):
+        return reverse('base_tables:device_model_list')
     
-    return render(request, 'base_tables/device_model_form.html', {
-        'form': form, 
-        'model': model, 
-        'title': _('Editar Modelo')
-    })
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Editar Modelo')
+        context['model'] = self.object
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Modelo de dispositivo atualizado com sucesso!'))
+        return super(BaseUpdateView, self).form_valid(form)
 
 
-@login_required
-@user_passes_test(is_staff_user)
-def device_model_delete(request, pk):
+class DeviceModelDeleteView(BaseDeleteView):
     """Deletar modelo de dispositivo (soft delete)"""
-    model = get_object_or_404(DeviceModel, pk=pk, deleted_at__isnull=True)
+    model = DeviceModel
+    service_class = DeviceModelService
+    template_name = 'base_tables/device_model_confirm_delete.html'
+    success_url = None
     
-    if request.method == 'POST':
-        model.deleted_at = timezone.now()
-        model.save()
-        messages.success(request, _('Modelo de dispositivo removido com sucesso!'))
-        return redirect('base_tables:device_model_list')
-    
-    return render(request, 'base_tables/device_model_confirm_delete.html', {'model': model})
+    def get_success_url(self):
+        return reverse('base_tables:device_model_list')

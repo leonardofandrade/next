@@ -1,5 +1,5 @@
 """
-Views para o app cases
+Views para o app cases - Refatoradas usando BaseService e BaseViews
 """
 from django.shortcuts import redirect, get_object_or_404, render
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -19,148 +19,100 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
 from io import BytesIO
+from typing import Dict, Any
+from django.db.models import QuerySet
 
+from apps.core.mixins.views import BaseListView, BaseDetailView, BaseCreateView, BaseUpdateView, BaseDeleteView, ServiceMixin
 from apps.cases.models import Case, CaseDevice, Extraction
 from apps.cases.forms import CaseForm, CaseSearchForm, CaseDeviceForm, CaseCompleteRegistrationForm
 from apps.core.models import ReportsSettings
+from apps.core.services.case_services import CaseService
+from apps.core.services.base import ServiceException
 
 
-class CaseListView(LoginRequiredMixin, ListView):
+class CaseListView(LoginRequiredMixin, ServiceMixin, ListView):
     """
     Lista todos os processos de extração com filtros
     """
     model = Case
+    service_class = CaseService
+    search_form_class = CaseSearchForm
     template_name = 'cases/case_list.html'
     context_object_name = 'page_obj'
     paginate_by = settings.PAGINATE_BY
     
-    def get_queryset(self):
-        """
-        Retorna o queryset filtrado com base nos parâmetros de busca
-        """
-        queryset = Case.objects.filter(
-            deleted_at__isnull=True
-        ).select_related(
-            'requester_agency_unit',
-            'extraction_unit',
-            'requester_authority_position',
-            'crime_category',
-            'created_by',
-            'assigned_to',
-            'extraction_request'
-        ).annotate(
-            devices_count=Count('case_devices', filter=Q(case_devices__deleted_at__isnull=True))
-        ).order_by('-priority', '-created_at')
+    def get_queryset(self) -> QuerySet:
+        """Get filtered queryset using service"""
+        service = self.get_service()
+        filters = self.get_filters()
         
-        form = CaseSearchForm(self.request.GET or None)
+        try:
+            return service.list_filtered(filters)
+        except ServiceException as e:
+            self.handle_service_exception(e)
+            return self.model.objects.none()
+    
+    def get_filters(self) -> Dict[str, Any]:
+        """Get filters from request"""
+        filters = {}
         
-        if form.is_valid():
-            search = form.cleaned_data.get('search')
-            if search:
-                queryset = queryset.filter(
-                    Q(number__icontains=search) |
-                    Q(request_procedures__icontains=search) |
-                    Q(requester_authority_name__icontains=search) |
-                    Q(additional_info__icontains=search) |
-                    Q(legacy_number__icontains=search)
-                )
-            
-            status = form.cleaned_data.get('status')
-            if status:
-                queryset = queryset.filter(status=status)
-            
-            priority = form.cleaned_data.get('priority')
-            if priority is not None and priority != '':
-                queryset = queryset.filter(priority=int(priority))
-            
-            requester_agency_unit = form.cleaned_data.get('requester_agency_unit')
-            if requester_agency_unit:
-                queryset = queryset.filter(requester_agency_unit=requester_agency_unit)
-            
-            extraction_unit = form.cleaned_data.get('extraction_unit')
-            if extraction_unit:
-                queryset = queryset.filter(extraction_unit=extraction_unit)
-            
-            assigned_to = form.cleaned_data.get('assigned_to')
-            if assigned_to:
-                queryset = queryset.filter(assigned_to=assigned_to)
-            
-            crime_category = form.cleaned_data.get('crime_category')
-            if crime_category:
-                queryset = queryset.filter(crime_category=crime_category)
-            
-            date_from = form.cleaned_data.get('date_from')
-            if date_from:
-                queryset = queryset.filter(requested_at__date__gte=date_from)
-            
-            date_to = form.cleaned_data.get('date_to')
-            if date_to:
-                queryset = queryset.filter(requested_at__date__lte=date_to)
-        
-        return queryset
+        if self.search_form_class:
+            form = self.search_form_class(self.request.GET or None)
+            if form.is_valid():
+                filters = form.cleaned_data
+                
+        return {k: v for k, v in filters.items() if v}
     
     def get_context_data(self, **kwargs):
-        """
-        Adiciona o formulário de busca e total_count ao contexto
-        """
+        """Add search form and total count to context"""
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Processos de Extração'
         context['page_icon'] = 'fa-folder-open'
-        context['form'] = CaseSearchForm(self.request.GET or None)
+        context['form'] = self.search_form_class(self.request.GET or None)
         context['total_count'] = self.get_queryset().count()
         return context
 
 
-class CaseDetailView(LoginRequiredMixin, DetailView):
+class CaseDetailView(BaseDetailView):
     """
     Exibe os detalhes de um processo de extração
     """
     model = Case
+    service_class = CaseService
     template_name = 'cases/case_detail.html'
     context_object_name = 'case'
     
-    def get_queryset(self):
-        """
-        Filtra apenas casos não deletados
-        """
-        return Case.objects.filter(deleted_at__isnull=True)
-    
     def get_context_data(self, **kwargs):
-        """
-        Adiciona informações de página ao contexto
-        """
+        """Add page information and counts to context"""
         context = super().get_context_data(**kwargs)
         case = self.get_object()
         context['page_title'] = f'Processo {case.number if case.number else f"#{case.pk}"}'
         context['page_icon'] = 'fa-file-alt'
         
-        # Adiciona a contagem de dispositivos e procedimentos para controlar exibição do botão de finalizar cadastro
+        # Add device and procedure counts for complete registration button
         context['devices_count'] = case.case_devices.filter(deleted_at__isnull=True).count()
         context['procedures_count'] = case.procedures.filter(deleted_at__isnull=True).count()
         
         return context
 
 
-class CaseCreateView(LoginRequiredMixin, CreateView):
+class CaseCreateView(BaseCreateView):
     """
     Cria um novo processo de extração
     """
     model = Case
     form_class = CaseForm
+    service_class = CaseService
     template_name = 'cases/case_form.html'
     
     def get_form_kwargs(self):
-        """
-        Passa o usuário atual para o formulário
-        """
+        """Pass current user to form"""
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
     
     def get_initial(self):
-        """
-        Define dados iniciais se estiver criando a partir de uma extraction_request
-        """
+        """Set initial data if creating from extraction_request"""
         initial = super().get_initial()
         extraction_request_id = self.request.GET.get('extraction_request')
         
@@ -190,36 +142,35 @@ class CaseCreateView(LoginRequiredMixin, CreateView):
         return initial
     
     def form_valid(self, form):
-        """
-        Define campos adicionais antes de salvar
-        """
-        case = form.save(commit=False)
-        case.created_by = self.request.user
+        """Handle form submission with service"""
+        service = self.get_service()
+        form_data = form.cleaned_data
         
-        # Define requested_at automaticamente se não veio de extraction_request
-        if not case.requested_at:
-            case.requested_at = timezone.now()
+        # Set requested_at automatically if not from extraction_request
+        if not form_data.get('requested_at'):
+            form_data['requested_at'] = timezone.now()
         
-        # Define status inicial como draft
-        case.status = Case.CASE_STATUS_DRAFT
+        # Set initial status as draft
+        form_data['status'] = Case.CASE_STATUS_DRAFT
         
-        # Se tiver assigned_to, registra assigned_at e assigned_by
-        if case.assigned_to:
-            case.assigned_at = timezone.now()
-            case.assigned_by = self.request.user
+        # If has assigned_to, set assigned_at and assigned_by
+        if form_data.get('assigned_to'):
+            form_data['assigned_at'] = timezone.now()
+            form_data['assigned_by'] = self.request.user
         
-        case.save()
-        
-        messages.success(
-            self.request,
-            f'Processo criado com sucesso! Aguardando número sequencial.'
-        )
-        return redirect('cases:detail', pk=case.pk)
+        try:
+            self.object = service.create(form_data)
+            messages.success(
+                self.request,
+                f'Processo criado com sucesso! Aguardando número sequencial.'
+            )
+            return redirect('cases:detail', pk=self.object.pk)
+        except ServiceException as e:
+            self.handle_service_exception(e)
+            return self.form_invalid(form)
     
     def get_context_data(self, **kwargs):
-        """
-        Adiciona informações de página ao contexto
-        """
+        """Add page information to context"""
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Novo Processo'
         context['page_icon'] = 'fa-plus'
@@ -227,29 +178,26 @@ class CaseCreateView(LoginRequiredMixin, CreateView):
         return context
 
 
-class CaseUpdateView(LoginRequiredMixin, UpdateView):
+class CaseUpdateView(BaseUpdateView):
     """
     Atualiza um processo de extração existente
     """
     model = Case
     form_class = CaseForm
+    service_class = CaseService
     template_name = 'cases/case_form.html'
     
     def get_queryset(self):
-        """
-        Filtra apenas casos não deletados e faz prefetch de procedures
-        """
+        """Filter non-deleted cases and prefetch procedures"""
         return Case.objects.filter(
             deleted_at__isnull=True
         ).prefetch_related('procedures__procedure_category')
     
     def dispatch(self, request, *args, **kwargs):
-        """
-        Verifica se o usuário tem permissão para editar o processo
-        """
+        """Check if user has permission to edit the case"""
         case = self.get_object()
         
-        # Permite edição se o usuário for o responsável ou se o processo não tiver responsável
+        # Allow editing if user is assigned or case has no assignee
         if case.assigned_to and case.assigned_to != request.user:
             messages.error(
                 request,
@@ -260,44 +208,39 @@ class CaseUpdateView(LoginRequiredMixin, UpdateView):
         return super().dispatch(request, *args, **kwargs)
     
     def get_form_kwargs(self):
-        """
-        Passa o usuário atual para o formulário
-        """
+        """Pass current user to form"""
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
     
     def form_valid(self, form):
-        """
-        Atualiza campos adicionais antes de salvar
-        """
-        case = form.save(commit=False)
+        """Handle form submission with service"""
+        service = self.get_service()
+        form_data = form.cleaned_data
         old_assigned_to = self.get_object().assigned_to
         
-        case.updated_by = self.request.user
-        case.version += 1
-        
-        # Atualiza assigned_at se assigned_to mudou
-        new_assigned_to = case.assigned_to
+        # Update assigned_at if assigned_to changed
+        new_assigned_to = form_data.get('assigned_to')
         if old_assigned_to != new_assigned_to and new_assigned_to:
-            case.assigned_at = timezone.now()
-            case.assigned_by = self.request.user
+            form_data['assigned_at'] = timezone.now()
+            form_data['assigned_by'] = self.request.user
         elif not new_assigned_to:
-            case.assigned_at = None
-            case.assigned_by = None
+            form_data['assigned_at'] = None
+            form_data['assigned_by'] = None
         
-        case.save()
-        
-        messages.success(
-            self.request,
-            f'Processo atualizado com sucesso!'
-        )
-        return redirect('cases:detail', pk=case.pk)
+        try:
+            self.object = service.update(self.object.pk, form_data)
+            messages.success(
+                self.request,
+                f'Processo atualizado com sucesso!'
+            )
+            return redirect('cases:detail', pk=self.object.pk)
+        except ServiceException as e:
+            self.handle_service_exception(e)
+            return self.form_invalid(form)
     
     def get_context_data(self, **kwargs):
-        """
-        Adiciona informações de página ao contexto
-        """
+        """Add page information and counts to context"""
         context = super().get_context_data(**kwargs)
         case = self.get_object()
         context['page_title'] = f'Editar Processo {case.number if case.number else f"#{case.pk}"}'
@@ -305,40 +248,31 @@ class CaseUpdateView(LoginRequiredMixin, UpdateView):
         context['case'] = case
         context['action'] = 'update'
         
-        # Adiciona contagens para controlar exibição do botão de finalizar cadastro
+        # Add counts for complete registration button
         context['devices_count'] = case.case_devices.filter(deleted_at__isnull=True).count()
         context['procedures_count'] = case.procedures.filter(deleted_at__isnull=True).count()
         
         return context
 
 
-class CaseDeleteView(LoginRequiredMixin, DeleteView):
+class CaseDeleteView(BaseDeleteView):
     """
     Realiza soft delete de um processo de extração
     """
     model = Case
+    service_class = CaseService
     template_name = 'cases/case_confirm_delete.html'
-    success_url = None  # Will be set dynamically in get_success_url
+    success_url = None
     
     def get_success_url(self):
-        """
-        Retorna a URL de redirecionamento após exclusão
-        """
+        """Return redirect URL after deletion"""
         return reverse('cases:list')
     
-    def get_queryset(self):
-        """
-        Filtra apenas casos não deletados
-        """
-        return Case.objects.filter(deleted_at__isnull=True)
-    
     def dispatch(self, request, *args, **kwargs):
-        """
-        Verifica se o usuário tem permissão para excluir o processo
-        """
+        """Check if user has permission to delete the case"""
         case = self.get_object()
         
-        # Permite exclusão apenas se o usuário for o responsável ou se o processo não tiver responsável
+        # Allow deletion only if user is assigned or case has no assignee
         if case.assigned_to and case.assigned_to != request.user:
             messages.error(
                 request,
@@ -348,33 +282,8 @@ class CaseDeleteView(LoginRequiredMixin, DeleteView):
         
         return super().dispatch(request, *args, **kwargs)
     
-    def post(self, request, *args, **kwargs):
-        """
-        Realiza soft delete ao invés de deletar permanentemente
-        Override post() para evitar que Django tente fazer hard delete
-        """
-        case = self.get_object()
-        case.deleted_at = timezone.now()
-        case.deleted_by = request.user
-        case.save()
-        
-        messages.success(
-            request,
-            f'Processo excluído com sucesso!'
-        )
-        return redirect('cases:list')
-    
-    def delete(self, request, *args, **kwargs):
-        """
-        Realiza soft delete ao invés de deletar permanentemente
-        Mantido para compatibilidade, mas post() é o método principal
-        """
-        return self.post(request, *args, **kwargs)
-    
     def get_context_data(self, **kwargs):
-        """
-        Adiciona informações de página ao contexto
-        """
+        """Add page information to context"""
         context = super().get_context_data(**kwargs)
         case = self.get_object()
         context['page_title'] = f'Excluir Processo {case.number if case.number else f"#{case.pk}"}'
@@ -382,10 +291,11 @@ class CaseDeleteView(LoginRequiredMixin, DeleteView):
         return context
 
 
-class CaseCompleteRegistrationView(LoginRequiredMixin, View):
+class CaseCompleteRegistrationView(LoginRequiredMixin, ServiceMixin, View):
     """
     Finaliza o cadastro de um processo e opcionalmente cria extrações
     """
+    service_class = CaseService
     template_name = 'cases/case_complete_registration.html'
     
     def get(self, request, pk):
@@ -512,62 +422,39 @@ class CaseCompleteRegistrationView(LoginRequiredMixin, View):
                 'page_icon': 'fa-check-circle',
             })
         
-        # Finaliza o cadastro
-        case.registration_completed_at = timezone.now()
-        case.updated_by = request.user
-        case.version += 1
-        
-        # Gera o número do processo se ainda não tiver sido gerado
-        if not case.number and case.extraction_unit:
-            case_number = case.generate_case_number()
-            if case_number:
-                case.number = case_number
-                case.year = timezone.now().year
-        
-        # Adiciona observações se fornecidas
-        notes = form.cleaned_data.get('notes')
-        if notes:
-            if case.additional_info:
-                case.additional_info += f"\n\n[Finalização de Cadastro - {timezone.now().strftime('%d/%m/%Y %H:%M')}]\n{notes}"
-            else:
-                case.additional_info = f"[Finalização de Cadastro - {timezone.now().strftime('%d/%m/%Y %H:%M')}]\n{notes}"
-        
-        case.save()
-        
-        # Cria extrações se solicitado
+        # Complete registration using service
+        service = self.get_service()
         create_extractions = form.cleaned_data.get('create_extractions', False)
-        created_extractions = 0
+        notes = form.cleaned_data.get('notes')
         
-        if create_extractions:
-            devices_without_extraction = case.case_devices.filter(
-                deleted_at__isnull=True,
-                device_extraction__isnull=True
-            ).select_related('device_category', 'device_model__brand')
+        try:
+            case = service.complete_registration(case.pk, create_extractions=create_extractions, notes=notes)
             
-            for device in devices_without_extraction:
-                Extraction.objects.create(
-                    case_device=device,
-                    status=Extraction.STATUS_PENDING,
-                    created_by=request.user
+            # Count created extractions
+            created_extractions = 0
+            if create_extractions:
+                created_extractions = Extraction.objects.filter(
+                    case_device__case=case,
+                    case_device__deleted_at__isnull=True,
+                    deleted_at__isnull=True
+                ).count()
+            
+            # Success message
+            if created_extractions > 0:
+                messages.success(
+                    request,
+                    f'Cadastro finalizado com sucesso! {created_extractions} extração(ões) criada(s) automaticamente.'
                 )
-                created_extractions += 1
-        
-        # Atualiza o status do Case baseado nas extrações
-        case.update_status_based_on_extractions()
-        
-        # Mensagem de sucesso
-        if created_extractions > 0:
-            messages.success(
-                request,
-                f'Cadastro finalizado com sucesso! {created_extractions} extração(ões) criada(s) automaticamente.'
-            )
-        else:
-            messages.success(
-                request,
-                'Cadastro finalizado com sucesso!'
-            )
-        
-        return redirect('cases:detail', pk=case.pk)
+            else:
+                messages.success(
+                    request,
+                    'Cadastro finalizado com sucesso!'
+                )
+            
+            return redirect('cases:detail', pk=case.pk)
+        except ServiceException as e:
+            self.handle_service_exception(e)
+            return redirect('cases:detail', pk=case.pk)
 
 
 class CaseDevicesView(LoginRequiredMixin, DetailView):

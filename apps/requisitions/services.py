@@ -1,50 +1,212 @@
 """
-Service functions for extraction requests
+Services for requisitions app
 """
-from django.db.models import Q, Count, Sum, Avg, Case, When, IntegerField, F
+from typing import Dict, Any, Optional, List
+from django.db.models import Q, QuerySet, Count, Sum, Case, When, IntegerField
 from django.utils import timezone
-from datetime import datetime, timedelta
+from django.db.models.functions import TruncMonth
+
+from apps.core.services.base import BaseService, ValidationServiceException
 from apps.requisitions.models import ExtractionRequest
 from apps.core.models import ExtractionUnit
 from apps.base_tables.models import AgencyUnit
 
 
+class ExtractionRequestService(BaseService):
+    """Service for ExtractionRequest business logic"""
+    
+    model_class = ExtractionRequest
+    
+    def get_queryset(self) -> QuerySet:
+        """Get extraction requests queryset with optimized queries"""
+        return super().get_queryset().select_related(
+            'requester_agency_unit',
+            'extraction_unit',
+            'requester_authority_position',
+            'crime_category',
+            'created_by',
+            'received_by',
+            'case'
+        ).order_by('-requested_at', '-created_at')
+    
+    def apply_filters(self, queryset: QuerySet, filters: Dict[str, Any]) -> QuerySet:
+        """Apply filters to queryset"""
+        search = filters.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(request_procedures__icontains=search) |
+                Q(requester_authority_name__icontains=search) |
+                Q(additional_info__icontains=search) |
+                Q(requester_agency_unit__name__icontains=search) |
+                Q(requester_agency_unit__acronym__icontains=search)
+            )
+        
+        status = filters.get('status')
+        if status:
+            # status pode ser uma lista
+            if isinstance(status, list):
+                queryset = queryset.filter(status__in=status)
+            else:
+                queryset = queryset.filter(status=status)
+        
+        extraction_unit = filters.get('extraction_unit')
+        if extraction_unit:
+            # extraction_unit pode ser uma lista
+            if isinstance(extraction_unit, list):
+                queryset = queryset.filter(extraction_unit__in=extraction_unit)
+            else:
+                queryset = queryset.filter(extraction_unit=extraction_unit)
+        
+        crime_category = filters.get('crime_category')
+        if crime_category:
+            queryset = queryset.filter(crime_category=crime_category)
+        
+        date_from = filters.get('date_from')
+        if date_from:
+            queryset = queryset.filter(requested_at__date__gte=date_from)
+        
+        date_to = filters.get('date_to')
+        if date_to:
+            queryset = queryset.filter(requested_at__date__lte=date_to)
+        
+        return queryset
+    
+    def get_not_received(self) -> QuerySet:
+        """Get extraction requests that are not received"""
+        return self.get_queryset().filter(
+            received_at__isnull=True,
+            status__in=[
+                ExtractionRequest.REQUEST_STATUS_PENDING,
+                ExtractionRequest.REQUEST_STATUS_ASSIGNED
+            ]
+        )
+    
+    def create_case_from_request(self, request_pk: int) -> 'Case':
+        """
+        Cria um Case a partir de um ExtractionRequest
+        """
+        from apps.cases.models import Case, CaseProcedure
+        from apps.base_tables.models import ProcedureCategory
+        import re
+        
+        extraction_request = self.get_object(request_pk)
+        
+        # Verifica se já existe um case para esta extraction_request
+        if hasattr(extraction_request, 'case'):
+            existing_case = extraction_request.case
+            if existing_case and not existing_case.deleted_at:
+                raise ValidationServiceException(
+                    f'Já existe um processo criado para esta solicitação (Processo #{existing_case.pk}).'
+                )
+        
+        # Cria o Case copiando os dados do ExtractionRequest
+        case = Case(
+            requester_agency_unit=extraction_request.requester_agency_unit,
+            requested_at=extraction_request.requested_at,
+            requested_device_amount=extraction_request.requested_device_amount,
+            extraction_unit=extraction_request.extraction_unit,
+            requester_reply_email=extraction_request.requester_reply_email,
+            requester_authority_name=extraction_request.requester_authority_name,
+            requester_authority_position=extraction_request.requester_authority_position,
+            request_procedures=extraction_request.request_procedures,
+            crime_category=extraction_request.crime_category,
+            additional_info=extraction_request.additional_info,
+            extraction_request=extraction_request,
+            status=Case.CASE_STATUS_DRAFT,
+            number=None,  # Será criado posteriormente
+            created_by=self.user,
+        )
+        case.save()
+        
+        # Tenta parsear request_procedures e criar CaseProcedure
+        if extraction_request.request_procedures:
+            self._parse_request_procedures(extraction_request.request_procedures, case)
+        
+        # Atualiza a ExtractionRequest: seta received_at, received_by e status
+        if not extraction_request.received_at:
+            extraction_request.received_at = timezone.now()
+            extraction_request.received_by = self.user
+        
+        if extraction_request.status not in [
+            ExtractionRequest.REQUEST_STATUS_ASSIGNED,
+            ExtractionRequest.REQUEST_STATUS_RECEIVED
+        ]:
+            extraction_request.status = ExtractionRequest.REQUEST_STATUS_ASSIGNED
+        
+        extraction_request.updated_by = self.user
+        extraction_request.version += 1
+        extraction_request.save()
+        
+        return case
+    
+    def _parse_request_procedures(self, request_procedures_text: str, case: 'Case') -> List[str]:
+        """
+        Tenta parsear o campo request_procedures e criar CaseProcedure.
+        Retorna uma lista de erros encontrados (se houver).
+        """
+        from apps.cases.models import CaseProcedure
+        from apps.base_tables.models import ProcedureCategory
+        
+        errors = []
+        if not request_procedures_text:
+            return errors
+        
+        procedures_text = request_procedures_text.strip()
+        if not procedures_text:
+            return errors
+        
+        # Tenta dividir por vírgula ou ponto e vírgula
+        procedures_list = re.split(r'[,;]', procedures_text)
+        
+        for procedure_text in procedures_list:
+            procedure_text = procedure_text.strip()
+            if not procedure_text:
+                continue
+            
+            # Tenta extrair o acrônimo e o número
+            match = re.match(r'^([A-Z]{1,10})\s+([0-9/]+)', procedure_text, re.IGNORECASE)
+            if not match:
+                match = re.match(r'^([A-Z]{1,10})', procedure_text, re.IGNORECASE)
+                if match:
+                    acronym = match.group(1).upper()
+                    procedure_number = procedure_text.replace(acronym, '').strip()
+                else:
+                    errors.append(f"Não foi possível parsear: {procedure_text}")
+                    continue
+            else:
+                acronym = match.group(1).upper()
+                procedure_number = match.group(2).strip()
+            
+            # Busca ProcedureCategory pelo acronym
+            try:
+                procedure_category = ProcedureCategory.objects.filter(
+                    acronym__iexact=acronym,
+                    deleted_at__isnull=True
+                ).first()
+                
+                if not procedure_category:
+                    errors.append(f"Categoria de procedimento não encontrada para acrônimo: {acronym}")
+                    continue
+                
+                # Cria o CaseProcedure
+                CaseProcedure.objects.create(
+                    case=case,
+                    number=procedure_number if procedure_number else None,
+                    procedure_category=procedure_category,
+                    created_by=case.created_by
+                )
+            except Exception as e:
+                errors.append(f"Erro ao criar procedimento {acronym} {procedure_number}: {str(e)}")
+                continue
+        
+        return errors
+
+
+# Funções auxiliares mantidas para compatibilidade
 def apply_filters_to_queryset(queryset, filters):
-    """
-    Apply filters to ExtractionRequest queryset
-    
-    Args:
-        queryset: Base queryset
-        filters: Dict with filter parameters:
-            - year: int
-            - start_date: date
-            - end_date: date
-            - extraction_unit: int (pk)
-            - status: str
-            - requester_agency_unit: int (pk)
-    
-    Returns:
-        Filtered queryset
-    """
-    if filters.get('year'):
-        queryset = queryset.filter(requested_at__year=filters['year'])
-    
-    if filters.get('start_date'):
-        queryset = queryset.filter(requested_at__date__gte=filters['start_date'])
-    
-    if filters.get('end_date'):
-        queryset = queryset.filter(requested_at__date__lte=filters['end_date'])
-    
-    if filters.get('extraction_unit'):
-        queryset = queryset.filter(extraction_unit_id=filters['extraction_unit'])
-    
-    if filters.get('status'):
-        queryset = queryset.filter(status=filters['status'])
-    
-    if filters.get('requester_agency_unit'):
-        queryset = queryset.filter(requester_agency_unit_id=filters['requester_agency_unit'])
-    
-    return queryset
+    """Apply filters to ExtractionRequest queryset - mantida para compatibilidade"""
+    service = ExtractionRequestService()
+    return service.apply_filters(queryset, filters)
 
 
 def list_extraction_units():
@@ -61,19 +223,6 @@ def get_distribution_summary():
     """
     Get distribution summary for extraction requests by unit.
     Returns data in format expected by extraction_request_form.html template.
-    Includes all extraction units, even if they have no requests.
-    
-    Returns:
-        List of dicts with:
-            - unit: ExtractionUnit object
-            - total_requests: int
-            - total_devices: int
-            - pending_requests: int
-            - in_progress_requests: int
-            - received_requests: int
-            - pending_devices: int
-            - is_overloaded: bool
-            - is_available: bool
     """
     queryset = ExtractionRequest.objects.filter(deleted_at__isnull=True)
     
@@ -162,10 +311,7 @@ def get_distribution_summary():
         )['total'] or 0
         
         # Determine if unit is overloaded or available
-        # Overloaded: more than 50 pending devices or more than 30 pending requests
         is_overloaded = pending_devices > 50 or pending_requests > 30
-        
-        # Available: less than 10 pending devices and less than 5 pending requests
         is_available = pending_devices < 10 and pending_requests < 5
         
         summary_data.append({
@@ -194,14 +340,7 @@ def get_distribution_report(filters=None):
         filters: Dict with filter parameters
     
     Returns:
-        Dict with report data including:
-            - summary_by_unit: List of dicts with unit statistics
-            - summary_by_status: List of dicts with status statistics
-            - summary_by_month: List of dicts with monthly statistics
-            - top_requesting_units: List of top requesting units
-            - distribution_efficiency: Dict with efficiency metrics
-            - chart_data: Dict with chart data
-            - statistics: Dict with general statistics
+        Dict with report data
     """
     if filters is None:
         filters = {}
@@ -210,7 +349,8 @@ def get_distribution_report(filters=None):
     queryset = ExtractionRequest.objects.filter(deleted_at__isnull=True)
     
     # Apply filters
-    queryset = apply_filters_to_queryset(queryset, filters)
+    service = ExtractionRequestService()
+    queryset = service.apply_filters(queryset, filters)
     
     # Summary by unit
     summary_by_unit = []
@@ -226,7 +366,7 @@ def get_distribution_report(filters=None):
                 unit = ExtractionUnit.objects.get(pk=unit_id)
                 unit_requests = queryset.filter(extraction_unit_id=unit_id)
                 
-                # Calculate efficiency score (simplified - can be improved)
+                # Calculate efficiency score
                 completed = unit_requests.filter(
                     status__in=['waiting_collect', 'in_progress']
                 ).count()
@@ -257,7 +397,6 @@ def get_distribution_report(filters=None):
     
     # Summary by month
     summary_by_month = []
-    from django.db.models.functions import TruncMonth
     monthly_data = queryset.filter(
         requested_at__isnull=False
     ).annotate(
@@ -299,13 +438,10 @@ def get_distribution_report(filters=None):
     ).count()
     completion_rate = (completed_requests / total_requests * 100) if total_requests > 0 else 0
     
-    # Calculate average processing time (simplified)
-    avg_processing_time_days = 0  # Can be improved with actual processing time calculation
-    
     distribution_efficiency = {
         'completion_rate': round(completion_rate, 2),
-        'avg_processing_time_days': round(avg_processing_time_days, 2),
-        'efficiency_score': round(completion_rate, 2)  # Simplified
+        'avg_processing_time_days': 0,  # Can be improved
+        'efficiency_score': round(completion_rate, 2)
     }
     
     # Chart data
@@ -387,4 +523,3 @@ def get_distribution_report(filters=None):
         'chart_data': chart_data,
         'statistics': statistics
     }
-

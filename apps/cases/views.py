@@ -188,10 +188,14 @@ class CaseUpdateView(BaseUpdateView):
     template_name = 'cases/case_form.html'
     
     def get_queryset(self):
-        """Filter non-deleted cases and prefetch procedures"""
+        """Filter non-deleted cases and prefetch procedures and devices"""
         return Case.objects.filter(
             deleted_at__isnull=True
-        ).prefetch_related('procedures__procedure_category')
+        ).prefetch_related(
+            'procedures__procedure_category',
+            'case_devices__device_category',
+            'case_devices__device_model__brand'
+        )
     
     def dispatch(self, request, *args, **kwargs):
         """Check if user has permission to edit the case"""
@@ -254,6 +258,12 @@ class CaseUpdateView(BaseUpdateView):
         
         # Add procedures to context for the template
         context['procedures'] = case.procedures.filter(deleted_at__isnull=True).select_related('procedure_category')
+        
+        # Add devices to context for the template
+        context['devices'] = case.case_devices.filter(deleted_at__isnull=True).select_related(
+            'device_category',
+            'device_model__brand'
+        )
         
         return context
 
@@ -333,7 +343,7 @@ class CaseCompleteRegistrationView(LoginRequiredMixin, ServiceMixin, View):
                 request,
                 'É necessário cadastrar pelo menos um dispositivo antes de finalizar o cadastro do processo.'
             )
-            return redirect('cases:devices', pk=case.pk)
+            return redirect('cases:update', pk=case.pk)
         
         # Verifica se há procedimentos cadastrados
         procedures_count = case.procedures.filter(deleted_at__isnull=True).count()
@@ -396,7 +406,7 @@ class CaseCompleteRegistrationView(LoginRequiredMixin, ServiceMixin, View):
                 request,
                 'É necessário cadastrar pelo menos um dispositivo antes de finalizar o cadastro do processo.'
             )
-            return redirect('cases:devices', pk=case.pk)
+            return redirect('cases:update', pk=case.pk)
         
         # Verifica se há procedimentos cadastrados
         procedures_count = case.procedures.filter(deleted_at__isnull=True).count()
@@ -516,7 +526,7 @@ class CaseDeviceCreateView(LoginRequiredMixin, CreateView):
                 request,
                 'Você não tem permissão para adicionar dispositivos a este processo. Apenas o responsável pode fazer isso.'
             )
-            return redirect('cases:devices', pk=self.case.pk)
+            return redirect('cases:update', pk=self.case.pk)
         
         return super().dispatch(request, *args, **kwargs)
     
@@ -550,7 +560,7 @@ class CaseDeviceCreateView(LoginRequiredMixin, CreateView):
                 self.request,
                 'Dispositivo adicionado com sucesso!'
             )
-            return redirect('cases:devices', pk=self.case.pk)
+            return redirect('cases:update', pk=self.case.pk)
     
     def get_context_data(self, **kwargs):
         """
@@ -587,7 +597,7 @@ class CaseDeviceUpdateView(LoginRequiredMixin, UpdateView):
                 request,
                 'Você não tem permissão para editar dispositivos deste processo. Apenas o responsável pode fazer isso.'
             )
-            return redirect('cases:devices', pk=self.case.pk)
+            return redirect('cases:update', pk=self.case.pk)
         
         return super().dispatch(request, *args, **kwargs)
     
@@ -621,7 +631,7 @@ class CaseDeviceUpdateView(LoginRequiredMixin, UpdateView):
             self.request,
             'Dispositivo atualizado com sucesso!'
         )
-        return redirect('cases:devices', pk=self.case.pk)
+        return redirect('cases:update', pk=self.case.pk)
     
     def get_context_data(self, **kwargs):
         """
@@ -658,7 +668,7 @@ class CaseDeviceDeleteView(LoginRequiredMixin, DeleteView):
                 request,
                 'Você não tem permissão para excluir dispositivos deste processo. Apenas o responsável pode fazer isso.'
             )
-            return redirect('cases:devices', pk=self.case.pk)
+            return redirect('cases:update', pk=self.case.pk)
         
         return super().dispatch(request, *args, **kwargs)
     
@@ -695,7 +705,7 @@ class CaseDeviceDeleteView(LoginRequiredMixin, DeleteView):
                 'message': 'Dispositivo excluído com sucesso!'
             })
         
-        return redirect('cases:devices', pk=self.case.pk)
+        return redirect('cases:update', pk=self.case.pk)
     
     def get(self, request, *args, **kwargs):
         """

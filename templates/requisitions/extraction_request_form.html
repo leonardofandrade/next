@@ -217,7 +217,7 @@
                                     <tr>
                                         <td colspan="4" class="text-center text-muted py-3">
                                             <i class="fas fa-info-circle me-2"></i>
-                                            Nenhuma unidade com solicitações encontrada.
+                                            Nenhuma unidade de extração encontrada.
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -631,22 +631,27 @@ function loadEmailContent(pk) {
             {% endfor %}
         ];
         
+        // Filter out units with zero requests for charts (but keep all in table)
+        const chartData = distributionData.filter(function(item) {
+            return item.total > 0;
+        });
+        
         if (distributionData.length === 0) {
             console.warn('No distribution data available');
             return;
         }
         
-        // Compact Chart (Pie Chart)
+        // Compact Chart (Pie Chart) - only show units with requests
         const compactCtx = document.getElementById('compactChart');
-        if (compactCtx && distributionData.length > 0) {
+        if (compactCtx && chartData.length > 0) {
             new Chart(compactCtx, {
                 type: 'pie',
                 data: {
-                    labels: distributionData.map(function(item) {
+                    labels: chartData.map(function(item) {
                         return item.unit;
                     }),
                     datasets: [{
-                        data: distributionData.map(function(item) {
+                        data: chartData.map(function(item) {
                             return item.total;
                         }),
                         backgroundColor: [
@@ -690,19 +695,19 @@ function loadEmailContent(pk) {
             });
         }
         
-        // Detailed Chart (Bar Chart with stacked status)
+        // Detailed Chart (Bar Chart with stacked status) - only show units with requests
         const requestsCtx = document.getElementById('requestsChart');
-        if (requestsCtx && distributionData.length > 0) {
+        if (requestsCtx && chartData.length > 0) {
             new Chart(requestsCtx, {
                 type: 'bar',
                 data: {
-                    labels: distributionData.map(function(item) {
+                    labels: chartData.map(function(item) {
                         return item.unit;
                     }),
                     datasets: [
                         {
                             label: 'Pendentes',
-                            data: distributionData.map(function(item) {
+                            data: chartData.map(function(item) {
                                 return item.pending;
                             }),
                             backgroundColor: 'rgba(255, 193, 7, 0.8)',
@@ -711,7 +716,7 @@ function loadEmailContent(pk) {
                         },
                         {
                             label: 'Em Andamento',
-                            data: distributionData.map(function(item) {
+                            data: chartData.map(function(item) {
                                 return item.in_progress;
                             }),
                             backgroundColor: 'rgba(13, 202, 240, 0.8)',
@@ -720,7 +725,7 @@ function loadEmailContent(pk) {
                         },
                         {
                             label: 'Recebidas',
-                            data: distributionData.map(function(item) {
+                            data: chartData.map(function(item) {
                                 return item.received;
                             }),
                             backgroundColor: 'rgba(25, 135, 84, 0.8)',

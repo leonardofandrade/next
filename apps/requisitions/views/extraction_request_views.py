@@ -54,11 +54,11 @@ class ExtractionRequestListView(LoginRequiredMixin, ListView):
             
             status = form.cleaned_data.get('status')
             if status:
-                queryset = queryset.filter(status=status)
+                queryset = queryset.filter(status__in=status)
             
             extraction_unit = form.cleaned_data.get('extraction_unit')
             if extraction_unit:
-                queryset = queryset.filter(extraction_unit=extraction_unit)
+                queryset = queryset.filter(extraction_unit__in=extraction_unit)
             
             crime_category = form.cleaned_data.get('crime_category')
             if crime_category:
@@ -298,12 +298,16 @@ class ExtractionRequestNotReceivedView(LoginRequiredMixin, ListView):
                 )
             
             status = form.cleaned_data.get('status')
-            if status and status in [ExtractionRequest.REQUEST_STATUS_PENDING, ExtractionRequest.REQUEST_STATUS_ASSIGNED]:
-                queryset = queryset.filter(status=status)
+            if status:
+                # Filtra apenas status permitidos para esta view
+                allowed_statuses = [ExtractionRequest.REQUEST_STATUS_PENDING, ExtractionRequest.REQUEST_STATUS_ASSIGNED]
+                filtered_statuses = [s for s in status if s in allowed_statuses]
+                if filtered_statuses:
+                    queryset = queryset.filter(status__in=filtered_statuses)
             
             extraction_unit = form.cleaned_data.get('extraction_unit')
             if extraction_unit:
-                queryset = queryset.filter(extraction_unit=extraction_unit)
+                queryset = queryset.filter(extraction_unit__in=extraction_unit)
             
             crime_category = form.cleaned_data.get('crime_category')
             if crime_category:
@@ -620,11 +624,11 @@ class ExtractionRequestDistributionListView(LoginRequiredMixin, ListView):
             
             status = form.cleaned_data.get('status')
             if status:
-                queryset = queryset.filter(status=status)
+                queryset = queryset.filter(status__in=status)
             
             extraction_unit = form.cleaned_data.get('extraction_unit')
             if extraction_unit:
-                queryset = queryset.filter(extraction_unit=extraction_unit)
+                queryset = queryset.filter(extraction_unit__in=extraction_unit)
             
             crime_category = form.cleaned_data.get('crime_category')
             if crime_category:

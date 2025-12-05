@@ -147,12 +147,13 @@ class ExtractionRequestSearchForm(forms.Form):
         })
     )
     
-    status = forms.ChoiceField(
+    status = forms.MultipleChoiceField(
         required=False,
         label='Status',
-        choices=[('', 'Todos')] + ExtractionRequest.REQUEST_STATUS_CHOICES,
-        widget=forms.Select(attrs={
-            'class': 'form-select'
+        choices=ExtractionRequest.REQUEST_STATUS_CHOICES,
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-select select2-multiple',
+            'data-placeholder': 'Selecione um ou mais status...'
         })
     )
     
@@ -165,12 +166,13 @@ class ExtractionRequestSearchForm(forms.Form):
         })
     )
     
-    extraction_unit = forms.ModelChoiceField(
+    extraction_unit = forms.ModelMultipleChoiceField(
         required=False,
         label='Unidade de Extração',
         queryset=ExtractionUnit.objects.all().order_by('acronym'),
-        widget=forms.Select(attrs={
-            'class': 'form-select'
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-select select2-multiple',
+            'data-placeholder': 'Selecione uma ou mais unidades...'
         })
     )
     

@@ -248,4 +248,59 @@
         {% endif %}
     {% endfor %}
 {% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Aguarda um pouco para garantir que o jQuery e Select2 estejam carregados
+    setTimeout(function() {
+        if (typeof $ !== 'undefined' && $.fn.select2) {
+            // Destroi instâncias anteriores se existirem
+            var extractionUnitSelect = $('#{{ form.extraction_unit.id_for_label }}');
+            if (extractionUnitSelect.data('select2')) {
+                extractionUnitSelect.select2('destroy');
+            }
+            
+            // Inicializa Select2 para extraction_unit (múltipla seleção)
+            extractionUnitSelect.select2({
+                theme: 'bootstrap-5',
+                language: {
+                    noResults: function() {
+                        return "Nenhum resultado encontrado";
+                    },
+                    searching: function() {
+                        return "Buscando...";
+                    }
+                },
+                placeholder: 'Selecione uma ou mais unidades...',
+                allowClear: true,
+                width: '100%'
+            });
+            
+            {% if view_type != 'not_received' %}
+            // Destroi instâncias anteriores se existirem
+            var statusSelect = $('#{{ form.status.id_for_label }}');
+            if (statusSelect.data('select2')) {
+                statusSelect.select2('destroy');
+            }
+            
+            // Inicializa Select2 para status (múltipla seleção)
+            statusSelect.select2({
+                theme: 'bootstrap-5',
+                language: {
+                    noResults: function() {
+                        return "Nenhum resultado encontrado";
+                    },
+                    searching: function() {
+                        return "Buscando...";
+                    }
+                },
+                placeholder: 'Selecione um ou mais status...',
+                allowClear: true,
+                width: '100%'
+            });
+            {% endif %}
+        }
+    }, 100);
+});
+</script>
 {% endblock %}

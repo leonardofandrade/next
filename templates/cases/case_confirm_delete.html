@@ -70,7 +70,7 @@
                     <form method="post">
                         {% csrf_token %}
                         <div class="d-flex justify-content-between">
-                            <a href="{% url 'cases:detail' case.pk %}" class="btn btn-secondary">
+                            <a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'cases:detail' case.pk %}{% endif %}" class="btn btn-secondary">
                                 <i class="fas fa-times me-2"></i>
                                 Cancelar
                             </a>

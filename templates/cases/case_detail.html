@@ -56,7 +56,7 @@
     Editar
 </button>
 {% endif %}
-<a href="{% url 'cases:list' %}" class="btn btn-secondary">
+<a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'cases:list' %}{% endif %}" class="btn btn-secondary">
     <i class="fas fa-arrow-left me-2"></i>
     Voltar
 </a>

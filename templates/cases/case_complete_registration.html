@@ -11,7 +11,7 @@ Confirme os dados e finalize o cadastro do processo
 {% endblock page_description %}
 
 {% block page_actions %}
-<a href="{% url 'cases:detail' case.pk %}" class="btn btn-secondary">
+<a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'cases:detail' case.pk %}{% endif %}" class="btn btn-secondary">
     <i class="fas fa-arrow-left me-2"></i>
     Voltar
 </a>

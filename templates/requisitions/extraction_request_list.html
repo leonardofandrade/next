@@ -46,7 +46,7 @@
         <form method="get">
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="{% if view_type == 'not_received' %}col-md-4{% else %}col-md-4{% endif %}">
+                    <div class="{% if view_type == 'not_received' %}col-md-6{% else %}col-md-5{% endif %}">
                         {{ form.search|form_label_class }}
                         {{ form.search }}
                     </div>
@@ -56,10 +56,6 @@
                         {{ form.status }}
                     </div>
                     {% endif %}
-                    <div class="{% if view_type == 'not_received' %}col-md-4{% else %}col-md-3{% endif %}">
-                        {{ form.requester_agency_unit|form_label_class }}
-                        {{ form.requester_agency_unit }}
-                    </div>
                     <div class="{% if view_type == 'not_received' %}col-md-4{% else %}col-md-3{% endif %}">
                         {{ form.extraction_unit|form_label_class }}
                         {{ form.extraction_unit }}

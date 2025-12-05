@@ -47,16 +47,14 @@ class ExtractionRequestListView(LoginRequiredMixin, ListView):
                 queryset = queryset.filter(
                     Q(request_procedures__icontains=search) |
                     Q(requester_authority_name__icontains=search) |
-                    Q(additional_info__icontains=search)
+                    Q(additional_info__icontains=search) |
+                    Q(requester_agency_unit__name__icontains=search) |
+                    Q(requester_agency_unit__acronym__icontains=search)
                 )
             
             status = form.cleaned_data.get('status')
             if status:
                 queryset = queryset.filter(status=status)
-            
-            requester_agency_unit = form.cleaned_data.get('requester_agency_unit')
-            if requester_agency_unit:
-                queryset = queryset.filter(requester_agency_unit=requester_agency_unit)
             
             extraction_unit = form.cleaned_data.get('extraction_unit')
             if extraction_unit:
@@ -294,16 +292,14 @@ class ExtractionRequestNotReceivedView(LoginRequiredMixin, ListView):
                 queryset = queryset.filter(
                     Q(request_procedures__icontains=search) |
                     Q(requester_authority_name__icontains=search) |
-                    Q(additional_info__icontains=search)
+                    Q(additional_info__icontains=search) |
+                    Q(requester_agency_unit__name__icontains=search) |
+                    Q(requester_agency_unit__acronym__icontains=search)
                 )
             
             status = form.cleaned_data.get('status')
             if status and status in [ExtractionRequest.REQUEST_STATUS_PENDING, ExtractionRequest.REQUEST_STATUS_ASSIGNED]:
                 queryset = queryset.filter(status=status)
-            
-            requester_agency_unit = form.cleaned_data.get('requester_agency_unit')
-            if requester_agency_unit:
-                queryset = queryset.filter(requester_agency_unit=requester_agency_unit)
             
             extraction_unit = form.cleaned_data.get('extraction_unit')
             if extraction_unit:
@@ -617,16 +613,14 @@ class ExtractionRequestDistributionListView(LoginRequiredMixin, ListView):
                 queryset = queryset.filter(
                     Q(request_procedures__icontains=search) |
                     Q(requester_authority_name__icontains=search) |
-                    Q(additional_info__icontains=search)
+                    Q(additional_info__icontains=search) |
+                    Q(requester_agency_unit__name__icontains=search) |
+                    Q(requester_agency_unit__acronym__icontains=search)
                 )
             
             status = form.cleaned_data.get('status')
             if status:
                 queryset = queryset.filter(status=status)
-            
-            requester_agency_unit = form.cleaned_data.get('requester_agency_unit')
-            if requester_agency_unit:
-                queryset = queryset.filter(requester_agency_unit=requester_agency_unit)
             
             extraction_unit = form.cleaned_data.get('extraction_unit')
             if extraction_unit:

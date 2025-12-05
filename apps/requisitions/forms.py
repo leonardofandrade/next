@@ -143,7 +143,7 @@ class ExtractionRequestSearchForm(forms.Form):
         label='Pesquisar',
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Pesquisar por procedimentos, autoridade, etc...'
+            'placeholder': 'Pesquisar por procedimentos, autoridade, unidade solicitante, etc...'
         })
     )
     

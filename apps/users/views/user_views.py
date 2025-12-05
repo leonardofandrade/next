@@ -202,3 +202,4 @@ def change_password(request):
     """Wrapper para ChangePasswordView"""
     view = ChangePasswordView.as_view()
     return view(request)
+

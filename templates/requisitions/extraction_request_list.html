@@ -46,9 +46,13 @@
         <form method="get">
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="{% if view_type == 'not_received' %}col-md-6{% else %}col-md-5{% endif %}">
+                    <div class="col-md-4">
                         {{ form.search|form_label_class }}
                         {{ form.search }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ form.extraction_unit|form_label_class }}
+                        {{ form.extraction_unit }}
                     </div>
                     {% if view_type != 'not_received' %}
                     <div class="col-md-2">
@@ -56,14 +60,6 @@
                         {{ form.status }}
                     </div>
                     {% endif %}
-                    <div class="{% if view_type == 'not_received' %}col-md-4{% else %}col-md-3{% endif %}">
-                        {{ form.extraction_unit|form_label_class }}
-                        {{ form.extraction_unit }}
-                    </div>
-                    <div class="col-md-3">
-                        {{ form.crime_category|form_label_class }}
-                        {{ form.crime_category }}
-                    </div>
                     <div class="col-md-2">
                         {{ form.date_from|form_label_class }}
                         {{ form.date_from }}

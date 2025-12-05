@@ -7,6 +7,7 @@ from django.views.generic import DetailView, ListView, View
 from django.db.models import Q
 from django.contrib import messages
 from django.utils import timezone
+from django.conf import settings
 from apps.cases.models import Case, Extraction
 from apps.extractions.forms import ExtractionSearchForm, ExtractionFinishForm
 from apps.core.models import ExtractorUser, ExtractionUnitStorageMedia
@@ -19,7 +20,7 @@ class ExtractionListView(LoginRequiredMixin, ListView):
     model = Extraction
     template_name = 'extractions/extraction_list.html'
     context_object_name = 'page_obj'
-    paginate_by = 25
+    paginate_by = settings.PAGINATE_BY
     
     def get_queryset(self):
         """
@@ -111,7 +112,7 @@ class MyExtractionsView(LoginRequiredMixin, ListView):
     model = Extraction
     template_name = 'extractions/my_extractions.html'
     context_object_name = 'page_obj'
-    paginate_by = 25
+    paginate_by = settings.PAGINATE_BY
     
     def dispatch(self, request, *args, **kwargs):
         """

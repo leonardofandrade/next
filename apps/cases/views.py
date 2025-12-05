@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from django.template.loader import render_to_string
+from django.conf import settings
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
@@ -31,7 +32,7 @@ class CaseListView(LoginRequiredMixin, ListView):
     model = Case
     template_name = 'cases/case_list.html'
     context_object_name = 'page_obj'
-    paginate_by = 25
+    paginate_by = settings.PAGINATE_BY
     
     def get_queryset(self):
         """

@@ -1,5 +1,5 @@
 <!-- Bootstrap 5 Pagination Component -->
-{% if is_paginated or page_obj.has_other_pages %}
+{% if is_paginated %}
 <nav aria-label="Navegação de páginas" class="mt-4 p-2 border-top">
     <div class="row align-items-center">
         <!-- Results info -->
@@ -26,7 +26,7 @@
                 <!-- First page -->
                 {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?{% for key, value_list in request.GET.lists %}{% if key != 'page' %}{% for value in value_list %}{{ key }}={{ value|urlencode }}&{% endfor %}{% endif %}{% endfor %}page=1" aria-label="Primeira página">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1" aria-label="Primeira página">
                             <i class="fas fa-angle-double-left"></i>
                             <span class="d-none d-sm-inline ms-1">Primeira</span>
                         </a>
@@ -43,7 +43,7 @@
                 <!-- Previous page -->
                 {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?{% for key, value_list in request.GET.lists %}{% if key != 'page' %}{% for value in value_list %}{{ key }}={{ value|urlencode }}&{% endfor %}{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" aria-label="Página anterior">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" aria-label="Página anterior">
                             <i class="fas fa-angle-left"></i>
                             <span class="d-none d-sm-inline ms-1">Anterior</span>
                         </a>
@@ -68,7 +68,7 @@
                         </li>
                     {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                         <li class="page-item">
-                            <a class="page-link" href="?{% for key, value_list in request.GET.lists %}{% if key != 'page' %}{% for value in value_list %}{{ key }}={{ value|urlencode }}&{% endfor %}{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
                         </li>
                     {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
                         <li class="page-item disabled">
@@ -80,7 +80,7 @@
                 <!-- Next page -->
                 {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?{% for key, value_list in request.GET.lists %}{% if key != 'page' %}{% for value in value_list %}{{ key }}={{ value|urlencode }}&{% endfor %}{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" aria-label="Próxima página">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" aria-label="Próxima página">
                             <span class="d-none d-sm-inline me-1">Próxima</span>
                             <i class="fas fa-angle-right"></i>
                         </a>
@@ -97,7 +97,7 @@
                 <!-- Last page -->
                 {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?{% for key, value_list in request.GET.lists %}{% if key != 'page' %}{% for value in value_list %}{{ key }}={{ value|urlencode }}&{% endfor %}{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}" aria-label="Última página">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}" aria-label="Última página">
                             <span class="d-none d-sm-inline me-1">Última</span>
                             <i class="fas fa-angle-double-right"></i>
                         </a>
@@ -121,7 +121,7 @@
                 <span class="input-group-text">
                     <i class="fas fa-list-ol"></i>
                 </span>
-                <select class="form-select" onchange="window.location.href='?{% for key, value_list in request.GET.lists %}{% if key != 'page' %}{% for value in value_list %}{{ key }}={{ value|urlencode }}&{% endfor %}{% endif %}{% endfor %}page=' + this.value">
+                <select class="form-select" onchange="window.location.href='?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=' + this.value">
                     {% for num in page_obj.paginator.page_range %}
                         <option value="{{ num }}" {% if page_obj.number == num %}selected{% endif %}>
                             Página {{ num }} de {{ page_obj.paginator.num_pages }}

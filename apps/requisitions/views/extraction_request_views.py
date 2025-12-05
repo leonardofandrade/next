@@ -10,6 +10,7 @@ from django.views import View
 from django.db.models import Q, Count, Case, When, IntegerField
 from django.utils import timezone
 from django.http import JsonResponse
+from django.conf import settings
 
 from apps.requisitions.models import ExtractionRequest
 from apps.requisitions.forms import ExtractionRequestForm, ExtractionRequestSearchForm
@@ -23,8 +24,8 @@ class ExtractionRequestListView(LoginRequiredMixin, ListView):
     """
     model = ExtractionRequest
     template_name = 'requisitions/extraction_request_list.html'
-    context_object_name = 'page_obj'
-    paginate_by = 25
+    context_object_name = 'extraction_requests'
+    paginate_by = settings.PAGINATE_BY
     
     def get_queryset(self):
         queryset = ExtractionRequest.objects.filter(
@@ -268,8 +269,8 @@ class ExtractionRequestNotReceivedView(LoginRequiredMixin, ListView):
     """
     model = ExtractionRequest
     template_name = 'requisitions/extraction_request_list.html'
-    context_object_name = 'page_obj'
-    paginate_by = 25
+    context_object_name = 'extraction_requests'
+    paginate_by = settings.PAGINATE_BY
     
     def get_queryset(self):
         queryset = ExtractionRequest.objects.filter(

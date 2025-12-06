@@ -91,6 +91,12 @@
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="casesDropdown">
                             <li>
+                                <a class="dropdown-item" href="{% url 'users:my_cases' %}">
+                                    <i class="fas fa-user-check me-2"></i>
+                                    Meus Processos
+                                </a>
+                            </li>
+                            <li>
                                 <a class="dropdown-item" href="{% url 'cases:list' %}">
                                     <i class="fas fa-list me-2"></i>
                                     Todos os Processos

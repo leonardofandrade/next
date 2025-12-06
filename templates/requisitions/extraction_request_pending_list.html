@@ -92,7 +92,7 @@ Solicitações pendentes ou aguardando material (não recebidas)
                             </tr>
                         </thead>
                         <tbody>
-                            {% for request in page_obj %}
+                            {% for request in extraction_requests %}
                             <tr>
                                 <td>
                                     <strong class="text-primary">{{ request.id }}</strong>
@@ -177,7 +177,7 @@ Solicitações pendentes ou aguardando material (não recebidas)
     </div>
 </div>
 
-{% for request in page_obj %}
+{% for request in extraction_requests %}
     {% if not request.case or request.case.deleted_at %}
     <!-- Modal de Confirmação para Criar Processo -->
     <div class="modal fade" id="createCaseModal{{ request.pk }}" tabindex="-1" aria-labelledby="createCaseModalLabel{{ request.pk }}" aria-hidden="true">

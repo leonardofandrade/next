@@ -8,6 +8,7 @@ from .user_views import (
     UserProfileDetailView,
     UserProfileUpdateView,
     ChangePasswordView,
+    MyCasesView,
 )
 from .extractor_views import MyExtractionsView
 
@@ -21,6 +22,7 @@ __all__ = [
     'UserProfileDetailView',
     'UserProfileUpdateView',
     'ChangePasswordView',
+    'MyCasesView',
     'MyExtractionsView',
 ]
 

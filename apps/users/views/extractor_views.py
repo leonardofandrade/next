@@ -24,7 +24,7 @@ class MyExtractionsView(LoginRequiredMixin, ServiceMixin, ListView):
     service_class = ExtractionService
     search_form_class = ExtractionSearchForm
     template_name = 'users/extractors/my_extractions.html'
-    context_object_name = 'page_obj'
+    context_object_name = 'extractions'
     paginate_by = settings.PAGINATE_BY
     
     def dispatch(self, request, *args, **kwargs):

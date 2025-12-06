@@ -8,14 +8,20 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.http import HttpResponse
-from django.views.generic import DetailView, UpdateView, View
+from django.views.generic import DetailView, UpdateView, View, ListView
 from django.urls import reverse
+from django.db.models import QuerySet
+from django.conf import settings
+from typing import Dict, Any
 
 from apps.core.mixins.views import ServiceMixin
 from apps.users.models import UserProfile
 from apps.users.forms import UserProfileForm, ChangePasswordForm
 from apps.users.services import UserProfileService
 from apps.core.services.base import ServiceException
+from apps.cases.models import Case
+from apps.cases.forms import CaseSearchForm
+from apps.cases.services import CaseService
 
 
 @login_required
@@ -202,4 +208,47 @@ def change_password(request):
     """Wrapper para ChangePasswordView"""
     view = ChangePasswordView.as_view()
     return view(request)
+
+
+class MyCasesView(LoginRequiredMixin, ServiceMixin, ListView):
+    """
+    Lista os processos atribuídos ao ou criados pelo usuário logado
+    """
+    model = Case
+    service_class = CaseService
+    search_form_class = CaseSearchForm
+    template_name = 'users/my_cases.html'
+    context_object_name = 'cases'
+    paginate_by = settings.PAGINATE_BY
+    
+    def get_queryset(self) -> QuerySet:
+        """Retorna apenas os casos atribuídos ao ou criados pelo usuário logado"""
+        service = self.get_service()
+        queryset = service.get_my_cases()
+        
+        # Aplica filtros do formulário
+        filters = self.get_filters()
+        if filters:
+            queryset = service.apply_filters(queryset, filters)
+        
+        return queryset
+    
+    def get_filters(self) -> Dict[str, Any]:
+        """Get filters from request"""
+        filters = {}
+        
+        if self.search_form_class:
+            form = self.search_form_class(self.request.GET or None)
+            if form.is_valid():
+                filters = form.cleaned_data
+                
+        return {k: v for k, v in filters.items() if v}
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Meus Processos'
+        context['page_icon'] = 'fa-folder-open'
+        context['form'] = self.search_form_class(self.request.GET or None)
+        context['total_count'] = self.get_queryset().count()
+        return context
 

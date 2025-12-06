@@ -95,7 +95,7 @@ Visualize e gerencie as extrações atribuídas a você
                             </tr>
                         </thead>
                         <tbody>
-                            {% for extraction in page_obj %}
+                            {% for extraction in extractions %}
                             <tr>
                                 <td>
                                     <strong>#{{ extraction.pk }}</strong>
@@ -259,7 +259,7 @@ Visualize e gerencie as extrações atribuídas a você
 </div>
 
 <!-- Modais de Confirmação -->
-{% for extraction in page_obj %}
+{% for extraction in extractions %}
     <!-- Modal Desatribuir-me -->
     <div class="modal fade" id="unassignModal{{ extraction.pk }}" tabindex="-1" aria-labelledby="unassignModalLabel{{ extraction.pk }}" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">

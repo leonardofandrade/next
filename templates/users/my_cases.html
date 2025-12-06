@@ -7,15 +7,8 @@
 {% endblock page_title %}
 
 {% block page_description %}
-Gerencie todos os processos de extração
+Visualize e gerencie os processos atribuídos a você ou criados por você
 {% endblock page_description %}
-
-{% block page_actions %}
-<a href="{% url 'cases:create' %}" class="btn btn-primary">
-    <i class="fas fa-plus me-2"></i>
-    Novo Processo
-</a>
-{% endblock page_actions %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -50,10 +43,6 @@ Gerencie todos os processos de extração
                     {{ form.extraction_unit }}
                 </div>
                 <div class="col-md-3">
-                    {{ form.assigned_to.label_tag }}
-                    {{ form.assigned_to }}
-                </div>
-                <div class="col-md-3">
                     {{ form.crime_category.label_tag }}
                     {{ form.crime_category }}
                 </div>
@@ -70,7 +59,7 @@ Gerencie todos os processos de extração
                         <i class="fas fa-search me-2"></i>
                         Filtrar
                     </button>
-                    <a href="{% url 'cases:list' %}" class="btn btn-secondary">
+                    <a href="{% url 'users:my_cases' %}" class="btn btn-secondary">
                         <i class="fas fa-times me-2"></i>
                         Limpar
                     </a>
@@ -84,7 +73,7 @@ Gerencie todos os processos de extração
         <div class="col-12">
             <p class="text-muted mb-0">
                 <i class="fas fa-info-circle me-2"></i>
-                <strong>{{ total_count }}</strong> processo(s) encontrado(s)
+                <strong>{{ total_count }}</strong> processo(s) encontrado(s) sob sua responsabilidade ou criados por você
             </p>
         </div>
     </div>
@@ -149,6 +138,9 @@ Gerencie todos os processos de extração
                                     {% if case.assigned_to %}
                                         <i class="fas fa-user me-1"></i>
                                         {{ case.assigned_to.get_full_name|default:case.assigned_to.username }}
+                                        {% if case.assigned_to == request.user %}
+                                            <span class="badge bg-primary ms-1">Você</span>
+                                        {% endif %}
                                     {% else %}
                                         <span class="text-muted">Não atribuído</span>
                                     {% endif %}
@@ -162,23 +154,23 @@ Gerencie todos os processos de extração
                                 </td>
                                 <td class="text-end">
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <a href="{% url 'cases:detail' case.pk %}?next={% url 'cases:list' %}" 
+                                        <a href="{% url 'cases:detail' case.pk %}?next={% url 'users:my_cases' %}" 
                                            class="btn btn-outline-primary" 
                                            title="Ver detalhes">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{% url 'cases:devices' case.pk %}?next={% url 'cases:list' %}" 
+                                        <a href="{% url 'cases:devices' case.pk %}?next={% url 'users:my_cases' %}" 
                                            class="btn btn-outline-info" 
                                            title="Ver dispositivos">
                                             <i class="fas fa-mobile-alt"></i>
                                         </a>
-                                        <a href="{% url 'extractions:case_extractions' case.pk %}?next={% url 'cases:list' %}" 
+                                        <a href="{% url 'extractions:case_extractions' case.pk %}?next={% url 'users:my_cases' %}" 
                                            class="btn btn-outline-success" 
                                            title="Ver extrações">
                                             <i class="fas fa-database"></i>
                                         </a>
-                                        {% if not case.assigned_to or case.assigned_to == request.user %}
-                                        <a href="{% url 'cases:update' case.pk %}?next={% url 'cases:list' %}" 
+                                        {% if not case.assigned_to or case.assigned_to == request.user or case.created_by == request.user %}
+                                        <a href="{% url 'cases:update' case.pk %}?next={% url 'users:my_cases' %}" 
                                            class="btn btn-outline-secondary" 
                                            title="Editar">
                                             <i class="fas fa-edit"></i>
@@ -211,8 +203,8 @@ Gerencie todos os processos de extração
                                             <i class="fas fa-user-check"></i>
                                         </button>
                                         {% endif %}
-                                        {% if not case.assigned_to or case.assigned_to == request.user %}
-                                        <a href="{% url 'cases:delete' case.pk %}?next={% url 'cases:list' %}" 
+                                        {% if not case.assigned_to or case.assigned_to == request.user or case.created_by == request.user %}
+                                        <a href="{% url 'cases:delete' case.pk %}?next={% url 'users:my_cases' %}" 
                                            class="btn btn-outline-danger" 
                                            title="Excluir">
                                             <i class="fas fa-trash"></i>
@@ -238,9 +230,9 @@ Gerencie todos os processos de extração
                 <div class="text-center py-5">
                     <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
                     <p class="text-muted">Nenhum processo encontrado</p>
-                    <a href="{% url 'cases:create' %}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>
-                        Criar Primeiro Processo
+                    <a href="{% url 'cases:list' %}" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>
+                        Ver todos os processos
                     </a>
                 </div>
             {% endif %}
@@ -362,3 +354,4 @@ Gerencie todos os processos de extração
 {% endfor %}
 
 {% endblock %}
+

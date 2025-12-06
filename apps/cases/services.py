@@ -163,6 +163,15 @@ class CaseService(BaseService):
             ).count(),
         }
     
+    def get_my_cases(self) -> QuerySet:
+        """Get cases assigned to or created by the current user"""
+        if not self.user:
+            return self.model_class.objects.none()
+        
+        return self.get_queryset().filter(
+            Q(assigned_to=self.user) | Q(created_by=self.user)
+        )
+    
     def apply_filters(self, queryset: QuerySet, filters: Dict[str, Any]) -> QuerySet:
         """Apply search filters to Case queryset"""
         

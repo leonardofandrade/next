@@ -10,4 +10,5 @@ urlpatterns = [
     path('profile/edit/', views.profile_edit, name='profile_edit'),
     path('profile/change-password/', views.change_password, name='change_password'),
     path('profile/image/<int:pk>/', views.profile_image, name='profile_image'),
+    path('my-cases/', views.MyCasesView.as_view(), name='my_cases'),
 ]

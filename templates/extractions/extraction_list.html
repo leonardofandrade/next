@@ -99,7 +99,7 @@ Gerencie todas as extrações realizadas
                             </tr>
                         </thead>
                         <tbody>
-                            {% for extraction in page_obj %}
+                            {% for extraction in extractions %}
                             <tr>
                                 <td>
                                     <strong>#{{ extraction.pk }}</strong>
@@ -245,7 +245,7 @@ Gerencie todas as extrações realizadas
 </div>
 
 <!-- Modais de Confirmação -->
-{% for extraction in page_obj %}
+{% for extraction in extractions %}
     <!-- Modal Atribuir-me -->
     <div class="modal fade" id="assignModal{{ extraction.pk }}" tabindex="-1" aria-labelledby="assignModalLabel{{ extraction.pk }}" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">

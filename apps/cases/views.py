@@ -38,7 +38,7 @@ class CaseListView(LoginRequiredMixin, ServiceMixin, ListView):
     service_class = CaseService
     search_form_class = CaseSearchForm
     template_name = 'cases/case_list.html'
-    context_object_name = 'page_obj'
+    context_object_name = 'cases'
     paginate_by = settings.PAGINATE_BY
     
     def get_queryset(self) -> QuerySet:

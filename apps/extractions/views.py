@@ -25,7 +25,7 @@ class ExtractionListView(LoginRequiredMixin, ServiceMixin, ListView):
     service_class = ExtractionService
     search_form_class = ExtractionSearchForm
     template_name = 'extractions/extraction_list.html'
-    context_object_name = 'page_obj'
+    context_object_name = 'extractions'
     paginate_by = settings.PAGINATE_BY
     
     def get_queryset(self) -> QuerySet:

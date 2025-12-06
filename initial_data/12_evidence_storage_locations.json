@@ -1,0 +1,266 @@
+[
+  {
+    "extraction_unit_acronym": "CEINS/NEXT",
+    "type": "done",
+    "name": "Sala 001",
+    "description": "Sala principal de armazenamento de evidências físicas",
+    "shelf_name": "Prateleira A",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "CEINS/NEXT",
+    "type": "done",
+    "name": "Sala 001",
+    "description": "Sala principal de armazenamento de evidências físicas",
+    "shelf_name": "Prateleira A",
+    "slot_name": "Slot 002"
+  },
+  {
+    "extraction_unit_acronym": "CEINS/NEXT",
+    "type": "done",
+    "name": "Sala 001",
+    "description": "Sala principal de armazenamento de evidências físicas",
+    "shelf_name": "Prateleira A",
+    "slot_name": "Slot 003"
+  },
+  {
+    "extraction_unit_acronym": "CEINS/NEXT",
+    "type": "in_progress",
+    "name": "Sala 001",
+    "description": "Sala principal de armazenamento de evidências físicas",
+    "shelf_name": "Prateleira B",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "CEINS/NEXT",
+    "type": "to_do",
+    "name": "Sala 002",
+    "description": "Sala secundária de armazenamento de evidências físicas",
+    "shelf_name": "Prateleira A",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "CEINS/NEXT",
+    "type": "done",
+    "name": "Armário 001",
+    "description": "Armário de segurança para evidências de alto valor",
+    "shelf_name": "Prateleira Superior",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "CEINS/NEXT",
+    "type": "done",
+    "name": "Armário 001",
+    "description": "Armário de segurança para evidências de alto valor",
+    "shelf_name": "Prateleira Superior",
+    "slot_name": "Slot 002"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DIP",
+    "type": "done",
+    "name": "Sala de Evidências 001",
+    "description": "Sala de armazenamento de evidências do DIP",
+    "shelf_name": "Prateleira 01",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DIP",
+    "type": "done",
+    "name": "Sala de Evidências 001",
+    "description": "Sala de armazenamento de evidências do DIP",
+    "shelf_name": "Prateleira 01",
+    "slot_name": "Slot 002"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DIP",
+    "type": "done",
+    "name": "Sala de Evidências 001",
+    "description": "Sala de armazenamento de evidências do DIP",
+    "shelf_name": "Prateleira 01",
+    "slot_name": "Slot 003"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DIP",
+    "type": "in_progress",
+    "name": "Sala de Evidências 001",
+    "description": "Sala de armazenamento de evidências do DIP",
+    "shelf_name": "Prateleira 02",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DIP",
+    "type": "to_do",
+    "name": "Sala de Evidências 002",
+    "description": "Sala secundária de armazenamento de evidências do DIP",
+    "shelf_name": "Prateleira 01",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DIP",
+    "type": "done",
+    "name": "Armário Segurança 001",
+    "description": "Armário com sistema de segurança para evidências sensíveis",
+    "shelf_name": "Prateleira 01",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DIP",
+    "type": "done",
+    "name": "Cofre 001",
+    "description": "Cofre de alta segurança para evidências de valor",
+    "shelf_name": null,
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/CRATO",
+    "type": "done",
+    "name": "Sala de Armazenamento",
+    "description": "Sala de armazenamento de evidências da SEINT Crato",
+    "shelf_name": "Prateleira A",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/CRATO",
+    "type": "done",
+    "name": "Sala de Armazenamento",
+    "description": "Sala de armazenamento de evidências da SEINT Crato",
+    "shelf_name": "Prateleira A",
+    "slot_name": "Slot 002"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/CRATO",
+    "type": "in_progress",
+    "name": "Sala de Armazenamento",
+    "description": "Sala de armazenamento de evidências da SEINT Crato",
+    "shelf_name": "Prateleira B",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/CRATO",
+    "type": "to_do",
+    "name": "Sala de Armazenamento",
+    "description": "Sala de armazenamento de evidências da SEINT Crato",
+    "shelf_name": "Prateleira B",
+    "slot_name": "Slot 002"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/CRATO",
+    "type": "done",
+    "name": "Armário 001",
+    "description": "Armário de segurança para evidências da SEINT Crato",
+    "shelf_name": "Prateleira Superior",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/SOBRAL",
+    "type": "done",
+    "name": "Depósito de Evidências",
+    "description": "Depósito para armazenamento de evidências da SEINT Sobral",
+    "shelf_name": "Prateleira 01",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/SOBRAL",
+    "type": "done",
+    "name": "Depósito de Evidências",
+    "description": "Depósito para armazenamento de evidências da SEINT Sobral",
+    "shelf_name": "Prateleira 01",
+    "slot_name": "Slot 002"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/SOBRAL",
+    "type": "in_progress",
+    "name": "Depósito de Evidências",
+    "description": "Depósito para armazenamento de evidências da SEINT Sobral",
+    "shelf_name": "Prateleira 02",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/SOBRAL",
+    "type": "to_do",
+    "name": "Sala de Segurança",
+    "description": "Sala de segurança para evidências sensíveis da SEINT Sobral",
+    "shelf_name": "Prateleira 01",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/RUSSAS",
+    "type": "done",
+    "name": "Sala de Evidências",
+    "description": "Sala de armazenamento de evidências da SEINT Russas",
+    "shelf_name": "Prateleira Principal",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/RUSSAS",
+    "type": "done",
+    "name": "Sala de Evidências",
+    "description": "Sala de armazenamento de evidências da SEINT Russas",
+    "shelf_name": "Prateleira Principal",
+    "slot_name": "Slot 002"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/RUSSAS",
+    "type": "in_progress",
+    "name": "Sala de Evidências",
+    "description": "Sala de armazenamento de evidências da SEINT Russas",
+    "shelf_name": "Prateleira Secundária",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/RUSSAS",
+    "type": "to_do",
+    "name": "Sala de Evidências",
+    "description": "Sala de armazenamento de evidências da SEINT Russas",
+    "shelf_name": "Prateleira Secundária",
+    "slot_name": "Slot 002"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/RUSSAS",
+    "type": "done",
+    "name": "Armário 001",
+    "description": "Armário de segurança para evidências da SEINT Russas",
+    "shelf_name": "Prateleira Superior",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DRCO",
+    "type": "done",
+    "name": "Armazém de Evidências 001",
+    "description": "Armazém para armazenamento de evidências do DRCO",
+    "shelf_name": "Setor A - Prateleira 01",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DRCO",
+    "type": "done",
+    "name": "Armazém de Evidências 001",
+    "description": "Armazém para armazenamento de evidências do DRCO",
+    "shelf_name": "Setor A - Prateleira 01",
+    "slot_name": "Slot 002"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DRCO",
+    "type": "in_progress",
+    "name": "Armazém de Evidências 001",
+    "description": "Armazém para armazenamento de evidências do DRCO",
+    "shelf_name": "Setor A - Prateleira 02",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DRCO",
+    "type": "to_do",
+    "name": "Armazém de Evidências 002",
+    "description": "Armazém secundário para armazenamento de evidências do DRCO",
+    "shelf_name": "Setor B - Prateleira 01",
+    "slot_name": "Slot 001"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DRCO",
+    "type": "done",
+    "name": "Cofre de Segurança",
+    "description": "Cofre de alta segurança para evidências de valor",
+    "shelf_name": null,
+    "slot_name": "Slot 001"
+  }
+]

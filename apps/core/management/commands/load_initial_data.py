@@ -14,7 +14,8 @@ from apps.base_tables.models import (
 from apps.users.models import UserProfile
 from apps.core.models import (
     ExtractionAgency, ExtractionUnit, ExtractorUser,
-    GeneralSettings, EmailSettings, ReportsSettings
+    GeneralSettings, EmailSettings, ReportsSettings,
+    ExtractionUnitStorageMedia, ExtractionUnitEvidenceLocation
 )
 
 
@@ -70,6 +71,8 @@ class Command(BaseCommand):
         ReportsSettings.objects.all().delete()
         EmailSettings.objects.all().delete()
         GeneralSettings.objects.all().delete()
+        ExtractionUnitEvidenceLocation.objects.all().delete()
+        ExtractionUnitStorageMedia.objects.all().delete()
         ExtractorUser.objects.all().delete()
         ExtractionUnit.objects.all().delete()
         ExtractionAgency.objects.all().delete()
@@ -100,6 +103,8 @@ class Command(BaseCommand):
             '08_device_brands_models.json',
             '09_procedure_category.json',
             '10_extraction_agency_and_settings.json',
+            '11_storage_media.json',
+            '12_evidence_storage_locations.json',
         ]
 
         for file_name in files:
@@ -137,6 +142,10 @@ class Command(BaseCommand):
             self.load_procedure_categories(data)
         elif file_name == '10_extraction_agency_and_settings.json':
             self.load_extraction_agency_and_settings(data)
+        elif file_name == '11_storage_media.json':
+            self.load_storage_media(data)
+        elif file_name == '12_evidence_storage_locations.json':
+            self.load_evidence_storage_locations(data)
 
     def load_employee_positions(self, data):
         """Carrega cargos de funcionários"""
@@ -653,3 +662,86 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS('  ReportsSettings criado'))
         else:
             self.stdout.write(self.style.SUCCESS('  ReportsSettings atualizado'))
+
+    def load_storage_media(self, data):
+        """Carrega meios de armazenamento"""
+        count = 0
+        for item in data:
+            # Busca a unidade de extração
+            try:
+                extraction_unit = ExtractionUnit.objects.get(
+                    acronym=item['extraction_unit_acronym']
+                )
+            except ExtractionUnit.DoesNotExist:
+                self.stdout.write(self.style.WARNING(
+                    f'  Pulando meio de armazenamento {item.get("name", "N/A")}: '
+                    f'Unidade de extração {item["extraction_unit_acronym"]} não encontrada'
+                ))
+                continue
+
+            # Cria ou atualiza o meio de armazenamento
+            media, created = ExtractionUnitStorageMedia.objects.get_or_create(
+                extraction_unit=extraction_unit,
+                acronym=item['acronym'],
+                name=item['name'],
+                defaults={
+                    'description': item.get('description', '')
+                }
+            )
+            if created:
+                count += 1
+            else:
+                # Atualiza descrição se já existia
+                if item.get('description'):
+                    media.description = item.get('description')
+                    media.save()
+
+        self.stdout.write(self.style.SUCCESS(f'  {count} meios de armazenamento criados'))
+
+    def load_evidence_storage_locations(self, data):
+        """Carrega locais de armazenamento de evidências"""
+        count = 0
+        for item in data:
+            # Busca a unidade de extração
+            try:
+                extraction_unit = ExtractionUnit.objects.get(
+                    acronym=item['extraction_unit_acronym']
+                )
+            except ExtractionUnit.DoesNotExist:
+                self.stdout.write(self.style.WARNING(
+                    f'  Pulando local de armazenamento {item.get("name", "N/A")}: '
+                    f'Unidade de extração {item["extraction_unit_acronym"]} não encontrada'
+                ))
+                continue
+
+            # Valida o tipo
+            location_type = item.get('type', 'to_do')
+            if location_type not in ['to_do', 'in_progress', 'done']:
+                location_type = 'to_do'
+
+            # Cria ou atualiza o local de armazenamento
+            location, created = ExtractionUnitEvidenceLocation.objects.get_or_create(
+                extraction_unit=extraction_unit,
+                name=item['name'],
+                defaults={
+                    'type': location_type,
+                    'description': item.get('description', ''),
+                    'shelf_name': item.get('shelf_name'),
+                    'slot_name': item.get('slot_name')
+                }
+            )
+            if created:
+                count += 1
+            else:
+                # Atualiza campos se já existia
+                if item.get('type'):
+                    location.type = location_type
+                if item.get('description'):
+                    location.description = item.get('description')
+                if item.get('shelf_name'):
+                    location.shelf_name = item.get('shelf_name')
+                if item.get('slot_name'):
+                    location.slot_name = item.get('slot_name')
+                location.save()
+
+        self.stdout.write(self.style.SUCCESS(f'  {count} locais de armazenamento de evidências criados'))

@@ -1,0 +1,200 @@
+[
+  {
+    "extraction_unit_acronym": "CEINS/NEXT",
+    "acronym": "HD-001",
+    "name": "HD Externo 001",
+    "description": "HD externo de 1TB para armazenamento de extrações digitais"
+  },
+  {
+    "extraction_unit_acronym": "CEINS/NEXT",
+    "acronym": "HD-002",
+    "name": "HD Externo 002",
+    "description": "HD externo de 2TB para armazenamento de extrações digitais"
+  },
+  {
+    "extraction_unit_acronym": "CEINS/NEXT",
+    "acronym": "HD-003",
+    "name": "HD Externo 003",
+    "description": "HD externo de 4TB para armazenamento de extrações digitais"
+  },
+  {
+    "extraction_unit_acronym": "CEINS/NEXT",
+    "acronym": "HD-004",
+    "name": "HD Externo 004",
+    "description": "HD externo de 5TB para backup de extrações digitais"
+  },
+  {
+    "extraction_unit_acronym": "CEINS/NEXT",
+    "acronym": "SRV-001",
+    "name": "Servidor de Arquivos Principal",
+    "description": "Servidor centralizado para armazenamento de dados extraídos"
+  },
+  {
+    "extraction_unit_acronym": "CEINS/NEXT",
+    "acronym": "SRV-002",
+    "name": "Servidor de Arquivos Secundário",
+    "description": "Servidor de backup para dados extraídos"
+  },
+  {
+    "extraction_unit_acronym": "CEINS/NEXT",
+    "acronym": "GUARDIAN",
+    "name": "Sistema Guardian",
+    "description": "Sistema de gestão e armazenamento de evidências digitais"
+  },
+  {
+    "extraction_unit_acronym": "CEINS/NEXT",
+    "acronym": "NAS-001",
+    "name": "NAS Storage 001",
+    "description": "Network Attached Storage para armazenamento em rede"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DIP",
+    "acronym": "HD-001",
+    "name": "HD Externo 001 - DIP",
+    "description": "HD externo dedicado para armazenamento de extrações do DIP"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DIP",
+    "acronym": "HD-002",
+    "name": "HD Externo 002 - DIP",
+    "description": "HD externo de backup para extrações do DIP"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DIP",
+    "acronym": "HD-003",
+    "name": "HD Externo 003 - DIP",
+    "description": "HD externo de 3TB para armazenamento de extrações do DIP"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DIP",
+    "acronym": "NAS-001",
+    "name": "NAS Storage 001",
+    "description": "Network Attached Storage para armazenamento em rede"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DIP",
+    "acronym": "SRV-001",
+    "name": "Servidor DIP 001",
+    "description": "Servidor dedicado para armazenamento de extrações do DIP"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DIP",
+    "acronym": "SSD-001",
+    "name": "SSD Externo 001",
+    "description": "SSD externo de alta velocidade para extrações críticas"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/CRATO",
+    "acronym": "HD-001",
+    "name": "HD Externo 001 - Crato",
+    "description": "HD externo para armazenamento de extrações da SEINT Crato"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/CRATO",
+    "acronym": "HD-002",
+    "name": "HD Externo 002 - Crato",
+    "description": "HD externo de backup para extrações da SEINT Crato"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/CRATO",
+    "acronym": "HD-003",
+    "name": "HD Externo 003 - Crato",
+    "description": "HD externo de 2TB para armazenamento de extrações da SEINT Crato"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/CRATO",
+    "acronym": "NAS-001",
+    "name": "NAS Storage Crato",
+    "description": "Network Attached Storage para armazenamento em rede da SEINT Crato"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/SOBRAL",
+    "acronym": "HD-001",
+    "name": "HD Externo 001 - Sobral",
+    "description": "HD externo para armazenamento de extrações da SEINT Sobral"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/SOBRAL",
+    "acronym": "HD-002",
+    "name": "HD Externo 002 - Sobral",
+    "description": "HD externo de backup para extrações da SEINT Sobral"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/SOBRAL",
+    "acronym": "HD-003",
+    "name": "HD Externo 003 - Sobral",
+    "description": "HD externo de 4TB para armazenamento de extrações da SEINT Sobral"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/SOBRAL",
+    "acronym": "SRV-001",
+    "name": "Servidor Sobral 001",
+    "description": "Servidor local para armazenamento de extrações da SEINT Sobral"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/SOBRAL",
+    "acronym": "SSD-001",
+    "name": "SSD Externo Sobral",
+    "description": "SSD externo para extrações de alta prioridade"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/RUSSAS",
+    "acronym": "HD-001",
+    "name": "HD Externo 001 - Russas",
+    "description": "HD externo para armazenamento de extrações da SEINT Russas"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/RUSSAS",
+    "acronym": "HD-002",
+    "name": "HD Externo 002 - Russas",
+    "description": "HD externo de backup para extrações da SEINT Russas"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/RUSSAS",
+    "acronym": "HD-003",
+    "name": "HD Externo 003 - Russas",
+    "description": "HD externo de 2TB para armazenamento de extrações da SEINT Russas"
+  },
+  {
+    "extraction_unit_acronym": "SEINT/RUSSAS",
+    "acronym": "NAS-001",
+    "name": "NAS Storage Russas",
+    "description": "Network Attached Storage para armazenamento em rede da SEINT Russas"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DRCO",
+    "acronym": "HD-001",
+    "name": "HD Externo 001 - DRCO",
+    "description": "HD externo para armazenamento de extrações do DRCO"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DRCO",
+    "acronym": "HD-002",
+    "name": "HD Externo 002 - DRCO",
+    "description": "HD externo de backup para extrações do DRCO"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DRCO",
+    "acronym": "HD-003",
+    "name": "HD Externo 003 - DRCO",
+    "description": "HD externo de 4TB para armazenamento de extrações do DRCO"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DRCO",
+    "acronym": "SRV-001",
+    "name": "Servidor DRCO 001",
+    "description": "Servidor dedicado para armazenamento de extrações do DRCO"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DRCO",
+    "acronym": "SSD-001",
+    "name": "SSD Externo DRCO",
+    "description": "SSD externo para extrações críticas do DRCO"
+  },
+  {
+    "extraction_unit_acronym": "PCCE/DRCO",
+    "acronym": "NAS-001",
+    "name": "NAS Storage DRCO",
+    "description": "Network Attached Storage para armazenamento em rede do DRCO"
+  }
+]

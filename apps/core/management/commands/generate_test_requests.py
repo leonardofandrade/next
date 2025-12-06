@@ -7,7 +7,9 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from faker import Faker
 
+from apps.requisitions.services import ExtractionRequestService
 from apps.requisitions.models import ExtractionRequest
+from apps.core.services.base import ValidationServiceException
 from apps.base_tables.models import AgencyUnit, EmployeePosition, CrimeCategory, ProcedureCategory
 from apps.core.models import ExtractionUnit
 
@@ -78,6 +80,9 @@ class Command(BaseCommand):
 
         # Inicializa Faker
         fake = Faker('pt_BR')
+        
+        # Inicializa o service
+        request_service = ExtractionRequestService(user=user)
 
         self.stdout.write(f'Gerando {quantity} solicitações de extração...')
 
@@ -125,27 +130,36 @@ class Command(BaseCommand):
                                                        hours=random.randint(0, 23),
                                                        minutes=random.randint(0, 59))
 
-                # Cria a solicitação
-                extraction_request = ExtractionRequest.objects.create(
-                    requester_agency_unit=requester_agency_unit,
-                    requested_at=requested_at,
-                    requested_device_amount=device_amount,
-                    extraction_unit=extraction_unit,
-                    requester_reply_email=requester_email,
-                    requester_authority_name=authority_name,
-                    requester_authority_position=authority_position,
-                    request_procedures=procedure_number,
-                    crime_category=crime_category,
-                    additional_info=additional_info,
-                    status=ExtractionRequest.REQUEST_STATUS_ASSIGNED,
-                    created_by=user
-                )
+                # Prepara dados para criação via service
+                request_data = {
+                    'requester_agency_unit': requester_agency_unit,
+                    'requested_at': requested_at,
+                    'requested_device_amount': device_amount,
+                    'extraction_unit': extraction_unit,
+                    'requester_reply_email': requester_email,
+                    'requester_authority_name': authority_name,
+                    'requester_authority_position': authority_position,
+                    'request_procedures': procedure_number,
+                    'crime_category': crime_category,
+                    'status': ExtractionRequest.REQUEST_STATUS_ASSIGNED,
+                }
+                
+                # Adiciona campos opcionais apenas se não forem None
+                if additional_info:
+                    request_data['additional_info'] = additional_info
+
+                # Usa o service para criar a solicitação
+                extraction_request = request_service.create(request_data)
 
                 created_count += 1
                 
                 if (i + 1) % 10 == 0:
                     self.stdout.write(f'  {i + 1}/{quantity} solicitações criadas...')
 
+            except ValidationServiceException as e:
+                self.stdout.write(
+                    self.style.ERROR(f'Erro de validação ao criar solicitação #{i + 1}: {str(e)}')
+                )
             except Exception as e:
                 self.stdout.write(
                     self.style.ERROR(f'Erro ao criar solicitação #{i + 1}: {str(e)}')

@@ -1,79 +1,15 @@
 """
 Management command para criar cases a partir de extraction_requests
 """
-import re
 import random
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
-from django.utils import timezone
 
-from apps.cases.models import Case, CaseDevice, CaseProcedure
+from apps.cases.models import CaseDevice
 from apps.requisitions.models import ExtractionRequest
-from apps.base_tables.models import ProcedureCategory, DeviceCategory, DeviceModel
-
-
-def parse_request_procedures(request_procedures_text, case, user):
-    """
-    Tenta parsear o campo request_procedures e criar CaseProcedure.
-    Formato esperado: "IP 123/2024, PJ 456/2024" ou similar.
-    Retorna uma lista de erros encontrados (se houver).
-    """
-    errors = []
-    if not request_procedures_text:
-        return errors
-    
-    # Remove espaços extras e divide por vírgula
-    procedures_text = request_procedures_text.strip()
-    if not procedures_text:
-        return errors
-    
-    # Tenta dividir por vírgula ou ponto e vírgula
-    procedures_list = re.split(r'[,;]', procedures_text)
-    
-    for procedure_text in procedures_list:
-        procedure_text = procedure_text.strip()
-        if not procedure_text:
-            continue
-        
-        # Tenta extrair o acrônimo e o número
-        # Padrão: "ACRONIMO NUMERO" ou "ACRONIMO NUMERO/ANO"
-        match = re.match(r'^([A-Z]{1,10})\s+([0-9/]+)', procedure_text, re.IGNORECASE)
-        if not match:
-            # Tenta outro padrão: pode ser só o acrônimo ou formato diferente
-            match = re.match(r'^([A-Z]{1,10})', procedure_text, re.IGNORECASE)
-            if match:
-                acronym = match.group(1).upper()
-                procedure_number = procedure_text.replace(acronym, '').strip()
-            else:
-                errors.append(f"Não foi possível parsear: {procedure_text}")
-                continue
-        else:
-            acronym = match.group(1).upper()
-            procedure_number = match.group(2).strip()
-        
-        # Busca ProcedureCategory pelo acronym
-        try:
-            procedure_category = ProcedureCategory.objects.filter(
-                acronym__iexact=acronym,
-                deleted_at__isnull=True
-            ).first()
-            
-            if not procedure_category:
-                errors.append(f"Categoria de procedimento não encontrada para acrônimo: {acronym}")
-                continue
-            
-            # Cria o CaseProcedure
-            CaseProcedure.objects.create(
-                case=case,
-                number=procedure_number if procedure_number else None,
-                procedure_category=procedure_category,
-                created_by=user
-            )
-        except Exception as e:
-            errors.append(f"Erro ao criar procedimento {acronym} {procedure_number}: {str(e)}")
-            continue
-    
-    return errors
+from apps.requisitions.services import ExtractionRequestService
+from apps.core.services.base import ValidationServiceException
+from apps.base_tables.models import DeviceCategory, DeviceModel
 
 
 class Command(BaseCommand):
@@ -196,6 +132,8 @@ class Command(BaseCommand):
             return
 
         # Verifica se há categorias e modelos de dispositivo (se for criar devices)
+        device_categories = None
+        device_models = None
         if create_devices:
             device_categories = list(DeviceCategory.objects.filter(deleted_at__isnull=True))
             if not device_categories:
@@ -224,59 +162,21 @@ class Command(BaseCommand):
 
         self.stdout.write(f'\nProcessando {total_requests} extraction_request(s)...\n')
 
+        # Inicializa o service com o usuário
+        request_service = ExtractionRequestService(user=user)
+
         for extraction_request in extraction_requests:
             try:
-                # Cria o Case copiando os dados do ExtractionRequest
-                case = Case(
-                    requester_agency_unit=extraction_request.requester_agency_unit,
-                    requested_at=extraction_request.requested_at,
-                    requested_device_amount=extraction_request.requested_device_amount,
-                    extraction_unit=extraction_request.extraction_unit,
-                    requester_reply_email=extraction_request.requester_reply_email,
-                    requester_authority_name=extraction_request.requester_authority_name,
-                    requester_authority_position=extraction_request.requester_authority_position,
-                    request_procedures=extraction_request.request_procedures,
-                    crime_category=extraction_request.crime_category,
-                    additional_info=extraction_request.additional_info,
-                    extraction_request=extraction_request,
-                    status=Case.CASE_STATUS_DRAFT,
-                    number=None,  # Será criado posteriormente quando finalizar cadastro
-                    created_by=user,
-                )
-                case.save()
+                # Usa o service para criar o case a partir do request
+                # O service já faz: criar case, parsear procedimentos, atualizar request
+                case = request_service.create_case_from_request(extraction_request.pk)
                 created_cases += 1
 
-                # Tenta parsear request_procedures e criar CaseProcedure
-                if extraction_request.request_procedures:
-                    errors = parse_request_procedures(
-                        extraction_request.request_procedures,
-                        case,
-                        user
-                    )
-                    if errors:
-                        for error in errors:
-                            errors_list.append(f'Request #{extraction_request.pk}: {error}')
-                    else:
-                        # Conta os procedimentos criados
-                        created_procedures += case.procedures.count()
-
-                # Atualiza a ExtractionRequest: seta received_at, received_by e status
-                if not extraction_request.received_at:
-                    extraction_request.received_at = timezone.now()
-                    extraction_request.received_by = user
-
-                if extraction_request.status not in [
-                    ExtractionRequest.REQUEST_STATUS_ASSIGNED,
-                    ExtractionRequest.REQUEST_STATUS_RECEIVED
-                ]:
-                    extraction_request.status = ExtractionRequest.REQUEST_STATUS_ASSIGNED
-
-                extraction_request.updated_by = user
-                extraction_request.version += 1
-                extraction_request.save()
-
+                # Conta os procedimentos criados
+                created_procedures += case.procedures.filter(deleted_at__isnull=True).count()
+                
                 # Cria case_devices se solicitado
-                if create_devices and extraction_request.requested_device_amount:
+                if create_devices and extraction_request.requested_device_amount and device_categories and device_models:
                     device_amount = extraction_request.requested_device_amount
                     for i in range(device_amount):
                         # Seleciona categoria e modelo aleatórios
@@ -294,6 +194,15 @@ class Command(BaseCommand):
 
                 if created_cases % 10 == 0:
                     self.stdout.write(f'  {created_cases} cases criados...')
+                
+            except ValidationServiceException as e:
+                # Captura erros de validação do service (ex: case já existe)
+                error_msg = f'Request #{extraction_request.pk}: {str(e)}'
+                errors_list.append(error_msg)
+                self.stdout.write(
+                    self.style.ERROR(error_msg)
+                )
+                continue
 
             except Exception as e:
                 error_msg = f'Erro ao criar case para request #{extraction_request.pk}: {str(e)}'

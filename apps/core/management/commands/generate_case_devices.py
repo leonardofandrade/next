@@ -7,7 +7,8 @@ from django.contrib.auth.models import User
 from django.db.models import Count
 from faker import Faker
 
-from apps.cases.models import Case, CaseDevice
+from apps.cases.models import Case
+from apps.cases.services import CaseDeviceService
 from apps.base_tables.models import DeviceCategory, DeviceModel
 
 
@@ -213,37 +214,66 @@ class Command(BaseCommand):
                     if random.random() < 0.3:
                         additional_info = fake.text(max_nb_chars=200)
                     
-                    # Cria o dispositivo
-                    case_device = CaseDevice.objects.create(
-                        case=case,
-                        device_category=device_category,
-                        device_model=device_model,
-                        color=color,
-                        is_imei_unknown=is_imei_unknown,
-                        imei_01=imei_01,
-                        imei_02=imei_02,
-                        owner_name=owner_name,
-                        internal_storage=internal_storage,
-                        is_turned_on=is_turned_on,
-                        is_locked=is_locked,
-                        is_password_known=is_password_known,
-                        password_type=password_type,
-                        password=password,
-                        is_damaged=is_damaged,
-                        damage_description=damage_description,
-                        has_fluids=has_fluids,
-                        fluids_description=fluids_description,
-                        has_sim_card=has_sim_card,
-                        sim_card_info=sim_card_info,
-                        has_memory_card=has_memory_card,
-                        memory_card_info=memory_card_info,
-                        has_other_accessories=has_other_accessories,
-                        other_accessories_info=other_accessories_info,
-                        is_sealed=is_sealed,
-                        security_seal=security_seal,
-                        additional_info=additional_info,
-                        created_by=user
-                    )
+                    # Prepara dados do dispositivo
+                    device_data = {
+                        'case': case,
+                        'device_category': device_category,
+                        'device_model': device_model,
+                    }
+                    
+                    # Adiciona campos opcionais apenas se não forem None
+                    if color is not None:
+                        device_data['color'] = color
+                    if is_imei_unknown is not None:
+                        device_data['is_imei_unknown'] = is_imei_unknown
+                    if imei_01 is not None:
+                        device_data['imei_01'] = imei_01
+                    if imei_02 is not None:
+                        device_data['imei_02'] = imei_02
+                    if owner_name is not None:
+                        device_data['owner_name'] = owner_name
+                    if internal_storage is not None:
+                        device_data['internal_storage'] = internal_storage
+                    if is_turned_on is not None:
+                        device_data['is_turned_on'] = is_turned_on
+                    if is_locked is not None:
+                        device_data['is_locked'] = is_locked
+                    if is_password_known is not None:
+                        device_data['is_password_known'] = is_password_known
+                    if password_type is not None:
+                        device_data['password_type'] = password_type
+                    if password is not None:
+                        device_data['password'] = password
+                    if is_damaged is not None:
+                        device_data['is_damaged'] = is_damaged
+                    if damage_description is not None:
+                        device_data['damage_description'] = damage_description
+                    if has_fluids is not None:
+                        device_data['has_fluids'] = has_fluids
+                    if fluids_description is not None:
+                        device_data['fluids_description'] = fluids_description
+                    if has_sim_card is not None:
+                        device_data['has_sim_card'] = has_sim_card
+                    if sim_card_info is not None:
+                        device_data['sim_card_info'] = sim_card_info
+                    if has_memory_card is not None:
+                        device_data['has_memory_card'] = has_memory_card
+                    if memory_card_info is not None:
+                        device_data['memory_card_info'] = memory_card_info
+                    if has_other_accessories is not None:
+                        device_data['has_other_accessories'] = has_other_accessories
+                    if other_accessories_info is not None:
+                        device_data['other_accessories_info'] = other_accessories_info
+                    if is_sealed is not None:
+                        device_data['is_sealed'] = is_sealed
+                    if security_seal is not None:
+                        device_data['security_seal'] = security_seal
+                    if additional_info is not None:
+                        device_data['additional_info'] = additional_info
+                    
+                    # Usa o service para criar o dispositivo
+                    device_service = CaseDeviceService(user=user)
+                    case_device = device_service.create(device_data)
                     
                     devices_created_for_case += 1
                     created_devices += 1

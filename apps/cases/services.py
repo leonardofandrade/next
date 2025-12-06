@@ -109,6 +109,13 @@ class CaseService(BaseService):
     
     def create_extractions_for_case(self, case: Case) -> List[Extraction]:
         """Create extractions for all devices in case that don't have extraction"""
+        # Validate that case registration is completed
+        if not case.registration_completed_at:
+            raise ValidationServiceException(
+                "Não é possível criar extrações para um caso com cadastro não finalizado. "
+                "Finalize o cadastro do caso antes de criar extrações."
+            )
+        
         devices_without_extraction = case.case_devices.filter(
             deleted_at__isnull=True,
             device_extraction__isnull=True

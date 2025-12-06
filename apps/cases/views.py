@@ -951,6 +951,21 @@ class CreateExtractionsView(LoginRequiredMixin, View):
             pk=pk
         )
         
+        # Valida se o caso tem cadastro finalizado
+        if not case.registration_completed_at:
+            error_message = "Não é possível criar extrações para um caso com cadastro não finalizado. Finalize o cadastro do caso antes de criar extrações."
+            messages.error(request, error_message)
+            
+            # Se a requisição espera JSON, retorna JSON
+            if request.headers.get('Accept') == 'application/json' or request.GET.get('format') == 'json':
+                return JsonResponse({
+                    'success': False,
+                    'error': error_message
+                }, status=400)
+            
+            # Caso contrário, redireciona de volta
+            return redirect('cases:case_detail', pk=case.pk)
+        
         # Busca dispositivos do caso que não têm extração associada
         # Para OneToOneField reverso, precisamos usar exclude com valores existentes
         devices_without_extraction = case.case_devices.filter(

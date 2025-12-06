@@ -16,6 +16,38 @@ class ExtractionService(BaseService):
     
     model_class = Extraction
     
+    def validate_business_rules(self, data: Dict[str, Any], instance: Optional[Extraction] = None) -> Dict[str, Any]:
+        """Validate Extraction business rules"""
+        # If creating a new extraction, validate that case registration is completed
+        if instance is None and data.get('case_device'):
+            from apps.cases.models import CaseDevice
+            
+            # Get case_device_id - handle both object and ID
+            case_device_value = data['case_device']
+            if hasattr(case_device_value, 'pk'):
+                case_device_id = case_device_value.pk
+            elif isinstance(case_device_value, int):
+                case_device_id = case_device_value
+            else:
+                case_device_id = case_device_value
+            
+            try:
+                case_device = CaseDevice.objects.select_related('case').get(
+                    pk=case_device_id,
+                    deleted_at__isnull=True
+                )
+                case = case_device.case
+                
+                if not case.registration_completed_at:
+                    raise ValidationServiceException(
+                        "Não é possível criar extrações para um caso com cadastro não finalizado. "
+                        "Finalize o cadastro do caso antes de criar extrações."
+                    )
+            except CaseDevice.DoesNotExist:
+                raise ValidationServiceException("Dispositivo do caso não encontrado")
+        
+        return data
+    
     def get_queryset(self) -> QuerySet:
         """Get extractions queryset with optimized queries"""
         return super().get_queryset().filter(

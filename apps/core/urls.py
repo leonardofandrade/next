@@ -44,4 +44,10 @@ urlpatterns = [
     path('settings/general/', views.general_settings, name='general_settings'),
     path('settings/email/', views.email_settings, name='email_settings'),
     path('settings/reports/', views.reports_settings, name='reports_settings'),
+    
+    # User Extractor Management URLs
+    path('user-extractor-management/', views.user_extractor_management, name='user_extractor_management'),
+    path('user-extractor-management/user/<int:user_id>/toggle-extractor/', views.toggle_extractor, name='toggle_extractor'),
+    path('user-extractor-management/extractor/<int:extractor_user_id>/toggle-unit/', views.toggle_unit_association, name='toggle_unit_association'),
+    path('user-extractor-management/user/<int:user_id>/info/', views.get_user_extractor_info, name='get_user_extractor_info'),
 ]

@@ -1,9 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import User
 from django.contrib import messages
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 from django.db.models import Q
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
 
 from apps.core.models import (
     ExtractionAgency,
@@ -474,3 +478,221 @@ def reports_settings(request):
         form = ReportsSettingsForm(instance=settings) if settings else ReportsSettingsForm()
     
     return render(request, 'core/reports_settings.html', {'form': form, 'settings': settings})
+
+
+# ==================== User Extractor Management Views ====================
+
+@login_required
+@user_passes_test(is_staff_user)
+def user_extractor_management(request):
+    """
+    Página unificada para gerenciar usuários, extratores e associações
+    """
+    # Busca todos os usuários ativos com seus perfis
+    users = User.objects.filter(
+        is_active=True
+    ).select_related('profile').prefetch_related(
+        'extractor_users',
+        'extractor_users__extraction_agency',
+        'extractor_users__extraction_unit_extractors',
+        'extractor_users__extraction_unit_extractors__extraction_unit',
+        'extractor_users__extraction_unit_extractors__extraction_unit__agency'
+    ).order_by('first_name', 'last_name', 'username')
+    
+    # Busca todas as agências e unidades para os formulários
+    agencies = ExtractionAgency.objects.filter(deleted_at__isnull=True).order_by('acronym')
+    units = ExtractionUnit.objects.filter(deleted_at__isnull=True).select_related('agency').order_by('agency__acronym', 'acronym')
+    
+    context = {
+        'users': users,
+        'agencies': agencies,
+        'units': units,
+    }
+    
+    return render(request, 'core/user_extractor_management.html', context)
+
+
+@login_required
+@user_passes_test(is_staff_user)
+@require_http_methods(["POST"])
+def toggle_extractor(request, user_id):
+    """
+    Adiciona ou remove um usuário como extrator de uma agência
+    """
+    try:
+        user = get_object_or_404(User, pk=user_id, is_active=True)
+        agency_id = request.POST.get('agency_id')
+        
+        if not agency_id:
+            return JsonResponse({'success': False, 'message': _('Agência não especificada.')}, status=400)
+        
+        agency = get_object_or_404(ExtractionAgency, pk=agency_id, deleted_at__isnull=True)
+        
+        # Verifica se já existe (incluindo deletados)
+        try:
+            extractor_user = ExtractorUser.objects.get(
+                user=user,
+                extraction_agency=agency
+            )
+            
+            # Se já existe e está deletado, reativa
+            if extractor_user.deleted_at:
+                extractor_user.deleted_at = None
+                extractor_user.deleted_by = None
+                extractor_user.updated_by = request.user
+                extractor_user.save()
+                return JsonResponse({
+                    'success': True,
+                    'is_extractor': True,
+                    'message': _('Usuário reativado como extrator.')
+                })
+            else:
+                # Se já existe e está ativo, remove (soft delete)
+                extractor_user.deleted_at = timezone.now()
+                extractor_user.deleted_by = request.user
+                extractor_user.save()
+                
+                # Remove todas as associações com unidades
+                ExtractionUnitExtractor.objects.filter(
+                    extractor=extractor_user,
+                    deleted_at__isnull=True
+                ).update(
+                    deleted_at=timezone.now(),
+                    deleted_by=request.user
+                )
+                
+                return JsonResponse({
+                    'success': True,
+                    'is_extractor': False,
+                    'message': _('Usuário removido como extrator.')
+                })
+        except ExtractorUser.DoesNotExist:
+            # Cria novo
+            extractor_user = ExtractorUser.objects.create(
+                user=user,
+                extraction_agency=agency,
+                created_by=request.user
+            )
+            return JsonResponse({
+                'success': True,
+                'is_extractor': True,
+                'message': _('Usuário adicionado como extrator.')
+            })
+            
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+@login_required
+@user_passes_test(is_staff_user)
+@require_http_methods(["POST"])
+def toggle_unit_association(request, extractor_user_id):
+    """
+    Adiciona ou remove uma associação entre extrator e unidade
+    """
+    try:
+        extractor_user = get_object_or_404(ExtractorUser, pk=extractor_user_id, deleted_at__isnull=True)
+        unit_id = request.POST.get('unit_id')
+        
+        if not unit_id:
+            return JsonResponse({'success': False, 'message': _('Unidade não especificada.')}, status=400)
+        
+        unit = get_object_or_404(ExtractionUnit, pk=unit_id, deleted_at__isnull=True)
+        
+        # Verifica se a unidade pertence à mesma agência do extrator
+        if unit.agency != extractor_user.extraction_agency:
+            return JsonResponse({
+                'success': False,
+                'message': _('A unidade deve pertencer à mesma agência do extrator.')
+            }, status=400)
+        
+        # Verifica se já existe (incluindo deletados)
+        try:
+            association = ExtractionUnitExtractor.objects.get(
+                extraction_unit=unit,
+                extractor=extractor_user
+            )
+            
+            # Se já existe e está deletado, reativa
+            if association.deleted_at:
+                association.deleted_at = None
+                association.deleted_by = None
+                association.updated_by = request.user
+                association.save()
+                return JsonResponse({
+                    'success': True,
+                    'is_associated': True,
+                    'message': _('Associação reativada.')
+                })
+            else:
+                # Se já existe e está ativo, remove (soft delete)
+                association.deleted_at = timezone.now()
+                association.deleted_by = request.user
+                association.save()
+                
+                return JsonResponse({
+                    'success': True,
+                    'is_associated': False,
+                    'message': _('Associação removida.')
+                })
+        except ExtractionUnitExtractor.DoesNotExist:
+            # Cria novo
+            association = ExtractionUnitExtractor.objects.create(
+                extraction_unit=unit,
+                extractor=extractor_user,
+                created_by=request.user
+            )
+            return JsonResponse({
+                'success': True,
+                'is_associated': True,
+                'message': _('Associação criada.')
+            })
+            
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+@login_required
+@user_passes_test(is_staff_user)
+@require_http_methods(["GET"])
+def get_user_extractor_info(request, user_id):
+    """
+    Retorna informações sobre o usuário como extrator (JSON)
+    """
+    try:
+        user = get_object_or_404(User, pk=user_id, is_active=True)
+        
+        extractor_users = ExtractorUser.objects.filter(
+            user=user,
+            deleted_at__isnull=True
+        ).select_related('extraction_agency').prefetch_related(
+            'extraction_unit_extractors__extraction_unit',
+            'extraction_unit_extractors__extraction_unit__agency'
+        )
+        
+        data = {
+            'is_extractor': extractor_users.exists(),
+            'extractors': []
+        }
+        
+        for extractor_user in extractor_users:
+            units = []
+            for association in extractor_user.extraction_unit_extractors.filter(deleted_at__isnull=True):
+                units.append({
+                    'id': association.extraction_unit.pk,
+                    'acronym': association.extraction_unit.acronym,
+                    'name': association.extraction_unit.name,
+                })
+            
+            data['extractors'].append({
+                'id': extractor_user.pk,
+                'agency_id': extractor_user.extraction_agency.pk,
+                'agency_acronym': extractor_user.extraction_agency.acronym,
+                'agency_name': extractor_user.extraction_agency.name,
+                'units': units
+            })
+        
+        return JsonResponse(data)
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)

@@ -23,6 +23,11 @@ urlpatterns = [
     path('extractors/create/', views.extractor_user_create, name='extractor_user_create'),
     path('extractors/<int:pk>/delete/', views.extractor_user_delete, name='extractor_user_delete'),
     
+    # Extraction Unit Extractor URLs
+    path('extraction-unit-extractors/', views.extraction_unit_extractor_list, name='extraction_unit_extractor_list'),
+    path('extraction-unit-extractors/create/', views.extraction_unit_extractor_create, name='extraction_unit_extractor_create'),
+    path('extraction-unit-extractors/<int:pk>/delete/', views.extraction_unit_extractor_delete, name='extraction_unit_extractor_delete'),
+    
     # Storage Media URLs
     path('storage-media/', views.storage_media_list, name='storage_media_list'),
     path('storage-media/create/', views.storage_media_create, name='storage_media_create'),

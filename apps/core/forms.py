@@ -106,9 +106,67 @@ class ExtractionUnitExtractorForm(forms.ModelForm):
         model = ExtractionUnitExtractor
         fields = ['extraction_unit', 'extractor']
         widgets = {
-            'extraction_unit': forms.Select(attrs={'class': 'form-select'}),
-            'extractor': forms.Select(attrs={'class': 'form-select'}),
+            'extraction_unit': forms.Select(attrs={'class': 'form-select', 'id': 'id_extraction_unit'}),
+            'extractor': forms.Select(attrs={'class': 'form-select', 'id': 'id_extractor'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Ordena unidades de extração
+        self.fields['extraction_unit'].queryset = ExtractionUnit.objects.filter(
+            deleted_at__isnull=True
+        ).select_related('agency').order_by('agency__acronym', 'acronym')
+        
+        # Filtra extratores baseado na unidade selecionada
+        if 'extraction_unit' in self.data:
+            try:
+                extraction_unit_id = int(self.data.get('extraction_unit'))
+                extraction_unit = ExtractionUnit.objects.get(pk=extraction_unit_id)
+                # Filtra extratores da mesma agência da unidade
+                self.fields['extractor'].queryset = ExtractorUser.objects.filter(
+                    deleted_at__isnull=True,
+                    extraction_agency=extraction_unit.agency
+                ).select_related('user', 'extraction_agency').order_by('user__first_name', 'user__last_name', 'user__username')
+            except (ValueError, ExtractionUnit.DoesNotExist):
+                self.fields['extractor'].queryset = ExtractorUser.objects.none()
+        elif self.instance.pk:
+            # Se estiver editando, mostra apenas extratores da agência da unidade atual
+            self.fields['extractor'].queryset = ExtractorUser.objects.filter(
+                deleted_at__isnull=True,
+                extraction_agency=self.instance.extraction_unit.agency
+            ).select_related('user', 'extraction_agency').order_by('user__first_name', 'user__last_name', 'user__username')
+        else:
+            # Estado inicial: mostra todos os extratores
+            self.fields['extractor'].queryset = ExtractorUser.objects.filter(
+                deleted_at__isnull=True
+            ).select_related('user', 'extraction_agency').order_by('user__first_name', 'user__last_name', 'user__username')
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        extraction_unit = cleaned_data.get('extraction_unit')
+        extractor = cleaned_data.get('extractor')
+        
+        if extraction_unit and extractor:
+            # Verifica se o extrator pertence à mesma agência da unidade
+            if extractor.extraction_agency != extraction_unit.agency:
+                raise forms.ValidationError({
+                    'extractor': _('O extrator deve pertencer à mesma agência da unidade de extração selecionada.')
+                })
+            
+            # Verifica se já existe uma associação ativa
+            existing = ExtractionUnitExtractor.objects.filter(
+                extraction_unit=extraction_unit,
+                extractor=extractor,
+                deleted_at__isnull=True
+            ).exclude(pk=self.instance.pk if self.instance.pk else None)
+            
+            if existing.exists():
+                raise forms.ValidationError(
+                    _('Esta associação já existe.')
+                )
+        
+        return cleaned_data
 
 
 class ExtractionUnitStorageMediaForm(forms.ModelForm):

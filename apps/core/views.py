@@ -220,6 +220,57 @@ def extractor_user_delete(request, pk):
     return render(request, 'core/extractor_user_confirm_delete.html', {'extractor': extractor})
 
 
+# ==================== Extraction Unit Extractor Views ====================
+
+@login_required
+@user_passes_test(is_staff_user)
+def extraction_unit_extractor_list(request):
+    """Lista de associações entre extratores e unidades de extração"""
+    associations = ExtractionUnitExtractor.objects.filter(
+        deleted_at__isnull=True
+    ).select_related(
+        'extraction_unit', 'extractor', 'extractor__user', 'extractor__extraction_agency'
+    ).order_by('-created_at')
+    return render(request, 'core/extraction_unit_extractor_list.html', {'associations': associations})
+
+
+@login_required
+@user_passes_test(is_staff_user)
+def extraction_unit_extractor_create(request):
+    """Criar nova associação entre extrator e unidade de extração"""
+    if request.method == 'POST':
+        form = ExtractionUnitExtractorForm(request.POST)
+        if form.is_valid():
+            association = form.save()
+            messages.success(request, _('Associação criada com sucesso!'))
+            return redirect('core:extraction_unit_extractor_list')
+    else:
+        form = ExtractionUnitExtractorForm()
+    
+    return render(request, 'core/extraction_unit_extractor_form.html', {
+        'form': form, 
+        'title': _('Nova Associação Extrator-Unidade')
+    })
+
+
+@login_required
+@user_passes_test(is_staff_user)
+def extraction_unit_extractor_delete(request, pk):
+    """Deletar associação entre extrator e unidade de extração (soft delete)"""
+    association = get_object_or_404(ExtractionUnitExtractor, pk=pk, deleted_at__isnull=True)
+    
+    if request.method == 'POST':
+        from django.utils import timezone
+        association.deleted_at = timezone.now()
+        association.save()
+        messages.success(request, _('Associação removida com sucesso!'))
+        return redirect('core:extraction_unit_extractor_list')
+    
+    return render(request, 'core/extraction_unit_extractor_confirm_delete.html', {
+        'association': association
+    })
+
+
 # ==================== Storage Media Views ====================
 
 @login_required

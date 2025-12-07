@@ -22,6 +22,27 @@ class StaffRequiredMixin(UserPassesTestMixin):
         return self.request.user.is_staff or self.request.user.is_superuser
 
 
+class StaffOrExtractorRequiredMixin(UserPassesTestMixin):
+    """Mixin that requires user to be staff, superuser, or an extractor"""
+    
+    def test_func(self):
+        user = self.request.user
+        
+        # Staff e superuser sempre têm acesso
+        if user.is_staff or user.is_superuser:
+            return True
+        
+        # Verifica se é um extrator ativo
+        try:
+            from apps.core.models import ExtractorUser
+            return ExtractorUser.objects.filter(
+                user=user,
+                deleted_at__isnull=True
+            ).exists()
+        except Exception:
+            return False
+
+
 class AjaxResponseMixin:
     """Mixin to handle AJAX requests"""
     
@@ -53,7 +74,7 @@ class ServiceMixin:
         messages.error(self.request, str(exception))
 
 
-class BaseListView(LoginRequiredMixin, StaffRequiredMixin, ServiceMixin, ListView):
+class BaseListView(LoginRequiredMixin, StaffOrExtractorRequiredMixin, ServiceMixin, ListView):
     """Base list view with search and pagination"""
     
     paginate_by = 25
@@ -90,7 +111,7 @@ class BaseListView(LoginRequiredMixin, StaffRequiredMixin, ServiceMixin, ListVie
         return context
 
 
-class BaseDetailView(LoginRequiredMixin, StaffRequiredMixin, ServiceMixin, DetailView):
+class BaseDetailView(LoginRequiredMixin, StaffOrExtractorRequiredMixin, ServiceMixin, DetailView):
     """Base detail view"""
     
     def get_object(self):
@@ -104,7 +125,7 @@ class BaseDetailView(LoginRequiredMixin, StaffRequiredMixin, ServiceMixin, Detai
             return None
 
 
-class BaseCreateView(LoginRequiredMixin, StaffRequiredMixin, ServiceMixin, CreateView):
+class BaseCreateView(LoginRequiredMixin, StaffOrExtractorRequiredMixin, ServiceMixin, CreateView):
     """Base create view using service"""
     
     def form_valid(self, form):
@@ -130,7 +151,7 @@ class BaseCreateView(LoginRequiredMixin, StaffRequiredMixin, ServiceMixin, Creat
                       kwargs={'pk': self.object.pk})
 
 
-class BaseUpdateView(LoginRequiredMixin, StaffRequiredMixin, ServiceMixin, UpdateView):
+class BaseUpdateView(LoginRequiredMixin, StaffOrExtractorRequiredMixin, ServiceMixin, UpdateView):
     """Base update view using service"""
     
     def get_object(self):
@@ -159,7 +180,7 @@ class BaseUpdateView(LoginRequiredMixin, StaffRequiredMixin, ServiceMixin, Updat
             return self.form_invalid(form)
 
 
-class BaseDeleteView(LoginRequiredMixin, StaffRequiredMixin, ServiceMixin, DeleteView):
+class BaseDeleteView(LoginRequiredMixin, StaffOrExtractorRequiredMixin, ServiceMixin, DeleteView):
     """Base delete view using service (soft delete)"""
     
     def get_object(self):

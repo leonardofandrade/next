@@ -215,7 +215,16 @@ function renderExtractorModal(userId, data) {
             <hr>
             <h6 class="mb-3">Unidades de Extração Associadas</h6>
             <div class="mb-3">
-                <label class="form-label">Unidades disponíveis</label>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label mb-0">Unidades disponíveis</label>
+                    <button type="button" 
+                            class="btn btn-sm btn-primary"
+                            onclick="associateAllUnits(${extractor.id})"
+                            title="Associar a todas as unidades da agência">
+                        <i class="fas fa-check-double me-1"></i>
+                        Associar a Todas
+                    </button>
+                </div>
                 <div class="list-group" style="max-height: 300px; overflow-y: auto;">
         `;
         
@@ -347,6 +356,39 @@ function toggleUnitAssociation(extractorUserId, unitId, isRemoving) {
     fetch(`{% url 'core:toggle_unit_association' 0 %}`.replace('0', extractorUserId), {
         method: 'POST',
         body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Recarrega as informações do usuário usando o userId armazenado
+            if (currentModalUserId) {
+                loadUserExtractorInfo(currentModalUserId);
+                // Recarrega o modal após um pequeno delay
+                setTimeout(() => {
+                    loadExtractorModal(currentModalUserId);
+                }, 300);
+            }
+            showMessage(data.message, 'success');
+        } else {
+            showMessage(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        showMessage('Erro ao processar solicitação.', 'error');
+    });
+}
+
+function associateAllUnits(extractorUserId) {
+    if (!confirm('Deseja associar este extrator a todas as unidades da agência?')) {
+        return;
+    }
+    
+    fetch(`{% url 'core:associate_all_units' 0 %}`.replace('0', extractorUserId), {
+        method: 'POST',
         headers: {
             'X-CSRFToken': getCookie('csrftoken')
         }

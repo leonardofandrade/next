@@ -49,5 +49,6 @@ urlpatterns = [
     path('user-extractor-management/', views.user_extractor_management, name='user_extractor_management'),
     path('user-extractor-management/user/<int:user_id>/toggle-extractor/', views.toggle_extractor, name='toggle_extractor'),
     path('user-extractor-management/extractor/<int:extractor_user_id>/toggle-unit/', views.toggle_unit_association, name='toggle_unit_association'),
+    path('user-extractor-management/extractor/<int:extractor_user_id>/associate-all-units/', views.associate_all_units, name='associate_all_units'),
     path('user-extractor-management/user/<int:user_id>/info/', views.get_user_extractor_info, name='get_user_extractor_info'),
 ]

@@ -654,6 +654,72 @@ def toggle_unit_association(request, extractor_user_id):
 
 @login_required
 @user_passes_test(is_staff_user)
+@require_http_methods(["POST"])
+def associate_all_units(request, extractor_user_id):
+    """
+    Associa um extrator a todas as unidades da sua agência
+    """
+    try:
+        extractor_user = get_object_or_404(ExtractorUser, pk=extractor_user_id, deleted_at__isnull=True)
+        
+        # Busca todas as unidades da agência do extrator
+        units = ExtractionUnit.objects.filter(
+            agency=extractor_user.extraction_agency,
+            deleted_at__isnull=True
+        )
+        
+        created_count = 0
+        reactivated_count = 0
+        
+        for unit in units:
+            # Verifica se já existe (incluindo deletados)
+            try:
+                association = ExtractionUnitExtractor.objects.get(
+                    extraction_unit=unit,
+                    extractor=extractor_user
+                )
+                
+                # Se está deletado, reativa
+                if association.deleted_at:
+                    association.deleted_at = None
+                    association.deleted_by = None
+                    association.updated_by = request.user
+                    association.save()
+                    reactivated_count += 1
+                # Se já está ativo, não faz nada
+            except ExtractionUnitExtractor.DoesNotExist:
+                # Cria novo
+                ExtractionUnitExtractor.objects.create(
+                    extraction_unit=unit,
+                    extractor=extractor_user,
+                    created_by=request.user
+                )
+                created_count += 1
+        
+        total = created_count + reactivated_count
+        if total > 0:
+            message = _('Extrator associado a {total} unidade(s). {created} criada(s), {reactivated} reativada(s).').format(
+                total=total,
+                created=created_count,
+                reactivated=reactivated_count
+            )
+        else:
+            message = _('Extrator já está associado a todas as unidades.')
+        
+        return JsonResponse({
+            'success': True,
+            'message': message,
+            'created_count': created_count,
+            'reactivated_count': reactivated_count,
+            'total_count': total
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+@login_required
+@user_passes_test(is_staff_user)
 @require_http_methods(["GET"])
 def get_user_extractor_info(request, user_id):
     """

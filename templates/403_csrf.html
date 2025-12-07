@@ -1,0 +1,141 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Erro de verificação CSRF">
+    <title>403 - Erro de Segurança | Sistema de Extrações Digitais</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'assets/css/main.css' %}?v=5.0">
+    
+    <style>
+        .error-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            padding: 2rem;
+        }
+        .error-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 3rem;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        .error-icon {
+            font-size: 8rem;
+            color: #fa709a;
+            margin-bottom: 1.5rem;
+            animation: rotate 2s linear infinite;
+        }
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error-code {
+            font-size: 6rem;
+            font-weight: 700;
+            color: #fa709a;
+            line-height: 1;
+            margin-bottom: 1rem;
+        }
+        .error-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+        .error-message {
+            font-size: 1.1rem;
+            color: #718096;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        .error-details {
+            background: #fff5f5;
+            border-left: 4px solid #fa709a;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+        .error-details strong {
+            color: #fa709a;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        .error-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn-error {
+            padding: 0.75rem 2rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .btn-error:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-card">
+            <div class="error-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="error-code">403</div>
+            <h1 class="error-title">Erro de Verificação de Segurança</h1>
+            <p class="error-message">
+                Ocorreu um erro de verificação CSRF. Isso geralmente acontece quando o formulário expira ou há um problema de segurança.
+            </p>
+            <div class="error-details">
+                <strong><i class="fas fa-exclamation-triangle me-2"></i>Possíveis causas:</strong>
+                <ul class="mb-0 ps-3">
+                    <li>A sessão expirou - faça login novamente</li>
+                    <li>O formulário ficou aberto por muito tempo</li>
+                    <li>Problema de conexão durante o envio</li>
+                    <li>Cookies do navegador estão desabilitados</li>
+                </ul>
+            </div>
+            <div class="error-actions">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'users:home' %}" class="btn btn-primary btn-error">
+                        <i class="fas fa-home me-2"></i>
+                        Página Inicial
+                    </a>
+                    <button onclick="window.history.back();" class="btn btn-outline-secondary btn-error">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Voltar e Tentar Novamente
+                    </button>
+                {% else %}
+                    <a href="{% url 'public:login' %}" class="btn btn-primary btn-error">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        Fazer Login
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+</body>
+</html>
+

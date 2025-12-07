@@ -212,7 +212,7 @@ def change_password(request):
 
 class MyCasesView(LoginRequiredMixin, ServiceMixin, ListView):
     """
-    Lista os processos atribuídos ao ou criados pelo usuário logado
+    Lista os processos atribuídos ao usuário logado
     """
     model = Case
     service_class = CaseService
@@ -222,12 +222,14 @@ class MyCasesView(LoginRequiredMixin, ServiceMixin, ListView):
     paginate_by = settings.PAGINATE_BY
     
     def get_queryset(self) -> QuerySet:
-        """Retorna apenas os casos atribuídos ao ou criados pelo usuário logado"""
+        """Retorna apenas os casos atribuídos ao usuário logado"""
         service = self.get_service()
         queryset = service.get_my_cases()
         
-        # Aplica filtros do formulário
+        # Aplica filtros do formulário (removendo assigned_to para garantir segurança)
         filters = self.get_filters()
+        # Remove o filtro assigned_to para garantir que sempre filtre apenas pelo usuário logado
+        filters.pop('assigned_to', None)
         if filters:
             queryset = service.apply_filters(queryset, filters)
         
@@ -248,7 +250,11 @@ class MyCasesView(LoginRequiredMixin, ServiceMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Meus Processos'
         context['page_icon'] = 'fa-folder-open'
-        context['form'] = self.search_form_class(self.request.GET or None)
+        # Remove o campo assigned_to do formulário para evitar confusão
+        form = self.search_form_class(self.request.GET or None)
+        if 'assigned_to' in form.fields:
+            del form.fields['assigned_to']
+        context['form'] = form
         context['total_count'] = self.get_queryset().count()
         return context
 

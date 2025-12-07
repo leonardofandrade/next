@@ -50,7 +50,7 @@ class ExtractionService(BaseService):
     
     def get_queryset(self) -> QuerySet:
         """Get extractions queryset with optimized queries"""
-        return super().get_queryset().filter(
+        queryset = super().get_queryset().filter(
             case_device__deleted_at__isnull=True,
             case_device__case__deleted_at__isnull=True
         ).select_related(
@@ -63,6 +63,51 @@ class ExtractionService(BaseService):
             'finished_by__user',
             'storage_media'
         ).order_by('-created_at')
+        
+        # Aplica filtro de extraction_unit para usuários extratores
+        queryset = self._apply_extraction_unit_filter(queryset)
+        
+        return queryset
+    
+    def _apply_extraction_unit_filter(self, queryset: QuerySet) -> QuerySet:
+        """
+        Filtra queryset baseado nas extraction_units do usuário extrator.
+        Superusuários veem todos os dados.
+        """
+        if not self.user or self.user.is_superuser:
+            return queryset
+        
+        try:
+            from apps.core.models import ExtractorUser
+            
+            # Busca todos os ExtractorUser vinculados ao usuário
+            extractor_users = ExtractorUser.objects.filter(
+                user=self.user,
+                deleted_at__isnull=True
+            ).prefetch_related('extraction_unit_extractors')
+            
+            if not extractor_users.exists():
+                # Não é um extrator, retorna queryset completo
+                return queryset
+            
+            # Obtém todas as extraction_units vinculadas aos extractors do usuário
+            extraction_unit_ids = []
+            for extractor in extractor_users:
+                unit_ids = extractor.extraction_unit_extractors.filter(
+                    deleted_at__isnull=True
+                ).values_list('extraction_unit_id', flat=True)
+                extraction_unit_ids.extend(unit_ids)
+            
+            if not extraction_unit_ids:
+                # Extrator sem unidades vinculadas
+                return queryset.none()
+            
+            # Para Extraction, o filtro é via case_device__case__extraction_unit
+            return queryset.filter(case_device__case__extraction_unit__in=extraction_unit_ids)
+            
+        except Exception:
+            # Em caso de erro, retorna queryset completo
+            return queryset
     
     def apply_filters(self, queryset: QuerySet, filters: Dict[str, Any]) -> QuerySet:
         """Apply filters to queryset"""

@@ -233,3 +233,64 @@ class BreadcrumbMixin:
         context = super().get_context_data(**kwargs)
         context['breadcrumbs'] = self.get_breadcrumbs()
         return context
+
+
+class ExtractionUnitFilterMixin:
+    """
+    Mixin que filtra automaticamente queryset baseado nas 
+    extraction_units do usuário extrator.
+    
+    Usuários extratores só podem acessar dados (extraction_request, cases e extractions) 
+    das extraction_units às quais estão relacionados.
+    
+    Superusuários têm acesso a todos os dados.
+    """
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        
+        # Superusuários veem tudo
+        if user.is_superuser:
+            return queryset
+        
+        # Verifica se é um usuário extrator
+        try:
+            # Busca todos os ExtractorUser vinculados ao usuário
+            from apps.core.models import ExtractorUser
+            
+            extractor_users = ExtractorUser.objects.filter(
+                user=user,
+                deleted_at__isnull=True
+            ).prefetch_related('extraction_unit_extractors')
+            
+            if not extractor_users.exists():
+                # Não é um extrator, retorna queryset completo
+                # (outras regras de permissão devem ser aplicadas)
+                return queryset
+            
+            # Obtém todas as extraction_units vinculadas aos extractors do usuário
+            extraction_unit_ids = []
+            for extractor in extractor_users:
+                unit_ids = extractor.extraction_unit_extractors.filter(
+                    deleted_at__isnull=True
+                ).values_list('extraction_unit_id', flat=True)
+                extraction_unit_ids.extend(unit_ids)
+            
+            if not extraction_unit_ids:
+                # Extrator sem unidades vinculadas, retorna queryset vazio
+                return queryset.none()
+            
+            # Filtra o queryset pela extraction_unit
+            # O campo pode variar dependendo do modelo
+            if hasattr(queryset.model, 'extraction_unit'):
+                return queryset.filter(extraction_unit__in=extraction_unit_ids)
+            elif hasattr(queryset.model, 'case_device'):
+                # Para Extraction model
+                return queryset.filter(case_device__case__extraction_unit__in=extraction_unit_ids)
+            
+            return queryset
+            
+        except Exception as e:
+            # Em caso de erro, retorna queryset vazio para segurança
+            return queryset.none()

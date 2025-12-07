@@ -22,7 +22,10 @@ from io import BytesIO
 from typing import Dict, Any
 from django.db.models import QuerySet
 
-from apps.core.mixins.views import BaseListView, BaseDetailView, BaseCreateView, BaseUpdateView, BaseDeleteView, ServiceMixin
+from apps.core.mixins.views import (
+    BaseListView, BaseDetailView, BaseCreateView, BaseUpdateView, 
+    BaseDeleteView, ServiceMixin, ExtractionUnitFilterMixin
+)
 from apps.cases.models import Case, CaseDevice, Extraction, CaseProcedure
 from apps.cases.forms import CaseForm, CaseSearchForm, CaseDeviceForm, CaseCompleteRegistrationForm, CaseProcedureForm
 from apps.core.models import ReportsSettings
@@ -30,7 +33,7 @@ from apps.cases.services import CaseService
 from apps.core.services.base import ServiceException
 
 
-class CaseListView(LoginRequiredMixin, ServiceMixin, ListView):
+class CaseListView(ExtractionUnitFilterMixin, LoginRequiredMixin, ServiceMixin, ListView):
     """
     Lista todos os processos de extração com filtros
     """
@@ -73,7 +76,7 @@ class CaseListView(LoginRequiredMixin, ServiceMixin, ListView):
         return context
 
 
-class CaseDetailView(BaseDetailView):
+class CaseDetailView(ExtractionUnitFilterMixin, BaseDetailView):
     """
     Exibe os detalhes de um processo de extração
     """
@@ -178,7 +181,7 @@ class CaseCreateView(BaseCreateView):
         return context
 
 
-class CaseUpdateView(BaseUpdateView):
+class CaseUpdateView(ExtractionUnitFilterMixin, BaseUpdateView):
     """
     Atualiza um processo de extração existente
     """
@@ -189,13 +192,15 @@ class CaseUpdateView(BaseUpdateView):
     
     def get_queryset(self):
         """Filter non-deleted cases and prefetch procedures and devices"""
-        return Case.objects.filter(
+        queryset = Case.objects.filter(
             deleted_at__isnull=True
         ).prefetch_related(
             'procedures__procedure_category',
             'case_devices__device_category',
             'case_devices__device_model__brand'
         )
+        # Aplica filtro de extraction_unit via mixin
+        return super().get_queryset() if hasattr(super(), 'get_queryset') else queryset
     
     def dispatch(self, request, *args, **kwargs):
         """Check if user has permission to edit the case"""

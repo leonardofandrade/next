@@ -14,7 +14,10 @@ from django.urls import reverse
 from typing import Dict, Any
 from django.db.models import QuerySet
 
-from apps.core.mixins.views import BaseListView, BaseDetailView, BaseCreateView, BaseUpdateView, BaseDeleteView, ServiceMixin
+from apps.core.mixins.views import (
+    BaseListView, BaseDetailView, BaseCreateView, BaseUpdateView, 
+    BaseDeleteView, ServiceMixin, ExtractionUnitFilterMixin
+)
 from apps.requisitions.models import ExtractionRequest
 from apps.requisitions.forms import ExtractionRequestForm, ExtractionRequestSearchForm
 from apps.requisitions.services import ExtractionRequestService
@@ -22,7 +25,7 @@ from apps.cases.models import Case
 from apps.core.services.base import ServiceException
 
 
-class ExtractionRequestListView(BaseListView):
+class ExtractionRequestListView(ExtractionUnitFilterMixin, BaseListView):
     """
     Lista todas as solicitações de extração com filtros
     """
@@ -42,7 +45,7 @@ class ExtractionRequestListView(BaseListView):
         return context
 
 
-class ExtractionRequestDetailView(BaseDetailView):
+class ExtractionRequestDetailView(ExtractionUnitFilterMixin, BaseDetailView):
     """
     Exibe os detalhes de uma solicitação de extração
     """
@@ -135,7 +138,7 @@ class ExtractionRequestCreateView(BaseCreateView):
         return context
 
 
-class ExtractionRequestUpdateView(BaseUpdateView):
+class ExtractionRequestUpdateView(ExtractionUnitFilterMixin, BaseUpdateView):
     """
     Atualiza uma solicitação de extração existente
     """
@@ -211,7 +214,7 @@ class ExtractionRequestDeleteView(BaseDeleteView):
         return context
 
 
-class ExtractionRequestNotReceivedView(LoginRequiredMixin, ServiceMixin, ListView):
+class ExtractionRequestNotReceivedView(ExtractionUnitFilterMixin, LoginRequiredMixin, ServiceMixin, ListView):
     """
     Lista solicitações não recebidas (pending ou assigned e sem received_at)
     """
@@ -394,7 +397,7 @@ class GenerateReplyEmailView(LoginRequiredMixin, View):
         })
 
 
-class ExtractionRequestDistributionListView(LoginRequiredMixin, ServiceMixin, ListView):
+class ExtractionRequestDistributionListView(ExtractionUnitFilterMixin, LoginRequiredMixin, ServiceMixin, ListView):
     """
     Lista solicitações de extração agrupadas por extraction_unit com resumo (distribuição)
     """

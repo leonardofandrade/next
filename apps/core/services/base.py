@@ -137,3 +137,51 @@ class BaseService:
     def apply_filters(self, queryset: QuerySet, filters: Dict[str, Any]) -> QuerySet:
         """Apply filters to queryset - override in subclasses"""
         return queryset
+    
+    def get_user_extraction_units(self) -> List[int]:
+        """
+        Retorna lista de IDs das extraction_units vinculadas ao usuário.
+        Retorna lista vazia se não for um extrator.
+        Superusuários retornam lista vazia (sem restrição).
+        """
+        if not self.user or self.user.is_superuser:
+            return []
+        
+        try:
+            from apps.core.models import ExtractorUser
+            
+            # Busca todos os ExtractorUser vinculados ao usuário
+            extractor_users = ExtractorUser.objects.filter(
+                user=self.user,
+                deleted_at__isnull=True
+            ).prefetch_related('extraction_unit_extractors')
+            
+            if not extractor_users.exists():
+                return []
+            
+            # Obtém todas as extraction_units vinculadas
+            extraction_unit_ids = []
+            for extractor in extractor_users:
+                unit_ids = extractor.extraction_unit_extractors.filter(
+                    deleted_at__isnull=True
+                ).values_list('extraction_unit_id', flat=True)
+                extraction_unit_ids.extend(unit_ids)
+            
+            return list(set(extraction_unit_ids))  # Remove duplicatas
+            
+        except Exception:
+            return []
+    
+    def is_extractor_user(self) -> bool:
+        """Verifica se o usuário é um extrator"""
+        if not self.user or self.user.is_superuser:
+            return False
+        
+        try:
+            from apps.core.models import ExtractorUser
+            return ExtractorUser.objects.filter(
+                user=self.user,
+                deleted_at__isnull=True
+            ).exists()
+        except Exception:
+            return False

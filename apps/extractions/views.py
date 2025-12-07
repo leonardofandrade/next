@@ -10,14 +10,14 @@ from django.urls import reverse
 from django.db.models import QuerySet
 from typing import Dict, Any
 
-from apps.core.mixins.views import ServiceMixin
+from apps.core.mixins.views import ServiceMixin, ExtractionUnitFilterMixin
 from apps.cases.models import Case, Extraction
 from apps.extractions.forms import ExtractionSearchForm, ExtractionFinishForm
 from apps.extractions.services import ExtractionService
 from apps.core.services.base import ServiceException
 
 
-class ExtractionListView(LoginRequiredMixin, ServiceMixin, ListView):
+class ExtractionListView(ExtractionUnitFilterMixin, LoginRequiredMixin, ServiceMixin, ListView):
     """
     Lista todas as extrações com filtros de busca
     """

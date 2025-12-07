@@ -8,9 +8,11 @@ from .user_views import (
     UserProfileDetailView,
     UserProfileUpdateView,
     ChangePasswordView,
+)
+from .extractor_views import (
+    MyExtractionsView,
     MyCasesView,
 )
-from .extractor_views import MyExtractionsView
 
 __all__ = [
     'home_view',

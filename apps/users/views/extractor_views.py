@@ -14,6 +14,9 @@ from apps.cases.models import Extraction
 from apps.extractions.forms import ExtractionSearchForm
 from apps.extractions.services import ExtractionService
 from apps.core.models import ExtractorUser
+from apps.cases.models import Case
+from apps.cases.forms import CaseSearchForm
+from apps.cases.services import CaseService
 
 
 class MyExtractionsView(LoginRequiredMixin, ServiceMixin, ListView):
@@ -70,6 +73,55 @@ class MyExtractionsView(LoginRequiredMixin, ServiceMixin, ListView):
         context['page_title'] = 'Minhas Extrações'
         context['page_icon'] = 'fa-user-check'
         context['form'] = self.search_form_class(self.request.GET or None)
+        context['total_count'] = self.get_queryset().count()
+        return context
+
+
+class MyCasesView(LoginRequiredMixin, ServiceMixin, ListView):
+    """
+    Lista os processos atribuídos ao usuário logado
+    """
+    model = Case
+    service_class = CaseService
+    search_form_class = CaseSearchForm
+    template_name = 'users/my_cases.html'
+    context_object_name = 'cases'
+    paginate_by = settings.PAGINATE_BY
+    
+    def get_queryset(self) -> QuerySet:
+        """Retorna apenas os casos atribuídos ao usuário logado"""
+        service = self.get_service()
+        queryset = service.get_my_cases()
+        
+        # Aplica filtros do formulário (removendo assigned_to para garantir segurança)
+        filters = self.get_filters()
+        # Remove o filtro assigned_to para garantir que sempre filtre apenas pelo usuário logado
+        filters.pop('assigned_to', None)
+        if filters:
+            queryset = service.apply_filters(queryset, filters)
+        
+        return queryset
+    
+    def get_filters(self) -> Dict[str, Any]:
+        """Get filters from request"""
+        filters = {}
+        
+        if self.search_form_class:
+            form = self.search_form_class(self.request.GET or None)
+            if form.is_valid():
+                filters = form.cleaned_data
+                
+        return {k: v for k, v in filters.items() if v}
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Meus Processos'
+        context['page_icon'] = 'fa-folder-open'
+        # Remove o campo assigned_to do formulário para evitar confusão
+        form = self.search_form_class(self.request.GET or None)
+        if 'assigned_to' in form.fields:
+            del form.fields['assigned_to']
+        context['form'] = form
         context['total_count'] = self.get_queryset().count()
         return context
 

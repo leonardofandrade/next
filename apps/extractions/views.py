@@ -116,7 +116,7 @@ class ExtractionAssignToMeView(LoginRequiredMixin, View):
         referer = request.META.get('HTTP_REFERER')
         if referer:
             if 'extractions/my-extractions' in referer:
-                return redirect('extractions:my_extractions')
+                return redirect('users:my_extractions')
             if 'extractions/list' in referer:
                 return redirect('extractions:list')
         return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
@@ -142,7 +142,7 @@ class ExtractionUnassignFromMeView(LoginRequiredMixin, View):
         referer = request.META.get('HTTP_REFERER')
         if referer:
             if 'extractions/my-extractions' in referer:
-                return redirect('extractions:my_extractions')
+                return redirect('users:my_extractions')
             if 'extractions/list' in referer:
                 return redirect('extractions:list')
         return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
@@ -175,7 +175,7 @@ class ExtractionStartView(LoginRequiredMixin, View):
         referer = request.META.get('HTTP_REFERER')
         if referer:
             if 'extractions/my-extractions' in referer:
-                return redirect('extractions:my_extractions')
+                return redirect('users:my_extractions')
             if 'extractions/list' in referer:
                 return redirect('extractions:list')
         return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
@@ -201,7 +201,7 @@ class ExtractionPauseView(LoginRequiredMixin, View):
         referer = request.META.get('HTTP_REFERER')
         if referer:
             if 'extractions/my-extractions' in referer:
-                return redirect('extractions:my_extractions')
+                return redirect('users:my_extractions')
             if 'extractions/list' in referer:
                 return redirect('extractions:list')
         return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
@@ -227,7 +227,7 @@ class ExtractionResumeView(LoginRequiredMixin, View):
         referer = request.META.get('HTTP_REFERER')
         if referer:
             if 'extractions/my-extractions' in referer:
-                return redirect('extractions:my_extractions')
+                return redirect('users:my_extractions')
             if 'extractions/list' in referer:
                 return redirect('extractions:list')
         return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
@@ -332,7 +332,7 @@ class ExtractionFinishView(LoginRequiredMixin, View):
         referer = request.META.get('HTTP_REFERER')
         if referer:
             if 'extractions/my-extractions' in referer:
-                return redirect('extractions:my_extractions')
+                return redirect('users:my_extractions')
             if 'extractions/list' in referer:
                 return redirect('extractions:list')
         return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)

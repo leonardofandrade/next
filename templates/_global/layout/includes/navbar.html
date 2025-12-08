@@ -102,6 +102,7 @@
                                     Todos os Processos
                                 </a>
                             </li>
+                            {% if user.is_superuser%}
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <a class="dropdown-item" href="{% url 'cases:create' %}">
@@ -109,6 +110,7 @@
                                     Novo Processo
                                 </a>
                             </li>
+                            {% endif %}
                         </ul>
                     </li>
                     

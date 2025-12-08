@@ -57,8 +57,17 @@ class BaseService:
     def validate_permissions(self, action: str, obj: Optional[Model] = None) -> bool:
         """Validate user permissions for action"""
         # Base implementation - override in subclasses
-        if self.user and hasattr(self.user, 'is_staff'):
-            return self.user.is_staff or self.user.is_superuser
+        if not self.user or not hasattr(self.user, 'is_staff'):
+            return False
+        
+        # Staff e superuser sempre têm acesso
+        if self.user.is_staff or self.user.is_superuser:
+            return True
+        
+        # Verifica se é um extrator ativo (para ações de leitura como list, get)
+        if action in ['list', 'get', 'retrieve']:
+            return self.is_extractor_user()
+        
         return False
     
     def validate_business_rules(self, data: Dict[str, Any], instance: Optional[Model] = None) -> Dict[str, Any]:

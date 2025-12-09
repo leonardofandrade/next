@@ -502,9 +502,14 @@ class CaseDevicesView(LoginRequiredMixin, DetailView):
             'device_model__brand'
         )
         
+        # Sempre cria um formulário vazio para criar novo dispositivo
+        form = CaseDeviceForm(case=case)
+        
         context['page_title'] = f'Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}'
         context['page_icon'] = 'fa-mobile-alt'
         context['devices'] = devices
+        context['device_form'] = form
+        context['action'] = 'create'
         return context
 
 
@@ -587,6 +592,34 @@ class CaseDeviceCreateView(LoginRequiredMixin, CreateView):
         kwargs['case'] = self.case
         return kwargs
     
+    def form_invalid(self, form):
+        """
+        Trata erros de validação - se vier da página de dispositivos, renderiza lá
+        """
+        # Se vier da página de dispositivos, renderiza o template de devices com o formulário
+        if self.request.GET.get('from') == 'devices':
+            # Recria o contexto da view CaseDevicesView
+            case = self.case
+            devices = case.case_devices.filter(deleted_at__isnull=True).select_related(
+                'device_category',
+                'device_model__brand'
+            )
+            
+            context = {
+                'case': case,
+                'page_title': f'Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}',
+                'page_icon': 'fa-mobile-alt',
+                'devices': devices,
+                'device_form': form,  # Formulário com erros
+                'action': 'create',
+                'form_errors': form.errors,
+                'form_data': form.data,
+            }
+            
+            return render(self.request, 'cases/case_devices.html', context)
+        
+        return super().form_invalid(form)
+    
     def form_valid(self, form):
         """
         Define campos adicionais antes de salvar
@@ -598,6 +631,8 @@ class CaseDeviceCreateView(LoginRequiredMixin, CreateView):
         
         # Verifica se deve criar e adicionar outro
         save_and_add_another = self.request.POST.get('save_and_add_another')
+        from_param = self.request.GET.get('from', '')
+        
         if save_and_add_another == '1':
             messages.success(
                 self.request,
@@ -609,6 +644,8 @@ class CaseDeviceCreateView(LoginRequiredMixin, CreateView):
                 self.request,
                 'Dispositivo adicionado com sucesso!'
             )
+            if from_param == 'devices':
+                return redirect('cases:devices', pk=self.case.pk)
             return redirect('cases:update', pk=self.case.pk)
     
     def get_context_data(self, **kwargs):
@@ -667,6 +704,35 @@ class CaseDeviceUpdateView(LoginRequiredMixin, UpdateView):
         kwargs['case'] = self.case
         return kwargs
     
+    def form_invalid(self, form):
+        """
+        Trata erros de validação - se vier da página de dispositivos, renderiza lá
+        """
+        # Se vier da página de dispositivos, renderiza o template de devices com o formulário
+        if self.request.GET.get('from') == 'devices':
+            # Recria o contexto da view CaseDevicesView
+            case = self.case
+            devices = case.case_devices.filter(deleted_at__isnull=True).select_related(
+                'device_category',
+                'device_model__brand'
+            )
+            
+            context = {
+                'case': case,
+                'page_title': f'Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}',
+                'page_icon': 'fa-mobile-alt',
+                'devices': devices,
+                'device_form': form,  # Formulário com erros
+                'action': 'create',
+                'form_errors': form.errors,
+                'form_data': form.data,
+                'editing_device_id': self.get_object().pk
+            }
+            
+            return render(self.request, 'cases/case_devices.html', context)
+        
+        return super().form_invalid(form)
+    
     def form_valid(self, form):
         """
         Atualiza campos adicionais antes de salvar
@@ -680,6 +746,9 @@ class CaseDeviceUpdateView(LoginRequiredMixin, UpdateView):
             self.request,
             'Dispositivo atualizado com sucesso!'
         )
+        from_param = self.request.GET.get('from', '')
+        if from_param == 'devices':
+            return redirect('cases:devices', pk=self.case.pk)
         return redirect('cases:update', pk=self.case.pk)
     
     def get_context_data(self, **kwargs):
@@ -693,6 +762,61 @@ class CaseDeviceUpdateView(LoginRequiredMixin, UpdateView):
         context['device'] = self.get_object()
         context['action'] = 'update'
         return context
+
+
+class CaseDeviceDetailView(LoginRequiredMixin, DetailView):
+    """
+    Retorna dados de um dispositivo em JSON para AJAX
+    """
+    model = CaseDevice
+    
+    def get_queryset(self):
+        """
+        Filtra apenas dispositivos não deletados
+        """
+        return CaseDevice.objects.filter(deleted_at__isnull=True).select_related(
+            'device_category',
+            'device_model__brand'
+        )
+    
+    def get(self, request, *args, **kwargs):
+        """
+        Retorna dados do dispositivo em JSON
+        """
+        device = self.get_object()
+        
+        return JsonResponse({
+            'id': device.pk,
+            'device_category': device.device_category.pk if device.device_category else None,
+            'device_model': device.device_model.pk if device.device_model else None,
+            'color': device.color or '',
+            'is_imei_unknown': device.is_imei_unknown,
+            'imei_01': device.imei_01 or '',
+            'imei_02': device.imei_02 or '',
+            'imei_03': device.imei_03 or '',
+            'imei_04': device.imei_04 or '',
+            'imei_05': device.imei_05 or '',
+            'owner_name': device.owner_name or '',
+            'internal_storage': device.internal_storage or '',
+            'is_turned_on': device.is_turned_on,
+            'is_locked': device.is_locked,
+            'is_password_known': device.is_password_known,
+            'password_type': device.password_type or '',
+            'password': device.password or '',
+            'is_damaged': device.is_damaged,
+            'damage_description': device.damage_description or '',
+            'has_fluids': device.has_fluids,
+            'fluids_description': device.fluids_description or '',
+            'has_sim_card': device.has_sim_card,
+            'sim_card_info': device.sim_card_info or '',
+            'has_memory_card': device.has_memory_card,
+            'memory_card_info': device.memory_card_info or '',
+            'has_other_accessories': device.has_other_accessories,
+            'other_accessories_info': device.other_accessories_info or '',
+            'is_sealed': device.is_sealed,
+            'security_seal': device.security_seal or '',
+            'additional_info': device.additional_info or '',
+        })
 
 
 class CaseDeviceDeleteView(LoginRequiredMixin, DeleteView):
@@ -754,30 +878,7 @@ class CaseDeviceDeleteView(LoginRequiredMixin, DeleteView):
                 'message': 'Dispositivo excluído com sucesso!'
             })
         
-        return redirect('cases:update', pk=self.case.pk)
-    
-    def get(self, request, *args, **kwargs):
-        """
-        Suporta requisições AJAX para GET
-        """
-        device = self.get_object()
-        
-        # Se for requisição AJAX para GET, retorna dados do dispositivo em JSON
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'device': {
-                    'id': device.pk,
-                    'category': device.device_category.name if device.device_category else None,
-                    'model': f"{device.device_model.brand.name} - {device.device_model.name}" if device.device_model else None,
-                    'color': device.color or '-',
-                    'imei': 'Desconhecido' if device.is_imei_unknown else (device.imei_01 or '-'),
-                    'owner': device.owner_name or '-',
-                    'case_number': self.case.number or 'Rascunho',
-                    'created_at': device.created_at.strftime('%d/%m/%Y %H:%M') if device.created_at else '-',
-                }
-            })
-        
-        return super().get(request, *args, **kwargs)
+        return redirect('cases:devices', pk=self.case.pk)
     
     def get_context_data(self, **kwargs):
         """

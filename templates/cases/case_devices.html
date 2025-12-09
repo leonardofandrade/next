@@ -294,7 +294,10 @@ Visualize os dispositivos e informações do processo
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-mobile-alt me-2"></i>
-                        Dispositivos do Processo
+                        Dispositivos do Processo: 
+                        {% if devices.count > 0 %}
+                            <span class="badge bg-primary">{{ devices.count }}</span>
+                        {% endif %}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -303,60 +306,26 @@ Visualize os dispositivos e informações do processo
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th width="15%">Categoria</th>
-                                    <th width="20%">Modelo</th>
-                                    <th width="10%">Cor</th>
-                                    <th width="15%">IMEI</th>
-                                    <th width="15%">Proprietário</th>
-                                    <th width="10%">Armazenamento</th>
-                                    <th width="15%" class="text-center">Ações</th>
+                                    <th>Dispositivo</th>
+                                    <th class="text-center">Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for device in devices %}
-                                <tr>
+                                <tr>                    
                                     <td>
-                                        {% if device.device_category %}
-                                            <strong>{{ device.device_category.name }}</strong>
-                                        {% else %}
-                                            <span class="text-muted">-</span>
+                                        {{ device.device_model.name }}
+                                        {{ device.color|default:"" }}
+                                        {% if not device.is_imei_unknown %}
+                                            <p class="text-muted small">IMEI(s):&nbsp;  {{ device.imei_list }}</p>
                                         {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if device.device_model %}
-                                            <strong>{{ device.device_model.brand.name }}</strong><br>
-                                            <small class="text-muted">{{ device.device_model.name }}</small>
-                                        {% else %}
-                                            <span class="text-muted">-</span>
+                                        {% if device.owner_name %}
+                                            <p class="text-muted small">Proprietário: &nbsp;{{ device.owner_name }}</p>
                                         {% endif %}
+                                  
                                     </td>
-                                    <td>
-                                        {{ device.color|default:"-" }}
-                                    </td>
-                                    <td>
-                                        {% if device.is_imei_unknown %}
-                                            <span class="badge bg-warning">Desconhecido</span>
-                                        {% else %}
-                                            {% if device.imei_01 %}
-                                                <small>{{ device.imei_01 }}</small>
-                                                {% if device.imei_02 %}
-                                                    <br><small class="text-muted">{{ device.imei_02 }}</small>
-                                                {% endif %}
-                                            {% else %}
-                                                <span class="text-muted">-</span>
-                                            {% endif %}
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {{ device.owner_name|default:"-" }}
-                                    </td>
-                                    <td>
-                                        {% if device.internal_storage %}
-                                            {{ device.internal_storage }} GB
-                                        {% else %}
-                                            <span class="text-muted">-</span>
-                                        {% endif %}
-                                    </td>
+           
+                
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm" role="group">
                                             <a href="{% url 'cases:devices' pk=case.pk %}?edit={{ device.pk }}" 

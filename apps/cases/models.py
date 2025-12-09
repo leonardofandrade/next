@@ -421,7 +421,6 @@ class CaseDevice(AbstractDeviceModel):
         db_table = 'case_device'
         verbose_name = _('Dispositivo do Processo')
         verbose_name_plural = _('Dispositivos do Processo')
-        unique_together = ('case', 'device_model', 'color')
         indexes = [
             models.Index(fields=['case']),
             models.Index(fields=['device_model']),

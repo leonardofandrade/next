@@ -277,19 +277,65 @@ class CaseDeviceService(BaseService):
     def validate_business_rules(self, data: Dict[str, Any], instance: Optional[CaseDevice] = None) -> Dict[str, Any]:
         """Validate CaseDevice business rules"""
         
-        # Validar IMEI único se fornecido
-        if imei := data.get('imei'):
+        # Coleta todos os IMEIs informados (normalizados)
+        imeis = []
+        for i in range(1, 6):  # imei_01 até imei_05
+            imei_field = f'imei_{i:02d}'
+            imei_value = data.get(imei_field)
+            if imei_value:
+                imei_value = str(imei_value).strip()
+                if imei_value:
+                    imeis.append(imei_value)
+        
+        # Validação 1: Verifica se há IMEI duplicado dentro do próprio dispositivo
+        if len(imeis) != len(set(imeis)):
+            duplicates = [imei for imei in imeis if imeis.count(imei) > 1]
+            unique_duplicates = list(set(duplicates))
+            raise ValidationServiceException(
+                f"IMEI(s) duplicado(s) no mesmo dispositivo: {', '.join(unique_duplicates)}. "
+                "Cada IMEI deve ser único dentro do dispositivo."
+            )
+        
+        # Validação 2: Verifica se algum IMEI já existe em outro dispositivo do mesmo processo
+        if imeis and data.get('case'):
+            # Obtém o case (pode ser um objeto ou ID)
+            case = data.get('case')
+            if hasattr(case, 'pk'):
+                case_id = case.pk
+            elif isinstance(case, int):
+                case_id = case
+            else:
+                # Se não conseguir obter o case, tenta usar o instance
+                if instance and instance.case:
+                    case_id = instance.case.pk
+                else:
+                    return data  # Não pode validar sem case
+            
             queryset = CaseDevice.objects.filter(
-                imei=imei,
+                case_id=case_id,
                 deleted_at__isnull=True
             )
             
-            if instance:
+            # Se estiver editando, exclui o próprio dispositivo da verificação
+            if instance and instance.pk:
                 queryset = queryset.exclude(pk=instance.pk)
+            
+            # Verifica cada IMEI informado
+            for imei in imeis:
+                # Verifica se o IMEI existe em qualquer campo de IMEI de outro dispositivo
+                existing_device = queryset.filter(
+                    Q(imei_01=imei) |
+                    Q(imei_02=imei) |
+                    Q(imei_03=imei) |
+                    Q(imei_04=imei) |
+                    Q(imei_05=imei)
+                ).first()
                 
-            if queryset.exists():
-                raise ValidationServiceException(f"IMEI {imei} já está cadastrado")
-                
+                if existing_device:
+                    raise ValidationServiceException(
+                        f"O IMEI {imei} já está cadastrado em outro dispositivo deste processo."
+                    )
+        
         return data
 
 

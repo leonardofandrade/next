@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, View
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
+from django.db import IntegrityError
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
@@ -29,7 +30,7 @@ from apps.core.mixins.views import (
 from apps.cases.models import Case, CaseDevice, Extraction, CaseProcedure
 from apps.cases.forms import CaseCreateForm, CaseUpdateForm, CaseSearchForm, CaseDeviceForm, CaseCompleteRegistrationForm, CaseProcedureForm
 from apps.core.models import ReportsSettings
-from apps.cases.services import CaseService
+from apps.cases.services import CaseService, CaseDeviceService
 from apps.core.services.base import ServiceException
 
 
@@ -656,10 +657,34 @@ class CaseDeviceCreateView(LoginRequiredMixin, CreateView):
         """
         Define campos adicionais antes de salvar
         """
-        device = form.save(commit=False)
-        device.case = self.case
-        device.created_by = self.request.user
-        device.save()
+        try:
+            device = form.save(commit=False)
+            device.case = self.case
+            device.created_by = self.request.user
+            
+            # Valida regras de negócio usando o service
+            service = CaseDeviceService(user=self.request.user)
+            data = {
+                'case': self.case,
+                'device_category': device.device_category,
+                'device_model': device.device_model,
+                'color': device.color,
+                'imei_01': device.imei_01,
+                'imei_02': device.imei_02,
+                'imei_03': device.imei_03,
+                'imei_04': device.imei_04,
+                'imei_05': device.imei_05,
+            }
+            service.validate_business_rules(data, instance=None)
+            
+            device.save()
+        except (IntegrityError, ServiceException) as e:
+            # Se houver erro de integridade ou de validação do service, retorna o formulário com erro
+            if isinstance(e, ServiceException):
+                form.add_error(None, str(e))
+            else:
+                form.add_error(None, 'Erro ao salvar dispositivo. Verifique se não há IMEI duplicado neste processo.')
+            return self.form_invalid(form)
         
         # Verifica se deve criar e adicionar outro
         save_and_add_another = self.request.POST.get('save_and_add_another')
@@ -769,10 +794,34 @@ class CaseDeviceUpdateView(LoginRequiredMixin, UpdateView):
         """
         Atualiza campos adicionais antes de salvar
         """
-        device = form.save(commit=False)
-        device.updated_by = self.request.user
-        device.version += 1
-        device.save()
+        try:
+            device = form.save(commit=False)
+            device.updated_by = self.request.user
+            device.version += 1
+            
+            # Valida regras de negócio usando o service
+            service = CaseDeviceService(user=self.request.user)
+            data = {
+                'case': device.case,
+                'device_category': device.device_category,
+                'device_model': device.device_model,
+                'color': device.color,
+                'imei_01': device.imei_01,
+                'imei_02': device.imei_02,
+                'imei_03': device.imei_03,
+                'imei_04': device.imei_04,
+                'imei_05': device.imei_05,
+            }
+            service.validate_business_rules(data, instance=device)
+            
+            device.save()
+        except (IntegrityError, ServiceException) as e:
+            # Se houver erro de integridade ou de validação do service, retorna o formulário com erro
+            if isinstance(e, ServiceException):
+                form.add_error(None, str(e))
+            else:
+                form.add_error(None, 'Erro ao atualizar dispositivo. Verifique se não há IMEI duplicado neste processo.')
+            return self.form_invalid(form)
         
         messages.success(
             self.request,

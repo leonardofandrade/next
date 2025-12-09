@@ -2,7 +2,6 @@
 Formulários para o app cases
 """
 from django import forms
-from django.db.models import Q
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from apps.cases.models import Case, CaseDevice, CaseProcedure
@@ -567,44 +566,11 @@ class CaseDeviceForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         
-        # Validação de IMEI duplicado no mesmo processo
-        if self.case:
-            # Coleta todos os IMEIs informados (normalizados)
-            imeis = []
-            for i in range(1, 6):  # imei_01 até imei_05
-                imei_field = f'imei_{i:02d}'
-                imei_value = cleaned_data.get(imei_field)
-                if imei_value:
-                    imei_value = imei_value.strip()
-                    if imei_value:
-                        imeis.append(imei_value)
-            
-            # Verifica se algum IMEI já existe em outro dispositivo do mesmo processo
-            if imeis:
-                queryset = CaseDevice.objects.filter(
-                    case=self.case,
-                    deleted_at__isnull=True
-                )
-                
-                # Se estiver editando, exclui o próprio dispositivo da verificação
-                if self.instance and self.instance.pk:
-                    queryset = queryset.exclude(pk=self.instance.pk)
-                
-                # Verifica cada IMEI informado
-                for imei in imeis:
-                    # Verifica se o IMEI existe em qualquer campo de IMEI do dispositivo
-                    existing_device = queryset.filter(
-                        Q(imei_01=imei) |
-                        Q(imei_02=imei) |
-                        Q(imei_03=imei) |
-                        Q(imei_04=imei) |
-                        Q(imei_05=imei)
-                    ).first()
-                    
-                    if existing_device:
-                        raise forms.ValidationError({
-                            'imei_01': f'O IMEI {imei} já está cadastrado em outro dispositivo deste processo.'
-                        })
+        # Normaliza os IMEIs removendo espaços em branco
+        for i in range(1, 6):  # imei_01 até imei_05
+            imei_field = f'imei_{i:02d}'
+            if imei_field in cleaned_data and cleaned_data[imei_field]:
+                cleaned_data[imei_field] = cleaned_data[imei_field].strip() or None
         
         return cleaned_data
 

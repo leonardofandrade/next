@@ -416,3 +416,42 @@ class AbstractDeviceModel(AuditedModel):
                 imei_list.append(self.imei_05)
         
         return ", ".join(imei_list)
+    
+    def get_imeis(self):
+        """
+        Retorna uma lista de IMEIs do dispositivo ou "IMEI Desconhecido" se marcado.
+        
+        Returns:
+            list: Lista de IMEIs ou ["IMEI Desconhecido"] se is_imei_unknown for True
+        """
+        if self.is_imei_unknown:
+            return ["IMEI Desconhecido"]
+        
+        imei_list = []
+        if self.imei_01:
+            imei_list.append(self.imei_01)
+        if self.imei_02:
+            imei_list.append(self.imei_02)
+        if self.imei_03:
+            imei_list.append(self.imei_03)
+        if self.imei_04:
+            imei_list.append(self.imei_04)
+        if self.imei_05:
+            imei_list.append(self.imei_05)
+        
+        return imei_list if imei_list else []
+    
+    @property
+    def imei_list(self):
+        """
+        Retorna uma string com os IMEIs separados por vírgula ou "IMEI Desconhecido".
+        
+        Returns:
+            str: String com IMEIs separados por vírgula ou "IMEI Desconhecido"
+        """
+        imeis = self.get_imeis()
+        if not imeis:
+            return ""
+        if imeis == ["IMEI Desconhecido"]:
+            return "IMEI Desconhecido"
+        return ", ".join(imeis)

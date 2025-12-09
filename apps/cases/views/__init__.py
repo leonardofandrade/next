@@ -1,0 +1,67 @@
+"""
+Views para o app cases - Pacote modularizado
+
+Este pacote contém todas as views organizadas por funcionalidade:
+- case_views.py: Views relacionadas ao modelo Case
+- case_device_views.py: Views relacionadas ao modelo CaseDevice
+- case_procedure_views.py: Views relacionadas ao modelo CaseProcedure
+"""
+# Importa views relacionadas ao modelo Case
+from apps.cases.views.case_views import (
+    CaseListView,
+    CaseDetailView,
+    CaseCreateView,
+    CaseUpdateView,
+    CaseDeleteView,
+    CaseCompleteRegistrationView,
+    CaseDevicesView,
+    CaseProceduresView,
+    CreateExtractionsView,
+    CaseAssignToMeView,
+    CaseUnassignFromMeView,
+    CaseCoverPDFView,
+)
+
+# Importa views relacionadas ao modelo CaseDevice
+from apps.cases.views.case_device_views import (
+    CaseDeviceCreateView,
+    CaseDeviceUpdateView,
+    CaseDeviceDetailView,
+    CaseDeviceDeleteView,
+)
+
+# Importa views relacionadas ao modelo CaseProcedure
+from apps.cases.views.case_procedure_views import (
+    CaseProcedureCreateView,
+    CaseProcedureDetailView,
+    CaseProcedureUpdateView,
+    CaseProcedureDeleteView,
+)
+
+# Exporta todas as views para manter compatibilidade
+__all__ = [
+    # Case views
+    'CaseListView',
+    'CaseDetailView',
+    'CaseCreateView',
+    'CaseUpdateView',
+    'CaseDeleteView',
+    'CaseCompleteRegistrationView',
+    'CaseDevicesView',
+    'CaseProceduresView',
+    'CreateExtractionsView',
+    'CaseAssignToMeView',
+    'CaseUnassignFromMeView',
+    'CaseCoverPDFView',
+    # CaseDevice views
+    'CaseDeviceCreateView',
+    'CaseDeviceUpdateView',
+    'CaseDeviceDetailView',
+    'CaseDeviceDeleteView',
+    # CaseProcedure views
+    'CaseProcedureCreateView',
+    'CaseProcedureDetailView',
+    'CaseProcedureUpdateView',
+    'CaseProcedureDeleteView',
+]
+

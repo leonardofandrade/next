@@ -1,0 +1,399 @@
+"""
+Views relacionadas ao modelo CaseDevice
+"""
+from django.shortcuts import redirect, get_object_or_404, render
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
+from django.views.generic import CreateView, UpdateView, DeleteView, DetailView
+from django.db import IntegrityError
+from django.utils import timezone
+from django.http import JsonResponse
+
+from apps.cases.models import Case, CaseDevice
+from apps.cases.forms import CaseDeviceForm
+from apps.cases.services import CaseDeviceService
+from apps.core.services.base import ServiceException
+
+
+class CaseDeviceCreateView(LoginRequiredMixin, CreateView):
+    """
+    Cria um novo dispositivo para um processo
+    """
+    model = CaseDevice
+    form_class = CaseDeviceForm
+    template_name = 'cases/case_device_form.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Verifica se o caso existe, não está deletado e se o usuário tem permissão
+        """
+        self.case = get_object_or_404(
+            Case.objects.filter(deleted_at__isnull=True),
+            pk=kwargs['case_pk']
+        )
+        
+        # Verifica se o usuário tem permissão para adicionar dispositivos
+        if self.case.assigned_to and self.case.assigned_to != request.user:
+            messages.error(
+                request,
+                'Você não tem permissão para adicionar dispositivos a este processo. Apenas o responsável pode fazer isso.'
+            )
+            return redirect('cases:update', pk=self.case.pk)
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_form_kwargs(self):
+        """
+        Passa o caso para o formulário
+        """
+        kwargs = super().get_form_kwargs()
+        kwargs['case'] = self.case
+        return kwargs
+    
+    def form_invalid(self, form):
+        """
+        Trata erros de validação - se vier da página de dispositivos, renderiza lá
+        """
+        # Se vier da página de dispositivos, renderiza o template de devices com o formulário
+        if self.request.GET.get('from') == 'devices':
+            # Recria o contexto da view CaseDevicesView
+            case = self.case
+            devices = case.case_devices.filter(deleted_at__isnull=True).select_related(
+                'device_category',
+                'device_model__brand'
+            )
+            
+            context = {
+                'case': case,
+                'page_title': f'Processo {case.number if case.number else f"#{case.pk}"} - Dispositivos',
+                'page_icon': 'fa-mobile-alt',
+                'devices': devices,
+                'device_form': form,  # Formulário com erros
+                'action': 'create',
+                'editing_device_id': None,  # Importante: define como None para criação
+                'form_errors': form.errors,
+                'form_data': form.data,
+            }
+            
+            return render(self.request, 'cases/case_devices.html', context)
+        
+        return super().form_invalid(form)
+    
+    def form_valid(self, form):
+        """
+        Define campos adicionais antes de salvar
+        """
+        try:
+            device = form.save(commit=False)
+            device.case = self.case
+            device.created_by = self.request.user
+            
+            # Valida regras de negócio usando o service
+            service = CaseDeviceService(user=self.request.user)
+            data = {
+                'case': self.case,
+                'device_category': device.device_category,
+                'device_model': device.device_model,
+                'color': device.color,
+                'imei_01': device.imei_01,
+                'imei_02': device.imei_02,
+                'imei_03': device.imei_03,
+                'imei_04': device.imei_04,
+                'imei_05': device.imei_05,
+            }
+            service.validate_business_rules(data, instance=None)
+            
+            device.save()
+        except (IntegrityError, ServiceException) as e:
+            # Se houver erro de integridade ou de validação do service, retorna o formulário com erro
+            if isinstance(e, ServiceException):
+                form.add_error(None, str(e))
+            else:
+                form.add_error(None, 'Erro ao salvar dispositivo. Verifique se não há IMEI duplicado neste processo.')
+            return self.form_invalid(form)
+        
+        # Verifica se deve criar e adicionar outro
+        save_and_add_another = self.request.POST.get('save_and_add_another')
+        from_param = self.request.GET.get('from', '')
+        
+        if save_and_add_another == '1':
+            messages.success(
+                self.request,
+                'Dispositivo adicionado com sucesso! Você pode adicionar outro dispositivo abaixo.'
+            )
+            return redirect('cases:device_create', case_pk=self.case.pk)
+        else:
+            messages.success(
+                self.request,
+                'Dispositivo adicionado com sucesso!'
+            )
+            if from_param == 'devices':
+                return redirect('cases:devices', pk=self.case.pk)
+            return redirect('cases:update', pk=self.case.pk)
+    
+    def get_context_data(self, **kwargs):
+        """
+        Adiciona informações de página ao contexto
+        """
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Processo {self.case.number if self.case.number else f"#{self.case.pk}"} - Adicionar Dispositivo'
+        context['page_icon'] = 'fa-plus'
+        context['case'] = self.case
+        context['action'] = 'create'
+        return context
+
+
+class CaseDeviceUpdateView(LoginRequiredMixin, UpdateView):
+    """
+    Atualiza um dispositivo existente
+    """
+    model = CaseDevice
+    form_class = CaseDeviceForm
+    template_name = 'cases/case_device_form.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Verifica se o caso e o dispositivo existem, não estão deletados e se o usuário tem permissão
+        """
+        self.case = get_object_or_404(
+            Case.objects.filter(deleted_at__isnull=True),
+            pk=kwargs['case_pk']
+        )
+        
+        # Verifica se o usuário tem permissão para editar dispositivos
+        if self.case.assigned_to and self.case.assigned_to != request.user:
+            messages.error(
+                request,
+                'Você não tem permissão para editar dispositivos deste processo. Apenas o responsável pode fazer isso.'
+            )
+            return redirect('cases:update', pk=self.case.pk)
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        """
+        Filtra apenas dispositivos não deletados do caso
+        """
+        return CaseDevice.objects.filter(
+            case=self.case,
+            deleted_at__isnull=True
+        )
+    
+    def get_form_kwargs(self):
+        """
+        Passa o caso para o formulário
+        """
+        kwargs = super().get_form_kwargs()
+        kwargs['case'] = self.case
+        return kwargs
+    
+    def form_invalid(self, form):
+        """
+        Trata erros de validação - se vier da página de dispositivos, renderiza lá
+        """
+        # Se vier da página de dispositivos, renderiza o template de devices com o formulário
+        if self.request.GET.get('from') == 'devices':
+            # Recria o contexto da view CaseDevicesView
+            case = self.case
+            devices = case.case_devices.filter(deleted_at__isnull=True).select_related(
+                'device_category',
+                'device_model__brand'
+            )
+            
+            context = {
+                'case': case,
+                'page_title': f'Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}',
+                'page_icon': 'fa-mobile-alt',
+                'devices': devices,
+                'device_form': form,  # Formulário com erros
+                'action': 'create',
+                'form_errors': form.errors,
+                'form_data': form.data,
+                'editing_device_id': self.get_object().pk
+            }
+            
+            return render(self.request, 'cases/case_devices.html', context)
+        
+        return super().form_invalid(form)
+    
+    def form_valid(self, form):
+        """
+        Atualiza campos adicionais antes de salvar
+        """
+        try:
+            device = form.save(commit=False)
+            device.updated_by = self.request.user
+            device.version += 1
+            
+            # Valida regras de negócio usando o service
+            service = CaseDeviceService(user=self.request.user)
+            data = {
+                'case': device.case,
+                'device_category': device.device_category,
+                'device_model': device.device_model,
+                'color': device.color,
+                'imei_01': device.imei_01,
+                'imei_02': device.imei_02,
+                'imei_03': device.imei_03,
+                'imei_04': device.imei_04,
+                'imei_05': device.imei_05,
+            }
+            service.validate_business_rules(data, instance=device)
+            
+            device.save()
+        except (IntegrityError, ServiceException) as e:
+            # Se houver erro de integridade ou de validação do service, retorna o formulário com erro
+            if isinstance(e, ServiceException):
+                form.add_error(None, str(e))
+            else:
+                form.add_error(None, 'Erro ao atualizar dispositivo. Verifique se não há IMEI duplicado neste processo.')
+            return self.form_invalid(form)
+        
+        messages.success(
+            self.request,
+            'Dispositivo atualizado com sucesso!'
+        )
+        from_param = self.request.GET.get('from', '')
+        if from_param == 'devices':
+            return redirect('cases:devices', pk=self.case.pk)
+        return redirect('cases:update', pk=self.case.pk)
+    
+    def get_context_data(self, **kwargs):
+        """
+        Adiciona informações de página ao contexto
+        """
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Editar Dispositivo - Processo {self.case.number if self.case.number else f"#{self.case.pk}"}'
+        context['page_icon'] = 'fa-edit'
+        context['case'] = self.case
+        context['device'] = self.get_object()
+        context['action'] = 'update'
+        return context
+
+
+class CaseDeviceDetailView(LoginRequiredMixin, DetailView):
+    """
+    Retorna dados de um dispositivo em JSON para AJAX
+    """
+    model = CaseDevice
+    
+    def get_queryset(self):
+        """
+        Filtra apenas dispositivos não deletados
+        """
+        return CaseDevice.objects.filter(deleted_at__isnull=True).select_related(
+            'device_category',
+            'device_model__brand'
+        )
+    
+    def get(self, request, *args, **kwargs):
+        """
+        Retorna dados do dispositivo em JSON
+        """
+        device = self.get_object()
+        
+        return JsonResponse({
+            'id': device.pk,
+            'device_category': device.device_category.pk if device.device_category else None,
+            'device_model': device.device_model.pk if device.device_model else None,
+            'color': device.color or '',
+            'is_imei_unknown': device.is_imei_unknown,
+            'imei_01': device.imei_01 or '',
+            'imei_02': device.imei_02 or '',
+            'imei_03': device.imei_03 or '',
+            'imei_04': device.imei_04 or '',
+            'imei_05': device.imei_05 or '',
+            'owner_name': device.owner_name or '',
+            'internal_storage': device.internal_storage or '',
+            'is_turned_on': device.is_turned_on,
+            'is_locked': device.is_locked,
+            'is_password_known': device.is_password_known,
+            'password_type': device.password_type or '',
+            'password': device.password or '',
+            'is_damaged': device.is_damaged,
+            'damage_description': device.damage_description or '',
+            'has_fluids': device.has_fluids,
+            'fluids_description': device.fluids_description or '',
+            'has_sim_card': device.has_sim_card,
+            'sim_card_info': device.sim_card_info or '',
+            'has_memory_card': device.has_memory_card,
+            'memory_card_info': device.memory_card_info or '',
+            'has_other_accessories': device.has_other_accessories,
+            'other_accessories_info': device.other_accessories_info or '',
+            'is_sealed': device.is_sealed,
+            'security_seal': device.security_seal or '',
+            'additional_info': device.additional_info or '',
+        })
+
+
+class CaseDeviceDeleteView(LoginRequiredMixin, DeleteView):
+    """
+    Realiza soft delete de um dispositivo
+    """
+    model = CaseDevice
+    template_name = 'cases/case_device_confirm_delete.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Verifica se o caso e o dispositivo existem, não estão deletados e se o usuário tem permissão
+        """
+        self.case = get_object_or_404(
+            Case.objects.filter(deleted_at__isnull=True),
+            pk=kwargs['case_pk']
+        )
+        
+        # Verifica se o usuário tem permissão para excluir dispositivos
+        if self.case.assigned_to and self.case.assigned_to != request.user:
+            messages.error(
+                request,
+                'Você não tem permissão para excluir dispositivos deste processo. Apenas o responsável pode fazer isso.'
+            )
+            return redirect('cases:update', pk=self.case.pk)
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        """
+        Filtra apenas dispositivos não deletados do caso
+        """
+        return CaseDevice.objects.filter(
+            case=self.case,
+            deleted_at__isnull=True
+        ).select_related(
+            'device_category',
+            'device_model__brand'
+        )
+    
+    def delete(self, request, *args, **kwargs):
+        """
+        Realiza soft delete e suporta requisições AJAX
+        """
+        device = self.get_object()
+        device.deleted_at = timezone.now()
+        device.deleted_by = request.user
+        device.save()
+        
+        messages.success(
+            request,
+            'Dispositivo excluído com sucesso!'
+        )
+        
+        # Se for requisição AJAX, retorna JSON
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': 'Dispositivo excluído com sucesso!'
+            })
+        
+        return redirect('cases:devices', pk=self.case.pk)
+    
+    def get_context_data(self, **kwargs):
+        """
+        Adiciona informações de página ao contexto
+        """
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Excluir Dispositivo - Processo {self.case.number if self.case.number else f"#{self.case.pk}"}'
+        context['page_icon'] = 'fa-trash'
+        context['case'] = self.case
+        return context
+

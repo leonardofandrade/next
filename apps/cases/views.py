@@ -502,14 +502,29 @@ class CaseDevicesView(LoginRequiredMixin, DetailView):
             'device_model__brand'
         )
         
-        # Sempre cria um formulário vazio para criar novo dispositivo
-        form = CaseDeviceForm(case=case)
+        # Verifica se está editando um dispositivo
+        edit_device_id = self.request.GET.get('edit')
+        editing_device = None
+        
+        if edit_device_id:
+            try:
+                editing_device = devices.get(pk=edit_device_id)
+                # Cria formulário com instância do dispositivo
+                form = CaseDeviceForm(instance=editing_device, case=case)
+                context['editing_device_id'] = editing_device.pk
+            except CaseDevice.DoesNotExist:
+                form = CaseDeviceForm(case=case)
+                context['editing_device_id'] = None
+        else:
+            # Cria formulário vazio para criar novo dispositivo
+            form = CaseDeviceForm(case=case)
+            context['editing_device_id'] = None
         
         context['page_title'] = f'Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}'
         context['page_icon'] = 'fa-mobile-alt'
         context['devices'] = devices
         context['device_form'] = form
-        context['action'] = 'create'
+        context['action'] = 'create' if not editing_device else 'update'
         return context
 
 

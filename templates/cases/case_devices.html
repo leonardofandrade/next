@@ -27,7 +27,7 @@ Visualize os dispositivos e informações do processo
         <div class="col-6">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0" id="deviceFormTitle">
+                    <h5 class="card-title mb-0">
                         {% if editing_device_id %}
                             <i class="fas fa-edit me-2"></i>
                             Editar Dispositivo
@@ -38,9 +38,11 @@ Visualize os dispositivos e informações do processo
                     </h5>
                 </div>
                 <div class="card-body" style="max-height: calc(100vh - 300px); overflow-y: auto;">
-                    <form id="deviceForm" method="post" action="{% if editing_device_id %}{% url 'cases:device_update' case_pk=case.pk pk=editing_device_id %}?from=devices{% else %}{% url 'cases:device_create' case_pk=case.pk %}?from=devices{% endif %}" novalidate>
+                    <form method="post" action="{% if editing_device_id %}{% url 'cases:device_update' case_pk=case.pk pk=editing_device_id %}?from=devices{% else %}{% url 'cases:device_create' case_pk=case.pk %}?from=devices{% endif %}" novalidate>
+                        {% if editing_device_id %}
+                        <input type="hidden" name="device_id" value="{{ editing_device_id }}">
+                        {% endif %}
                         {% csrf_token %}
-                        <input type="hidden" id="deviceId" name="device_id" value="{% if editing_device_id %}{{ editing_device_id }}{% endif %}">
                         
                         <!-- Informações Básicas do Dispositivo -->
                         <div class="mb-3">
@@ -233,34 +235,30 @@ Visualize os dispositivos e informações do processo
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                            <div id="editModeButtons" style="{% if editing_device_id %}display: block;{% else %}display: none;{% endif %}">
-                                <button type="submit" class="btn btn-primary me-2" id="submitBtn">
-                                    <i class="fas fa-save me-2"></i>
-                                    <span id="submitBtnText">Salvar Alterações</span>
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary" onclick="resetDeviceForm()">
-                                    <i class="fas fa-eraser me-2"></i>
-                                    Limpar
-                                </button>
-                            </div>
-                            <div id="createModeButtons" style="{% if editing_device_id %}display: none;{% else %}display: block;{% endif %}">
-                                <button type="submit" class="btn btn-primary" id="submitBtnCreate">
-                                    <i class="fas fa-save me-2"></i>
-                                    Salvar Dispositivo
-                                </button>
-                            </div>
-                            <button type="button" id="cancelEditBtn" class="btn btn-secondary" style="{% if editing_device_id %}display: inline-block;{% else %}display: none;{% endif %}" onclick="resetDeviceForm()">
-                                <i class="fas fa-times me-2"></i>
-                                Cancelar
+                        <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                {% if editing_device_id %}Salvar Alterações{% else %}Salvar Dispositivo{% endif %}
                             </button>
+                            {% if editing_device_id %}
+                            <a href="{% url 'cases:devices' pk=case.pk %}" class="btn btn-success me-2">
+                                <i class="fas fa-plus me-2"></i>
+                                Novo
+                            </a>
+                            <div>
+                                <a href="{% url 'cases:devices' pk=case.pk %}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-2"></i>
+                                    Cancelar
+                                </a>
+                            </div>
+                            {% endif %}
                         </div>
                     </form>
                 </div>
             </div>
         </div>
         <div class="col-6">
-            <div class="card">
+            <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-mobile-alt me-2"></i>
@@ -329,12 +327,11 @@ Visualize os dispositivos e informações do processo
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm" role="group">
-                                            <button type="button" 
-                                                    class="btn btn-outline-primary edit-device-btn" 
-                                                    title="Editar"
-                                                    data-device-id="{{ device.pk }}">
+                                            <a href="{% url 'cases:devices' pk=case.pk %}?edit={{ device.pk }}" 
+                                               class="btn btn-outline-primary" 
+                                               title="Editar">
                                                 <i class="fas fa-edit"></i>
-                                            </button>
+                                            </a>
                                             <button type="button" 
                                                     class="btn btn-outline-danger delete-device-btn" 
                                                     title="Excluir"
@@ -425,7 +422,7 @@ Visualize os dispositivos e informações do processo
 document.addEventListener('DOMContentLoaded', function() {
     // Inicializa Select2 no formulário
     if (typeof $ !== 'undefined' && $.fn.select2) {
-        $('#deviceForm select').select2({
+        $('form select').select2({
             theme: 'bootstrap-5',
             language: {
                 noResults: function() {
@@ -577,297 +574,14 @@ document.addEventListener('DOMContentLoaded', function() {
         '{{ device_form.imei_03.id_for_label }}'
     ], true);
     
-    // ===== EDIÇÃO DE DISPOSITIVOS =====
-    const deviceForm = document.getElementById('deviceForm');
-    const deviceIdInput = document.getElementById('deviceId');
-    const formTitle = document.getElementById('deviceFormTitle');
-    const submitBtn = document.getElementById('submitBtn');
-    const submitBtnText = document.getElementById('submitBtnText');
-    const submitBtnCreate = document.getElementById('submitBtnCreate');
-    const cancelEditBtn = document.getElementById('cancelEditBtn');
-    const editModeButtons = document.getElementById('editModeButtons');
-    const createModeButtons = document.getElementById('createModeButtons');
-    const editButtons = document.querySelectorAll('.edit-device-btn');
-    
-    // Função para resetar o formulário para modo de criação
-    window.resetDeviceForm = function() {
-        deviceForm.reset();
-        deviceIdInput.value = '';
-        deviceForm.action = '{% url "cases:device_create" case_pk=case.pk %}?from=devices';
-        formTitle.innerHTML = '<i class="fas fa-plus me-2"></i>Adicionar Dispositivo';
-        cancelEditBtn.style.display = 'none';
-        editModeButtons.style.display = 'none';
-        createModeButtons.style.display = 'block';
-        
-        // Limpa o Select2
-        if (typeof $ !== 'undefined' && $.fn.select2) {
-            $('#deviceForm select').val(null).trigger('change');
-        }
-        
-        // Reseta todos os checkboxes e campos condicionais
-        const checkboxes = deviceForm.querySelectorAll('input[type="checkbox"]');
-        checkboxes.forEach(cb => {
-            cb.checked = false;
-            const event = new Event('change');
-            cb.dispatchEvent(event);
-        });
-    };
-    
-    // Função para carregar dados do dispositivo
-    function loadDeviceData(deviceId) {
-        fetch('{% url "cases:device_detail" case_pk=case.pk pk=0 %}'.replace('0', deviceId), {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Preenche o formulário com os dados
-            deviceIdInput.value = data.id;
-            deviceForm.action = '{% url "cases:device_update" case_pk=case.pk pk=0 %}?from=devices'.replace('0', data.id);
-            
-            // Preenche os campos
-            if (data.device_category) {
-                $('#deviceForm select[name="device_category"]').val(data.device_category).trigger('change');
-            } else {
-                $('#deviceForm select[name="device_category"]').val(null).trigger('change');
-            }
-            
-            if (data.device_model) {
-                $('#deviceForm select[name="device_model"]').val(data.device_model).trigger('change');
-            } else {
-                $('#deviceForm select[name="device_model"]').val(null).trigger('change');
-            }
-            
-            $('#deviceForm input[name="color"]').val(data.color);
-            $('#deviceForm input[name="internal_storage"]').val(data.internal_storage);
-            $('#deviceForm input[name="owner_name"]').val(data.owner_name);
-            
-            // IMEI
-            const isImeiUnknownCheckbox = document.getElementById('{{ device_form.is_imei_unknown.id_for_label }}');
-            if (isImeiUnknownCheckbox) {
-                isImeiUnknownCheckbox.checked = data.is_imei_unknown;
-                isImeiUnknownCheckbox.dispatchEvent(new Event('change'));
-            }
-            
-            $('#deviceForm input[name="imei_01"]').val(data.imei_01);
-            $('#deviceForm input[name="imei_02"]').val(data.imei_02);
-            $('#deviceForm input[name="imei_03"]').val(data.imei_03);
-            
-            // Status e Segurança
-            const isTurnedOnCheckbox = document.getElementById('{{ device_form.is_turned_on.id_for_label }}');
-            if (isTurnedOnCheckbox) isTurnedOnCheckbox.checked = data.is_turned_on;
-            
-            const isLockedCheckbox = document.getElementById('{{ device_form.is_locked.id_for_label }}');
-            if (isLockedCheckbox) isLockedCheckbox.checked = data.is_locked;
-            
-            if (data.password_type) {
-                $('#deviceForm select[name="password_type"]').val(data.password_type).trigger('change');
-            }
-            
-            const isPasswordKnownCheckbox = document.getElementById('{{ device_form.is_password_known.id_for_label }}');
-            if (isPasswordKnownCheckbox) {
-                isPasswordKnownCheckbox.checked = data.is_password_known;
-                isPasswordKnownCheckbox.dispatchEvent(new Event('change'));
-            }
-            $('#deviceForm input[name="password"]').val(data.password);
-            
-            // Condição Física
-            const isDamagedCheckbox = document.getElementById('{{ device_form.is_damaged.id_for_label }}');
-            if (isDamagedCheckbox) {
-                isDamagedCheckbox.checked = data.is_damaged;
-                isDamagedCheckbox.dispatchEvent(new Event('change'));
-            }
-            $('#deviceForm input[name="damage_description"]').val(data.damage_description);
-            
-            const hasFluidsCheckbox = document.getElementById('{{ device_form.has_fluids.id_for_label }}');
-            if (hasFluidsCheckbox) {
-                hasFluidsCheckbox.checked = data.has_fluids;
-                hasFluidsCheckbox.dispatchEvent(new Event('change'));
-            }
-            $('#deviceForm input[name="fluids_description"]').val(data.fluids_description);
-            
-            // Acessórios
-            const hasSimCardCheckbox = document.getElementById('{{ device_form.has_sim_card.id_for_label }}');
-            if (hasSimCardCheckbox) {
-                hasSimCardCheckbox.checked = data.has_sim_card;
-                hasSimCardCheckbox.dispatchEvent(new Event('change'));
-            }
-            $('#deviceForm input[name="sim_card_info"]').val(data.sim_card_info);
-            
-            const hasMemoryCardCheckbox = document.getElementById('{{ device_form.has_memory_card.id_for_label }}');
-            if (hasMemoryCardCheckbox) {
-                hasMemoryCardCheckbox.checked = data.has_memory_card;
-                hasMemoryCardCheckbox.dispatchEvent(new Event('change'));
-            }
-            $('#deviceForm input[name="memory_card_info"]').val(data.memory_card_info);
-            
-            const hasOtherAccessoriesCheckbox = document.getElementById('{{ device_form.has_other_accessories.id_for_label }}');
-            if (hasOtherAccessoriesCheckbox) {
-                hasOtherAccessoriesCheckbox.checked = data.has_other_accessories;
-                hasOtherAccessoriesCheckbox.dispatchEvent(new Event('change'));
-            }
-            $('#deviceForm input[name="other_accessories_info"]').val(data.other_accessories_info);
-            
-            // Lacre
-            const isSealedCheckbox = document.getElementById('{{ device_form.is_sealed.id_for_label }}');
-            if (isSealedCheckbox) {
-                isSealedCheckbox.checked = data.is_sealed;
-                isSealedCheckbox.dispatchEvent(new Event('change'));
-            }
-            $('#deviceForm input[name="security_seal"]').val(data.security_seal);
-            
-            // Informações Adicionais
-            $('#deviceForm textarea[name="additional_info"]').val(data.additional_info);
-            
-            // Atualiza o título e botões
-            formTitle.innerHTML = '<i class="fas fa-edit me-2"></i>Editar Dispositivo';
-            submitBtnText.textContent = 'Salvar Alterações';
-            cancelEditBtn.style.display = 'inline-block';
-            editModeButtons.style.display = 'block';
-            createModeButtons.style.display = 'none';
-            
-            // Scroll suave até o formulário
-            deviceForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        })
-        .catch(error => {
-            console.error('Erro ao carregar dispositivo:', error);
-            alert('Erro ao carregar dados do dispositivo. Tente novamente.');
-        });
-    }
-    
-    // Adiciona listener para cada botão de editar
-    editButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const deviceId = this.getAttribute('data-device-id');
-            loadDeviceData(deviceId);
-        });
-    });
-    
-    // Se houver erros de validação e estiver editando, carrega os dados
-    {% if editing_device_id %}
-    loadDeviceData({{ editing_device_id }});
-    // Preenche os dados do formulário com os valores submetidos
-    {% if form_data %}
-    {% if form_data.device_category %}
-    setTimeout(function() {
-        $('#deviceForm select[name="device_category"]').val('{{ form_data.device_category }}').trigger('change');
-    }, 500);
-    {% endif %}
-    {% if form_data.device_model %}
-    setTimeout(function() {
-        $('#deviceForm select[name="device_model"]').val('{{ form_data.device_model }}').trigger('change');
-    }, 500);
-    {% endif %}
-    $('#deviceForm input[name="color"]').val('{{ form_data.color|default:"" }}');
-    $('#deviceForm input[name="internal_storage"]').val('{{ form_data.internal_storage|default:"" }}');
-    $('#deviceForm input[name="owner_name"]').val('{{ form_data.owner_name|default:"" }}');
-    $('#deviceForm input[name="imei_01"]').val('{{ form_data.imei_01|default:"" }}');
-    $('#deviceForm input[name="imei_02"]').val('{{ form_data.imei_02|default:"" }}');
-    $('#deviceForm input[name="imei_03"]').val('{{ form_data.imei_03|default:"" }}');
-    $('#deviceForm input[name="password"]').val('{{ form_data.password|default:"" }}');
-    $('#deviceForm input[name="damage_description"]').val('{{ form_data.damage_description|default:"" }}');
-    $('#deviceForm input[name="fluids_description"]').val('{{ form_data.fluids_description|default:"" }}');
-    $('#deviceForm input[name="sim_card_info"]').val('{{ form_data.sim_card_info|default:"" }}');
-    $('#deviceForm input[name="memory_card_info"]').val('{{ form_data.memory_card_info|default:"" }}');
-    $('#deviceForm input[name="other_accessories_info"]').val('{{ form_data.other_accessories_info|default:"" }}');
-    $('#deviceForm input[name="security_seal"]').val('{{ form_data.security_seal|default:"" }}');
-    $('#deviceForm textarea[name="additional_info"]').val('{{ form_data.additional_info|default:"" }}');
-    
-    // Atualiza checkboxes
-    {% if form_data.is_imei_unknown %}
-    const isImeiUnknownCheckbox = document.getElementById('{{ device_form.is_imei_unknown.id_for_label }}');
-    if (isImeiUnknownCheckbox) {
-        isImeiUnknownCheckbox.checked = true;
-        isImeiUnknownCheckbox.dispatchEvent(new Event('change'));
-    }
-    {% endif %}
-    {% if form_data.is_turned_on %}
-    document.getElementById('{{ device_form.is_turned_on.id_for_label }}').checked = true;
-    {% endif %}
-    {% if form_data.is_locked %}
-    document.getElementById('{{ device_form.is_locked.id_for_label }}').checked = true;
-    {% endif %}
-    {% if form_data.is_password_known %}
-    const isPasswordKnownCheckbox = document.getElementById('{{ device_form.is_password_known.id_for_label }}');
-    if (isPasswordKnownCheckbox) {
-        isPasswordKnownCheckbox.checked = true;
-        isPasswordKnownCheckbox.dispatchEvent(new Event('change'));
-    }
-    {% endif %}
-    {% if form_data.is_damaged %}
-    const isDamagedCheckbox = document.getElementById('{{ device_form.is_damaged.id_for_label }}');
-    if (isDamagedCheckbox) {
-        isDamagedCheckbox.checked = true;
-        isDamagedCheckbox.dispatchEvent(new Event('change'));
-    }
-    {% endif %}
-    {% if form_data.has_fluids %}
-    const hasFluidsCheckbox = document.getElementById('{{ device_form.has_fluids.id_for_label }}');
-    if (hasFluidsCheckbox) {
-        hasFluidsCheckbox.checked = true;
-        hasFluidsCheckbox.dispatchEvent(new Event('change'));
-    }
-    {% endif %}
-    {% if form_data.has_sim_card %}
-    const hasSimCardCheckbox = document.getElementById('{{ device_form.has_sim_card.id_for_label }}');
-    if (hasSimCardCheckbox) {
-        hasSimCardCheckbox.checked = true;
-        hasSimCardCheckbox.dispatchEvent(new Event('change'));
-    }
-    {% endif %}
-    {% if form_data.has_memory_card %}
-    const hasMemoryCardCheckbox = document.getElementById('{{ device_form.has_memory_card.id_for_label }}');
-    if (hasMemoryCardCheckbox) {
-        hasMemoryCardCheckbox.checked = true;
-        hasMemoryCardCheckbox.dispatchEvent(new Event('change'));
-    }
-    {% endif %}
-    {% if form_data.has_other_accessories %}
-    const hasOtherAccessoriesCheckbox = document.getElementById('{{ device_form.has_other_accessories.id_for_label }}');
-    if (hasOtherAccessoriesCheckbox) {
-        hasOtherAccessoriesCheckbox.checked = true;
-        hasOtherAccessoriesCheckbox.dispatchEvent(new Event('change'));
-    }
-    {% endif %}
-    {% if form_data.is_sealed %}
-    const isSealedCheckbox = document.getElementById('{{ device_form.is_sealed.id_for_label }}');
-    if (isSealedCheckbox) {
-        isSealedCheckbox.checked = true;
-        isSealedCheckbox.dispatchEvent(new Event('change'));
-    }
-    {% endif %}
-    {% if form_data.password_type %}
-    setTimeout(function() {
-        $('#deviceForm select[name="password_type"]').val('{{ form_data.password_type }}').trigger('change');
-    }, 500);
-    {% endif %}
-    {% endif %}
-    {% endif %}
-    
-    // Se houver erros de validação, mostra mensagem e scroll até o formulário
-    {% if form_errors %}
-    setTimeout(function() {
-        deviceForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        // Adiciona classe de erro nos campos com erro
-        {% for field, errors in form_errors.items %}
-        const {{ field }}Field = document.querySelector('[name="{{ field }}"]');
-        if ({{ field }}Field) {
-            {{ field }}Field.classList.add('is-invalid');
-        }
-        {% endfor %}
-    }, 300);
-    {% endif %}
-    
     // ===== EXCLUSÃO DE DISPOSITIVOS =====
     const deleteDeviceModal = document.getElementById('deleteDeviceModal');
     const deleteDeviceForm = document.getElementById('deleteDeviceForm');
     const deleteButtons = document.querySelectorAll('.delete-device-btn');
-    let currentDeleteDeviceId = null;
     
     deleteButtons.forEach(button => {
         button.addEventListener('click', function() {
-            currentDeleteDeviceId = this.getAttribute('data-device-id');
+            const deviceId = this.getAttribute('data-device-id');
             const category = this.getAttribute('data-device-category');
             const model = this.getAttribute('data-device-model');
             
@@ -876,7 +590,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('deleteDeviceModel').textContent = model;
             
             // Atualiza a action do form
-            deleteDeviceForm.action = '{% url "cases:device_delete" case_pk=case.pk pk=0 %}?from=devices'.replace('0', currentDeleteDeviceId);
+            deleteDeviceForm.action = '{% url "cases:device_delete" case_pk=case.pk pk=0 %}?from=devices'.replace('0', deviceId);
         });
     });
     

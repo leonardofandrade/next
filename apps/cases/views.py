@@ -521,7 +521,7 @@ class CaseDevicesView(LoginRequiredMixin, DetailView):
             form = CaseDeviceForm(case=case)
             context['editing_device_id'] = None
         
-        context['page_title'] = f'Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}'
+        context['page_title'] = f'Processo {case.number if case.number else f"#{case.pk}"} - Dispositivos'
         context['page_icon'] = 'fa-mobile-alt'
         context['devices'] = devices
         context['device_form'] = form
@@ -579,7 +579,7 @@ class CaseProceduresView(LoginRequiredMixin, DetailView):
             form = CaseProcedureForm(case=case)
             context['editing_procedure_id'] = None
         
-        context['page_title'] = f'Procedimentos e Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}'
+        context['page_title'] = f'Processo {case.number if case.number else f"#{case.pk}"} - Procedimentos'
         context['page_icon'] = 'fa-gavel'
         context['procedures'] = procedures
         context['devices'] = devices
@@ -639,7 +639,7 @@ class CaseDeviceCreateView(LoginRequiredMixin, CreateView):
             
             context = {
                 'case': case,
-                'page_title': f'Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}',
+                'page_title': f'Processo {case.number if case.number else f"#{case.pk}"} - Dispositivos',
                 'page_icon': 'fa-mobile-alt',
                 'devices': devices,
                 'device_form': form,  # Formulário com erros
@@ -710,7 +710,7 @@ class CaseDeviceCreateView(LoginRequiredMixin, CreateView):
         Adiciona informações de página ao contexto
         """
         context = super().get_context_data(**kwargs)
-        context['page_title'] = f'Adicionar Dispositivo - Processo {self.case.number if self.case.number else f"#{self.case.pk}"}'
+        context['page_title'] = f'Processo {self.case.number if self.case.number else f"#{self.case.pk}"} - Adicionar Dispositivo'
         context['page_icon'] = 'fa-plus'
         context['case'] = self.case
         context['action'] = 'create'
@@ -1023,7 +1023,7 @@ class CaseProcedureCreateView(LoginRequiredMixin, CreateView):
             
             context = {
                 'case': case,
-                'page_title': f'Procedimentos e Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}',
+                'page_title': f'Processo {case.number if case.number else f"#{case.pk}"} - Procedimentos',
                 'page_icon': 'fa-gavel',
                 'procedures': procedures,
                 'devices': devices,
@@ -1155,7 +1155,7 @@ class CaseProcedureUpdateView(LoginRequiredMixin, UpdateView):
             
             context = {
                 'case': case,
-                'page_title': f'Procedimentos e Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}',
+                'page_title': f'Processo {case.number if case.number else f"#{case.pk}"} - Procedimentos',
                 'page_icon': 'fa-gavel',
                 'procedures': procedures,
                 'devices': devices,

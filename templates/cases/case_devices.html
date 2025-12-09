@@ -7,11 +7,11 @@
 {% endblock page_title %}
 
 {% block page_description %}
-Dispositivos do processo
+Visualize os dispositivos e informações do processo
 {% endblock page_description %}
 
 {% block page_actions %}
-<a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'cases:detail' case.pk %}{% endif %}" class="btn btn-secondary">
+<a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'cases:list' %}{% endif %}" class="btn btn-secondary">
     <i class="fas fa-arrow-left me-2"></i>
     Voltar
 </a>
@@ -19,122 +19,21 @@ Dispositivos do processo
 
 {% block content %}
 <div class="container-fluid py-4">
-    <div class="row">
-        <!-- Informações do Processo -->
-        <div class="col-12 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Informações do Processo
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <strong>Número:</strong><br>
-                            <span class="badge bg-secondary fs-6">{{ case.number|default:"Rascunho" }}</span>
-                        </div>
-                        <div class="col-md-3">
-                            <strong>Status:</strong><br>
-                            <span class="badge {{ case.status_badge_class }} fs-6">
-                                {{ case.get_status_display }}
-                            </span>
-                        </div>
-                        <div class="col-md-3">
-                            <strong>Prioridade:</strong><br>
-                            <span class="badge bg-{{ case.get_priority_color }} fs-6">
-                                {{ case.get_priority_display }}
-                            </span>
-                        </div>
-                        <div class="col-md-3">
-                            <strong>Dispositivos Solicitados:</strong><br>
-                            {{ case.requested_device_amount|default:"-" }}
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Unidade Solicitante:</strong><br>
-                            {% if case.requester_agency_unit %}
-                                {{ case.requester_agency_unit.name }}
-                                <span class="badge bg-info">{{ case.requester_agency_unit.acronym }}</span>
-                            {% else %}
-                                <span class="text-muted">-</span>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Unidade de Extração:</strong><br>
-                            {% if case.extraction_unit %}
-                                <span class="badge bg-info">{{ case.extraction_unit.acronym }}</span>
-                                {{ case.extraction_unit.name }}
-                            {% else %}
-                                <span class="text-muted">Não atribuída</span>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Autoridade:</strong><br>
-                            {{ case.requester_authority_name|default:"-" }}
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Data da Solicitação:</strong><br>
-                            {% if case.requested_at %}
-                                {{ case.requested_at|date:"d/m/Y H:i" }}
-                            {% else %}
-                                <span class="text-muted">-</span>
-                            {% endif %}
-                        </div>
-                        {% if case.request_procedures %}
-                        <div class="col-md-12">
-                            <strong>Procedimentos:</strong><br>
-                            {{ case.request_procedures }}
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
+    {% include 'cases/includes/case_detail_include.html' with case=case %}
 
-        <!-- Lista de Dispositivos -->
+    <!-- Dispositivos do Caso -->
+    <div class="row mt-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-mobile-alt me-2"></i>
-                            Dispositivos do Processo
-                        </h5>
-                        <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-secondary">
-                            {{ devices.count }} dispositivo{{ devices.count|pluralize }}
-                        </span>
-                            {% if not case.assigned_to or case.assigned_to == request.user %}
-                            <button type="button" 
-                                    class="btn btn-sm btn-success" 
-                                    id="createExtractionsBtn"
-                                    data-case-pk="{{ case.pk }}"
-                                    data-create-extractions-url="{% url 'cases:create_extractions' case.pk %}">
-                                <i class="fas fa-plus-circle me-1"></i>
-                                Criar Extrações
-                            </button>
-                            <a href="{% url 'cases:device_create' case.pk %}" class="btn btn-sm btn-primary">
-                                <i class="fas fa-plus me-1"></i>
-                                Adicionar Dispositivo
-                            </a>
-                            {% else %}
-                            <button type="button" 
-                                    class="btn btn-sm btn-success" 
-                                    disabled
-                                    title="Apenas o responsável pode criar extrações">
-                                <i class="fas fa-plus-circle me-1"></i>
-                                Criar Extrações
-                            </button>
-                            <button class="btn btn-sm btn-primary" 
-                                    disabled
-                                    title="Apenas o responsável pode adicionar dispositivos">
-                                <i class="fas fa-plus me-1"></i>
-                                Adicionar Dispositivo
-                            </button>
-                            {% endif %}
-                        </div>
-                    </div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-mobile-alt me-2"></i>
+                        Dispositivos do Processo
+                    </h5>
+                    <a href="{% url 'cases:device_create' case_pk=case.pk %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        Adicionar Dispositivo
+                    </a>
                 </div>
                 <div class="card-body">
                     {% if devices %}
@@ -142,23 +41,18 @@ Dispositivos do processo
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th width="5%">#</th>
                                     <th width="15%">Categoria</th>
                                     <th width="20%">Modelo</th>
                                     <th width="10%">Cor</th>
                                     <th width="15%">IMEI</th>
                                     <th width="15%">Proprietário</th>
                                     <th width="10%">Armazenamento</th>
-                                    <th width="10%" class="text-center">Status</th>
-                                    <th width="10%" class="text-center">Ações</th>
+                                    <th width="15%" class="text-center">Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for device in devices %}
                                 <tr>
-                                    <td>
-                                        <strong>{{ forloop.counter }}</strong>
-                                    </td>
                                     <td>
                                         {% if device.device_category %}
                                             <span class="badge bg-primary">
@@ -204,54 +98,17 @@ Dispositivos do processo
                                         {% endif %}
                                     </td>
                                     <td class="text-center">
-                                        <div class="d-flex flex-column gap-1">
-                                            {% if device.is_turned_on is not None %}
-                                                {% if device.is_turned_on %}
-                                                    <span class="badge bg-success">Ligado</span>
-                                                {% else %}
-                                                    <span class="badge bg-secondary">Desligado</span>
-                                                {% endif %}
-                                            {% endif %}
-                                            {% if device.is_locked is not None %}
-                                                {% if device.is_locked %}
-                                                    <span class="badge bg-warning">Bloqueado</span>
-                                                {% else %}
-                                                    <span class="badge bg-info">Desbloqueado</span>
-                                                {% endif %}
-                                            {% endif %}
-                                            {% if device.is_sealed %}
-                                                <span class="badge bg-primary">Lacrado</span>
-                                            {% endif %}
-                                        </div>
-                                    </td>
-                                    <td class="text-center">
                                         <div class="btn-group btn-group-sm" role="group">
-                                            {% if not case.assigned_to or case.assigned_to == request.user %}
-                                            <a href="{% url 'cases:device_update' case.pk device.pk %}" 
+                                            <a href="{% url 'cases:device_update' case_pk=case.pk pk=device.pk %}" 
                                                class="btn btn-outline-primary" 
                                                title="Editar">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <button type="button" 
-                                                    class="btn btn-outline-danger delete-device-btn" 
-                                                    title="Excluir"
-                                                    data-case-pk="{{ case.pk }}"
-                                                    data-device-pk="{{ device.pk }}"
-                                                    data-device-info="{{ device.device_model.brand.name|default:'' }} - {{ device.device_model.name|default:'Sem modelo' }}">
+                                            <a href="{% url 'cases:device_delete' case_pk=case.pk pk=device.pk %}" 
+                                               class="btn btn-outline-danger" 
+                                               title="Excluir">
                                                 <i class="fas fa-trash"></i>
-                                            </button>
-                                            {% else %}
-                                            <button class="btn btn-outline-primary" 
-                                                    disabled
-                                                    title="Apenas o responsável pode editar">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-outline-danger" 
-                                                    disabled
-                                                    title="Apenas o responsável pode excluir">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                            {% endif %}
+                                            </a>
                                         </div>
                                     </td>
                                 </tr>
@@ -260,24 +117,10 @@ Dispositivos do processo
                         </table>
                     </div>
                     {% else %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-mobile-alt fa-3x text-muted mb-3"></i>
-                        <p class="text-muted mb-3">Nenhum dispositivo cadastrado para este processo.</p>
-                        {% if not case.assigned_to or case.assigned_to == request.user %}
-                        <a href="{% url 'cases:device_create' case.pk %}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>
-                            Adicionar Primeiro Dispositivo
-                        </a>
-                        {% else %}
-                        <button class="btn btn-primary" disabled title="Apenas o responsável pode adicionar dispositivos">
-                            <i class="fas fa-plus me-2"></i>
-                            Adicionar Primeiro Dispositivo
-                        </button>
-                        <p class="text-muted mt-3">
-                            <i class="fas fa-info-circle me-1"></i>
-                            Apenas o responsável ({{ case.assigned_to.get_full_name|default:case.assigned_to.username }}) pode adicionar dispositivos.
-                        </p>
-                        {% endif %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-mobile-alt fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">Nenhum dispositivo cadastrado.</p>
+                        <small class="text-muted">Adicione dispositivos ao processo para iniciar as extrações.</small>
                     </div>
                     {% endif %}
                 </div>
@@ -285,349 +128,4 @@ Dispositivos do processo
         </div>
     </div>
 </div>
-
-<!-- Modal de Confirmação de Criação de Extrações -->
-<div class="modal fade" id="createExtractionsModal" tabindex="-1" aria-labelledby="createExtractionsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="createExtractionsModalLabel">
-                    <i class="fas fa-plus-circle me-2"></i>
-                    Criar Extrações
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-info" role="alert">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <strong>Informação:</strong> Serão criadas extrações com status "Aguardando Extrator" apenas para dispositivos que ainda não possuem extração associada.
-                </div>
-
-                <p class="mb-3">Os seguintes dispositivos receberão uma nova extração:</p>
-
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <div id="devicesToCreateList" class="mb-0">
-                            <div class="text-center py-3">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Carregando...</span>
-                                </div>
-                                <p class="mt-2 mb-0">Carregando informações...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>
-                    Cancelar
-                </button>
-                <form id="createExtractionsForm" method="post" style="display: inline;" action="{% url 'cases:create_extractions' case.pk %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-check me-2"></i>
-                        Confirmar Criação
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de Confirmação de Exclusão de Dispositivo -->
-<div class="modal fade" id="deleteDeviceModal" tabindex="-1" aria-labelledby="deleteDeviceModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteDeviceModalLabel">
-                    <i class="fas fa-trash me-2"></i>
-                    Excluir Dispositivo
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-warning" role="alert">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Atenção!</strong> Esta ação não pode ser desfeita.
-                </div>
-
-                <p class="mb-3">Você tem certeza que deseja excluir o dispositivo:</p>
-
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <dl class="row mb-0" id="deviceInfo">
-                            <dt class="col-sm-4">Categoria:</dt>
-                            <dd class="col-sm-8" id="deviceCategory">-</dd>
-
-                            <dt class="col-sm-4">Modelo:</dt>
-                            <dd class="col-sm-8" id="deviceModel">-</dd>
-
-                            <dt class="col-sm-4">Cor:</dt>
-                            <dd class="col-sm-8" id="deviceColor">-</dd>
-
-                            <dt class="col-sm-4">IMEI:</dt>
-                            <dd class="col-sm-8" id="deviceImei">-</dd>
-
-                            <dt class="col-sm-4">Proprietário:</dt>
-                            <dd class="col-sm-8" id="deviceOwner">-</dd>
-
-                            <dt class="col-sm-4">Processo:</dt>
-                            <dd class="col-sm-8">
-                                <strong>{{ case.number|default:"Rascunho" }}</strong>
-                            </dd>
-
-                            <dt class="col-sm-4">Criado em:</dt>
-                            <dd class="col-sm-8" id="deviceCreatedAt">-</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>
-                    Cancelar
-                </button>
-                <form id="deleteDeviceForm" method="post" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash me-2"></i>
-                        Confirmar Exclusão
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // ===== CRIAÇÃO DE EXTRAÇÕES =====
-    const createExtractionsBtn = document.getElementById('createExtractionsBtn');
-    const createExtractionsModal = new bootstrap.Modal(document.getElementById('createExtractionsModal'));
-    const createExtractionsForm = document.getElementById('createExtractionsForm');
-    const devicesToCreateList = document.getElementById('devicesToCreateList');
-    let currentCasePkForExtractions = null;
-
-    if (createExtractionsBtn) {
-        createExtractionsBtn.addEventListener('click', function() {
-            currentCasePkForExtractions = this.getAttribute('data-case-pk');
-            const createExtractionsUrl = this.getAttribute('data-create-extractions-url');
-            
-            // Reseta o conteúdo e mostra loading
-            devicesToCreateList.innerHTML = `
-                <div class="text-center py-3">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Carregando...</span>
-                    </div>
-                    <p class="mt-2 mb-0">Carregando informações...</p>
-                </div>
-            `;
-            
-            // Abre o modal primeiro para mostrar o loading
-            createExtractionsModal.show();
-            
-            // Carrega informações dos dispositivos que precisam de extração
-            fetch(createExtractionsUrl, {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(err.message || `HTTP error! status: ${response.status}`);
-                    }).catch(() => {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Verifica se há erro na resposta
-                if (data.error) {
-                    throw new Error(data.message || 'Erro desconhecido');
-                }
-                
-                // Atualiza a action do form
-                createExtractionsForm.action = createExtractionsUrl;
-                
-                // Preenche a lista de dispositivos
-                if (data.devices_count === 0) {
-                    devicesToCreateList.innerHTML = `
-                        <div class="alert alert-warning mb-0">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            Todos os dispositivos já possuem extração associada.
-                        </div>
-                    `;
-                    createExtractionsForm.querySelector('button[type="submit"]').disabled = true;
-                } else {
-                    let devicesHtml = `<p class="mb-2"><strong>${data.devices_count} dispositivo(s) sem extração:</strong></p>`;
-                    devicesHtml += '<ul class="list-group list-group-flush">';
-                    data.devices.forEach(device => {
-                        devicesHtml += `
-                            <li class="list-group-item">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong>${device.model}</strong><br>
-                                        <small class="text-muted">Categoria: ${device.category} | IMEI: ${device.imei}</small>
-                                    </div>
-                                </div>
-                            </li>
-                        `;
-                    });
-                    devicesHtml += '</ul>';
-                    devicesToCreateList.innerHTML = devicesHtml;
-                    createExtractionsForm.querySelector('button[type="submit"]').disabled = false;
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao carregar informações dos dispositivos:', error);
-                devicesToCreateList.innerHTML = `
-                    <div class="alert alert-danger mb-0">
-                        <i class="fas fa-exclamation-circle me-2"></i>
-                        <strong>Erro ao carregar informações dos dispositivos.</strong><br>
-                        <small>Detalhes: ${error.message}</small>
-                    </div>
-                `;
-                if (createExtractionsForm) {
-                    createExtractionsForm.querySelector('button[type="submit"]').disabled = true;
-                }
-            });
-        });
-    }
-
-    // Submete o formulário de criação de extrações
-    if (createExtractionsForm) {
-        createExtractionsForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Obtém o CSRF token do formulário
-            const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
-            
-            fetch(this.action, {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrfToken,
-                },
-                body: new FormData(this)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Fecha o modal
-                    createExtractionsModal.hide();
-                    
-                    // Recarrega a página para atualizar a lista
-                    // A mensagem de sucesso será exibida via Django messages após o reload
-                    window.location.reload();
-                } else {
-                    console.error('Erro ao criar extrações:', data);
-                    devicesToCreateList.innerHTML = `
-                        <div class="alert alert-danger mb-0">
-                            <i class="fas fa-exclamation-circle me-2"></i>
-                            <strong>Erro ao criar extrações.</strong>
-                        </div>
-                    `;
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao criar extrações:', error);
-                devicesToCreateList.innerHTML = `
-                    <div class="alert alert-danger mb-0">
-                        <i class="fas fa-exclamation-circle me-2"></i>
-                        <strong>Erro ao criar extrações.</strong>
-                    </div>
-                `;
-            });
-        });
-    }
-
-    // ===== EXCLUSÃO DE DISPOSITIVOS =====
-    const deleteButtons = document.querySelectorAll('.delete-device-btn');
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteDeviceModal'));
-    const deleteForm = document.getElementById('deleteDeviceForm');
-    let currentDevicePk = null;
-    let currentCasePk = null;
-
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            currentDevicePk = this.getAttribute('data-device-pk');
-            currentCasePk = this.getAttribute('data-case-pk');
-            
-            // Carrega informações do dispositivo via AJAX
-            fetch(`/cases/${currentCasePk}/devices/${currentDevicePk}/delete/`, {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Preenche o modal com as informações do dispositivo
-                document.getElementById('deviceCategory').innerHTML = data.device.category 
-                    ? `<span class="badge bg-primary">${data.device.category}</span>` 
-                    : '<span class="text-muted">-</span>';
-                
-                document.getElementById('deviceModel').innerHTML = data.device.model 
-                    ? `<strong>${data.device.model}</strong>` 
-                    : '<span class="text-muted">-</span>';
-                
-                document.getElementById('deviceColor').textContent = data.device.color;
-                document.getElementById('deviceImei').innerHTML = data.device.imei === 'Desconhecido'
-                    ? '<span class="badge bg-warning">Desconhecido</span>'
-                    : data.device.imei;
-                document.getElementById('deviceOwner').textContent = data.device.owner;
-                document.getElementById('deviceCreatedAt').textContent = data.device.created_at;
-                
-                // Atualiza a action do form
-                deleteForm.action = `/cases/${currentCasePk}/devices/${currentDevicePk}/delete/`;
-                
-                // Abre o modal
-                deleteModal.show();
-            })
-            .catch(error => {
-                console.error('Erro ao carregar informações do dispositivo:', error);
-                alert('Erro ao carregar informações do dispositivo.');
-            });
-        });
-    });
-
-    // Submete o formulário de exclusão
-    deleteForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Obtém o CSRF token do formulário
-        const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
-        
-        fetch(this.action, {
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': csrfToken,
-            },
-            body: new FormData(this)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Fecha o modal
-                deleteModal.hide();
-                
-                // Recarrega a página para atualizar a lista
-                window.location.reload();
-            } else {
-                alert('Erro ao excluir dispositivo.');
-            }
-        })
-        .catch(error => {
-            console.error('Erro ao excluir dispositivo:', error);
-            alert('Erro ao excluir dispositivo.');
-        });
-    });
-});
-</script>
 {% endblock %}
-

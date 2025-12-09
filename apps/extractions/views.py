@@ -64,7 +64,7 @@ class CaseExtractionsView(LoginRequiredMixin, DetailView):
     Exibe as extrações de um processo de extração
     """
     model = Case
-    template_name = 'extractions/case_extractions.html'
+    template_name = 'cases/case_extractions.html'
     context_object_name = 'case'
     
     def get_queryset(self):

@@ -1,0 +1,177 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+
+{% block page_title %}
+<i class="fas {{ page_icon }} text-primary me-2"></i>
+{{ page_title }}
+{% endblock page_title %}
+
+{% block page_description %}
+Visualize as extrações e informações do processo
+{% endblock page_description %}
+
+{% block page_actions %}
+<a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'cases:list' %}{% endif %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left me-2"></i>
+    Voltar
+</a>
+{% endblock page_actions %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    {% include 'cases/includes/case_detail_include.html' with case=case %}
+
+    <!-- Extrações do Caso -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-database me-2"></i>
+                        Extrações do Processo
+                    </h5>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if has_devices_without_extractions %}
+                        <form method="post" action="{% url 'cases:create_extractions' case.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-success" title="Criar extrações para dispositivos sem extração">
+                                <i class="fas fa-plus-circle me-1"></i>
+                                Criar Extrações
+                            </button>
+                        </form>
+                        {% endif %}
+                        <a href="{% url 'cases:devices' case.pk %}" class="btn btn-sm btn-info">
+                            <i class="fas fa-mobile-alt me-1"></i>
+                            Ver Dispositivos
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if extractions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="5%">#</th>
+                                    <th width="15%">Dispositivo</th>
+                                    <th width="10%">Status</th>
+                                    <th width="15%">Atribuído a</th>
+                                    <th width="12%">Iniciado em</th>
+                                    <th width="12%">Finalizado em</th>
+                                    <th width="10%">Resultado</th>
+                                    <th width="10%">Tamanho</th>
+                                    <th width="11%" class="text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for extraction in extractions %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ forloop.counter }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if extraction.case_device.device_model %}
+                                            <strong>{{ extraction.case_device.device_model.brand.name }}</strong><br>
+                                            <small class="text-muted">{{ extraction.case_device.device_model.name }}</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                        {% if extraction.case_device.device_category %}
+                                            <br><span class="badge bg-primary">{{ extraction.case_device.device_category.name }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ extraction.get_status_color }}">
+                                            {{ extraction.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if extraction.assigned_to %}
+                                            <i class="fas fa-user me-1"></i>
+                                            {{ extraction.assigned_to.user.get_full_name|default:extraction.assigned_to.user.username }}
+                                        {% else %}
+                                            <span class="text-muted">Não atribuído</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if extraction.started_at %}
+                                            {{ extraction.started_at|date:"d/m/Y H:i" }}
+                                            {% if extraction.started_by %}
+                                                <br><small class="text-muted">por {{ extraction.started_by.user.get_full_name|default:extraction.started_by.user.username }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if extraction.finished_at %}
+                                            {{ extraction.finished_at|date:"d/m/Y H:i" }}
+                                            {% if extraction.finished_by %}
+                                                <br><small class="text-muted">por {{ extraction.finished_by.user.get_full_name|default:extraction.finished_by.user.username }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if extraction.extraction_result %}
+                                            {% if extraction.extraction_result == 'success' %}
+                                                <span class="badge bg-success">Bem-Sucedida</span>
+                                            {% elif extraction.extraction_result == 'failed' %}
+                                                <span class="badge bg-danger">Falhou</span>
+                                            {% elif extraction.extraction_result == 'partial' %}
+                                                <span class="badge bg-warning">Parcial</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if extraction.extraction_size %}
+                                            {{ extraction.extraction_size }} GB
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'cases:device_update' case.pk extraction.case_device.pk %}" 
+                                               class="btn btn-outline-primary" 
+                                               title="Ver Dispositivo">
+                                                <i class="fas fa-mobile-alt"></i>
+                                            </a>
+                                            {% if extraction.status == 'in_progress' or extraction.status == 'paused' %}
+                                            <a href="{% url 'extractions:finish_form' extraction.pk %}" 
+                                               class="btn btn-outline-success" 
+                                               title="Finalizar Extração">
+                                                <i class="fas fa-check-circle"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-database fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">Nenhuma extração encontrada para este processo.</p>
+                        {% if has_devices_without_extractions %}
+                        <div class="alert alert-info d-inline-block mt-3 mb-0" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Existem dispositivos cadastrados sem extração. Clique em "Criar Extrações" para gerá-las automaticamente.
+                        </div>
+                        {% else %}
+                        <small class="text-muted">Adicione dispositivos ao processo para iniciar as extrações.</small>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

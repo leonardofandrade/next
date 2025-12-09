@@ -84,7 +84,7 @@ class MyCasesView(LoginRequiredMixin, ServiceMixin, ListView):
     model = Case
     service_class = CaseService
     search_form_class = CaseSearchForm
-    template_name = 'users/my_cases.html'
+    template_name = 'users/extractors/my_cases.html'
     context_object_name = 'cases'
     paginate_by = settings.PAGINATE_BY
     

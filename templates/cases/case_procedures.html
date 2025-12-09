@@ -8,11 +8,7 @@
 {% endblock page_title %}
 
 {% block page_description %}
-{% if action == 'create' %}
-    Preencha os dados para criar um novo processo
-{% else %}
-    Atualize os dados do processo
-{% endif %}
+Visualize os procedimentos e informações do processo
 {% endblock page_description %}
 
 {% block page_actions %}
@@ -27,7 +23,6 @@
     {% include 'cases/includes/case_detail_include.html' with case=case %}
 
     <!-- Procedimentos do Caso -->
-    {% if action == 'update' and case %}
     <div class="row mt-4">
         <div class="col-12">
             <div class="card">
@@ -112,13 +107,11 @@
             </div>
         </div>
     </div>
-    {% endif %}
 
 </div>
 
 <!-- Modais de Confirmação -->
-{% if action == 'update' and case %}
-    <!-- Modal Atribuir-me -->
+<!-- Modal Atribuir-me -->
     <div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -237,7 +230,6 @@
             </div>
         </div>
     </div>
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}

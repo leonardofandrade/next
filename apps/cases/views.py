@@ -508,6 +508,44 @@ class CaseDevicesView(LoginRequiredMixin, DetailView):
         return context
 
 
+class CaseProceduresView(LoginRequiredMixin, DetailView):
+    """
+    Exibe os procedimentos e dispositivos de um processo de extração
+    """
+    model = Case
+    template_name = 'cases/case_procedures.html'
+    context_object_name = 'case'
+    
+    def get_queryset(self):
+        """
+        Filtra apenas casos não deletados
+        """
+        return Case.objects.filter(deleted_at__isnull=True)
+    
+    def get_context_data(self, **kwargs):
+        """
+        Adiciona os procedimentos e dispositivos do caso ao contexto
+        """
+        context = super().get_context_data(**kwargs)
+        case = self.get_object()
+        
+        # Filtra apenas procedimentos não deletados
+        procedures = case.procedures.filter(deleted_at__isnull=True).select_related('procedure_category')
+        
+        # Filtra apenas dispositivos não deletados
+        devices = case.case_devices.filter(deleted_at__isnull=True).select_related(
+            'device_category',
+            'device_model__brand'
+        )
+        
+        context['page_title'] = f'Procedimentos e Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}'
+        context['page_icon'] = 'fa-gavel'
+        context['action'] = 'update'
+        context['procedures'] = procedures
+        context['devices'] = devices
+        return context
+
+
 class CaseDeviceCreateView(LoginRequiredMixin, CreateView):
     """
     Cria um novo dispositivo para um processo

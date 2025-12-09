@@ -14,6 +14,7 @@ urlpatterns = [
     path('<int:pk>/assign-to-me/', views.CaseAssignToMeView.as_view(), name='assign_to_me'),
     path('<int:pk>/unassign-from-me/', views.CaseUnassignFromMeView.as_view(), name='unassign_from_me'),
     path('<int:pk>/devices/', views.CaseDevicesView.as_view(), name='devices'),
+    path('<int:pk>/procedures/', views.CaseProceduresView.as_view(), name='procedures'),
     path('<int:pk>/devices/create-extractions/', views.CreateExtractionsView.as_view(), name='create_extractions'),
     path('<int:case_pk>/devices/create/', views.CaseDeviceCreateView.as_view(), name='device_create'),
     path('<int:case_pk>/devices/<int:pk>/update/', views.CaseDeviceUpdateView.as_view(), name='device_update'),

@@ -1,0 +1,151 @@
+{% comment %}
+Card de detalhes do Case - Reutilizável
+Uso: {% include 'cases/includes/case_detail_include.html' with case=case %}
+{% endcomment %}
+
+<div class="card mb-3">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-info-circle me-2"></i>
+            Informações do Processo
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <!-- Número do Processo -->
+            <div class="col-md-3">
+                <strong>Número:</strong><br>
+                <span class="badge bg-secondary fs-6">
+                    {{ case.number|default:"Rascunho" }}
+                </span>
+            </div>
+            
+            <!-- Status -->
+            <div class="col-md-3">
+                <strong>Status:</strong><br>
+                <span class="badge {{ case.status_badge_class }} fs-6">
+                    {{ case.get_status_display }}
+                </span>
+            </div>
+            
+            <!-- Prioridade -->
+            <div class="col-md-3">
+                <strong>Prioridade:</strong><br>
+                <span class="badge bg-{{ case.get_priority_color }} fs-6">
+                    {{ case.get_priority_display }}
+                </span>
+            </div>
+            
+            <!-- Quantidade de Dispositivos -->
+            <div class="col-md-3">
+                <strong>Dispositivos:</strong><br>
+                {{ case.requested_device_amount|default:"-" }}
+            </div>
+            
+            <!-- Unidade Solicitante -->
+            <div class="col-md-6">
+                <strong>Unidade Solicitante:</strong><br>
+                {% if case.requester_agency_unit %}
+                    {{ case.requester_agency_unit.name }}
+                    <span class="badge bg-info">{{ case.requester_agency_unit.acronym }}</span>
+                {% else %}
+                    <span class="text-muted">-</span>
+                {% endif %}
+            </div>
+            
+            <!-- Unidade de Extração -->
+            <div class="col-md-6">
+                <strong>Unidade de Extração:</strong><br>
+                {% if case.extraction_unit %}
+                    <span class="badge bg-info">{{ case.extraction_unit.acronym }}</span>
+                    {{ case.extraction_unit.name }}
+                {% else %}
+                    <span class="text-muted">Não atribuída</span>
+                {% endif %}
+            </div>
+            
+            <!-- Atribuído a -->
+            <div class="col-md-6">
+                <strong>Atribuído a:</strong><br>
+                {% if case.assigned_to %}
+                    <i class="fas fa-user me-1"></i>
+                    {{ case.assigned_to.get_full_name|default:case.assigned_to.username }}
+                    {% if case.assigned_at %}
+                        <br><small class="text-muted">em {{ case.assigned_at|date:"d/m/Y H:i" }}</small>
+                    {% endif %}
+                {% else %}
+                    <span class="text-muted">Não atribuído</span>
+                {% endif %}
+            </div>
+            
+            <!-- Data da Solicitação -->
+            <div class="col-md-6">
+                <strong>Data da Solicitação:</strong><br>
+                {% if case.requested_at %}
+                    {{ case.requested_at|date:"d/m/Y H:i" }}
+                {% else %}
+                    <span class="text-muted">-</span>
+                {% endif %}
+            </div>
+            
+            <!-- Procedimentos -->
+            {% if case.request_procedures %}
+            <div class="col-md-12">
+                <strong>Procedimentos:</strong><br>
+                {{ case.request_procedures }}
+            </div>
+            {% endif %}
+            
+            <!-- Categoria de Crime -->
+            {% if case.crime_category %}
+            <div class="col-md-6">
+                <strong>Categoria de Crime:</strong><br>
+                {{ case.crime_category.name }}
+            </div>
+            {% endif %}
+            
+            <!-- E-mail para Resposta -->
+            {% if case.requester_reply_email %}
+            <div class="col-md-6">
+                <strong>E-mail para Resposta:</strong><br>
+                <a href="mailto:{{ case.requester_reply_email }}">{{ case.requester_reply_email }}</a>
+            </div>
+            {% endif %}
+            
+            <!-- Informações Adicionais -->
+            {% if case.additional_info %}
+            <div class="col-md-12">
+                <strong>Informações Adicionais:</strong><br>
+                <div class="bg-light p-3 rounded">
+                    {{ case.additional_info|linebreaksbr }}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Data de Criação -->
+            <div class="col-md-6">
+                <strong>Criado em:</strong><br>
+                <small class="text-muted">
+                    {{ case.created_at|date:"d/m/Y H:i" }}
+                    {% if case.created_by %}
+                        por {{ case.created_by.get_full_name|default:case.created_by.username }}
+                    {% endif %}
+                </small>
+            </div>
+            
+            <!-- Última Atualização -->
+            {% if case.updated_at %}
+            <div class="col-md-6">
+                <strong>Última atualização:</strong><br>
+                <small class="text-muted">
+                    {{ case.updated_at|date:"d/m/Y H:i" }}
+                    {% if case.updated_by %}
+                        por {{ case.updated_by.get_full_name|default:case.updated_by.username }}
+                    {% endif %}
+                </small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+

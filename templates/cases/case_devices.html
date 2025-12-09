@@ -45,7 +45,7 @@ Visualize os dispositivos e informações do processo
                     <div class="card-body">
                         <!-- Informações Básicas do Dispositivo -->
                         <div class="mb-3">
-                            <h6 class="text-muted mb-3">
+                            <h6 class="text-muted mb-3 border-bottom pb-2">
                                 <i class="fas fa-mobile-alt me-2"></i>
                                 Identificação do Dispositivo
                             </h6>
@@ -55,19 +55,27 @@ Visualize os dispositivos e informações do processo
                                     {{ device_form.device_category }}
                                     {{ device_form.device_category.errors }}
                                 </div>
-                                <div class="col-md-7">
+                                <div class="col-md-9">
                                     {{ device_form.device_model|form_label_class }}
                                     {{ device_form.device_model }}
                                     {{ device_form.device_model.errors }}
                                 </div>
-                                <div class="col-md-2">
+                            </div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-3">
                                     {{ device_form.color|form_label_class }}
                                     {{ device_form.color }}
                                     {{ device_form.color.errors }}
                                 </div>
+                                <div class="col-md-9">
+                                    {{ device_form.owner_name|form_label_class }}
+                                    {{ device_form.owner_name }}
+                                    {{ device_form.owner_name.errors }}
+                                </div>
+                               
                             </div>
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-3">
+                            <div class="row g-3">
+                                <div class="col-md-12">
                                     <div class="form-check form-switch form-label">
                                         {{ device_form.is_imei_unknown }}
                                         <label class="form-check-label" for="{{ device_form.is_imei_unknown.id_for_label }}">
@@ -75,28 +83,19 @@ Visualize os dispositivos e informações do processo
                                         </label>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
-                                    {{ device_form.imei_01|form_label_class }}
+                            </div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-4">
                                     {{ device_form.imei_01 }}
-                                    {{ device_form.imei_01.errors }}
                                 </div>
-                                <div class="col-md-3">
-                                    {{ device_form.imei_02|form_label_class }}
+                                <div class="col-md-4">
                                     {{ device_form.imei_02 }}
-                                    {{ device_form.imei_02.errors }}
                                 </div>
-                                <div class="col-md-3">
-                                    {{ device_form.imei_03|form_label_class }}
+                                <div class="col-md-4">
                                     {{ device_form.imei_03 }}
-                                    {{ device_form.imei_03.errors }}
                                 </div>
                             </div>
                             <div class="row g-3 mb-3">
-                                <div class="col-md-6">
-                                    {{ device_form.owner_name|form_label_class }}
-                                    {{ device_form.owner_name }}
-                                    {{ device_form.owner_name.errors }}
-                                </div>
                                 <div class="col-md-3">
                                     <div class="form-check form-switch form-label">
                                         {{ device_form.is_sealed }}
@@ -104,19 +103,16 @@ Visualize os dispositivos e informações do processo
                                             {{ device_form.is_sealed.label }}
                                         </label>
                                     </div>
+                                </div>
+                                <div class="col-md-9">
                                     <div id="security_seal_field">{{ device_form.security_seal }}</div>
-                                </div>
-                                <div class="col-md-3">
-                                    {{ device_form.internal_storage|form_label_class }}
-                                    {{ device_form.internal_storage }}
-                                    {{ device_form.internal_storage.errors }}
-                                </div>
+                                </div>                          
                             </div>
                         </div>
 
                         <!-- Status e Segurança -->
                         <div class="mb-3">
-                            <h6 class="text-muted mb-3">
+                            <h6 class="text-muted mb-3 border-bottom pb-2">
                                 <i class="fas fa-info-circle me-2"></i>
                                 Status e Segurança
                             </h6>
@@ -137,12 +133,14 @@ Visualize os dispositivos e informações do processo
                                         </label>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                            </div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
                                     {{ device_form.password_type|form_label_class }}
                                     {{ device_form.password_type }}
                                     {{ device_form.password_type.errors }}
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-6">
                                     <div class="form-check form-switch form-label">
                                         {{ device_form.is_password_known }}
                                         <label class="form-check-label" for="{{ device_form.is_password_known.id_for_label }}">
@@ -156,7 +154,7 @@ Visualize os dispositivos e informações do processo
 
                         <!-- Condição Física -->
                         <div class="mb-3">
-                            <h6 class="text-muted mb-3">
+                            <h6 class="text-muted mb-3 border-bottom pb-2">
                                 <i class="fas fa-tools me-2"></i>
                                 Condição Física
                             </h6>
@@ -184,7 +182,7 @@ Visualize os dispositivos e informações do processo
 
                         <!-- Acessórios -->
                         <div class="mb-3">
-                            <h6 class="text-muted mb-3">
+                            <h6 class="text-muted mb-3 border-bottom pb-2">
                                 <i class="fas fa-sim-card me-2"></i>
                                 Acessórios
                             </h6>
@@ -221,15 +219,13 @@ Visualize os dispositivos e informações do processo
 
                         <!-- Informações Adicionais -->
                         <div class="mb-3">
-                            <h6 class="text-muted mb-3">
+                            <h6 class="text-muted mb-3 border-bottom pb-2">
                                 <i class="fas fa-sticky-note me-2"></i>
                                 Informações Adicionais
                             </h6>
                             <div class="row g-3 mb-3">
                                 <div class="col-md-12">
-                                    {{ device_form.additional_info|form_label_class }}
                                     {{ device_form.additional_info }}
-                                    {{ device_form.additional_info.errors }}
                                 </div>
                             </div>
                         </div>
@@ -237,8 +233,13 @@ Visualize os dispositivos e informações do processo
                     <div class="card-footer">
                         <div class="d-flex justify-content-between align-items-center">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>
-                                {% if editing_device_id %}Salvar Alterações{% else %}Salvar Dispositivo{% endif %}
+                                {% if editing_device_id %}
+                                <i class="fas fa-check me-2"></i>
+                                Salvar Alterações
+                                {% else %}
+                                <i class="fas fa-plus me-2"></i>
+                                Adicionar Dispositivo
+                                {% endif %}
                             </button>
                             {% if editing_device_id %}
                             <div>

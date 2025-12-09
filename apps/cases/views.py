@@ -538,11 +538,17 @@ class CaseProceduresView(LoginRequiredMixin, DetailView):
             'device_model__brand'
         )
         
+        # Sempre cria um formulário vazio para criar novo procedimento
+        from apps.cases.forms import CaseProcedureForm
+        form = CaseProcedureForm(case=case)
+        
         context['page_title'] = f'Procedimentos e Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}'
         context['page_icon'] = 'fa-gavel'
-        context['action'] = 'update'
         context['procedures'] = procedures
         context['devices'] = devices
+        context['procedure_form'] = form
+        context['action'] = 'create'
+        
         return context
 
 
@@ -832,6 +838,11 @@ class CaseProcedureCreateView(LoginRequiredMixin, CreateView):
             self.request,
             'Procedimento adicionado com sucesso!'
         )
+        
+        # Se vier da página de procedimentos, redireciona para lá
+        if self.request.GET.get('from') == 'procedures':
+            return redirect('cases:procedures', pk=self.case.pk)
+        
         return redirect('cases:update', pk=self.case.pk)
     
     def get_context_data(self, **kwargs):
@@ -844,6 +855,32 @@ class CaseProcedureCreateView(LoginRequiredMixin, CreateView):
         context['case'] = self.case
         context['action'] = 'create'
         return context
+
+
+class CaseProcedureDetailView(LoginRequiredMixin, DetailView):
+    """
+    Retorna dados de um procedimento em JSON para AJAX
+    """
+    model = CaseProcedure
+    
+    def get_queryset(self):
+        """
+        Filtra apenas procedimentos não deletados
+        """
+        return CaseProcedure.objects.filter(deleted_at__isnull=True)
+    
+    def get(self, request, *args, **kwargs):
+        """
+        Retorna dados do procedimento em JSON
+        """
+        procedure = self.get_object()
+        
+        return JsonResponse({
+            'id': procedure.pk,
+            'procedure_category': procedure.procedure_category.pk if procedure.procedure_category else None,
+            'number': procedure.number or '',
+            'original_filename': procedure.original_filename or '',
+        })
 
 
 class CaseProcedureUpdateView(LoginRequiredMixin, UpdateView):
@@ -890,6 +927,41 @@ class CaseProcedureUpdateView(LoginRequiredMixin, UpdateView):
         kwargs['case'] = self.case
         return kwargs
     
+    def form_invalid(self, form):
+        """
+        Trata erros de validação - se vier da página de procedimentos, renderiza lá
+        """
+        # Se vier da página de procedimentos, renderiza o template de procedures com o formulário
+        if self.request.GET.get('from') == 'procedures':
+            # Recria o contexto da view CaseProceduresView
+            case = self.case
+            procedures = case.procedures.filter(deleted_at__isnull=True).select_related('procedure_category')
+            devices = case.case_devices.filter(deleted_at__isnull=True).select_related(
+                'device_category',
+                'device_model__brand'
+            )
+            
+            # Cria um novo formulário vazio para exibir na página
+            from apps.cases.forms import CaseProcedureForm
+            empty_form = CaseProcedureForm(case=case)
+            
+            context = {
+                'case': case,
+                'page_title': f'Procedimentos e Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}',
+                'page_icon': 'fa-gavel',
+                'procedures': procedures,
+                'devices': devices,
+                'procedure_form': empty_form,
+                'action': 'create',
+                'form_errors': form.errors,
+                'form_data': form.data,
+                'editing_procedure_id': self.get_object().pk
+            }
+            
+            return render(self.request, 'cases/case_procedures.html', context)
+        
+        return super().form_invalid(form)
+    
     def form_valid(self, form):
         """
         Atualiza campos adicionais antes de salvar
@@ -903,6 +975,19 @@ class CaseProcedureUpdateView(LoginRequiredMixin, UpdateView):
             self.request,
             'Procedimento atualizado com sucesso!'
         )
+        
+        # Se for requisição AJAX, retorna JSON para recarregar a página
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            from django.http import JsonResponse
+            return JsonResponse({
+                'success': True,
+                'redirect_url': reverse('cases:procedures', kwargs={'pk': self.case.pk})
+            })
+        
+        # Se vier da página de procedimentos, redireciona para lá (sem o parâmetro edit)
+        if self.request.GET.get('from') == 'procedures':
+            return redirect('cases:procedures', pk=self.case.pk)
+        
         return redirect('cases:update', pk=self.case.pk)
     
     def get_context_data(self, **kwargs):
@@ -940,6 +1025,13 @@ class CaseProcedureDeleteView(LoginRequiredMixin, DeleteView):
                 request,
                 'Você não tem permissão para excluir procedimentos deste processo. Apenas o responsável pode fazer isso.'
             )
+            # Se for AJAX, retorna JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
+               request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Você não tem permissão para excluir procedimentos deste processo.'
+                }, status=403)
             return redirect('cases:update', pk=self.case.pk)
         
         return super().dispatch(request, *args, **kwargs)
@@ -952,6 +1044,16 @@ class CaseProcedureDeleteView(LoginRequiredMixin, DeleteView):
             case=self.case,
             deleted_at__isnull=True
         ).select_related('procedure_category')
+    
+    def get_success_url(self):
+        """
+        Define a URL de redirecionamento após exclusão
+        """
+        # Se vier da página de procedimentos, redireciona para lá
+        if self.request.GET.get('from') == 'procedures':
+            return reverse('cases:procedures', kwargs={'pk': self.case.pk})
+        
+        return reverse('cases:update', kwargs={'pk': self.case.pk})
     
     def delete(self, request, *args, **kwargs):
         """
@@ -967,7 +1069,16 @@ class CaseProcedureDeleteView(LoginRequiredMixin, DeleteView):
             'Procedimento excluído com sucesso!'
         )
         
-        return redirect('cases:update', pk=self.case.pk)
+        # Se for requisição AJAX, retorna JSON para recarregar a página
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
+           request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'redirect_url': reverse('cases:procedures', kwargs={'pk': self.case.pk})
+            })
+        
+        # Usa get_success_url() para redirecionamento padrão
+        return redirect(self.get_success_url())
     
     def get_context_data(self, **kwargs):
         """

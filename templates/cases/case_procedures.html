@@ -408,9 +408,25 @@ document.addEventListener('DOMContentLoaded', function() {
             credentials: 'same-origin'
         })
         .then(response => {
+            // Verifica o content-type primeiro
+            const contentType = response.headers.get('content-type') || '';
+            
+            // Se retornou JSON, sempre tenta ler como JSON primeiro
+            if (contentType.includes('application/json')) {
+                return response.json();
+            }
+            
             // Se status é 200 ou 302, considera sucesso (exclusão realizada)
             if (response.status === 200 || response.status === 302 || response.ok) {
-                return { success: true };
+                // Tenta ler como JSON mesmo que o content-type não indique
+                return response.text().then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        // Se não é JSON, assume sucesso
+                        return { success: true, message: 'Procedimento excluído com sucesso!' };
+                    }
+                });
             }
             
             // Se status é erro, tenta ler a resposta
@@ -426,24 +442,40 @@ document.addEventListener('DOMContentLoaded', function() {
                             throw new Error('Erro ao excluir procedimento');
                         }
                         // Mesmo com erro HTTP, se não há mensagem de erro, considera sucesso
-                        return { success: true };
+                        return { success: true, message: 'Procedimento excluído com sucesso!' };
                     }
                 });
             }
             
-            // Para outros status, tenta ler como JSON ou considera sucesso
-            const contentType = response.headers.get('content-type') || '';
-            if (contentType.includes('application/json')) {
-                return response.json();
-            }
-            
             // Se não é JSON, assume sucesso (pode ser redirect)
-            return { success: true };
+            return { success: true, message: 'Procedimento excluído com sucesso!' };
         })
         .then(data => {
             // Se retornou JSON com success=false, mostra erro
             if (data && data.success === false) {
                 throw new Error(data.error || 'Erro ao excluir procedimento');
+            }
+            
+            // Se retornou JSON com success=true, exibe mensagem e recarrega
+            if (data && data.success === true) {
+                // Exibe mensagem de sucesso usando o sistema de toast se disponível
+                if (typeof window.ToastSystem !== 'undefined' && window.ToastSystem.success) {
+                    window.ToastSystem.success(data.message || 'Procedimento excluído com sucesso!');
+                } else if (typeof showToast !== 'undefined') {
+                    showToast(data.message || 'Procedimento excluído com sucesso!', 'success');
+                }
+                
+                // Fecha o modal
+                const modal = bootstrap.Modal.getInstance(deleteProcedureModal);
+                if (modal) {
+                    modal.hide();
+                }
+                
+                // Aguarda um pouco para exibir a mensagem antes de recarregar
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+                return;
             }
             
             // Qualquer outro caso, considera sucesso e recarrega

@@ -1064,16 +1064,18 @@ class CaseProcedureDeleteView(LoginRequiredMixin, DeleteView):
         procedure.deleted_by = request.user
         procedure.save()
         
+        success_message = 'Procedimento excluído com sucesso!'
         messages.success(
             request,
-            'Procedimento excluído com sucesso!'
+            success_message
         )
         
-        # Se for requisição AJAX, retorna JSON para recarregar a página
+        # Se for requisição AJAX, retorna JSON com a mensagem
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
            request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
             return JsonResponse({
                 'success': True,
+                'message': success_message,
                 'redirect_url': reverse('cases:procedures', kwargs={'pk': self.case.pk})
             })
         

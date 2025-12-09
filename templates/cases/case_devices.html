@@ -43,6 +43,18 @@ Visualize os dispositivos e informações do processo
                     <input type="hidden" name="device_id" value="{{ editing_device_id }}">
                     {% endif %}
                     <div class="card-body">
+                        {% if device_form.non_field_errors %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Erro:</strong>
+                            <ul class="mb-0">
+                                {% for error in device_form.non_field_errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                        </div>
+                        {% endif %}
                         <!-- Informações Básicas do Dispositivo -->
                         <div class="mb-3">
                             <h6 class="text-muted mb-3 border-bottom pb-2">
@@ -86,13 +98,32 @@ Visualize os dispositivos e informações do processo
                             </div>
                             <div class="row g-3 mb-3">
                                 <div class="col-md-4">
+                                    {{ device_form.imei_01|form_label_class }}
                                     {{ device_form.imei_01 }}
+                                    {% if device_form.imei_01.errors %}
+                                        <div class="text-danger small mt-1">
+                                            <i class="fas fa-exclamation-circle me-1"></i>
+                                            {{ device_form.imei_01.errors|first }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                                 <div class="col-md-4">
+                                    {{ device_form.imei_02|form_label_class }}
                                     {{ device_form.imei_02 }}
+                                    {% if device_form.imei_02.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ device_form.imei_02.errors|first }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                                 <div class="col-md-4">
+                                    {{ device_form.imei_03|form_label_class }}
                                     {{ device_form.imei_03 }}
+                                    {% if device_form.imei_03.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ device_form.imei_03.errors|first }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="row g-3 mb-3">

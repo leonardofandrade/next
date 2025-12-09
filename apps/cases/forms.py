@@ -2,6 +2,7 @@
 Formulários para o app cases
 """
 from django import forms
+from django.db.models import Q
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from apps.cases.models import Case, CaseDevice, CaseProcedure
@@ -543,9 +544,13 @@ class CaseDeviceForm(forms.ModelForm):
             deleted_at__isnull=True
         ).select_related('brand').order_by('brand__name', 'name')
         
+        # Garante que device_category é obrigatório (já é no modelo, mas reforça)
+        self.fields['device_category'].required = True
+        
         # Torna campos opcionais
         self.fields['owner_name'].required = False
         self.fields['password_type'].required = False
+        self.fields['device_model'].required = False
         
         # Configura campos booleanos para não serem obrigatórios
         boolean_fields = [
@@ -561,14 +566,45 @@ class CaseDeviceForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        is_imei_unknown = cleaned_data.get('is_imei_unknown')
-        imei_01 = cleaned_data.get('imei_01')
         
-        # Se IMEI não é desconhecido, pelo menos um IMEI deve ser informado
-        if not is_imei_unknown and not imei_01:
-            raise forms.ValidationError({
-                'imei_01': 'Informe pelo menos um IMEI ou marque "IMEI Desconhecido".'
-            })
+        # Validação de IMEI duplicado no mesmo processo
+        if self.case:
+            # Coleta todos os IMEIs informados (normalizados)
+            imeis = []
+            for i in range(1, 6):  # imei_01 até imei_05
+                imei_field = f'imei_{i:02d}'
+                imei_value = cleaned_data.get(imei_field)
+                if imei_value:
+                    imei_value = imei_value.strip()
+                    if imei_value:
+                        imeis.append(imei_value)
+            
+            # Verifica se algum IMEI já existe em outro dispositivo do mesmo processo
+            if imeis:
+                queryset = CaseDevice.objects.filter(
+                    case=self.case,
+                    deleted_at__isnull=True
+                )
+                
+                # Se estiver editando, exclui o próprio dispositivo da verificação
+                if self.instance and self.instance.pk:
+                    queryset = queryset.exclude(pk=self.instance.pk)
+                
+                # Verifica cada IMEI informado
+                for imei in imeis:
+                    # Verifica se o IMEI existe em qualquer campo de IMEI do dispositivo
+                    existing_device = queryset.filter(
+                        Q(imei_01=imei) |
+                        Q(imei_02=imei) |
+                        Q(imei_03=imei) |
+                        Q(imei_04=imei) |
+                        Q(imei_05=imei)
+                    ).first()
+                    
+                    if existing_device:
+                        raise forms.ValidationError({
+                            'imei_01': f'O IMEI {imei} já está cadastrado em outro dispositivo deste processo.'
+                        })
         
         return cleaned_data
 

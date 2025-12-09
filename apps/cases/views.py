@@ -643,6 +643,7 @@ class CaseDeviceCreateView(LoginRequiredMixin, CreateView):
                 'devices': devices,
                 'device_form': form,  # Formulário com erros
                 'action': 'create',
+                'editing_device_id': None,  # Importante: define como None para criação
                 'form_errors': form.errors,
                 'form_data': form.data,
             }

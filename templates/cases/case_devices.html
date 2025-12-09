@@ -321,11 +321,15 @@ Visualize os dispositivos e informações do processo
                                         {% endif %}
                                         {% if device.owner_name %}
                                             <p class="text-muted small">Proprietário: &nbsp;{{ device.owner_name }}</p>
+                                        {% endif %}       
+                                        {% if device_form.has_sim_card.value %}
+                                            <p class="text-muted small">Chip SIM: &nbsp;{{ device.sim_card_info }}</p>
                                         {% endif %}
-                                  
+                                        {% if device_form.has_memory_card.value %}
+                                            <p class="text-muted small">Cartão de Memória: &nbsp;{{ device.memory_card_info }}</p>
+                                        {% endif %}
+                                        
                                     </td>
-           
-                
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm" role="group">
                                             <a href="{% url 'cases:devices' pk=case.pk %}?edit={{ device.pk }}" 

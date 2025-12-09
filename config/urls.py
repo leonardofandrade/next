@@ -28,7 +28,7 @@ urlpatterns = [
         path('admin/', admin.site.urls),
         path('', include('apps.public.urls')),
         path('tables/', include('apps.base_tables.urls')),
-        path('user', include('apps.users.urls')),
+        path('user/', include('apps.users.urls')),
         path('', include('apps.core.urls')),
         path('requisitions/', include('apps.requisitions.urls')),
         path('cases/', include('apps.cases.urls')),

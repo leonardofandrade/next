@@ -27,7 +27,7 @@ from apps.core.mixins.views import (
     BaseDeleteView, ServiceMixin, ExtractionUnitFilterMixin
 )
 from apps.cases.models import Case, CaseDevice, Extraction, CaseProcedure
-from apps.cases.forms import CaseForm, CaseSearchForm, CaseDeviceForm, CaseCompleteRegistrationForm, CaseProcedureForm
+from apps.cases.forms import CaseCreateForm, CaseUpdateForm, CaseSearchForm, CaseDeviceForm, CaseCompleteRegistrationForm, CaseProcedureForm
 from apps.core.models import ReportsSettings
 from apps.cases.services import CaseService
 from apps.core.services.base import ServiceException
@@ -104,9 +104,9 @@ class CaseCreateView(BaseCreateView):
     Cria um novo processo de extração
     """
     model = Case
-    form_class = CaseForm
+    form_class = CaseCreateForm
     service_class = CaseService
-    template_name = 'cases/case_form.html'
+    template_name = 'cases/case_form_create.html'
     
     def get_form_kwargs(self):
         """Pass current user to form"""
@@ -186,9 +186,9 @@ class CaseUpdateView(ExtractionUnitFilterMixin, BaseUpdateView):
     Atualiza um processo de extração existente
     """
     model = Case
-    form_class = CaseForm
+    form_class = CaseUpdateForm
     service_class = CaseService
-    template_name = 'cases/case_form.html'
+    template_name = 'cases/case_form_update.html'
     
     def get_queryset(self):
         """Filter non-deleted cases and prefetch procedures and devices"""

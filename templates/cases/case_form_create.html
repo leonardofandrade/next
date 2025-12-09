@@ -1,0 +1,690 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+
+{% block page_title %}
+<i class="fas {{ page_icon }} text-primary me-2"></i>
+{{ page_title }}
+{% endblock page_title %}
+
+{% block page_description %}
+{% if action == 'create' %}
+    Preencha os dados para criar um novo processo
+{% else %}
+    Atualize os dados do processo
+{% endif %}
+{% endblock page_description %}
+
+{% block page_actions %}
+<a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'cases:list' %}{% endif %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left me-2"></i>
+    Voltar
+</a>
+{% endblock page_actions %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Form -->
+    <div class="row">
+        <div class="col-12">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <!-- Informações Básicas -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Informações do Processo
+                                </h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+                                    <!-- Status inicial -->
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-file-alt me-1"></i>
+                                        Novo Processo
+                                    </span>
+                                    
+                                    <!-- Status -->
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Cadastro Incompleto
+                                    </span>
+                                    
+                                    <!-- ID da Solicitação (se houver) -->
+                                    {% if form.extraction_request.value %}
+                                    <span class="badge bg-info text-dark">
+                                        <i class="fas fa-file-invoice me-1"></i>
+                                        Solicitação: #{{ form.extraction_request.value }}
+                                    </span>
+                                    {% endif %}
+                                    
+                                    <!-- Data atual -->
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {% now "d/m/Y" %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            {% if action == 'create' %}
+                            <div class="col-md-12">
+                                <label for="{{ form.extraction_request.id_for_label }}" class="form-label">
+                                    {{ form.extraction_request.label }}
+                                </label>
+                                {{ form.extraction_request }}
+                                {% if form.extraction_request.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.extraction_request.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    {{ form.extraction_request.help_text }}
+                                </small>
+                            </div>
+                            {% endif %}
+
+                            <div class="col-md-6">
+                                <label for="{{ form.requester_agency_unit.id_for_label }}" class="form-label">
+                                    {{ form.requester_agency_unit.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.requester_agency_unit }}
+                                {% if form.requester_agency_unit.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.requester_agency_unit.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    {{ form.requester_agency_unit.help_text }}
+                                </small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="{{ form.request_procedures.id_for_label }}" class="form-label">
+                                    {{ form.request_procedures.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.request_procedures }}
+                                {% if form.request_procedures.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.request_procedures.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    {{ form.request_procedures.help_text }}
+                                </small>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="{{ form.crime_category.id_for_label }}" class="form-label">
+                                    {{ form.crime_category.label }}
+                                </label>
+                                {{ form.crime_category }}
+                                {% if form.crime_category.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.crime_category.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="{{ form.requested_device_amount.id_for_label }}" class="form-label">
+                                    {{ form.requested_device_amount.label }}
+                                </label>
+                                {{ form.requested_device_amount }}
+                                {% if form.requested_device_amount.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.requested_device_amount.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="{{ form.requester_reply_email.id_for_label }}" class="form-label">
+                                    {{ form.requester_reply_email.label }}
+                                </label>
+                                {{ form.requester_reply_email }}
+                                {% if form.requester_reply_email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.requester_reply_email.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Autoridade -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-user-tie me-2"></i>
+                            Informações da Autoridade
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.requester_authority_name.id_for_label }}" class="form-label">
+                                    {{ form.requester_authority_name.label }}
+                                </label>
+                                {{ form.requester_authority_name }}
+                                {% if form.requester_authority_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.requester_authority_name.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="{{ form.requester_authority_position.id_for_label }}" class="form-label">
+                                    {{ form.requester_authority_position.label }}
+                                </label>
+                                {{ form.requester_authority_position }}
+                                {% if form.requester_authority_position.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.requester_authority_position.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gerenciamento -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-cogs me-2"></i>
+                            Gerenciamento do Processo
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="{{ form.extraction_unit.id_for_label }}" class="form-label">
+                                    {{ form.extraction_unit.label }}
+                                </label>
+                                {{ form.extraction_unit }}
+                                {% if form.extraction_unit.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.extraction_unit.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="{{ form.priority.id_for_label }}" class="form-label">
+                                    {{ form.priority.label }}
+                                </label>
+                                {{ form.priority }}
+                                {% if form.priority.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.priority.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="{{ form.assigned_to.id_for_label }}" class="form-label">
+                                    {{ form.assigned_to.label }}
+                                </label>
+                                {{ form.assigned_to }}
+                                {% if form.assigned_to.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.assigned_to.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-12">
+                                <label for="{{ form.additional_info.id_for_label }}" class="form-label">
+                                    {{ form.additional_info.label }}
+                                </label>
+                                {{ form.additional_info }}
+                                {% if form.additional_info.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.additional_info.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>
+                                    {% if action == 'create' %}
+                                        Criar Processo
+                                    {% else %}
+                                        Salvar Alterações
+                                    {% endif %}
+                                </button>
+                                {% if action == 'update' and case %}
+                                    {% if not case.registration_completed_at %}
+                                        {% if devices_count > 0 and procedures_count > 0 %}
+                                            <a href="{% url 'cases:complete_registration' case.pk %}" class="btn btn-success">
+                                                <i class="fas fa-check-circle me-2"></i>
+                                                Finalizar Cadastro
+                                            </a>
+                                        {% else %}
+                                            <button type="button" class="btn btn-success" disabled 
+                                                    title="{% if devices_count == 0 and procedures_count == 0 %}É necessário cadastrar pelo menos 1 dispositivo e 1 procedimento{% elif devices_count == 0 %}É necessário cadastrar pelo menos 1 dispositivo{% else %}É necessário cadastrar pelo menos 1 procedimento{% endif %}">
+                                                <i class="fas fa-check-circle me-2"></i>
+                                                Finalizar Cadastro
+                                            </button>
+                                        {% endif %}
+                                    {% endif %}
+                                    {% if case.assigned_to == request.user %}
+                                        <button type="button" 
+                                                class="btn btn-warning" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#unassignModal">
+                                            <i class="fas fa-user-times me-2"></i>
+                                            Desatribuir-me
+                                        </button>
+                                    {% elif not case.assigned_to %}
+                                        <button type="button" 
+                                                class="btn btn-success" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#assignModal">
+                                            <i class="fas fa-user-check me-2"></i>
+                                            Atribuir-me
+                                        </button>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            <a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'cases:list' %}{% endif %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Voltar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Procedimentos do Caso -->
+    {% if action == 'update' and case %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-gavel me-2"></i>
+                        Procedimentos do Processo
+                    </h5>
+                    <a href="{% url 'cases:procedure_create' case_pk=case.pk %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        Adicionar Procedimento
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if procedures %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="20%">Categoria</th>
+                                    <th width="30%">Número</th>
+                                    <th width="25%">Arquivo</th>
+                                    <th width="15%">Criado em</th>
+                                    <th width="10%" class="text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for procedure in procedures %}
+                                <tr>
+                                    <td>
+                                        {% if procedure.procedure_category %}
+                                            <span class="badge bg-primary">
+                                                {{ procedure.procedure_category.acronym }}
+                                            </span>
+                                            <small class="text-muted d-block">
+                                                {{ procedure.procedure_category.name }}
+                                            </small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>{{ procedure.number|default:"-" }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if procedure.original_filename %}
+                                            <i class="fas fa-file me-1"></i>
+                                            <small>{{ procedure.original_filename|truncatechars:30 }}</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ procedure.created_at|date:"d/m/Y H:i"|default:"-" }}</small>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'cases:procedure_update' case_pk=case.pk pk=procedure.pk %}" 
+                                               class="btn btn-outline-primary" 
+                                               title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'cases:procedure_delete' case_pk=case.pk pk=procedure.pk %}" 
+                                               class="btn btn-outline-danger" 
+                                               title="Excluir">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                            {% if procedure.document_file %}
+                                            <a href="#" 
+                                               class="btn btn-outline-secondary" 
+                                               title="Download"
+                                               onclick="alert('Funcionalidade de download em desenvolvimento'); return false;">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">Nenhum procedimento cadastrado.</p>
+                        <small class="text-muted">Os procedimentos são criados automaticamente ao criar o processo a partir de uma solicitação.</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Dispositivos do Caso -->
+    {% if action == 'update' and case %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-mobile-alt me-2"></i>
+                        Dispositivos do Processo
+                    </h5>
+                    <a href="{% url 'cases:device_create' case_pk=case.pk %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        Adicionar Dispositivo
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if devices %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="15%">Categoria</th>
+                                    <th width="20%">Modelo</th>
+                                    <th width="10%">Cor</th>
+                                    <th width="15%">IMEI</th>
+                                    <th width="15%">Proprietário</th>
+                                    <th width="10%">Armazenamento</th>
+                                    <th width="15%" class="text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for device in devices %}
+                                <tr>
+                                    <td>
+                                        {% if device.device_category %}
+                                            <span class="badge bg-primary">
+                                                {{ device.device_category.name }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if device.device_model %}
+                                            <strong>{{ device.device_model.brand.name }}</strong><br>
+                                            <small class="text-muted">{{ device.device_model.name }}</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ device.color|default:"-" }}
+                                    </td>
+                                    <td>
+                                        {% if device.is_imei_unknown %}
+                                            <span class="badge bg-warning">Desconhecido</span>
+                                        {% else %}
+                                            {% if device.imei_01 %}
+                                                <small>{{ device.imei_01 }}</small>
+                                                {% if device.imei_02 %}
+                                                    <br><small class="text-muted">{{ device.imei_02 }}</small>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ device.owner_name|default:"-" }}
+                                    </td>
+                                    <td>
+                                        {% if device.internal_storage %}
+                                            {{ device.internal_storage }} GB
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'cases:device_update' case_pk=case.pk pk=device.pk %}" 
+                                               class="btn btn-outline-primary" 
+                                               title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'cases:device_delete' case_pk=case.pk pk=device.pk %}" 
+                                               class="btn btn-outline-danger" 
+                                               title="Excluir">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-mobile-alt fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">Nenhum dispositivo cadastrado.</p>
+                        <small class="text-muted">Adicione dispositivos ao processo para iniciar as extrações.</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modais de Confirmação -->
+{% if action == 'update' and case %}
+    <!-- Modal Atribuir-me -->
+    <div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="assignModalLabel">
+                        <i class="fas fa-user-check me-2"></i>
+                        Atribuir Processo a Mim
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Você está prestes a se tornar responsável por este processo.
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <strong>Processo:</strong> {{ case.number|default:"Rascunho" }}
+                        </div>
+                        <div class="col-12">
+                            <strong>Procedimentos:</strong> {{ case.request_procedures|truncatechars:100 }}
+                        </div>
+                        <div class="col-6">
+                            <strong>Prioridade:</strong> 
+                            <span class="badge bg-{{ case.get_priority_color }}">{{ case.get_priority_display }}</span>
+                        </div>
+                        <div class="col-6">
+                            <strong>Status:</strong> 
+                            <span class="badge {{ case.status_badge_class }}">{{ case.get_status_display }}</span>
+                        </div>
+                        {% if case.requester_agency_unit %}
+                        <div class="col-12">
+                            <strong>Solicitante:</strong> {{ case.requester_agency_unit.acronym }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <hr>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Após confirmar, você será o responsável por este processo.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>
+                        Cancelar
+                    </button>
+                    <form method="post" action="{% url 'cases:assign_to_me' case.pk %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-user-check me-2"></i>
+                            Confirmar Atribuição
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Desatribuir-me -->
+    <div class="modal fade" id="unassignModal" tabindex="-1" aria-labelledby="unassignModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="unassignModalLabel">
+                        <i class="fas fa-user-times me-2"></i>
+                        Desatribuir Processo de Mim
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning mb-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Você está prestes a remover sua responsabilidade sobre este processo.
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <strong>Processo:</strong> {{ case.number|default:"Rascunho" }}
+                        </div>
+                        <div class="col-12">
+                            <strong>Procedimentos:</strong> {{ case.request_procedures|truncatechars:100 }}
+                        </div>
+                        <div class="col-6">
+                            <strong>Prioridade:</strong> 
+                            <span class="badge bg-{{ case.get_priority_color }}">{{ case.get_priority_display }}</span>
+                        </div>
+                        <div class="col-6">
+                            <strong>Status:</strong> 
+                            <span class="badge {{ case.status_badge_class }}">{{ case.get_status_display }}</span>
+                        </div>
+                        {% if case.assigned_at %}
+                        <div class="col-12">
+                            <strong>Atribuído em:</strong> {{ case.assigned_at|date:"d/m/Y H:i" }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <hr>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        O processo ficará sem responsável após esta ação.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>
+                        Cancelar
+                    </button>
+                    <form method="post" action="{% url 'cases:unassign_from_me' case.pk %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-user-times me-2"></i>
+                            Confirmar Desatribuição
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Inicializa Select2 para requester_agency_unit com busca e tema Bootstrap 5
+    $('#{{ form.requester_agency_unit.id_for_label }}').select2({
+        theme: 'bootstrap-5',
+        language: {
+            noResults: function() {
+                return "Nenhum resultado encontrado";
+            },
+            searching: function() {
+                return "Buscando...";
+            }
+        },
+        placeholder: 'Digite para pesquisar a unidade solicitante...',
+        allowClear: true,
+        width: '100%',
+        minimumInputLength: 0,
+        closeOnSelect: true
+    });
+    
+    // Também inicializa para extraction_unit se necessário
+    $('#{{ form.extraction_unit.id_for_label }}').select2({
+        theme: 'bootstrap-5',
+        language: {
+            noResults: function() {
+                return "Nenhum resultado encontrado";
+            },
+            searching: function() {
+                return "Buscando...";
+            }
+        },
+        placeholder: 'Selecione uma unidade de extração...',
+        allowClear: true,
+        width: '100%',
+        minimumInputLength: 0,
+        closeOnSelect: true
+    });
+});
+</script>
+{% endblock %}

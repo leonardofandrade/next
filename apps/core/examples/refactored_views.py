@@ -7,7 +7,7 @@ from apps.core.mixins.views import (
 )
 from apps.cases.services import CaseService, ExtractionService
 from apps.cases.models import Case, Extraction
-from apps.cases.forms import CaseForm, CaseSearchForm
+from apps.cases.forms import CaseCreateForm, CaseUpdateForm, CaseSearchForm
 
 
 class CaseListView(BaseListView):
@@ -45,7 +45,7 @@ class CaseCreateView(BaseCreateView):
     
     model = Case
     service_class = CaseService
-    form_class = CaseForm
+    form_class = CaseCreateForm
     template_name = 'cases/case_form.html'
 
 
@@ -54,7 +54,7 @@ class CaseUpdateView(BaseUpdateView):
     
     model = Case
     service_class = CaseService  
-    form_class = CaseForm
+    form_class = CaseUpdateForm
     template_name = 'cases/case_form.html'
 
 

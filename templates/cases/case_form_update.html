@@ -32,13 +32,66 @@
                 <!-- Informações Básicas -->
                 <div class="card mb-3">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-info-circle me-2"></i>
-                            Informações do Processo
-                        </h5>
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Informações do Processo
+                                </h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+                                    <!-- Número/ID do Processo -->
+                                    {% if case.number %}
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-hashtag me-1"></i>
+                                        Processo: {{ case.number }}
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-file-alt me-1"></i>
+                                        ID: #{{ case.pk }}
+                                    </span>
+                                    {% endif %}
+                                    
+                                    <!-- Status -->
+                                    <span class="badge {{ case.status_badge_class }}">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        {{ case.get_status_display }}
+                                    </span>
+                                    
+                                    <!-- ID da Solicitação -->
+                                    {% if case.extraction_request %}
+                                    <span class="badge bg-info text-dark">
+                                        <i class="fas fa-file-invoice me-1"></i>
+                                        Solicitação: #{{ case.extraction_request.pk }}
+                                    </span>
+                                    {% endif %}
+                                    
+                                    <!-- Data de Criação -->
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ case.created_at|date:"d/m/Y" }}
+                                    </span>
+                                    
+                                    <!-- Responsável -->
+                                    {% if case.assigned_to %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-user me-1"></i>
+                                        {{ case.assigned_to.get_full_name|default:case.assigned_to.username }}
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-user-times me-1"></i>
+                                        Sem responsável
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body">
-                        <div class="row g-3">
+                        <div class="row g-3 mb-3">
                             {% if action == 'create' %}
                             <div class="col-md-12">
                                 <label for="{{ form.extraction_request.id_for_label }}" class="form-label">
@@ -124,19 +177,7 @@
                                 {% endif %}
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Autoridade -->
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-user-tie me-2"></i>
-                            Informações da Autoridade
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
+                        <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label for="{{ form.requester_authority_name.id_for_label }}" class="form-label">
                                     {{ form.requester_authority_name.label }}
@@ -161,19 +202,8 @@
                                 {% endif %}
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Gerenciamento -->
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-cogs me-2"></i>
-                            Gerenciamento do Processo
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
+                        <div class="row g-3 mb-3 ">
                             <div class="col-md-4">
                                 <label for="{{ form.extraction_unit.id_for_label }}" class="form-label">
                                     {{ form.extraction_unit.label }}
@@ -223,11 +253,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Form Actions -->
-                <div class="card">
-                    <div class="card-body">
+                    <div class="card-footer">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <button type="submit" class="btn btn-primary">
@@ -277,6 +303,14 @@
                                 Voltar
                             </a>
                         </div>
+                    </div>
+                </div>
+
+
+                <!-- Form Actions -->
+                <div class="card">
+                    <div class="card-body">
+                        
                     </div>
                 </div>
             </form>

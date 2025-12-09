@@ -5,7 +5,6 @@ from django.shortcuts import redirect, get_object_or_404, render
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.views.generic import CreateView, UpdateView, DeleteView, DetailView
-from django.db import IntegrityError
 from django.utils import timezone
 from django.http import JsonResponse
 
@@ -13,14 +12,16 @@ from apps.cases.models import Case, CaseDevice
 from apps.cases.forms import CaseDeviceForm
 from apps.cases.services import CaseDeviceService
 from apps.core.services.base import ServiceException
+from apps.core.mixins.views import ServiceMixin
 
 
-class CaseDeviceCreateView(LoginRequiredMixin, CreateView):
+class CaseDeviceCreateView(LoginRequiredMixin, ServiceMixin, CreateView):
     """
     Cria um novo dispositivo para um processo
     """
     model = CaseDevice
     form_class = CaseDeviceForm
+    service_class = CaseDeviceService
     template_name = 'cases/case_device_form.html'
     
     def dispatch(self, request, *args, **kwargs):
@@ -81,55 +82,38 @@ class CaseDeviceCreateView(LoginRequiredMixin, CreateView):
     
     def form_valid(self, form):
         """
-        Define campos adicionais antes de salvar
+        Cria dispositivo usando service
         """
+        service = self.get_service()
+        form_data = form.cleaned_data
+        
+        # Adiciona o case aos dados
+        form_data['case'] = self.case
+        
         try:
-            device = form.save(commit=False)
-            device.case = self.case
-            device.created_by = self.request.user
+            device = service.create(form_data)
             
-            # Valida regras de negócio usando o service
-            service = CaseDeviceService(user=self.request.user)
-            data = {
-                'case': self.case,
-                'device_category': device.device_category,
-                'device_model': device.device_model,
-                'color': device.color,
-                'imei_01': device.imei_01,
-                'imei_02': device.imei_02,
-                'imei_03': device.imei_03,
-                'imei_04': device.imei_04,
-                'imei_05': device.imei_05,
-            }
-            service.validate_business_rules(data, instance=None)
+            # Verifica se deve criar e adicionar outro
+            save_and_add_another = self.request.POST.get('save_and_add_another')
+            from_param = self.request.GET.get('from', '')
             
-            device.save()
-        except (IntegrityError, ServiceException) as e:
-            # Se houver erro de integridade ou de validação do service, retorna o formulário com erro
-            if isinstance(e, ServiceException):
-                form.add_error(None, str(e))
+            if save_and_add_another == '1':
+                messages.success(
+                    self.request,
+                    'Dispositivo adicionado com sucesso! Você pode adicionar outro dispositivo abaixo.'
+                )
+                return redirect('cases:device_create', case_pk=self.case.pk)
             else:
-                form.add_error(None, 'Erro ao salvar dispositivo. Verifique se não há IMEI duplicado neste processo.')
+                messages.success(
+                    self.request,
+                    'Dispositivo adicionado com sucesso!'
+                )
+                if from_param == 'devices':
+                    return redirect('cases:devices', pk=self.case.pk)
+                return redirect('cases:update', pk=self.case.pk)
+        except ServiceException as e:
+            form.add_error(None, str(e))
             return self.form_invalid(form)
-        
-        # Verifica se deve criar e adicionar outro
-        save_and_add_another = self.request.POST.get('save_and_add_another')
-        from_param = self.request.GET.get('from', '')
-        
-        if save_and_add_another == '1':
-            messages.success(
-                self.request,
-                'Dispositivo adicionado com sucesso! Você pode adicionar outro dispositivo abaixo.'
-            )
-            return redirect('cases:device_create', case_pk=self.case.pk)
-        else:
-            messages.success(
-                self.request,
-                'Dispositivo adicionado com sucesso!'
-            )
-            if from_param == 'devices':
-                return redirect('cases:devices', pk=self.case.pk)
-            return redirect('cases:update', pk=self.case.pk)
     
     def get_context_data(self, **kwargs):
         """
@@ -143,12 +127,13 @@ class CaseDeviceCreateView(LoginRequiredMixin, CreateView):
         return context
 
 
-class CaseDeviceUpdateView(LoginRequiredMixin, UpdateView):
+class CaseDeviceUpdateView(LoginRequiredMixin, ServiceMixin, UpdateView):
     """
     Atualiza um dispositivo existente
     """
     model = CaseDevice
     form_class = CaseDeviceForm
+    service_class = CaseDeviceService
     template_name = 'cases/case_device_form.html'
     
     def dispatch(self, request, *args, **kwargs):
@@ -218,45 +203,29 @@ class CaseDeviceUpdateView(LoginRequiredMixin, UpdateView):
     
     def form_valid(self, form):
         """
-        Atualiza campos adicionais antes de salvar
+        Atualiza dispositivo usando service
         """
-        try:
-            device = form.save(commit=False)
-            device.updated_by = self.request.user
-            device.version += 1
-            
-            # Valida regras de negócio usando o service
-            service = CaseDeviceService(user=self.request.user)
-            data = {
-                'case': device.case,
-                'device_category': device.device_category,
-                'device_model': device.device_model,
-                'color': device.color,
-                'imei_01': device.imei_01,
-                'imei_02': device.imei_02,
-                'imei_03': device.imei_03,
-                'imei_04': device.imei_04,
-                'imei_05': device.imei_05,
-            }
-            service.validate_business_rules(data, instance=device)
-            
-            device.save()
-        except (IntegrityError, ServiceException) as e:
-            # Se houver erro de integridade ou de validação do service, retorna o formulário com erro
-            if isinstance(e, ServiceException):
-                form.add_error(None, str(e))
-            else:
-                form.add_error(None, 'Erro ao atualizar dispositivo. Verifique se não há IMEI duplicado neste processo.')
-            return self.form_invalid(form)
+        service = self.get_service()
+        form_data = form.cleaned_data
         
-        messages.success(
-            self.request,
-            'Dispositivo atualizado com sucesso!'
-        )
-        from_param = self.request.GET.get('from', '')
-        if from_param == 'devices':
-            return redirect('cases:devices', pk=self.case.pk)
-        return redirect('cases:update', pk=self.case.pk)
+        # Adiciona o case aos dados (caso não esteja no form_data)
+        if 'case' not in form_data:
+            form_data['case'] = self.case
+        
+        try:
+            device = service.update(self.get_object().pk, form_data)
+            
+            messages.success(
+                self.request,
+                'Dispositivo atualizado com sucesso!'
+            )
+            from_param = self.request.GET.get('from', '')
+            if from_param == 'devices':
+                return redirect('cases:devices', pk=self.case.pk)
+            return redirect('cases:update', pk=self.case.pk)
+        except ServiceException as e:
+            form.add_error(None, str(e))
+            return self.form_invalid(form)
     
     def get_context_data(self, **kwargs):
         """
@@ -326,11 +295,12 @@ class CaseDeviceDetailView(LoginRequiredMixin, DetailView):
         })
 
 
-class CaseDeviceDeleteView(LoginRequiredMixin, DeleteView):
+class CaseDeviceDeleteView(LoginRequiredMixin, ServiceMixin, DeleteView):
     """
     Realiza soft delete de um dispositivo
     """
     model = CaseDevice
+    service_class = CaseDeviceService
     template_name = 'cases/case_device_confirm_delete.html'
     
     def dispatch(self, request, *args, **kwargs):
@@ -366,26 +336,29 @@ class CaseDeviceDeleteView(LoginRequiredMixin, DeleteView):
     
     def delete(self, request, *args, **kwargs):
         """
-        Realiza soft delete e suporta requisições AJAX
+        Realiza soft delete usando service e suporta requisições AJAX
         """
-        device = self.get_object()
-        device.deleted_at = timezone.now()
-        device.deleted_by = request.user
-        device.save()
+        service = self.get_service()
+        device_pk = self.get_object().pk
         
-        messages.success(
-            request,
-            'Dispositivo excluído com sucesso!'
-        )
-        
-        # Se for requisição AJAX, retorna JSON
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': True,
-                'message': 'Dispositivo excluído com sucesso!'
-            })
-        
-        return redirect('cases:devices', pk=self.case.pk)
+        try:
+            service.delete(device_pk)
+            messages.success(
+                request,
+                'Dispositivo excluído com sucesso!'
+            )
+            
+            # Se for requisição AJAX, retorna JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Dispositivo excluído com sucesso!'
+                })
+            
+            return redirect('cases:devices', pk=self.case.pk)
+        except ServiceException as e:
+            self.handle_service_exception(e)
+            return redirect('cases:devices', pk=self.case.pk)
     
     def get_context_data(self, **kwargs):
         """

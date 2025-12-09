@@ -11,14 +11,18 @@ from django.urls import reverse
 
 from apps.cases.models import Case, CaseProcedure
 from apps.cases.forms import CaseProcedureForm
+from apps.cases.services import CaseProcedureService
+from apps.core.services.base import ServiceException
+from apps.core.mixins.views import ServiceMixin
 
 
-class CaseProcedureCreateView(LoginRequiredMixin, CreateView):
+class CaseProcedureCreateView(LoginRequiredMixin, ServiceMixin, CreateView):
     """
     Cria um novo procedimento para um processo
     """
     model = CaseProcedure
     form_class = CaseProcedureForm
+    service_class = CaseProcedureService
     template_name = 'cases/case_procedure_form.html'
     
     def dispatch(self, request, *args, **kwargs):
@@ -80,23 +84,30 @@ class CaseProcedureCreateView(LoginRequiredMixin, CreateView):
     
     def form_valid(self, form):
         """
-        Define campos adicionais antes de salvar
+        Cria procedimento usando service
         """
-        procedure = form.save(commit=False)
-        procedure.case = self.case
-        procedure.created_by = self.request.user
-        procedure.save()
+        service = self.get_service()
+        form_data = form.cleaned_data
         
-        messages.success(
-            self.request,
-            'Procedimento adicionado com sucesso!'
-        )
+        # Adiciona o case aos dados
+        form_data['case'] = self.case
         
-        # Se vier da página de procedimentos, redireciona para lá
-        if self.request.GET.get('from') == 'procedures':
-            return redirect('cases:procedures', pk=self.case.pk)
-        
-        return redirect('cases:update', pk=self.case.pk)
+        try:
+            procedure = service.create(form_data)
+            
+            messages.success(
+                self.request,
+                'Procedimento adicionado com sucesso!'
+            )
+            
+            # Se vier da página de procedimentos, redireciona para lá
+            if self.request.GET.get('from') == 'procedures':
+                return redirect('cases:procedures', pk=self.case.pk)
+            
+            return redirect('cases:update', pk=self.case.pk)
+        except ServiceException as e:
+            form.add_error(None, str(e))
+            return self.form_invalid(form)
     
     def get_context_data(self, **kwargs):
         """
@@ -136,12 +147,13 @@ class CaseProcedureDetailView(LoginRequiredMixin, DetailView):
         })
 
 
-class CaseProcedureUpdateView(LoginRequiredMixin, UpdateView):
+class CaseProcedureUpdateView(LoginRequiredMixin, ServiceMixin, UpdateView):
     """
     Atualiza um procedimento existente
     """
     model = CaseProcedure
     form_class = CaseProcedureForm
+    service_class = CaseProcedureService
     template_name = 'cases/case_procedure_form.html'
     
     def dispatch(self, request, *args, **kwargs):
@@ -213,30 +225,38 @@ class CaseProcedureUpdateView(LoginRequiredMixin, UpdateView):
     
     def form_valid(self, form):
         """
-        Atualiza campos adicionais antes de salvar
+        Atualiza procedimento usando service
         """
-        procedure = form.save(commit=False)
-        procedure.updated_by = self.request.user
-        procedure.version += 1
-        procedure.save()
+        service = self.get_service()
+        form_data = form.cleaned_data
         
-        messages.success(
-            self.request,
-            'Procedimento atualizado com sucesso!'
-        )
+        # Adiciona o case aos dados (caso não esteja no form_data)
+        if 'case' not in form_data:
+            form_data['case'] = self.case
         
-        # Se for requisição AJAX, retorna JSON para recarregar a página
-        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': True,
-                'redirect_url': reverse('cases:procedures', kwargs={'pk': self.case.pk})
-            })
-        
-        # Se vier da página de procedimentos, redireciona para lá (sem o parâmetro edit)
-        if self.request.GET.get('from') == 'procedures':
-            return redirect('cases:procedures', pk=self.case.pk)
-        
-        return redirect('cases:update', pk=self.case.pk)
+        try:
+            procedure = service.update(self.get_object().pk, form_data)
+            
+            messages.success(
+                self.request,
+                'Procedimento atualizado com sucesso!'
+            )
+            
+            # Se for requisição AJAX, retorna JSON para recarregar a página
+            if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'redirect_url': reverse('cases:procedures', kwargs={'pk': self.case.pk})
+                })
+            
+            # Se vier da página de procedimentos, redireciona para lá (sem o parâmetro edit)
+            if self.request.GET.get('from') == 'procedures':
+                return redirect('cases:procedures', pk=self.case.pk)
+            
+            return redirect('cases:update', pk=self.case.pk)
+        except ServiceException as e:
+            form.add_error(None, str(e))
+            return self.form_invalid(form)
     
     def get_context_data(self, **kwargs):
         """
@@ -251,11 +271,12 @@ class CaseProcedureUpdateView(LoginRequiredMixin, UpdateView):
         return context
 
 
-class CaseProcedureDeleteView(LoginRequiredMixin, DeleteView):
+class CaseProcedureDeleteView(LoginRequiredMixin, ServiceMixin, DeleteView):
     """
     Realiza soft delete de um procedimento
     """
     model = CaseProcedure
+    service_class = CaseProcedureService
     template_name = 'cases/case_procedure_confirm_delete.html'
     
     def dispatch(self, request, *args, **kwargs):
@@ -305,30 +326,42 @@ class CaseProcedureDeleteView(LoginRequiredMixin, DeleteView):
     
     def delete(self, request, *args, **kwargs):
         """
-        Realiza soft delete
+        Realiza soft delete usando service
         """
-        procedure = self.get_object()
-        procedure.deleted_at = timezone.now()
-        procedure.deleted_by = request.user
-        procedure.save()
+        service = self.get_service()
+        procedure_pk = self.get_object().pk
         
-        success_message = 'Procedimento excluído com sucesso!'
-        messages.success(
-            request,
-            success_message
-        )
-        
-        # Se for requisição AJAX, retorna JSON com a mensagem
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
-           request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': True,
-                'message': success_message,
-                'redirect_url': reverse('cases:procedures', kwargs={'pk': self.case.pk})
-            })
-        
-        # Usa get_success_url() para redirecionamento padrão
-        return redirect(self.get_success_url())
+        try:
+            service.delete(procedure_pk)
+            
+            success_message = 'Procedimento excluído com sucesso!'
+            messages.success(
+                request,
+                success_message
+            )
+            
+            # Se for requisição AJAX, retorna JSON com a mensagem
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
+               request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': success_message,
+                    'redirect_url': reverse('cases:procedures', kwargs={'pk': self.case.pk})
+                })
+            
+            # Usa get_success_url() para redirecionamento padrão
+            return redirect(self.get_success_url())
+        except ServiceException as e:
+            # Se for AJAX, retorna JSON com erro
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
+               request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': str(e)
+                }, status=400)
+            
+            self.handle_service_exception(e)
+            return redirect(self.get_success_url())
     
     def get_context_data(self, **kwargs):
         """

@@ -149,18 +149,7 @@ class CaseCreateView(BaseCreateView):
         service = self.get_service()
         form_data = form.cleaned_data
         
-        # Set requested_at automatically if not from extraction_request
-        if not form_data.get('requested_at'):
-            form_data['requested_at'] = timezone.now()
-        
-        # Set initial status as draft
-        form_data['status'] = Case.CASE_STATUS_DRAFT
-        
-        # If has assigned_to, set assigned_at and assigned_by
-        if form_data.get('assigned_to'):
-            form_data['assigned_at'] = timezone.now()
-            form_data['assigned_by'] = self.request.user
-        
+        # A lógica de negócio (status, assigned_at, etc) agora está no service.validate_business_rules()
         try:
             self.object = service.create(form_data)
             messages.success(
@@ -226,17 +215,8 @@ class CaseUpdateView(ExtractionUnitFilterMixin, BaseUpdateView):
         """Handle form submission with service"""
         service = self.get_service()
         form_data = form.cleaned_data
-        old_assigned_to = self.get_object().assigned_to
         
-        # Update assigned_at if assigned_to changed
-        new_assigned_to = form_data.get('assigned_to')
-        if old_assigned_to != new_assigned_to and new_assigned_to:
-            form_data['assigned_at'] = timezone.now()
-            form_data['assigned_by'] = self.request.user
-        elif not new_assigned_to:
-            form_data['assigned_at'] = None
-            form_data['assigned_by'] = None
-        
+        # A lógica de negócio (assigned_at, assigned_by) agora está no service.validate_business_rules()
         try:
             self.object = service.update(self.object.pk, form_data)
             messages.success(
@@ -586,92 +566,70 @@ class CaseProceduresView(LoginRequiredMixin, DetailView):
         return context
 
 
-class CreateExtractionsView(LoginRequiredMixin, View):
+class CreateExtractionsView(LoginRequiredMixin, ServiceMixin, View):
     """
     Cria extrações para todos os dispositivos do caso que não possuem extração
     """
+    service_class = CaseService
     
     def post(self, request, pk):
         """
         Cria extrações com status 'pending' para dispositivos sem extração
         """
-        case = get_object_or_404(
-            Case.objects.filter(deleted_at__isnull=True),
-            pk=pk
-        )
+        service = self.get_service()
         
-        # Valida se o caso tem cadastro finalizado
-        if not case.registration_completed_at:
-            error_message = "Não é possível criar extrações para um caso com cadastro não finalizado. Finalize o cadastro do caso antes de criar extrações."
-            messages.error(request, error_message)
+        try:
+            case = service.get_object(pk)
+            extractions = service.create_extractions_for_case(case)
+            created_count = len(extractions)
+            
+            # Coleta informações dos dispositivos para resposta
+            devices_info = []
+            for extraction in extractions:
+                device = extraction.case_device
+                device_info = {
+                    'id': device.pk,
+                    'model': f"{device.device_model.brand.name} - {device.device_model.name}" if device.device_model and device.device_model.brand else 'Sem modelo',
+                    'category': device.device_category.name if device.device_category else '-',
+                }
+                devices_info.append(device_info)
+            
+            # Adiciona mensagem de sucesso
+            if created_count > 0:
+                messages.success(
+                    request,
+                    f'{created_count} extração(ões) criada(s) com sucesso!'
+                )
+            else:
+                messages.info(
+                    request,
+                    'Nenhuma extração foi criada. Todos os dispositivos já possuem extração.'
+                )
+            
+            # Se a requisição espera JSON, retorna JSON
+            if request.headers.get('Accept') == 'application/json' or request.GET.get('format') == 'json':
+                return JsonResponse({
+                    'success': True,
+                    'created_count': created_count,
+                    'devices': devices_info,
+                    'message': f'{created_count} extração(ões) criada(s) com sucesso!' if created_count > 0 else 'Nenhuma extração foi criada. Todos os dispositivos já possuem extração.'
+                })
+            
+            # Caso contrário, redireciona para a página de extrações do caso
+            return redirect('extractions:case_extractions', pk=case.pk)
+            
+        except ServiceException as e:
+            self.handle_service_exception(e)
             
             # Se a requisição espera JSON, retorna JSON
             if request.headers.get('Accept') == 'application/json' or request.GET.get('format') == 'json':
                 return JsonResponse({
                     'success': False,
-                    'error': error_message
+                    'error': str(e)
                 }, status=400)
             
             # Caso contrário, redireciona de volta
-            return redirect('cases:case_detail', pk=case.pk)
-        
-        # Busca dispositivos do caso que não têm extração associada
-        # Para OneToOneField reverso, precisamos usar exclude com valores existentes
-        devices_without_extraction = case.case_devices.filter(
-            deleted_at__isnull=True
-        ).exclude(
-            pk__in=Extraction.objects.values_list('case_device_id', flat=True)
-        ).select_related(
-            'device_category',
-            'device_model__brand'
-        )
-        
-        created_count = 0
-        devices_info = []
-        
-        for device in devices_without_extraction:
-            # Cria extração com status pending
-            extraction = Extraction.objects.create(
-                case_device=device,
-                status=Extraction.STATUS_PENDING,
-                created_by=request.user
-            )
-            created_count += 1
-            
-            # Coleta informações do dispositivo para resposta
-            device_info = {
-                'id': device.pk,
-                'model': f"{device.device_model.brand.name} - {device.device_model.name}" if device.device_model and device.device_model.brand else 'Sem modelo',
-                'category': device.device_category.name if device.device_category else '-',
-            }
-            devices_info.append(device_info)
-        
-        # Adiciona mensagem de sucesso
-        if created_count > 0:
-            # Atualiza o status do Case baseado nas extrações
-            case.update_status_based_on_extractions()
-            
-            messages.success(
-                request,
-                f'{created_count} extração(ões) criada(s) com sucesso!'
-            )
-        else:
-            messages.info(
-                request,
-                'Nenhuma extração foi criada. Todos os dispositivos já possuem extração.'
-            )
-        
-        # Se a requisição espera JSON, retorna JSON
-        if request.headers.get('Accept') == 'application/json' or request.GET.get('format') == 'json':
-            return JsonResponse({
-                'success': True,
-                'created_count': created_count,
-                'devices': devices_info,
-                'message': f'{created_count} extração(ões) criada(s) com sucesso!' if created_count > 0 else 'Nenhuma extração foi criada. Todos os dispositivos já possuem extração.'
-            })
-        
-        # Caso contrário, redireciona para a página de extrações do caso
-        return redirect('extractions:case_extractions', pk=case.pk)
+            return redirect('cases:detail', pk=pk)
     
     def get(self, request, pk):
         """
@@ -735,82 +693,70 @@ class CreateExtractionsView(LoginRequiredMixin, View):
             }, status=500)
 
 
-class CaseAssignToMeView(LoginRequiredMixin, View):
+class CaseAssignToMeView(LoginRequiredMixin, ServiceMixin, View):
     """
     Atribui o processo ao usuário logado
     """
+    service_class = CaseService
     
     def post(self, request, pk):
         """
         Atribui o processo ao usuário logado
         """
-        case = get_object_or_404(
-            Case.objects.filter(deleted_at__isnull=True),
-            pk=pk
-        )
+        service = self.get_service()
         
-        # Verifica se o caso já está atribuído ao usuário
-        if case.assigned_to == request.user:
-            messages.warning(
-                request,
-                'Este processo já está atribuído a você.'
-            )
-        else:
-            # Atribui o caso ao usuário
-            case.assigned_to = request.user
-            case.assigned_at = timezone.now()
-            case.assigned_by = request.user
-            case.save()
-            
-            messages.success(
-                request,
-                f'Processo atribuído a você com sucesso!'
-            )
+        try:
+            # Verifica se já está atribuído antes de tentar atribuir
+            case = service.get_object(pk)
+            if case.assigned_to == request.user:
+                messages.warning(
+                    request,
+                    'Este processo já está atribuído a você.'
+                )
+            else:
+                case = service.assign_to_user(pk, request.user)
+                messages.success(
+                    request,
+                    f'Processo atribuído a você com sucesso!'
+                )
+        except ServiceException as e:
+            self.handle_service_exception(e)
+            return redirect('cases:detail', pk=pk)
         
         # Redireciona de acordo com o referer ou para detalhes
         referer = request.META.get('HTTP_REFERER')
         if referer and 'cases/list' in referer:
             return redirect('cases:list')
-        return redirect('cases:detail', pk=case.pk)
+        return redirect('cases:detail', pk=pk)
 
 
-class CaseUnassignFromMeView(LoginRequiredMixin, View):
+class CaseUnassignFromMeView(LoginRequiredMixin, ServiceMixin, View):
     """
     Remove a atribuição do processo do usuário logado
     """
+    service_class = CaseService
     
     def post(self, request, pk):
         """
         Remove a atribuição do processo do usuário logado
         """
-        case = get_object_or_404(
-            Case.objects.filter(deleted_at__isnull=True),
-            pk=pk
-        )
+        service = self.get_service()
         
-        # Verifica se o caso está atribuído ao usuário (apenas o responsável pode se desatribuir)
-        if case.assigned_to != request.user:
-            messages.error(
-                request,
-                'Você não tem permissão para desatribuir este processo. Apenas o responsável pode se desatribuir.'
-            )
-        else:
-            # Remove a atribuição
-            case.assigned_to = None
-            case.assigned_at = None
-            case.assigned_by = None
-            case.save()
-            
+        try:
+            case = service.unassign_from_user(pk, request.user)
             messages.success(
                 request,
                 'Atribuição removida com sucesso!'
             )
+        except ServiceException as e:
+            self.handle_service_exception(e)
+            return redirect('cases:detail', pk=pk)
         
         # Redireciona de acordo com o referer ou para detalhes
         referer = request.META.get('HTTP_REFERER')
         if referer and 'cases/list' in referer:
             return redirect('cases:list')
-        return redirect('cases:detail', pk=case.pk)
+        return redirect('cases:detail', pk=pk)
 
 
 class CaseCoverPDFView(LoginRequiredMixin, View):

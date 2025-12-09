@@ -196,7 +196,7 @@ class CaseUpdateForm(forms.ModelForm):
             }),
             'additional_info': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 4,
+                'rows': 1,
                 'placeholder': 'Informações adicionais sobre o processo'
             }),
         }
@@ -238,8 +238,12 @@ class CaseUpdateForm(forms.ModelForm):
         self.fields['crime_category'].queryset = CrimeCategory.objects.all().order_by('-default_selection', 'name')
         self.fields['assigned_to'].queryset = User.objects.filter(is_active=True).order_by('first_name', 'username')
         
+        self.fields['extraction_unit'].required = True
+        self.fields['requester_agency_unit'].required = True
+        self.fields['request_procedures'].required = True
+        self.fields['requested_device_amount'].required = True
+        
         # Torna campos opcionais
-        self.fields['extraction_unit'].required = False
         self.fields['assigned_to'].required = False
 
     def clean_requested_device_amount(self):

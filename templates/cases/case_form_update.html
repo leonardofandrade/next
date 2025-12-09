@@ -1,5 +1,6 @@
 {% extends '_global/layout/base.html' %}
 {% load static %}
+{% load form_tags %}
 
 {% block page_title %}
 <i class="fas {{ page_icon }} text-primary me-2"></i>
@@ -32,224 +33,113 @@
                 <!-- Informações Básicas -->
                 <div class="card mb-3">
                     <div class="card-header">
-                        <div class="row align-items-center">
+                        <div class="row align-items-center mb-3">
                             <div class="col-md-6">
                                 <h5 class="card-title mb-0">
                                     <i class="fas fa-info-circle me-2"></i>
                                     Informações do Processo
                                 </h5>
                             </div>
-                            <div class="col-md-6">
-                                <div class="d-flex flex-wrap gap-2 justify-content-md-end">
-                                    <!-- Número/ID do Processo -->
-                                    {% if case.number %}
-                                    <span class="badge bg-primary">
-                                        <i class="fas fa-hashtag me-1"></i>
-                                        Processo: {{ case.number }}
-                                    </span>
-                                    {% else %}
-                                    <span class="badge bg-secondary">
-                                        <i class="fas fa-file-alt me-1"></i>
-                                        ID: #{{ case.pk }}
-                                    </span>
-                                    {% endif %}
-                                    
-                                    <!-- Status -->
-                                    <span class="badge {{ case.status_badge_class }}">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        {{ case.get_status_display }}
-                                    </span>
-                                    
-                                    <!-- ID da Solicitação -->
-                                    {% if case.extraction_request %}
-                                    <span class="badge bg-info text-dark">
-                                        <i class="fas fa-file-invoice me-1"></i>
-                                        Solicitação: #{{ case.extraction_request.pk }}
-                                    </span>
-                                    {% endif %}
-                                    
-                                    <!-- Data de Criação -->
-                                    <span class="badge bg-light text-dark">
-                                        <i class="fas fa-calendar me-1"></i>
-                                        {{ case.created_at|date:"d/m/Y" }}
-                                    </span>
-                                    
-                                    <!-- Responsável -->
-                                    {% if case.assigned_to %}
-                                    <span class="badge bg-success">
-                                        <i class="fas fa-user me-1"></i>
-                                        {{ case.assigned_to.get_full_name|default:case.assigned_to.username }}
-                                    </span>
-                                    {% else %}
-                                    <span class="badge bg-warning text-dark">
-                                        <i class="fas fa-user-times me-1"></i>
-                                        Sem responsável
-                                    </span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
+                        </div>                        
                     </div>
                     <div class="card-body">
-                        <div class="row g-3 mb-3">
-                            {% if action == 'create' %}
-                            <div class="col-md-12">
-                                <label for="{{ form.extraction_request.id_for_label }}" class="form-label">
-                                    {{ form.extraction_request.label }}
-                                </label>
-                                {{ form.extraction_request }}
-                                {% if form.extraction_request.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.extraction_request.errors }}
-                                    </div>
-                                {% endif %}
-                                <small class="form-text text-muted">
-                                    {{ form.extraction_request.help_text }}
-                                </small>
+                        <!-- Linha de Informações de Exibição -->
+                        <div class="row g-3 mb-3 border-bottom">
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Número/ID:</label>
+                                <strong class="text-primary fs-6">{{ case.number|default:case.pk }}</strong>
                             </div>
-                            {% endif %}
-
-                            <div class="col-md-6">
-                                <label for="{{ form.requester_agency_unit.id_for_label }}" class="form-label">
-                                    {{ form.requester_agency_unit.label }}
-                                    <span class="text-danger">*</span>
-                                </label>
-                                {{ form.requester_agency_unit }}
-                                {% if form.requester_agency_unit.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.requester_agency_unit.errors }}
-                                    </div>
-                                {% endif %}
-                                <small class="form-text text-muted">
-                                    {{ form.requester_agency_unit.help_text }}
-                                </small>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="{{ form.request_procedures.id_for_label }}" class="form-label">
-                                    {{ form.request_procedures.label }}
-                                    <span class="text-danger">*</span>
-                                </label>
-                                {{ form.request_procedures }}
-                                {% if form.request_procedures.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.request_procedures.errors }}
-                                    </div>
-                                {% endif %}
-                                <small class="form-text text-muted">
-                                    {{ form.request_procedures.help_text }}
-                                </small>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label for="{{ form.crime_category.id_for_label }}" class="form-label">
-                                    {{ form.crime_category.label }}
-                                </label>
-                                {{ form.crime_category }}
-                                {% if form.crime_category.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.crime_category.errors }}
-                                    </div>
-                                {% endif %}
-                            </div>
-
-                            <div class="col-md-4">
-                                <label for="{{ form.requested_device_amount.id_for_label }}" class="form-label">
-                                    {{ form.requested_device_amount.label }}
-                                </label>
-                                {{ form.requested_device_amount }}
-                                {% if form.requested_device_amount.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.requested_device_amount.errors }}
-                                    </div>
-                                {% endif %}
-                            </div>
-
-                            <div class="col-md-4">
-                                <label for="{{ form.requester_reply_email.id_for_label }}" class="form-label">
-                                    {{ form.requester_reply_email.label }}
-                                </label>
-                                {{ form.requester_reply_email }}
-                                {% if form.requester_reply_email.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.requester_reply_email.errors }}
-                                    </div>
-                                {% endif %}
+                            
+                            <div class="col-md-2">
+                                <label class="form-label fw-bold">Status:</label>
+                                <span class="badge {{ case.status_badge_class }} fs-6">
+                                        {{ case.get_status_display }}
+                                </span>
+                            </div>                          
+                            
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Responsável</label>
+                                <strong class="text-primary fs-6">
+                                    {% if case.assigned_to %}
+                                        {{ case.assigned_to.get_full_name }}
+                                    {% else %}
+                                        <strong class="text-danger fs-6">NÃO ATRIBUÍDO</strong>
+                                    {% endif %}
+                                </strong>
                             </div>
                         </div>
-                        <div class="row g-3 mb-3">
+                        <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label for="{{ form.requester_authority_name.id_for_label }}" class="form-label">
-                                    {{ form.requester_authority_name.label }}
-                                </label>
-                                {{ form.requester_authority_name }}
-                                {% if form.requester_authority_name.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.requester_authority_name.errors }}
-                                    </div>
-                                {% endif %}
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="{{ form.requester_authority_position.id_for_label }}" class="form-label">
-                                    {{ form.requester_authority_position.label }}
-                                </label>
-                                {{ form.requester_authority_position }}
-                                {% if form.requester_authority_position.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.requester_authority_position.errors }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mb-3 ">
-                            <div class="col-md-4">
-                                <label for="{{ form.extraction_unit.id_for_label }}" class="form-label">
-                                    {{ form.extraction_unit.label }}
-                                </label>
+                                {{ form.extraction_unit|form_label_class }}
                                 {{ form.extraction_unit }}
-                                {% if form.extraction_unit.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.extraction_unit.errors }}
-                                    </div>
-                                {% endif %}
+                                {{ form.extraction_unit.errors }}
                             </div>
 
-                            <div class="col-md-4">
-                                <label for="{{ form.priority.id_for_label }}" class="form-label">
-                                    {{ form.priority.label }}
-                                </label>
+                            <div class="col-md-6">
+                                {{ form.priority|form_label_class }}
                                 {{ form.priority }}
-                                {% if form.priority.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.priority.errors }}
-                                    </div>
-                                {% endif %}
+                                {{ form.priority.errors }}
+                            </div>
+                        </div>
+                        <div class="row mb-3 border-bottom text-primary">
+                            <div class="col-12">
+                                <h5 class="mb-3"><i class="fas fa-envelope-open-text me-2"></i>Dados da Solicitação
+                                    {% if case.extraction_request %}
+                                        <span class="badge bg-info text-dark fs-6">
+                                            <i class="fas fa-hashtag me-1"></i>
+                                            #{{ case.extraction_request.pk }}
+                                        </span>
+                                    {% endif %}
+                                </h5>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">                            
+                           
+                            <div class="col-md-6">
+                                {{ form.requester_agency_unit|form_label_class }}
+                                {{ form.requester_agency_unit }}
+                                {{ form.requester_agency_unit.errors }}
+                            </div>
+
+                            <div class="col-md-2">
+                                {{ form.requested_device_amount|form_label_class }}
+                                {{ form.requested_device_amount }}
+                                {{ form.requested_device_amount.errors }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.request_procedures|form_label_class }}
+                                {{ form.request_procedures }}
+                                {{ form.request_procedures.errors }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.requester_reply_email|form_label_class }}
+                                {{ form.requester_reply_email }}
+                                {{ form.requester_reply_email.errors }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.requester_authority_name|form_label_class }}
+                                {{ form.requester_authority_name }}
+                                {{ form.requester_authority_name.errors }}
                             </div>
 
                             <div class="col-md-4">
-                                <label for="{{ form.assigned_to.id_for_label }}" class="form-label">
-                                    {{ form.assigned_to.label }}
-                                </label>
-                                {{ form.assigned_to }}
-                                {% if form.assigned_to.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.assigned_to.errors }}
-                                    </div>
-                                {% endif %}
+                                {{ form.requester_authority_position|form_label_class }}
+                                {{ form.requester_authority_position }}
+                                {{ form.requester_authority_position.errors }}
+                            </div>                            
+                        </div>
+ 
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                {{ form.crime_category|form_label_class }}
+                                {{ form.crime_category }}
+                                {{ form.crime_category.errors }}
                             </div>
-
-                            <div class="col-md-12">
-                                <label for="{{ form.additional_info.id_for_label }}" class="form-label">
-                                    {{ form.additional_info.label }}
-                                </label>
+                            <div class="col-md-8">
+                                {{ form.additional_info|form_label_class }}
                                 {{ form.additional_info }}
-                                {% if form.additional_info.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.additional_info.errors }}
-                                    </div>
-                                {% endif %}
+                                {{ form.additional_info.errors }}
                             </div>
                         </div>
                     </div>
@@ -305,14 +195,6 @@
                         </div>
                     </div>
                 </div>
-
-
-                <!-- Form Actions -->
-                <div class="card">
-                    <div class="card-body">
-                        
-                    </div>
-                </div>
             </form>
         </div>
     </div>
@@ -348,17 +230,8 @@
                             <tbody>
                                 {% for procedure in procedures %}
                                 <tr>
-                                    <td>
-                                        {% if procedure.procedure_category %}
-                                            <span class="badge bg-primary">
-                                                {{ procedure.procedure_category.acronym }}
-                                            </span>
-                                            <small class="text-muted d-block">
-                                                {{ procedure.procedure_category.name }}
-                                            </small>
-                                        {% else %}
-                                            <span class="text-muted">-</span>
-                                        {% endif %}
+                                    <td>                                        
+                                        <strong>{{ procedure.procedure_category.name }}</strong>
                                     </td>
                                     <td>
                                         <strong>{{ procedure.number|default:"-" }}</strong>

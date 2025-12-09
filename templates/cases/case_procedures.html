@@ -24,8 +24,8 @@ Visualize os procedimentos e informações do processo
 
     <!-- Formulário de Procedimento -->
     <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
+        <div class="col-6">
+            <div class="card h-100">
                 <div class="card-header">
                     <h5 class="card-title mb-0" id="procedureFormTitle">
                         <i class="fas fa-plus me-2"></i>
@@ -38,7 +38,7 @@ Visualize os procedimentos e informações do processo
                         <input type="hidden" id="procedureId" name="procedure_id" value="">
                         
                         <div class="row g-3 mb-3">
-                            <div class="col-md-2">
+                            <div class="col-md-4">
                                 {{ procedure_form.procedure_category|form_label_class }}
                                 {{ procedure_form.procedure_category }}
                                 {{ procedure_form.procedure_category.errors }}
@@ -46,8 +46,7 @@ Visualize os procedimentos e informações do processo
                                 <small class="form-text text-muted">{{ procedure_form.procedure_category.help_text }}</small>
                                 {% endif %}
                             </div>
-
-                            <div class="col-md-2">
+                            <div class="col-md-8">
                                 {{ procedure_form.number|form_label_class }}
                                 {{ procedure_form.number }}
                                 {{ procedure_form.number.errors }}
@@ -55,7 +54,9 @@ Visualize os procedimentos e informações do processo
                                 <small class="form-text text-muted">{{ procedure_form.number.help_text }}</small>
                                 {% endif %}
                             </div>
-                            <div class="col-md-8">
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-12">
                                 {{ procedure_form.document_file|form_label_class }}
                                 {{ procedure_form.document_file }}
                                 {{ procedure_form.document_file.errors }}
@@ -70,11 +71,6 @@ Visualize os procedimentos e informações do processo
                                 </div>
                             </div>
                         </div>
-
-                        <div class="row g-3 mb-3">
-                            
-                        </div>
-
                         <div class="d-flex justify-content-between align-items-center">
                             <div id="editModeButtons" style="display: none;">
                                 <button type="submit" class="btn btn-primary me-2" id="submitBtn">
@@ -101,12 +97,8 @@ Visualize os procedimentos e informações do processo
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Procedimentos do Caso -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
+        <div class="col-6">
+            <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-gavel me-2"></i>
@@ -122,7 +114,6 @@ Visualize os procedimentos e informações do processo
                                     <th width="20%">Categoria</th>
                                     <th width="30%">Número</th>
                                     <th width="25%">Arquivo</th>
-                                    <th width="15%">Criado em</th>
                                     <th width="10%" class="text-center">Ações</th>
                                 </tr>
                             </thead>
@@ -143,9 +134,7 @@ Visualize os procedimentos e informações do processo
                                             <span class="text-muted">-</span>
                                         {% endif %}
                                     </td>
-                                    <td>
-                                        <small>{{ procedure.created_at|date:"d/m/Y H:i"|default:"-" }}</small>
-                                    </td>
+                        
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm" role="group">
                                             <button type="button" 
@@ -190,6 +179,7 @@ Visualize os procedimentos e informações do processo
             </div>
         </div>
     </div>
+
 </div>
 
 <!-- Modal de Exclusão de Procedimento -->

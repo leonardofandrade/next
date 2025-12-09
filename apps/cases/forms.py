@@ -620,11 +620,20 @@ class CaseProcedureForm(forms.ModelForm):
         # Ordena os querysets
         self.fields['procedure_category'].queryset = ProcedureCategory.objects.filter(
             deleted_at__isnull=True
-        ).order_by('-default_selection', 'acronym')
+        ).order_by('-default_selection', 'name')
         
         # Torna campos opcionais
         self.fields['procedure_category'].required = False
         self.fields['number'].required = False
+        
+        # Se não estiver editando (criando novo), pré-seleciona a categoria padrão
+        if not self.instance or not self.instance.pk:
+            default_category = ProcedureCategory.objects.filter(
+                deleted_at__isnull=True,
+                default_selection=True
+            ).first()
+            if default_category:
+                self.fields['procedure_category'].initial = default_category.pk
 
     def clean(self):
         cleaned_data = super().clean()

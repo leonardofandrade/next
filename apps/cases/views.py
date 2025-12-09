@@ -558,16 +558,32 @@ class CaseProceduresView(LoginRequiredMixin, DetailView):
             'device_model__brand'
         )
         
-        # Sempre cria um formulário vazio para criar novo procedimento
+        # Verifica se está editando um procedimento
+        edit_procedure_id = self.request.GET.get('edit')
+        editing_procedure = None
+        
         from apps.cases.forms import CaseProcedureForm
-        form = CaseProcedureForm(case=case)
+        
+        if edit_procedure_id:
+            try:
+                editing_procedure = procedures.get(pk=edit_procedure_id)
+                # Cria formulário com instância do procedimento
+                form = CaseProcedureForm(instance=editing_procedure, case=case)
+                context['editing_procedure_id'] = editing_procedure.pk
+            except CaseProcedure.DoesNotExist:
+                form = CaseProcedureForm(case=case)
+                context['editing_procedure_id'] = None
+        else:
+            # Cria formulário vazio para criar novo procedimento
+            form = CaseProcedureForm(case=case)
+            context['editing_procedure_id'] = None
         
         context['page_title'] = f'Procedimentos e Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}'
         context['page_icon'] = 'fa-gavel'
         context['procedures'] = procedures
         context['devices'] = devices
         context['procedure_form'] = form
-        context['action'] = 'create'
+        context['action'] = 'create' if not editing_procedure else 'update'
         
         return context
 
@@ -941,6 +957,36 @@ class CaseProcedureCreateView(LoginRequiredMixin, CreateView):
         kwargs['case'] = self.case
         return kwargs
     
+    def form_invalid(self, form):
+        """
+        Trata erros de validação - se vier da página de procedimentos, renderiza lá
+        """
+        # Se vier da página de procedimentos, renderiza o template de procedures com o formulário
+        if self.request.GET.get('from') == 'procedures':
+            # Recria o contexto da view CaseProceduresView
+            case = self.case
+            procedures = case.procedures.filter(deleted_at__isnull=True).select_related('procedure_category')
+            devices = case.case_devices.filter(deleted_at__isnull=True).select_related(
+                'device_category',
+                'device_model__brand'
+            )
+            
+            context = {
+                'case': case,
+                'page_title': f'Procedimentos e Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}',
+                'page_icon': 'fa-gavel',
+                'procedures': procedures,
+                'devices': devices,
+                'procedure_form': form,  # Formulário com erros
+                'action': 'create',
+                'form_errors': form.errors,
+                'form_data': form.data,
+            }
+            
+            return render(self.request, 'cases/case_procedures.html', context)
+        
+        return super().form_invalid(form)
+    
     def form_valid(self, form):
         """
         Define campos adicionais antes de salvar
@@ -1057,18 +1103,14 @@ class CaseProcedureUpdateView(LoginRequiredMixin, UpdateView):
                 'device_model__brand'
             )
             
-            # Cria um novo formulário vazio para exibir na página
-            from apps.cases.forms import CaseProcedureForm
-            empty_form = CaseProcedureForm(case=case)
-            
             context = {
                 'case': case,
                 'page_title': f'Procedimentos e Dispositivos - Processo {case.number if case.number else f"#{case.pk}"}',
                 'page_icon': 'fa-gavel',
                 'procedures': procedures,
                 'devices': devices,
-                'procedure_form': empty_form,
-                'action': 'create',
+                'procedure_form': form,  # Formulário com erros
+                'action': 'update',
                 'form_errors': form.errors,
                 'form_data': form.data,
                 'editing_procedure_id': self.get_object().pk

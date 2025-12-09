@@ -27,16 +27,19 @@ Visualize os procedimentos e informações do processo
         <div class="col-6">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0" id="procedureFormTitle">
-                        <i class="fas fa-plus me-2"></i>
-                        Adicionar Procedimento
+                    <h5 class="card-title mb-0">
+                        {% if editing_procedure_id %}
+                            <i class="fas fa-edit me-2"></i>
+                            Editar Procedimento
+                        {% else %}
+                            <i class="fas fa-plus me-2"></i>
+                            Adicionar Procedimento
+                        {% endif %}
                     </h5>
                 </div>
-                <div class="card-body">
-                    <form id="procedureForm" method="post" action="{% url 'cases:procedure_create' case_pk=case.pk %}?from=procedures" enctype="multipart/form-data" novalidate>
-                        {% csrf_token %}
-                        <input type="hidden" id="procedureId" name="procedure_id" value="">
-                        
+                <form method="post" action="{% if editing_procedure_id %}{% url 'cases:procedure_update' case_pk=case.pk pk=editing_procedure_id %}?from=procedures{% else %}{% url 'cases:procedure_create' case_pk=case.pk %}?from=procedures{% endif %}" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+                    <div class="card-body">
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
                                 {{ procedure_form.procedure_category|form_label_class }}
@@ -63,42 +66,42 @@ Visualize os procedimentos e informações do processo
                                 {% if procedure_form.document_file.help_text %}
                                 <small class="form-text text-muted">{{ procedure_form.document_file.help_text }}</small>
                                 {% endif %}
-                                <div class="mt-2" id="currentFileInfo" style="display: none;">
+                                {% if editing_procedure_id and procedure_form.instance.original_filename %}
+                                <div class="mt-2">
                                     <small class="text-muted">
                                         <i class="fas fa-file me-1"></i>
-                                        Arquivo atual: <span id="currentFileName"></span>
+                                        Arquivo atual: {{ procedure_form.instance.original_filename }}
                                     </small>
                                 </div>
+                                {% endif %}
                             </div>
                         </div>
+                    </div>
+                    <div class="card-footer">
                         <div class="d-flex justify-content-between align-items-center">
-                            <div id="editModeButtons" style="display: none;">
-                                <button type="submit" class="btn btn-primary me-2" id="submitBtn">
-                                    <i class="fas fa-save me-2"></i>
-                                    <span id="submitBtnText">Salvar Alterações</span>
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary" onclick="resetProcedureForm()">
-                                    <i class="fas fa-eraser me-2"></i>
-                                    Limpar
-                                </button>
-                            </div>
-                            <div id="createModeButtons">
-                                <button type="submit" class="btn btn-primary" id="submitBtnCreate">
-                                    <i class="fas fa-save me-2"></i>
-                                    Salvar Procedimento
-                                </button>
-                            </div>
-                            <button type="button" id="cancelEditBtn" class="btn btn-secondary" style="display: none;" onclick="resetProcedureForm()">
-                                <i class="fas fa-times me-2"></i>
-                                Cancelar
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                {% if editing_procedure_id %}Salvar Alterações{% else %}Salvar Procedimento{% endif %}
                             </button>
+                            {% if editing_procedure_id %}
+                            <div>
+                                <a href="{% url 'cases:procedures' pk=case.pk %}" class="btn btn-success me-2">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Novo
+                                </a>
+                                <a href="{% url 'cases:procedures' pk=case.pk %}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-2"></i>
+                                    Cancelar
+                                </a>
+                            </div>
+                            {% endif %}
                         </div>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
         </div>
         <div class="col-6">
-            <div class="card">
+            <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-gavel me-2"></i>
@@ -137,12 +140,11 @@ Visualize os procedimentos e informações do processo
                         
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm" role="group">
-                                            <button type="button" 
-                                                    class="btn btn-outline-primary edit-procedure-btn" 
-                                                    title="Editar"
-                                                    data-procedure-id="{{ procedure.pk }}">
+                                            <a href="{% url 'cases:procedures' pk=case.pk %}?edit={{ procedure.pk }}" 
+                                               class="btn btn-outline-primary" 
+                                               title="Editar">
                                                 <i class="fas fa-edit"></i>
-                                            </button>
+                                            </a>
                                             <button type="button" 
                                                     class="btn btn-outline-danger delete-procedure-btn" 
                                                     title="Excluir"
@@ -241,129 +243,40 @@ Visualize os procedimentos e informações do processo
 document.addEventListener('DOMContentLoaded', function() {
     // Inicializa Select2 no formulário
     if (typeof $ !== 'undefined' && $.fn.select2) {
-        $('#procedureForm select').select2({
-            theme: 'bootstrap-5',
-            language: {
-                noResults: function() {
-                    return "Nenhum resultado encontrado";
+        // Inicializa Select2 preservando o valor selecionado/inicial
+        $('form select').each(function() {
+            const $select = $(this);
+            // Pega o valor inicial (pode ser do atributo value ou do initial do Django)
+            const selectedValue = $select.val() || $select.data('initial-value');
+            
+            $select.select2({
+                theme: 'bootstrap-5',
+                language: {
+                    noResults: function() {
+                        return "Nenhum resultado encontrado";
+                    },
+                    searching: function() {
+                        return "Buscando...";
+                    }
                 },
-                searching: function() {
-                    return "Buscando...";
-                }
-            },
-            width: '100%'
+                width: '100%'
+            });
+            
+            // Garante que o valor selecionado seja mantido após inicialização
+            if (selectedValue) {
+                $select.val(selectedValue).trigger('change');
+            }
         });
     }
-    
-    // ===== EDIÇÃO DE PROCEDIMENTOS =====
-    const procedureForm = document.getElementById('procedureForm');
-    const procedureIdInput = document.getElementById('procedureId');
-    const formTitle = document.getElementById('procedureFormTitle');
-    const submitBtn = document.getElementById('submitBtn');
-    const submitBtnText = document.getElementById('submitBtnText');
-    const submitBtnCreate = document.getElementById('submitBtnCreate');
-    const cancelEditBtn = document.getElementById('cancelEditBtn');
-    const editModeButtons = document.getElementById('editModeButtons');
-    const createModeButtons = document.getElementById('createModeButtons');
-    const currentFileInfo = document.getElementById('currentFileInfo');
-    const currentFileName = document.getElementById('currentFileName');
-    const editButtons = document.querySelectorAll('.edit-procedure-btn');
-    
-    // Função para resetar o formulário para modo de criação
-    window.resetProcedureForm = function() {
-        procedureForm.reset();
-        procedureIdInput.value = '';
-        procedureForm.action = '{% url "cases:procedure_create" case_pk=case.pk %}?from=procedures';
-        formTitle.innerHTML = '<i class="fas fa-plus me-2"></i>Adicionar Procedimento';
-        cancelEditBtn.style.display = 'none';
-        editModeButtons.style.display = 'none';
-        createModeButtons.style.display = 'block';
-        currentFileInfo.style.display = 'none';
-        currentFileName.textContent = '';
-        
-        // Limpa o Select2
-        if (typeof $ !== 'undefined' && $.fn.select2) {
-            $('#procedureForm select').val(null).trigger('change');
-        }
-    };
-    
-    // Função para carregar dados do procedimento
-    function loadProcedureData(procedureId) {
-        fetch('{% url "cases:procedure_detail" case_pk=case.pk pk=0 %}'.replace('0', procedureId), {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Preenche o formulário com os dados
-            procedureIdInput.value = data.id;
-            procedureForm.action = '{% url "cases:procedure_update" case_pk=case.pk pk=0 %}?from=procedures'.replace('0', data.id);
-            
-            // Preenche os campos
-            if (data.procedure_category) {
-                $('#procedureForm select[name="procedure_category"]').val(data.procedure_category).trigger('change');
-            } else {
-                $('#procedureForm select[name="procedure_category"]').val(null).trigger('change');
-            }
-            
-            $('#procedureForm input[name="number"]').val(data.number);
-            
-            // Mostra informações do arquivo atual se existir
-            if (data.original_filename) {
-                currentFileName.textContent = data.original_filename;
-                currentFileInfo.style.display = 'block';
-            } else {
-                currentFileInfo.style.display = 'none';
-            }
-            
-            // Atualiza o título e botões
-            formTitle.innerHTML = '<i class="fas fa-edit me-2"></i>Editar Procedimento';
-            submitBtnText.textContent = 'Salvar Alterações';
-            cancelEditBtn.style.display = 'inline-block';
-            editModeButtons.style.display = 'block';
-            createModeButtons.style.display = 'none';
-            
-            // Scroll suave até o formulário
-            procedureForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        })
-        .catch(error => {
-            console.error('Erro ao carregar procedimento:', error);
-            alert('Erro ao carregar dados do procedimento. Tente novamente.');
-        });
-    }
-    
-    // Adiciona listener para cada botão de editar
-    editButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const procedureId = this.getAttribute('data-procedure-id');
-            loadProcedureData(procedureId);
-        });
-    });
-    
-    // Se houver erros de validação e estiver editando, carrega os dados
-    {% if editing_procedure_id %}
-    loadProcedureData({{ editing_procedure_id }});
-    // Preenche os dados do formulário com os valores submetidos
-    {% if form_data %}
-    {% if form_data.procedure_category %}
-    setTimeout(function() {
-        $('#procedureForm select[name="procedure_category"]').val('{{ form_data.procedure_category }}').trigger('change');
-    }, 500);
-    {% endif %}
-    $('#procedureForm input[name="number"]').val('{{ form_data.number|default:"" }}');
-    {% endif %}
-    {% endif %}
     
     // ===== EXCLUSÃO DE PROCEDIMENTOS =====
     const deleteProcedureModal = document.getElementById('deleteProcedureModal');
     const deleteProcedureForm = document.getElementById('deleteProcedureForm');
     const deleteButtons = document.querySelectorAll('.delete-procedure-btn');
-    let currentDeleteProcedureId = null;
     
     deleteButtons.forEach(button => {
         button.addEventListener('click', function() {
-            currentDeleteProcedureId = this.getAttribute('data-procedure-id');
+            const procedureId = this.getAttribute('data-procedure-id');
             const category = this.getAttribute('data-procedure-category');
             const number = this.getAttribute('data-procedure-number');
             
@@ -372,7 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('deleteProcedureNumber').textContent = number;
             
             // Atualiza a action do form
-            deleteProcedureForm.action = '{% url "cases:procedure_delete" case_pk=case.pk pk=0 %}?from=procedures'.replace('0', currentDeleteProcedureId);
+            deleteProcedureForm.action = '{% url "cases:procedure_delete" case_pk=case.pk pk=0 %}?from=procedures'.replace('0', procedureId);
         });
     });
     
@@ -398,77 +311,61 @@ document.addEventListener('DOMContentLoaded', function() {
             credentials: 'same-origin'
         })
         .then(response => {
-            // Verifica o content-type primeiro
             const contentType = response.headers.get('content-type') || '';
             
-            // Se retornou JSON, sempre tenta ler como JSON primeiro
             if (contentType.includes('application/json')) {
                 return response.json();
             }
             
-            // Se status é 200 ou 302, considera sucesso (exclusão realizada)
             if (response.status === 200 || response.status === 302 || response.ok) {
-                // Tenta ler como JSON mesmo que o content-type não indique
                 return response.text().then(text => {
                     try {
                         return JSON.parse(text);
                     } catch (e) {
-                        // Se não é JSON, assume sucesso
                         return { success: true, message: 'Procedimento excluído com sucesso!' };
                     }
                 });
             }
             
-            // Se status é erro, tenta ler a resposta
             if (response.status >= 400) {
                 return response.text().then(text => {
-                    // Verifica se é JSON
                     try {
                         const jsonData = JSON.parse(text);
                         return jsonData;
                     } catch (e) {
-                        // Se não é JSON, verifica se há erros no HTML
                         if (text.includes('alert-danger') || text.includes('Erro')) {
                             throw new Error('Erro ao excluir procedimento');
                         }
-                        // Mesmo com erro HTTP, se não há mensagem de erro, considera sucesso
                         return { success: true, message: 'Procedimento excluído com sucesso!' };
                     }
                 });
             }
             
-            // Se não é JSON, assume sucesso (pode ser redirect)
             return { success: true, message: 'Procedimento excluído com sucesso!' };
         })
         .then(data => {
-            // Se retornou JSON com success=false, mostra erro
             if (data && data.success === false) {
                 throw new Error(data.error || 'Erro ao excluir procedimento');
             }
             
-            // Se retornou JSON com success=true, exibe mensagem e recarrega
             if (data && data.success === true) {
-                // Exibe mensagem de sucesso usando o sistema de toast se disponível
                 if (typeof window.ToastSystem !== 'undefined' && window.ToastSystem.success) {
                     window.ToastSystem.success(data.message || 'Procedimento excluído com sucesso!');
                 } else if (typeof showToast !== 'undefined') {
                     showToast(data.message || 'Procedimento excluído com sucesso!', 'success');
                 }
                 
-                // Fecha o modal
                 const modal = bootstrap.Modal.getInstance(deleteProcedureModal);
                 if (modal) {
                     modal.hide();
                 }
                 
-                // Aguarda um pouco para exibir a mensagem antes de recarregar
                 setTimeout(() => {
                     window.location.reload();
                 }, 500);
                 return;
             }
             
-            // Qualquer outro caso, considera sucesso e recarrega
             const modal = bootstrap.Modal.getInstance(deleteProcedureModal);
             if (modal) {
                 modal.hide();

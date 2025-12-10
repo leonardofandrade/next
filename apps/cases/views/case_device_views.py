@@ -211,7 +211,16 @@ class CaseDeviceUpdateView(LoginRequiredMixin, ServiceMixin, UpdateView):
     def form_invalid(self, form):
         """
         Trata erros de validação - se vier da página de dispositivos, renderiza lá
+        Se for AJAX, retorna JSON com erros
         """
+        # Se for requisição AJAX, retorna JSON com erros
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'error': 'Por favor, corrija os erros no formulário.',
+                'errors': form.errors
+            }, status=400)
+        
         # Se vier da página de dispositivos, renderiza o template de devices com o formulário
         if self.request.GET.get('from') == 'devices':
             # Recria o contexto da view CaseDevicesView

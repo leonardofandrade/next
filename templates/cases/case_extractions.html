@@ -601,10 +601,163 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success) {
                         modalBody.innerHTML = data.html;
                         modalBody.dataset.loaded = 'true';
-                        // Inicializar scripts do formulário se necessário
-                        if (typeof initializeDeviceForm === 'function') {
-                            initializeDeviceForm(modalBody);
-                        }
+                        
+                        // Aguarda um pouco para garantir que o DOM foi atualizado
+                        setTimeout(function() {
+                            // Executa scripts inline do HTML carregado
+                            const scripts = modalBody.querySelectorAll('script');
+                            scripts.forEach(function(oldScript) {
+                                const newScript = document.createElement('script');
+                                Array.from(oldScript.attributes).forEach(attr => {
+                                    newScript.setAttribute(attr.name, attr.value);
+                                });
+                                newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                                oldScript.parentNode.replaceChild(newScript, oldScript);
+                            });
+                            
+                            // Inicializa Select2 para device_model se existir
+                            const selects = modalBody.querySelectorAll('select[id*="device_model"]');
+                            if (selects.length > 0 && typeof $ !== 'undefined' && $.fn.select2) {
+                                const $select = $(selects[0]);
+                                if (!$select.hasClass('select2-hidden-accessible')) {
+                                    $select.select2({
+                                        theme: 'bootstrap-5',
+                                        language: {
+                                            noResults: function() {
+                                                return "Nenhum resultado encontrado";
+                                            },
+                                            searching: function() {
+                                                return "Buscando...";
+                                            }
+                                        },
+                                        placeholder: 'Digite para pesquisar o modelo do dispositivo...',
+                                        allowClear: true,
+                                        width: '100%',
+                                        minimumInputLength: 0,
+                                        closeOnSelect: true,
+                                        dropdownParent: $(modalId)
+                                    });
+                                }
+                            }
+                            
+                            // Adiciona listener direto no formulário carregado
+                            const form = modalBody.querySelector('form.ajax-form');
+                            if (form) {
+                                form.addEventListener('submit', function(e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    
+                                    const formData = new FormData(this);
+                                    const submitButton = this.querySelector('button[type="submit"]');
+                                    const originalText = submitButton ? submitButton.innerHTML : '';
+                                    
+                                    // Remove alertas anteriores
+                                    const existingAlerts = this.querySelectorAll('.alert');
+                                    existingAlerts.forEach(alert => alert.remove());
+                                    
+                                    if (submitButton) {
+                                        submitButton.disabled = true;
+                                        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
+                                    }
+                                    
+                                    // Obtém CSRF token
+                                    const csrftoken = getCSRFToken();
+                                    
+                                    fetch(this.action, {
+                                        method: 'POST',
+                                        body: formData,
+                                        headers: {
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                            'X-CSRFToken': csrftoken
+                                        },
+                                        credentials: 'same-origin'
+                                    })
+                                    .then(response => {
+                                        const contentType = response.headers.get('content-type');
+                                        if (contentType && contentType.includes('application/json')) {
+                                            return response.json();
+                                        } else {
+                                            return response.text().then(text => {
+                                                throw new Error('Resposta não é JSON. Status: ' + response.status);
+                                            });
+                                        }
+                                    })
+                                    .then(data => {
+                                        if (data.success) {
+                                            // Mostrar mensagem de sucesso
+                                            if (data.message) {
+                                                const alertDiv = document.createElement('div');
+                                                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                                                alertDiv.innerHTML = '<i class="fas fa-check-circle me-2"></i>' + data.message + 
+                                                    '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+                                                const container = document.querySelector('.container-fluid');
+                                                if (container) {
+                                                    container.insertBefore(alertDiv, container.firstChild);
+                                                }
+                                            }
+                                            
+                                            // Fechar modal
+                                            const modal = this.closest('.modal');
+                                            if (modal) {
+                                                const bsModal = bootstrap.Modal.getInstance(modal);
+                                                if (bsModal) {
+                                                    bsModal.hide();
+                                                }
+                                            }
+                                            
+                                            // Recarregar página ou redirecionar
+                                            if (data.redirect_url) {
+                                                window.location.href = data.redirect_url;
+                                            } else {
+                                                setTimeout(() => window.location.reload(), 1000);
+                                            }
+                                        } else {
+                                            // Mostrar erros
+                                            const errorDiv = document.createElement('div');
+                                            errorDiv.className = 'alert alert-danger alert-dismissible fade show';
+                                            errorDiv.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>' + (data.error || 'Erro ao salvar. Verifique os campos.') +
+                                                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+                                            this.insertBefore(errorDiv, this.firstChild);
+                                            
+                                            // Mostrar erros de campos se existirem
+                                            if (data.errors) {
+                                                const formElement = this;
+                                                Object.keys(data.errors).forEach(function(field) {
+                                                    const fieldElement = formElement.querySelector('[name="' + field + '"]');
+                                                    if (fieldElement) {
+                                                        const fieldError = document.createElement('div');
+                                                        fieldError.className = 'invalid-feedback d-block';
+                                                        fieldError.textContent = data.errors[field][0];
+                                                        fieldElement.parentNode.appendChild(fieldError);
+                                                        fieldElement.classList.add('is-invalid');
+                                                    }
+                                                });
+                                            }
+                                            
+                                            if (submitButton) {
+                                                submitButton.disabled = false;
+                                                submitButton.innerHTML = originalText;
+                                            }
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Erro ao processar formulário:', error);
+                                        const errorDiv = document.createElement('div');
+                                        errorDiv.className = 'alert alert-danger alert-dismissible fade show';
+                                        errorDiv.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Erro ao processar requisição: ' + error.message + 
+                                            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+                                        this.insertBefore(errorDiv, this.firstChild);
+                                        
+                                        if (submitButton) {
+                                            submitButton.disabled = false;
+                                            submitButton.innerHTML = originalText;
+                                        }
+                                    });
+                                    
+                                    return false;
+                                });
+                            }
+                        }, 150);
                     } else {
                         modalBody.innerHTML = '<div class="alert alert-danger">' + data.error + '</div>';
                     }
@@ -650,32 +803,74 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Processar submissão de formulários via AJAX
+    // Função para obter CSRF token
+    function getCSRFToken() {
+        const name = 'csrftoken';
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Processar submissão de formulários via AJAX usando event delegation
+    // Usa event delegation para funcionar com formulários carregados dinamicamente
     document.addEventListener('submit', function(e) {
         const form = e.target;
         
-        // Verificar se é um formulário dentro de um modal
-        if (form.closest('.modal') && form.classList.contains('ajax-form')) {
+        // Verificar se é um formulário dentro de um modal com classe ajax-form
+        if (form && form.tagName === 'FORM' && form.closest('.modal') && form.classList.contains('ajax-form')) {
             e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('Formulário AJAX detectado:', form.action);
             
             const formData = new FormData(form);
             const submitButton = form.querySelector('button[type="submit"]');
             const originalText = submitButton ? submitButton.innerHTML : '';
+            
+            // Remove alertas anteriores
+            const existingAlerts = form.querySelectorAll('.alert');
+            existingAlerts.forEach(alert => alert.remove());
             
             if (submitButton) {
                 submitButton.disabled = true;
                 submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
             }
             
+            // Obtém CSRF token
+            const csrftoken = getCSRFToken();
+            
             fetch(form.action, {
                 method: 'POST',
                 body: formData,
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                // Verifica se a resposta é JSON
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    // Se não for JSON, tenta ler como texto
+                    return response.text().then(text => {
+                        throw new Error('Resposta não é JSON: ' + text.substring(0, 100));
+                    });
                 }
             })
-            .then(response => response.json())
             .then(data => {
+                console.log('Dados recebidos:', data);
                 if (data.success) {
                     // Mostrar mensagem de sucesso
                     if (data.message) {
@@ -684,7 +879,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         alertDiv.className = 'alert alert-success alert-dismissible fade show';
                         alertDiv.innerHTML = '<i class="fas fa-check-circle me-2"></i>' + data.message + 
                             '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
-                        document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
+                        const container = document.querySelector('.container-fluid');
+                        if (container) {
+                            container.insertBefore(alertDiv, container.firstChild);
+                        }
                     }
                     
                     // Fechar modal
@@ -705,9 +903,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     // Mostrar erros
                     const errorDiv = document.createElement('div');
-                    errorDiv.className = 'alert alert-danger';
-                    errorDiv.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>' + (data.error || 'Erro ao salvar. Verifique os campos.');
+                    errorDiv.className = 'alert alert-danger alert-dismissible fade show';
+                    errorDiv.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>' + (data.error || 'Erro ao salvar. Verifique os campos.') +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
                     form.insertBefore(errorDiv, form.firstChild);
+                    
+                    // Mostrar erros de campos se existirem
+                    if (data.errors) {
+                        Object.keys(data.errors).forEach(function(field) {
+                            const fieldElement = form.querySelector('[name="' + field + '"]');
+                            if (fieldElement) {
+                                const fieldError = document.createElement('div');
+                                fieldError.className = 'invalid-feedback d-block';
+                                fieldError.textContent = data.errors[field][0];
+                                fieldElement.parentNode.appendChild(fieldError);
+                                fieldElement.classList.add('is-invalid');
+                            }
+                        });
+                    }
                     
                     if (submitButton) {
                         submitButton.disabled = false;
@@ -716,9 +929,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
+                console.error('Erro ao processar formulário:', error);
                 const errorDiv = document.createElement('div');
-                errorDiv.className = 'alert alert-danger';
-                errorDiv.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Erro ao processar requisição. Tente novamente.';
+                errorDiv.className = 'alert alert-danger alert-dismissible fade show';
+                errorDiv.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Erro ao processar requisição: ' + error.message + 
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
                 form.insertBefore(errorDiv, form.firstChild);
                 
                 if (submitButton) {
@@ -726,6 +941,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     submitButton.innerHTML = originalText;
                 }
             });
+            
+            return false;
         }
     });
 });

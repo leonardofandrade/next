@@ -143,141 +143,169 @@
 </form>
 
 <script>
-$(document).ready(function() {
-    // Inicializa Select2 para device_model
-    $('#{{ form.device_model.id_for_label }}').select2({
-        theme: 'bootstrap-5',
-        language: {
-            noResults: function() {
-                return "Nenhum resultado encontrado";
-            },
-            searching: function() {
-                return "Buscando...";
-            }
-        },
-        placeholder: 'Digite para pesquisar o modelo do dispositivo...',
-        allowClear: true,
-        width: '100%',
-        minimumInputLength: 0,
-        closeOnSelect: true,
-        dropdownParent: $('#editDeviceModal{{ device.pk }}')
-    });
+// Função para inicializar Select2 quando o modal for aberto
+(function() {
+    const modalId = 'editDeviceModal{{ device.pk }}';
+    const selectId = '{{ form.device_model.id_for_label }}';
     
-    // Função para habilitar/desabilitar campos condicionais
-    function toggleField(checkboxId, fieldId) {
-        const checkbox = document.getElementById(checkboxId);
-        const field = document.getElementById(fieldId);
+    function initializeSelect2() {
+        const selectElement = $('#' + selectId);
         
-        if (checkbox && field) {
-            let input = field.querySelector('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea, select');
+        if (selectElement.length === 0) {
+            return;
+        }
+        
+        // Destrói Select2 se já existir
+        if (selectElement.hasClass('select2-hidden-accessible')) {
+            selectElement.select2('destroy');
+        }
+        
+        // Inicializa Select2 para device_model
+        selectElement.select2({
+            theme: 'bootstrap-5',
+            language: {
+                noResults: function() {
+                    return "Nenhum resultado encontrado";
+                },
+                searching: function() {
+                    return "Buscando...";
+                }
+            },
+            placeholder: 'Digite para pesquisar o modelo do dispositivo...',
+            allowClear: true,
+            width: '100%',
+            minimumInputLength: 0,
+            closeOnSelect: true,
+            dropdownParent: $('#' + modalId)
+        });
+    }
+    
+    // Inicializa quando o DOM estiver pronto
+    $(document).ready(function() {
+        // Aguarda um pouco para garantir que o elemento existe
+        setTimeout(initializeSelect2, 100);
+        
+        // Re-inicializa quando o modal for mostrado
+        $('#' + modalId).on('shown.bs.modal', function() {
+            setTimeout(initializeSelect2, 200);
+        });
+        
+        // Função para habilitar/desabilitar campos condicionais
+        function toggleField(checkboxId, fieldId) {
+            const checkbox = document.getElementById(checkboxId);
+            const field = document.getElementById(fieldId);
             
-            if (!input) {
-                const allInputs = field.querySelectorAll('input, textarea, select');
-                for (let i = 0; i < allInputs.length; i++) {
-                    const elem = allInputs[i];
-                    const type = elem.type ? elem.type.toLowerCase() : '';
-                    if (type !== 'checkbox' && type !== 'radio' && type !== 'hidden') {
-                        input = elem;
-                        break;
+            if (checkbox && field) {
+                let input = field.querySelector('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea, select');
+                
+                if (!input) {
+                    const allInputs = field.querySelectorAll('input, textarea, select');
+                    for (let i = 0; i < allInputs.length; i++) {
+                        const elem = allInputs[i];
+                        const type = elem.type ? elem.type.toLowerCase() : '';
+                        if (type !== 'checkbox' && type !== 'radio' && type !== 'hidden') {
+                            input = elem;
+                            break;
+                        }
                     }
                 }
-            }
-            
-            let previousState = checkbox.checked;
-            
-            function updateFieldState() {
-                const isChecked = checkbox.checked;
                 
-                if (input) {
-                    input.disabled = !isChecked;
+                let previousState = checkbox.checked;
+                
+                function updateFieldState() {
+                    const isChecked = checkbox.checked;
                     
-                    if (isChecked) {
-                        input.classList.remove('bg-light');
-                        field.style.opacity = '1';
-                        if (!previousState && isChecked) {
+                    if (input) {
+                        input.disabled = !isChecked;
+                        
+                        if (isChecked) {
+                            input.classList.remove('bg-light');
+                            field.style.opacity = '1';
+                            if (!previousState && isChecked) {
+                                setTimeout(function() {
+                                    if (input && !input.disabled) {
+                                        try {
+                                            input.focus();
+                                        } catch(e) {}
+                                    }
+                                }, 50);
+                            }
+                        } else {
+                            input.classList.add('bg-light');
+                            field.style.opacity = '0.6';
+                        }
+                        
+                        previousState = isChecked;
+                    }
+                }
+                
+                updateFieldState();
+                checkbox.addEventListener('change', updateFieldState);
+            }
+        }
+        
+        // Configurar campos condicionais
+        toggleField('{{ form.is_password_known.id_for_label }}', 'password_field');
+        
+        // Configurar campos de IMEI
+        function toggleMultipleFields(checkboxId, fieldIds, invertLogic) {
+            const checkbox = document.getElementById(checkboxId);
+            invertLogic = invertLogic || false;
+            
+            if (checkbox && Array.isArray(fieldIds) && fieldIds.length > 0) {
+                const inputs = [];
+                
+                fieldIds.forEach(function(fieldId) {
+                    const input = document.getElementById(fieldId);
+                    if (input) {
+                        inputs.push(input);
+                    }
+                });
+                
+                if (inputs.length > 0) {
+                    let previousState = checkbox.checked;
+                    
+                    function updateFieldsState() {
+                        const isChecked = checkbox.checked;
+                        const shouldEnable = invertLogic ? !isChecked : isChecked;
+                        
+                        inputs.forEach(function(input) {
+                            input.disabled = !shouldEnable;
+                            
+                            if (shouldEnable) {
+                                input.classList.remove('bg-light');
+                                input.style.opacity = '1';
+                            } else {
+                                input.classList.add('bg-light');
+                                input.style.opacity = '0.6';
+                            }
+                        });
+                        
+                        if (previousState !== isChecked && shouldEnable && inputs.length > 0) {
                             setTimeout(function() {
-                                if (input && !input.disabled) {
+                                if (inputs[0] && !inputs[0].disabled) {
                                     try {
-                                        input.focus();
+                                        inputs[0].focus();
                                     } catch(e) {}
                                 }
                             }, 50);
                         }
-                    } else {
-                        input.classList.add('bg-light');
-                        field.style.opacity = '0.6';
-                    }
-                    
-                    previousState = isChecked;
-                }
-            }
-            
-            updateFieldState();
-            checkbox.addEventListener('change', updateFieldState);
-        }
-    }
-    
-    // Configurar campos condicionais
-    toggleField('{{ form.is_password_known.id_for_label }}', 'password_field');
-    
-    // Configurar campos de IMEI
-    function toggleMultipleFields(checkboxId, fieldIds, invertLogic) {
-        const checkbox = document.getElementById(checkboxId);
-        invertLogic = invertLogic || false;
-        
-        if (checkbox && Array.isArray(fieldIds) && fieldIds.length > 0) {
-            const inputs = [];
-            
-            fieldIds.forEach(function(fieldId) {
-                const input = document.getElementById(fieldId);
-                if (input) {
-                    inputs.push(input);
-                }
-            });
-            
-            if (inputs.length > 0) {
-                let previousState = checkbox.checked;
-                
-                function updateFieldsState() {
-                    const isChecked = checkbox.checked;
-                    const shouldEnable = invertLogic ? !isChecked : isChecked;
-                    
-                    inputs.forEach(function(input) {
-                        input.disabled = !shouldEnable;
                         
-                        if (shouldEnable) {
-                            input.classList.remove('bg-light');
-                            input.style.opacity = '1';
-                        } else {
-                            input.classList.add('bg-light');
-                            input.style.opacity = '0.6';
-                        }
-                    });
-                    
-                    if (previousState !== isChecked && shouldEnable && inputs.length > 0) {
-                        setTimeout(function() {
-                            if (inputs[0] && !inputs[0].disabled) {
-                                try {
-                                    inputs[0].focus();
-                                } catch(e) {}
-                            }
-                        }, 50);
+                        previousState = isChecked;
                     }
                     
-                    previousState = isChecked;
+                    updateFieldsState();
+                    checkbox.addEventListener('change', updateFieldsState);
                 }
-                
-                updateFieldsState();
-                checkbox.addEventListener('change', updateFieldsState);
             }
         }
-    }
-    
-    toggleMultipleFields('{{ form.is_imei_unknown.id_for_label }}', [
-        '{{ form.imei_01.id_for_label }}',
-        '{{ form.imei_02.id_for_label }}',
-        '{{ form.imei_03.id_for_label }}'
-    ], true);
-});
+        
+        toggleMultipleFields('{{ form.is_imei_unknown.id_for_label }}', [
+            '{{ form.imei_01.id_for_label }}',
+            '{{ form.imei_02.id_for_label }}',
+            '{{ form.imei_03.id_for_label }}'
+        ], true);
+    });
+})();
 </script>
 

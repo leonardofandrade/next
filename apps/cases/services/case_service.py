@@ -345,6 +345,54 @@ class CaseService(BaseService):
             
         if created_year := filters.get('created_year'):
             queryset = queryset.filter(created_at__year=created_year)
-            
+        
         return queryset
+    
+    def create_case_from_requisition(self, requisition, user) -> Case:
+        """
+        Cria um Case a partir de uma ExtractionRequest.
+        
+        Args:
+            requisition: Instância de ExtractionRequest
+            user: Usuário que está criando o caso (para created_by)
+        
+        Returns:
+            Case: Caso criado
+        
+        Raises:
+            ValidationServiceException: Se a requisição já tiver um caso associado
+        """
+        from apps.requisitions.models import ExtractionRequest
+        
+        # Verifica se a requisição já tem um caso associado
+        if hasattr(requisition, 'case') and requisition.case:
+            raise ValidationServiceException(
+                f"A requisição {requisition.id} já possui um caso associado (ID: {requisition.case.id})"
+            )
+        
+        # Prepara os dados do caso a partir da requisição
+        case_data = {
+            'extraction_request': requisition,
+            'requester_agency_unit': requisition.requester_agency_unit,
+            'request_procedures': requisition.request_procedures,
+            'crime_category': requisition.crime_category,
+            'requested_device_amount': requisition.requested_device_amount,
+            'requester_reply_email': requisition.requester_reply_email,
+            'requester_authority_name': requisition.requester_authority_name,
+            'requester_authority_position': requisition.requester_authority_position,
+            'extraction_unit': requisition.extraction_unit,
+            'additional_info': requisition.additional_info,
+            'requested_at': requisition.requested_at or timezone.now(),
+            'status': Case.CASE_STATUS_DRAFT,
+            'priority': 0,  # Prioridade padrão: Baixa
+            'created_by': user,
+        }
+        
+        # Valida regras de negócio
+        validated_data = self.validate_business_rules(case_data, instance=None)
+        
+        # Cria o caso
+        case = Case.objects.create(**validated_data)
+        
+        return case
 

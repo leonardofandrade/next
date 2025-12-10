@@ -90,6 +90,13 @@ class CaseExtractionsView(LoginRequiredMixin, DetailView):
         context['page_icon'] = 'fa-database'
         context['extractions'] = extractions
         context['has_devices_without_extractions'] = devices_without_extraction
+        
+        # Add extractions count
+        context['extractions_count'] = Extraction.objects.filter(
+            case_device__case=case,
+            deleted_at__isnull=True
+        ).count()
+        
         return context
 
 

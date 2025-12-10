@@ -95,6 +95,12 @@ Uso: {% include 'cases/includes/case_detail_include.html' with case=case %}
                         <strong>Dispositivos:</strong><br>
                         {{ case.requested_device_amount|default:"-" }}
                     </div>
+                    
+                    <!-- Quantidade de Extrações -->
+                    <div class="col-md-2">
+                        <strong>Extrações:</strong><br>
+                        {{ extractions_count|default:"0" }}
+                    </div>
                         
                     <!-- Procedimentos -->
                     {% if case.request_procedures %}

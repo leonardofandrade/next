@@ -96,6 +96,12 @@ class CaseDetailView(ExtractionUnitFilterMixin, BaseDetailView):
         context['devices_count'] = case.case_devices.filter(deleted_at__isnull=True).count()
         context['procedures_count'] = case.procedures.filter(deleted_at__isnull=True).count()
         
+        # Add extractions count
+        context['extractions_count'] = Extraction.objects.filter(
+            case_device__case=case,
+            deleted_at__isnull=True
+        ).count()
+        
         return context
 
 
@@ -505,6 +511,13 @@ class CaseDevicesView(LoginRequiredMixin, DetailView):
         context['devices'] = devices
         context['device_form'] = form
         context['action'] = 'create' if not editing_device else 'update'
+        
+        # Add extractions count
+        context['extractions_count'] = Extraction.objects.filter(
+            case_device__case=case,
+            deleted_at__isnull=True
+        ).count()
+        
         return context
 
 
@@ -562,6 +575,12 @@ class CaseProceduresView(LoginRequiredMixin, DetailView):
         context['devices'] = devices
         context['procedure_form'] = form
         context['action'] = 'create' if not editing_procedure else 'update'
+        
+        # Add extractions count
+        context['extractions_count'] = Extraction.objects.filter(
+            case_device__case=case,
+            deleted_at__isnull=True
+        ).count()
         
         return context
 

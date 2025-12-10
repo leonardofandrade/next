@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [    
+        
         {
             "name": "NEXT - Run Server",
             "type": "debugpy",
@@ -54,6 +55,23 @@
                 "13",
                 "--d",
                 "1"
+            ],
+            "django": true,
+            "program": "${workspaceFolder}\\manage.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "NEXT - Import Legacy Extraction Requests",
+            "type": "debugpy",
+            "request": "launch",
+            "args": [
+                "extraction_request_import_legacy_data",
+                "--file",
+                "${workspaceFolder}\\initial_data\\dist_2022.xlsx",
+                "--year",
+                "2022",
+                "--login",
+                "leo"
             ],
             "django": true,
             "program": "${workspaceFolder}\\manage.py",

@@ -135,10 +135,10 @@ Visualize as extrações e informações do processo
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm" role="group">
-                                            {% if not case.assigned_to or case.assigned_to == request.user %}
+                                            {% if not case.assigned_to or case.assigned_to == request.user or extraction.assigned_to and extraction.assigned_to.user == request.user %}
                                             <button type="button" 
                                                     class="btn btn-outline-primary" 
-                                                    title="Editar Dispositivo"
+                                                    title="{% if extraction.assigned_to and extraction.assigned_to.user == request.user %}Editar Dispositivo (dados descobertos na extração){% else %}Editar Dispositivo{% endif %}"
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#editDeviceModal{{ extraction.case_device.pk }}"
                                                     data-device-id="{{ extraction.case_device.pk }}">
@@ -525,7 +525,7 @@ Visualize as extrações e informações do processo
 <!-- Modais de Formulários -->
 {% for extraction in extractions %}
     <!-- Modal Editar Dispositivo -->
-    {% if not case.assigned_to or case.assigned_to == request.user %}
+    {% if not case.assigned_to or case.assigned_to == request.user or extraction.assigned_to and extraction.assigned_to.user == request.user %}
     <div class="modal fade" id="editDeviceModal{{ extraction.case_device.pk }}" tabindex="-1" aria-labelledby="editDeviceModalLabel{{ extraction.case_device.pk }}" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">

@@ -2,6 +2,13 @@
 <form method="post" action="{% url 'cases:device_update' case.pk device.pk %}?next={% url 'extractions:case_extractions' case.pk %}" class="ajax-form" novalidate>
     {% csrf_token %}
     
+    {% if is_extractor_editing %}
+    <div class="alert alert-info mb-3">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Edição como Extrator:</strong> Você pode atualizar informações do dispositivo descobertas durante a extração.
+    </div>
+    {% endif %}
+    
     <!-- Informações Básicas do Dispositivo -->
     <div class="card mb-3">
         <div class="card-header">
@@ -12,22 +19,10 @@
         </div>
         <div class="card-body">
             <div class="row g-3 mb-3">
-                <div class="col-md-3">
-                    {{ form.device_category|form_label_class }}
-                    {{ form.device_category }}
-                    {{ form.device_category.errors }}
-                </div>
-
-                <div class="col-md-7">
+                <div class="col-md-12">
                     {{ form.device_model|form_label_class }}
                     {{ form.device_model }}
                     {{ form.device_model.errors }}
-                </div>
-
-                <div class="col-md-2">
-                    {{ form.color|form_label_class }}
-                    {{ form.color }}
-                    {{ form.color.errors }}
                 </div>
             </div>
             <div class="row g-3 mb-3">
@@ -57,20 +52,6 @@
 
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                    {{ form.owner_name|form_label_class }}
-                    {{ form.owner_name }}
-                    {{ form.owner_name.errors }}
-                </div>
-                <div class="col-md-3">
-                    <div class="form-check form-switch form-label">
-                        {{ form.is_sealed }}
-                        <label class="form-check-label" for="{{ form.is_sealed.id_for_label }}">
-                            {{ form.is_sealed.label }}
-                        </label>
-                    </div>
-                    <div id="security_seal_field">{{ form.security_seal }}</div>
-                </div>
-                <div class="col-md-3">
                     {{ form.internal_storage|form_label_class }}
                     {{ form.internal_storage }}
                 </div>
@@ -118,82 +99,6 @@
                         </label>
                     </div>
                     <div id="password_field">{{ form.password }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Condição Física -->
-    <div class="card mb-3">
-        <div class="card-header">
-            <h6 class="card-title mb-0">
-                <i class="fas fa-tools me-2"></i>
-                Condição Física
-            </h6>
-        </div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="form-check form-switch form-label">
-                        {{ form.is_damaged }}
-                        <label class="form-check-label" for="{{ form.is_damaged.id_for_label }}">
-                            {{ form.is_damaged.label }}
-                        </label>
-                    </div>
-                    <div id="damage_description_field">{{ form.damage_description }}</div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="form-check form-switch form-label">
-                        <div id="has_fluids_field"> {{ form.has_fluids }}</div>
-                        <label class="form-check-label" for="{{ form.has_fluids.id_for_label }}">
-                            {{ form.has_fluids.label }}
-                        </label>
-                    </div>
-                    <div id="fluids_description_field">{{ form.fluids_description }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Acessórios -->
-    <div class="card mb-3">
-        <div class="card-header">
-            <h6 class="card-title mb-0">
-                <i class="fas fa-sim-card me-2"></i>
-                Acessórios
-            </h6>
-        </div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="form-check form-switch form-label">
-                        {{ form.has_sim_card }}
-                        <label class="form-check-label" for="{{ form.has_sim_card.id_for_label }}">
-                            {{ form.has_sim_card.label }}
-                        </label>
-                    </div>
-                    <div id="sim_card_info_field">{{ form.sim_card_info }}</div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="form-check form-switch form-label">
-                        {{ form.has_memory_card }}
-                        <label class="form-check-label" for="{{ form.has_memory_card.id_for_label }}">
-                            {{ form.has_memory_card.label }}
-                        </label>
-                    </div>
-                    <div id="memory_card_info_field">{{ form.memory_card_info }}</div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="form-check form-switch form-label">
-                        {{ form.has_other_accessories }}
-                        <label class="form-check-label" for="{{ form.has_other_accessories.id_for_label }}">
-                            {{ form.has_other_accessories.label }}
-                        </label>
-                    </div>
-                    <div id="other_accessories_info_field">{{ form.other_accessories_info }}</div>
                 </div>
             </div>
         </div>
@@ -313,13 +218,7 @@ $(document).ready(function() {
     }
     
     // Configurar campos condicionais
-    toggleField('{{ form.is_sealed.id_for_label }}', 'security_seal_field');
     toggleField('{{ form.is_password_known.id_for_label }}', 'password_field');
-    toggleField('{{ form.is_damaged.id_for_label }}', 'damage_description_field');
-    toggleField('{{ form.has_fluids.id_for_label }}', 'fluids_description_field');
-    toggleField('{{ form.has_sim_card.id_for_label }}', 'sim_card_info_field');
-    toggleField('{{ form.has_memory_card.id_for_label }}', 'memory_card_info_field');
-    toggleField('{{ form.has_other_accessories.id_for_label }}', 'other_accessories_info_field');
     
     // Configurar campos de IMEI
     function toggleMultipleFields(checkboxId, fieldIds, invertLogic) {

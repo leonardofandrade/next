@@ -140,17 +140,52 @@ class CaseDeviceUpdateView(LoginRequiredMixin, ServiceMixin, UpdateView):
     def dispatch(self, request, *args, **kwargs):
         """
         Verifica se o caso e o dispositivo existem, não estão deletados e se o usuário tem permissão
+        Permite edição por:
+        - Responsável pelo caso
+        - Extrator responsável pela extração do dispositivo
         """
         self.case = get_object_or_404(
             Case.objects.filter(deleted_at__isnull=True),
             pk=kwargs['case_pk']
         )
         
-        # Verifica se o usuário tem permissão para editar dispositivos
-        if self.case.assigned_to and self.case.assigned_to != request.user:
+        # Verifica permissão: responsável pelo caso OU extrator responsável pela extração
+        has_permission = False
+        
+        # Verifica se é responsável pelo caso
+        if not self.case.assigned_to or self.case.assigned_to == request.user:
+            has_permission = True
+        
+        # Verifica se é extrator responsável pela extração deste dispositivo
+        if not has_permission:
+            try:
+                from apps.core.models import ExtractorUser
+                extractor_user = ExtractorUser.objects.get(
+                    user=request.user,
+                    deleted_at__isnull=True
+                )
+                # Verifica se há extração atribuída a este extrator para este dispositivo
+                device_pk = kwargs.get('pk')
+                if device_pk:
+                    try:
+                        device = CaseDevice.objects.get(
+                            pk=device_pk,
+                            case=self.case,
+                            deleted_at__isnull=True
+                        )
+                        if hasattr(device, 'device_extraction'):
+                            extraction = device.device_extraction
+                            if extraction.assigned_to == extractor_user:
+                                has_permission = True
+                    except CaseDevice.DoesNotExist:
+                        pass
+            except ExtractorUser.DoesNotExist:
+                pass
+        
+        if not has_permission:
             messages.error(
                 request,
-                'Você não tem permissão para editar dispositivos deste processo. Apenas o responsável pode fazer isso.'
+                'Você não tem permissão para editar dispositivos deste processo. Apenas o responsável pelo caso ou o extrator responsável pela extração podem fazer isso.'
             )
             return redirect('cases:update', pk=self.case.pk)
         
@@ -314,6 +349,9 @@ class CaseDeviceDetailView(LoginRequiredMixin, DetailView):
 class CaseDeviceFormModalView(LoginRequiredMixin, View):
     """
     Retorna o formulário de edição de dispositivo para modal AJAX
+    Permite edição por:
+    - Responsável pelo caso
+    - Extrator responsável pela extração do dispositivo
     """
     def get(self, request, case_pk, pk):
         case = get_object_or_404(
@@ -321,25 +359,53 @@ class CaseDeviceFormModalView(LoginRequiredMixin, View):
             pk=case_pk
         )
         
-        # Verifica permissão
-        if case.assigned_to and case.assigned_to != request.user:
-            return JsonResponse({
-                'success': False,
-                'error': 'Você não tem permissão para editar dispositivos deste processo.'
-            }, status=403)
-        
         device = get_object_or_404(
             CaseDevice.objects.filter(case=case, deleted_at__isnull=True),
             pk=pk
         )
         
+        # Verifica permissão: responsável pelo caso OU extrator responsável pela extração
+        has_permission = False
+        
+        # Verifica se é responsável pelo caso
+        if not case.assigned_to or case.assigned_to == request.user:
+            has_permission = True
+        
+        # Verifica se é extrator responsável pela extração deste dispositivo
+        if not has_permission:
+            try:
+                from apps.core.models import ExtractorUser
+                extractor_user = ExtractorUser.objects.get(
+                    user=request.user,
+                    deleted_at__isnull=True
+                )
+                # Verifica se há extração atribuída a este extrator para este dispositivo
+                if hasattr(device, 'device_extraction'):
+                    extraction = device.device_extraction
+                    if extraction.assigned_to == extractor_user:
+                        has_permission = True
+            except ExtractorUser.DoesNotExist:
+                pass
+        
+        if not has_permission:
+            return JsonResponse({
+                'success': False,
+                'error': 'Você não tem permissão para editar dispositivos deste processo.'
+            }, status=403)
+        
         form = CaseDeviceForm(instance=device, case=case)
+        
+        # Verifica se é extrator editando (não responsável pelo caso)
+        is_extractor_editing = False
+        if case.assigned_to and case.assigned_to != request.user:
+            is_extractor_editing = True
         
         # Renderiza apenas o formulário
         form_html = render_to_string('cases/includes/device_form_modal.html', {
             'form': form,
             'device': device,
-            'case': case
+            'case': case,
+            'is_extractor_editing': is_extractor_editing
         }, request=request)
         
         return JsonResponse({

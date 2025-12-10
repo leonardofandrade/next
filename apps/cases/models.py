@@ -196,7 +196,7 @@ class Case(AbstractCaseModel):
     def get_priority_color(self):
         """Returns Bootstrap color class based on priority"""
         priority_colors = {
-            0: 'secondary',
+            0: 'success',
             1: 'primary',
             2: 'warning',
             3: 'danger',
@@ -210,15 +210,15 @@ class Case(AbstractCaseModel):
     def get_status_color(self):
         """Returns Bootstrap color class based on status"""
         status_colors = {
-            self.CASE_STATUS_DRAFT: 'secondary',
+            self.CASE_STATUS_DRAFT: 'danger',
             self.CASE_STATUS_WAITING_EXTRACTOR: 'warning',
-            self.CASE_STATUS_WAITING_START: 'warning',
+            self.CASE_STATUS_WAITING_START: 'success',
             self.CASE_STATUS_IN_PROGRESS: 'primary',
-            self.CASE_STATUS_PAUSED: 'secondary',
+            self.CASE_STATUS_PAUSED: 'warning',
             self.CASE_STATUS_COMPLETED: 'success',
-            self.CASE_STATUS_WAITING_COLLECT: 'warning',
+            self.CASE_STATUS_WAITING_COLLECT: 'info',
         }
-        return status_colors.get(self.status, 'secondary')
+        return status_colors.get(self.status, 'danger')
     
     @property
     def status_badge_class(self):

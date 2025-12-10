@@ -8,7 +8,7 @@
 {% endblock page_title %}
 
 {% block page_description %}
-Visualize os procedimentos e informações do processo
+Gerenciar os procedimentos do processo
 {% endblock page_description %}
 
 {% block page_actions %}
@@ -110,7 +110,7 @@ Visualize os procedimentos e informações do processo
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-gavel me-2"></i>
-                        Procedimentos do Processo
+                        Procedimentos do Processo: {{ case.procedures.count }}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -119,29 +119,21 @@ Visualize os procedimentos e informações do processo
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th width="20%">Categoria</th>
-                                    <th width="30%">Número</th>
-                                    <th width="25%">Arquivo</th>
-                                    <th width="10%" class="text-center">Ações</th>
+                                    <th>Categoria</th>
+                                    <th>Número</th>
+                                    <th class="text-end">Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for procedure in procedures %}
                                 <tr>
                                     <td>                                        
-                                        <strong>{{ procedure.procedure_category.name }}</strong>
+                                        <strong>{{ procedure.procedure_category.acronym }}</strong>
                                     </td>
                                     <td>
-                                        <strong>{{ procedure.number|default:"-" }}</strong>
+                                        {{ procedure.number|default:"-" }}
                                     </td>
-                                    <td>
-                                        {% if procedure.original_filename %}
-                                            <i class="fas fa-file me-1"></i>
-                                            <small>{{ procedure.original_filename|truncatechars:30 }}</small>
-                                        {% else %}
-                                            <span class="text-muted">-</span>
-                                        {% endif %}
-                                    </td>
+     
                         
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm" role="group">

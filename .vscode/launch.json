@@ -61,7 +61,7 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "NEXT - Import Legacy Extraction Requests",
+            "name": "NEXT - Import 2022",
             "type": "debugpy",
             "request": "launch",
             "args": [
@@ -70,6 +70,57 @@
                 "${workspaceFolder}\\initial_data\\dist_2022.xlsx",
                 "--year",
                 "2022",
+                "--login",
+                "leo"
+            ],
+            "django": true,
+            "program": "${workspaceFolder}\\manage.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "NEXT - Import 2023",
+            "type": "debugpy",
+            "request": "launch",
+            "args": [
+                "extraction_request_import_legacy_data",
+                "--file",
+                "${workspaceFolder}\\initial_data\\dist_2023.xlsx",
+                "--year",
+                "2023",
+                "--login",
+                "leo"
+            ],
+            "django": true,
+            "program": "${workspaceFolder}\\manage.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "NEXT - Import 2024",
+            "type": "debugpy",
+            "request": "launch",
+            "args": [
+                "extraction_request_import_legacy_data",
+                "--file",
+                "${workspaceFolder}\\initial_data\\dist_2024.xlsx",
+                "--year",
+                "2024",
+                "--login",
+                "leo"
+            ],
+            "django": true,
+            "program": "${workspaceFolder}\\manage.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "NEXT - Import 2025",
+            "type": "debugpy",
+            "request": "launch",
+            "args": [
+                "extraction_request_import_legacy_data",
+                "--file",
+                "${workspaceFolder}\\initial_data\\dist_2025.xlsx",
+                "--year",
+                "2025",
                 "--login",
                 "leo"
             ],

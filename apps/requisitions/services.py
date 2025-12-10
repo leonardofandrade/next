@@ -408,42 +408,84 @@ def get_distribution_report(filters=None):
     if filters is None:
         filters = {}
     
+    # Convert filter names for compatibility with apply_filters
+    normalized_filters = filters.copy()
+    if 'start_date' in normalized_filters:
+        normalized_filters['date_from'] = normalized_filters.pop('start_date')
+    if 'end_date' in normalized_filters:
+        normalized_filters['date_to'] = normalized_filters.pop('end_date')
+    
+    # Handle year filter
+    if 'year' in normalized_filters and 'date_from' not in normalized_filters and 'date_to' not in normalized_filters:
+        year = normalized_filters.pop('year')
+        normalized_filters['date_from'] = timezone.datetime(year, 1, 1).date()
+        normalized_filters['date_to'] = timezone.datetime(year, 12, 31).date()
+    
     # Base queryset
     queryset = ExtractionRequest.objects.filter(deleted_at__isnull=True)
     
     # Apply filters
     service = ExtractionRequestService()
-    queryset = service.apply_filters(queryset, filters)
+    queryset = service.apply_filters(queryset, normalized_filters)
     
-    # Summary by unit
+    # Summary by unit - Include all extraction units, even without requests
     summary_by_unit = []
-    units_data = queryset.values('extraction_unit').annotate(
+    
+    # Get all active extraction units
+    all_units = ExtractionUnit.objects.filter(deleted_at__isnull=True).order_by('acronym', 'name')
+    
+    # If there's an extraction_unit filter, apply it to the units list
+    extraction_unit_filter = filters.get('extraction_unit')
+    if extraction_unit_filter:
+        if isinstance(extraction_unit_filter, list):
+            all_units = all_units.filter(id__in=extraction_unit_filter)
+        else:
+            all_units = all_units.filter(id=extraction_unit_filter)
+    
+    # Get aggregated data for units that have requests
+    units_data_dict = {}
+    units_with_requests = queryset.exclude(
+        extraction_unit__isnull=True
+    ).values('extraction_unit').annotate(
         total_requests=Count('id'),
         total_devices=Sum('requested_device_amount')
-    ).order_by('-total_requests')
+    )
     
-    for unit_data in units_data:
+    # Create a dictionary for quick lookup
+    for unit_data in units_with_requests:
         unit_id = unit_data['extraction_unit']
         if unit_id:
-            try:
-                unit = ExtractionUnit.objects.get(pk=unit_id)
-                unit_requests = queryset.filter(extraction_unit_id=unit_id)
-                
-                # Calculate efficiency score
-                completed = unit_requests.filter(
-                    status__in=['waiting_collect', 'in_progress']
-                ).count()
-                total = unit_data['total_requests']
-                efficiency_score = (completed / total * 100) if total > 0 else 0
-                
-                summary_by_unit.append({
-                    'unit': unit,
-                    'total_requests': unit_data['total_requests'],
-                    'total_devices': unit_data['total_devices'] or 0,
-                    'efficiency_score': round(efficiency_score, 2)
-                })
-            except ExtractionUnit.DoesNotExist:
-                continue
+            units_data_dict[unit_id] = unit_data
+    
+    # Process all units (including those without requests)
+    for unit in all_units:
+        unit_id = unit.id
+        unit_requests = queryset.filter(extraction_unit_id=unit_id)
+        
+        # Get data from dictionary if unit has requests, otherwise use zeros
+        if unit_id in units_data_dict:
+            unit_data = units_data_dict[unit_id]
+            total_requests = unit_data['total_requests']
+            total_devices = unit_data['total_devices'] or 0
+        else:
+            total_requests = 0
+            total_devices = 0
+        
+        # Calculate efficiency score
+        completed = unit_requests.filter(
+            status__in=['waiting_collect', 'in_progress']
+        ).count()
+        efficiency_score = (completed / total_requests * 100) if total_requests > 0 else 0
+        
+        summary_by_unit.append({
+            'unit': unit,
+            'total_requests': total_requests,
+            'total_devices': total_devices,
+            'efficiency_score': round(efficiency_score, 2)
+        })
+    
+    # Sort by total_requests (descending) to maintain the original behavior
+    summary_by_unit.sort(key=lambda x: x['total_requests'], reverse=True)
     
     # Summary by status
     summary_by_status = []

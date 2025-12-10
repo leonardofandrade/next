@@ -3,7 +3,7 @@ Card de detalhes do Case - Reutilizável (Bootstrap Accordion)
 Uso: {% include 'cases/includes/case_detail_include.html' with case=case %}
 {% endcomment %}
 
-<div class="accordion mb-3" id="caseDetailAccordion">
+<div class="accordion" id="caseDetailAccordion">
     <div class="accordion-item">
         <h2 class="accordion-header" id="caseDetailHeading">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
@@ -56,10 +56,11 @@ Uso: {% include 'cases/includes/case_detail_include.html' with case=case %}
                     </div>
                     
                     <!-- Segunda Linha -->
-                    <div class="row g-2 align-items-center">
+                    <div class="row g-2 align-items-center border-top mt-2">
                         <div class="col-md-12 text-center">
                             <i class="fas fa-info-circle text-primary me-1"></i>
-                            <small class="text-muted">Clique para ver mais detalhes</small>
+                            <small class="text-info">Clique para ver mais detalhes</small>
+                            <p class="text-info mb-0"><i id="chevronIcon" class="fas fa-chevron-down text-info ms-1 chevron-icon"></i></p>
                         </div>
                     </div>
                 </div>
@@ -164,3 +165,20 @@ Uso: {% include 'cases/includes/case_detail_include.html' with case=case %}
         </div>
     </div>
 </div>
+
+<style>
+/* Remove o chevron do accordion */
+#caseDetailAccordion .accordion-button::after {
+    display: none;
+}
+
+/* Animação de rotação do chevron */
+#caseDetailAccordion .chevron-icon {
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+
+#caseDetailAccordion .accordion-button:not(.collapsed) .chevron-icon {
+    transform: rotate(180deg);
+}
+</style>

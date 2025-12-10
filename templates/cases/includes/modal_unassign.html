@@ -1,0 +1,70 @@
+<!-- Modal Desatribuir-me -->
+<div class="modal fade" id="unassignModal" tabindex="-1" aria-labelledby="unassignModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="unassignModalLabel">
+                    <i class="fas fa-user-times me-2"></i>
+                    Desatribuir Processo de Mim
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning mb-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Você está prestes a remover sua responsabilidade sobre este processo.
+                </div>
+                <div class="row g-2">
+                    <div class="col-12">
+                        <strong>Processo:</strong> {{ case.number|default:"Rascunho" }}
+                    </div>
+                    <div class="col-12">
+                        <strong>Procedimentos:</strong> {{ case.request_procedures|truncatechars:100 }}
+                    </div>
+                    <div class="col-6">
+                        <strong>Prioridade:</strong> 
+                        <span class="badge bg-{{ case.get_priority_color }}">{{ case.get_priority_display }}</span>
+                    </div>
+                    <div class="col-6">
+                        <strong>Status:</strong> 
+                        <span class="badge {{ case.status_badge_class }}">{{ case.get_status_display }}</span>
+                    </div>
+                    {% if case.assigned_at %}
+                    <div class="col-12">
+                        <strong>Atribuído em:</strong> {{ case.assigned_at|date:"d/m/Y H:i" }}
+                    </div>
+                    {% endif %}
+                    {% if case.assigned_by %}
+                    <div class="col-12">
+                        <strong>Atribuído por:</strong> {{ case.assigned_by.get_full_name|default:case.assigned_by.username }}
+                    </div>
+                    {% endif %}
+                </div>
+                <hr>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    O processo ficará sem responsável após esta ação.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>
+                    Cancelar
+                </button>
+                <form method="post" action="{% url 'cases:unassign_from_me' case.pk %}" style="display: inline;">
+                    {% csrf_token %}
+                    {% if request.GET.next %}
+                    <input type="hidden" name="next" value="{{ request.GET.next }}">
+                    {% else %}
+                    <input type="hidden" name="next" value="{% url 'cases:detail' case.pk %}">
+                    {% endif %}
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-user-times me-2"></i>
+                        Confirmar Desatribuição
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

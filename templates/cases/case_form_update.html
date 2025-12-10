@@ -31,7 +31,7 @@
 {% endblock page_actions %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container">
     <!-- Form -->
     <div class="row">
         <div class="col-12">
@@ -55,25 +55,31 @@
                         <div class="row g-3 mb-3 border-bottom">
                             <div class="col-md-3">
                                 <label class="form-label fw-bold">Número/ID:</label>
-                                <strong class="text-primary fs-6">{{ case.number|default:case.pk }}</strong>
+                                <p class="text-primary fw-bold fs-5">{{ case.number|default:case.pk }}</p>
                             </div>
                             
-                            <div class="col-md-2">
-                                <label class="form-label fw-bold">Status:</label>
-                                <span class="badge {{ case.status_badge_class }} fs-6">
-                                        {{ case.get_status_display }}
-                                </span>
-                            </div>                          
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Status:</label><br>
+                                <p class="badge {{ case.status_badge_class }} fs-5">
+                                    {{ case.get_status_display }}
+                                </p>
+                            </div>                       
                             
                             <div class="col-md-3">
-                                <label class="form-label fw-bold">Responsável</label>
-                                <strong class="text-primary fs-6">
+                                <label class="form-label fw-bold">Responsável:</label><br>
+                                <p class="text-primary fw-bold fs-5">
                                     {% if case.assigned_to %}
                                         {{ case.assigned_to.get_full_name }}
                                     {% else %}
-                                        <strong class="text-danger fs-6">NÃO ATRIBUÍDO</strong>
+                                        <span class="text-danger fs-5">NÃO ATRIBUÍDO</span>
                                     {% endif %}
-                                </strong>
+                                </p>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Recebido em:</label><br>
+                                <p class="text-primary fw-bold fs-5">
+                                    {{ case.registration_completed_at|date:"d/m/Y H:i" }}
+                                </p>
                             </div>
                         </div>
                         <div class="row g-3 mb-4">

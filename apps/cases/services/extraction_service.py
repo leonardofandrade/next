@@ -43,6 +43,7 @@ class ExtractionService(BaseService):
         extraction.assigned_to = extractor_user
         extraction.assigned_by = self.user
         extraction.status = Extraction.EXTRACTION_STATUS_ASSIGNED
+        # updated_by será preenchido automaticamente pelo AuditedModel.save()
         extraction.save()
         
         # Update case status
@@ -60,6 +61,7 @@ class ExtractionService(BaseService):
         extraction.status = Extraction.EXTRACTION_STATUS_IN_PROGRESS
         extraction.started_at = timezone.now()
         extraction.started_by = extraction.assigned_to
+        # updated_by será preenchido automaticamente pelo AuditedModel.save()
         extraction.save()
         
         # Update case status
@@ -76,6 +78,7 @@ class ExtractionService(BaseService):
             
         extraction.status = Extraction.EXTRACTION_STATUS_PAUSED
         extraction.pause_reason = reason
+        # updated_by será preenchido automaticamente pelo AuditedModel.save()
         extraction.save()
         
         # Update case status  
@@ -103,7 +106,8 @@ class ExtractionService(BaseService):
         for field, value in kwargs.items():
             if hasattr(extraction, field):
                 setattr(extraction, field, value)
-                
+        
+        # updated_by será preenchido automaticamente pelo AuditedModel.save()
         extraction.save()
         
         # Update case status

@@ -40,6 +40,10 @@ class BaseService:
     
     def __init__(self, user: Optional[User] = None):
         self.user = user
+        # Define o usuário no thread-local para que o AuditedModel possa preencher created_by/updated_by
+        if user:
+            from apps.core.middleware import set_current_user
+            set_current_user(user)
     
     def get_queryset(self) -> QuerySet:
         """Get base queryset for the service"""
@@ -83,10 +87,7 @@ class BaseService:
         
         validated_data = self.validate_business_rules(data)
         
-        # Add created_by if user is available and model has the field
-        if self.user and hasattr(self.model_class, 'created_by'):
-            validated_data['created_by'] = self.user
-        
+        # created_by será preenchido automaticamente pelo AuditedModel.save()
         # Create instance
         instance = self.model_class(**validated_data)
         instance.save()
@@ -103,10 +104,7 @@ class BaseService:
         
         validated_data = self.validate_business_rules(data, instance)
         
-        # Add updated_by if user is available and model has the field
-        if self.user and hasattr(self.model_class, 'updated_by'):
-            validated_data['updated_by'] = self.user
-        
+        # updated_by será preenchido automaticamente pelo AuditedModel.save()
         # Update fields
         for field, value in validated_data.items():
             setattr(instance, field, value)

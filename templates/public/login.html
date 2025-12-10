@@ -87,7 +87,7 @@
                                                placeholder="Digite sua senha"
                                                required>
                                         <button type="button" class="btn btn-outline-secondary border-start-0" id="togglePassword" style="z-index: 10;">
-                                            <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                                            <i class="fas fa-folder-open" id="togglePasswordIcon"></i>
                                         </button>
                                     </div>
                                     {% if form.password.errors %}
@@ -363,11 +363,11 @@
             togglePasswordBtn.addEventListener('click', function() {
                 if (passwordField.type === 'password') {
                     passwordField.type = 'text';
-                    togglePasswordIcon.className = 'fas fa-eye-slash';
+                    togglePasswordIcon.className = 'fas fa-folder-open-slash';
                     this.setAttribute('title', 'Ocultar senha');
                 } else {
                     passwordField.type = 'password';
-                    togglePasswordIcon.className = 'fas fa-eye';
+                    togglePasswordIcon.className = 'fas fa-folder-open';
                     this.setAttribute('title', 'Mostrar senha');
                 }
             });

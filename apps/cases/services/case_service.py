@@ -2,6 +2,7 @@
 Service for Case business logic
 """
 from django.db.models import Q, QuerySet, Count
+from django.db import transaction
 from django.utils import timezone
 from typing import Dict, Any, List, Optional
 
@@ -348,13 +349,15 @@ class CaseService(BaseService):
         
         return queryset
     
-    def create_case_from_requisition(self, requisition, user) -> Case:
+    @transaction.atomic
+    def create_case_from_requisition(self, requisition, user, mark_request_as_received: bool = False) -> Case:
         """
         Cria um Case a partir de uma ExtractionRequest.
         
         Args:
             requisition: Instância de ExtractionRequest
             user: Usuário que está criando o caso (para created_by)
+            mark_request_as_received: Se True, marca o ExtractionRequest como recebido e atualiza status
         
         Returns:
             Case: Caso criado
@@ -366,9 +369,11 @@ class CaseService(BaseService):
         
         # Verifica se a requisição já tem um caso associado
         if hasattr(requisition, 'case') and requisition.case:
-            raise ValidationServiceException(
-                f"A requisição {requisition.id} já possui um caso associado (ID: {requisition.case.id})"
-            )
+            existing_case = requisition.case
+            if existing_case and not existing_case.deleted_at:
+                raise ValidationServiceException(
+                    f'Já existe um processo criado para esta solicitação (Processo #{existing_case.pk}).'
+                )
         
         # Prepara os dados do caso a partir da requisição
         case_data = {
@@ -393,6 +398,41 @@ class CaseService(BaseService):
         
         # Cria o caso
         case = Case.objects.create(**validated_data)
+        
+        # Tenta parsear request_procedures e criar CaseProcedure
+        # Se falhar, não impede a criação do case
+        if requisition.request_procedures:
+            try:
+                from apps.cases.utils import parse_request_procedures
+                import logging
+                
+                errors = parse_request_procedures(requisition.request_procedures, case, user)
+                # Loga erros se houver, mas não interrompe o fluxo
+                if errors:
+                    logger = logging.getLogger(__name__)
+                    for error in errors:
+                        logger.warning(f"Erro ao parsear procedimentos do Case #{case.pk}: {error}")
+            except Exception as e:
+                # Captura qualquer exceção não tratada e loga, mas não interrompe
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Erro inesperado ao parsear procedimentos do Case #{case.pk}: {str(e)}", exc_info=True)
+        
+        # Se solicitado, marca o ExtractionRequest como recebido
+        if mark_request_as_received:
+            if not requisition.received_at:
+                requisition.received_at = timezone.now()
+                requisition.received_by = user
+            
+            if requisition.status not in [
+                ExtractionRequest.REQUEST_STATUS_ASSIGNED,
+                ExtractionRequest.REQUEST_STATUS_RECEIVED
+            ]:
+                requisition.status = ExtractionRequest.REQUEST_STATUS_ASSIGNED
+            
+            requisition.updated_by = user
+            requisition.version += 1
+            requisition.save()
         
         return case
 

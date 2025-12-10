@@ -7,7 +7,7 @@ from apps.cases.services.case_service import CaseService
 
 
 class Command(BaseCommand):
-    help = "Cria casos (Case) a partir de requisições de extração (ExtractionRequest) com received_at None"
+    help = "Cria casos (Case) a partir de requisições de extração (ExtractionRequest) com received_at None e marca as requisições como recebidas"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -84,11 +84,12 @@ class Command(BaseCommand):
                     )
                     continue
 
-                # Criar caso usando o serviço
+                # Criar caso usando o serviço e marcar requisição como recebida
                 with transaction.atomic():
                     case = case_service.create_case_from_requisition(
                         requisition=requisition,
-                        user=created_by_user
+                        user=created_by_user,
+                        mark_request_as_received=True
                     )
                     created_cases.append(case)
 
@@ -96,7 +97,8 @@ class Command(BaseCommand):
                     self.style.SUCCESS(
                         f"  ✅ Caso criado: ID {case.id} - "
                         f"Agência: {case.requester_agency_unit.name if case.requester_agency_unit else 'N/A'} - "
-                        f"Data: {case.requested_at.strftime('%d/%m/%Y %H:%M')}"
+                        f"Data: {case.requested_at.strftime('%d/%m/%Y %H:%M')} - "
+                        f"Requisição marcada como recebida"
                     )
                 )
 

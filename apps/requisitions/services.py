@@ -1,7 +1,6 @@
 """
 Services for requisitions app
 """
-import re
 import logging
 from typing import Dict, Any, Optional, List
 from django.db.models import Q, QuerySet, Count, Sum, Case, When, IntegerField
@@ -132,137 +131,30 @@ class ExtractionRequestService(BaseService):
     @transaction.atomic
     def create_case_from_request(self, request_pk: int) -> 'Case':
         """
-        Cria um Case a partir de um ExtractionRequest
+        Cria um Case a partir de um ExtractionRequest e marca o request como recebido.
         Operação atômica: criação do Case e atualização do ExtractionRequest são executadas
         em uma única transação. Se falharem, tudo será revertido.
         
         Nota: Falhas no parsing de procedimentos (CaseProcedure) não impedem a criação do case.
+        
+        Este método delega a criação do case para o CaseService, mantendo apenas
+        a responsabilidade de buscar o ExtractionRequest e marcar como recebido.
         """
-        from apps.cases.models import Case, CaseProcedure
-        from apps.base_tables.models import ProcedureCategory
+        from apps.cases.services.case_service import CaseService
         
         extraction_request = self.get_object(request_pk)
         
-        # Verifica se já existe um case para esta extraction_request
-        if hasattr(extraction_request, 'case'):
-            existing_case = extraction_request.case
-            if existing_case and not existing_case.deleted_at:
-                raise ValidationServiceException(
-                    f'Já existe um processo criado para esta solicitação (Processo #{existing_case.pk}).'
-                )
-        
-        # Cria o Case copiando os dados do ExtractionRequest
-        case = Case(
-            requester_agency_unit=extraction_request.requester_agency_unit,
-            requested_at=extraction_request.requested_at,
-            requested_device_amount=extraction_request.requested_device_amount,
-            extraction_unit=extraction_request.extraction_unit,
-            requester_reply_email=extraction_request.requester_reply_email,
-            requester_authority_name=extraction_request.requester_authority_name,
-            requester_authority_position=extraction_request.requester_authority_position,
-            request_procedures=extraction_request.request_procedures,
-            crime_category=extraction_request.crime_category,
-            additional_info=extraction_request.additional_info,
-            extraction_request=extraction_request,
-            status=Case.CASE_STATUS_DRAFT,
-            number=None,  # Será criado posteriormente
-            created_by=self.user,
+        # Delega a criação do case para o CaseService
+        # O CaseService já faz: criar case, parsear procedimentos, e opcionalmente marcar request como recebido
+        case_service = CaseService(user=self.user)
+        case = case_service.create_case_from_requisition(
+            requisition=extraction_request,
+            user=self.user,
+            mark_request_as_received=True
         )
-        case.save()
-        
-        # Tenta parsear request_procedures e criar CaseProcedure
-        # Se falhar, não impede a criação do case
-        if extraction_request.request_procedures:
-            try:
-                errors = self._parse_request_procedures(extraction_request.request_procedures, case)
-                # Loga erros se houver, mas não interrompe o fluxo
-                if errors:
-                    logger = logging.getLogger(__name__)
-                    for error in errors:
-                        logger.warning(f"Erro ao parsear procedimentos do Case #{case.pk}: {error}")
-            except Exception as e:
-                # Captura qualquer exceção não tratada e loga, mas não interrompe
-                logger = logging.getLogger(__name__)
-                logger.error(f"Erro inesperado ao parsear procedimentos do Case #{case.pk}: {str(e)}", exc_info=True)
-        
-        # Atualiza a ExtractionRequest: seta received_at, received_by e status
-        if not extraction_request.received_at:
-            extraction_request.received_at = timezone.now()
-            extraction_request.received_by = self.user
-        
-        if extraction_request.status not in [
-            ExtractionRequest.REQUEST_STATUS_ASSIGNED,
-            ExtractionRequest.REQUEST_STATUS_RECEIVED
-        ]:
-            extraction_request.status = ExtractionRequest.REQUEST_STATUS_ASSIGNED
-        
-        extraction_request.updated_by = self.user
-        extraction_request.version += 1
-        extraction_request.save()
         
         return case
     
-    def _parse_request_procedures(self, request_procedures_text: str, case: 'Case') -> List[str]:
-        """
-        Tenta parsear o campo request_procedures e criar CaseProcedure.
-        Retorna uma lista de erros encontrados (se houver).
-        """
-        from apps.cases.models import CaseProcedure
-        from apps.base_tables.models import ProcedureCategory
-        
-        errors = []
-        if not request_procedures_text:
-            return errors
-        
-        procedures_text = request_procedures_text.strip()
-        if not procedures_text:
-            return errors
-        
-        # Tenta dividir por vírgula ou ponto e vírgula
-        procedures_list = re.split(r'[,;]', procedures_text)
-        
-        for procedure_text in procedures_list:
-            procedure_text = procedure_text.strip()
-            if not procedure_text:
-                continue
-            
-            # Tenta extrair o acrônimo e o número
-            match = re.match(r'^([A-Z]{1,10})\s+([0-9/]+)', procedure_text, re.IGNORECASE)
-            if not match:
-                match = re.match(r'^([A-Z]{1,10})', procedure_text, re.IGNORECASE)
-                if match:
-                    acronym = match.group(1).upper()
-                    procedure_number = procedure_text.replace(acronym, '').strip()
-                else:
-                    errors.append(f"Não foi possível parsear: {procedure_text}")
-                    continue
-            else:
-                acronym = match.group(1).upper()
-                procedure_number = match.group(2).strip()
-            
-            # Busca ProcedureCategory pelo acronym
-            try:
-                procedure_category = ProcedureCategory.objects.filter(
-                    acronym__iexact=acronym,
-                    deleted_at__isnull=True
-                ).first()
-                
-                if not procedure_category:
-                    errors.append(f"Categoria de procedimento não encontrada para acrônimo: {acronym}")
-                    continue
-                
-                # Cria o CaseProcedure
-                CaseProcedure.objects.create(
-                    case=case,
-                    number=procedure_number if procedure_number else None,
-                    procedure_category=procedure_category,
-                    created_by=case.created_by
-                )
-            except Exception as e:
-                errors.append(f"Erro ao criar procedimento {acronym} {procedure_number}: {str(e)}")
-                continue
-        
-        return errors
 
 
 # Funções auxiliares mantidas para compatibilidade

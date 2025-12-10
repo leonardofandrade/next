@@ -55,12 +55,14 @@ urlpatterns = [
     # DeviceBrand URLs
     path('device-brands/', views.DeviceBrandListView.as_view(), name='device_brand_list'),
     path('device-brands/create/', views.DeviceBrandCreateView.as_view(), name='device_brand_create'),
+    path('device-brands/create-ajax/', views.DeviceBrandCreateAjaxView.as_view(), name='device_brand_create_ajax'),
     path('device-brands/<int:pk>/edit/', views.DeviceBrandUpdateView.as_view(), name='device_brand_edit'),
     path('device-brands/<int:pk>/delete/', views.DeviceBrandDeleteView.as_view(), name='device_brand_delete'),
     
     # DeviceModel URLs
     path('device-models/', views.DeviceModelListView.as_view(), name='device_model_list'),
     path('device-models/create/', views.DeviceModelCreateView.as_view(), name='device_model_create'),
+    path('device-models/create-ajax/', views.DeviceModelCreateAjaxView.as_view(), name='device_model_create_ajax'),
     path('device-models/<int:pk>/edit/', views.DeviceModelUpdateView.as_view(), name='device_model_edit'),
     path('device-models/<int:pk>/delete/', views.DeviceModelDeleteView.as_view(), name='device_model_delete'),
 ]

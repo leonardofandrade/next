@@ -77,9 +77,22 @@ Gerenciar os dispositivos do processo
                                     {{ device_form.device_category.errors }}
                                 </div>
                                 <div class="col-md-9">
-                                    {{ device_form.device_model|form_label_class }}
-                                    {{ device_form.device_model }}
-                                    {{ device_form.device_model.errors }}
+                                    <div class="d-flex align-items-end gap-2">
+                                        <div class="flex-grow-1">
+                                            {{ device_form.device_model|form_label_class }}
+                                            {{ device_form.device_model }}
+                                            {{ device_form.device_model.errors }}
+                                        </div>
+                                        <div>
+                                            <button type="button" 
+                                                    class="btn btn-outline-success" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#createDeviceModelModal"
+                                                    title="Criar novo modelo">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="row g-3 mb-3">
@@ -107,7 +120,6 @@ Gerenciar os dispositivos do processo
                             </div>
                             <div class="row g-3 mb-3">
                                 <div class="col-md-4">
-                                    {{ device_form.imei_01|form_label_class }}
                                     {{ device_form.imei_01 }}
                                     {% if device_form.imei_01.errors %}
                                         <div class="text-danger small mt-1">
@@ -117,7 +129,6 @@ Gerenciar os dispositivos do processo
                                     {% endif %}
                                 </div>
                                 <div class="col-md-4">
-                                    {{ device_form.imei_02|form_label_class }}
                                     {{ device_form.imei_02 }}
                                     {% if device_form.imei_02.errors %}
                                         <div class="text-danger small mt-1">
@@ -126,7 +137,6 @@ Gerenciar os dispositivos do processo
                                     {% endif %}
                                 </div>
                                 <div class="col-md-4">
-                                    {{ device_form.imei_03|form_label_class }}
                                     {{ device_form.imei_03 }}
                                     {% if device_form.imei_03.errors %}
                                         <div class="text-danger small mt-1">
@@ -429,6 +439,9 @@ Gerenciar os dispositivos do processo
         </div>
     </div>
 </div>
+
+<!-- Modal de Criação -->
+{% include 'cases/includes/modal_create_device_model.html' %}
 {% endblock %}
 
 {% block extra_js %}
@@ -697,6 +710,176 @@ document.addEventListener('DOMContentLoaded', function() {
             submitButton.innerHTML = originalText;
             alert('Erro ao excluir dispositivo: ' + (error.message || 'Tente novamente.'));
         });
+    });
+    
+    // ===== CRIAÇÃO DE DEVICE MODEL =====
+    const createDeviceModelModal = document.getElementById('createDeviceModelModal');
+    const createDeviceModelForm = document.getElementById('createDeviceModelForm');
+    const createDeviceModelSubmit = document.getElementById('createDeviceModelSubmit');
+    const deviceModelBrandSelect = document.getElementById('device_model_brand');
+    const deviceModelBrandMode = document.getElementById('device_model_brand_mode');
+    const deviceModelBrandSelectContainer = document.getElementById('device_model_brand_select_container');
+    const deviceModelBrandInputContainer = document.getElementById('device_model_brand_input_container');
+    
+    // Toggle entre select e input de marca
+    if (deviceModelBrandMode) {
+        deviceModelBrandMode.addEventListener('change', function() {
+            if (this.checked) {
+                // Modo: criar nova marca
+                deviceModelBrandSelectContainer.style.display = 'none';
+                deviceModelBrandInputContainer.style.display = 'block';
+                deviceModelBrandSelect.removeAttribute('required');
+                document.getElementById('device_model_new_brand_name').setAttribute('required', 'required');
+            } else {
+                // Modo: selecionar marca existente
+                deviceModelBrandSelectContainer.style.display = 'block';
+                deviceModelBrandInputContainer.style.display = 'none';
+                deviceModelBrandSelect.setAttribute('required', 'required');
+                document.getElementById('device_model_new_brand_name').removeAttribute('required');
+            }
+        });
+    }
+    
+    // Carrega marcas no select quando o modal é aberto
+    createDeviceModelModal.addEventListener('show.bs.modal', function() {
+        loadDeviceBrands();
+        // Reseta o toggle
+        if (deviceModelBrandMode) {
+            deviceModelBrandMode.checked = false;
+            deviceModelBrandSelectContainer.style.display = 'block';
+            deviceModelBrandInputContainer.style.display = 'none';
+        }
+    });
+    
+    function loadDeviceBrands() {
+        fetch('{% url "base_tables:device_brand_list" %}', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.brands) {
+                deviceModelBrandSelect.innerHTML = '<option value="">Selecione uma marca</option>';
+                data.brands.forEach(brand => {
+                    const option = document.createElement('option');
+                    option.value = brand.id;
+                    option.textContent = brand.name;
+                    deviceModelBrandSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar marcas:', error);
+        });
+    }
+    
+    // Por enquanto, vamos usar uma abordagem mais simples: 
+    // O usuário pode criar a marca primeiro, e depois criar o modelo
+    // Ou podemos fazer uma requisição para obter as marcas via uma view JSON
+    
+    createDeviceModelForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Limpa erros anteriores
+        document.querySelectorAll('#createDeviceModelForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.getElementById('device_model_form_errors').classList.add('d-none');
+        
+        // Desabilita botão e mostra loading
+        const originalText = createDeviceModelSubmit.innerHTML;
+        createDeviceModelSubmit.disabled = true;
+        createDeviceModelSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Criando...';
+        
+        const formData = new FormData(createDeviceModelForm);
+        
+        fetch('{% url "base_tables:device_model_create_ajax" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Fecha o modal
+                const modal = bootstrap.Modal.getInstance(createDeviceModelModal);
+                modal.hide();
+                
+                // Limpa o formulário
+                createDeviceModelForm.reset();
+                
+                // Mostra mensagem de sucesso
+                if (typeof window.ToastSystem !== 'undefined' && window.ToastSystem.success) {
+                    window.ToastSystem.success(data.message || 'Modelo criado com sucesso!');
+                } else if (typeof showToast !== 'undefined') {
+                    showToast(data.message || 'Modelo criado com sucesso!', 'success');
+                } else {
+                    alert(data.message || 'Modelo criado com sucesso!');
+                }
+                
+                // Recarrega a página para atualizar o select
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                // Mostra erros
+                if (data.errors) {
+                    Object.keys(data.errors).forEach(field => {
+                        let input = document.getElementById(`device_model_${field}`);
+                        let errorDiv = document.getElementById(`device_model_${field}_error`);
+                        
+                        // Se não encontrou, pode ser o campo de nova marca
+                        if (!input && field === 'new_brand_name') {
+                            input = document.getElementById('device_model_new_brand_name');
+                            errorDiv = document.getElementById('device_model_new_brand_name_error');
+                        }
+                        
+                        if (input) {
+                            input.classList.add('is-invalid');
+                            if (errorDiv && data.errors[field]) {
+                                errorDiv.textContent = Array.isArray(data.errors[field]) ? data.errors[field][0] : data.errors[field];
+                            }
+                        }
+                    });
+                }
+                
+                if (data.error) {
+                    const errorDiv = document.getElementById('device_model_form_errors');
+                    errorDiv.textContent = data.error;
+                    errorDiv.classList.remove('d-none');
+                }
+                
+                // Reabilita botão
+                createDeviceModelSubmit.disabled = false;
+                createDeviceModelSubmit.innerHTML = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao criar modelo:', error);
+            const errorDiv = document.getElementById('device_model_form_errors');
+            errorDiv.textContent = 'Erro ao criar modelo. Tente novamente.';
+            errorDiv.classList.remove('d-none');
+            
+            // Reabilita botão
+            createDeviceModelSubmit.disabled = false;
+            createDeviceModelSubmit.innerHTML = originalText;
+        });
+    });
+    
+    // Limpa erros ao fechar o modal de modelo
+    createDeviceModelModal.addEventListener('hidden.bs.modal', function() {
+        createDeviceModelForm.reset();
+        document.querySelectorAll('#createDeviceModelForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.getElementById('device_model_form_errors').classList.add('d-none');
+        createDeviceModelSubmit.disabled = false;
+        createDeviceModelSubmit.innerHTML = '<i class="fas fa-save me-2"></i>Criar Modelo';
+        if (deviceModelBrandMode) {
+            deviceModelBrandMode.checked = false;
+            deviceModelBrandSelectContainer.style.display = 'block';
+            deviceModelBrandInputContainer.style.display = 'none';
+        }
     });
 });
 </script>

@@ -1,0 +1,113 @@
+<!-- Modal para Criar DeviceModel -->
+<div class="modal fade" id="createDeviceModelModal" tabindex="-1" aria-labelledby="createDeviceModelModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createDeviceModelModalLabel">
+                    <i class="fas fa-mobile-alt me-2"></i>
+                    Novo Modelo de Dispositivo
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form id="createDeviceModelForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <label for="device_model_brand_mode" class="form-label mb-0">
+                                    Marca <span class="text-danger">*</span>
+                                </label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           id="device_model_brand_mode" 
+                                           name="create_new_brand">
+                                    <label class="form-check-label" for="device_model_brand_mode">
+                                        <small class="text-muted">Criar nova marca</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div id="device_model_brand_select_container">
+                                <select class="form-select" 
+                                        id="device_model_brand" 
+                                        name="brand">
+                                    <option value="">Selecione uma marca</option>
+                                </select>
+                                <div class="invalid-feedback" id="device_model_brand_error"></div>
+                            </div>
+                            <div id="device_model_brand_input_container" style="display: none;">
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="device_model_new_brand_name" 
+                                       name="new_brand_name" 
+                                       placeholder="Nome da nova marca (Ex: Samsung, Apple)">
+                                <div class="invalid-feedback" id="device_model_new_brand_name_error"></div>
+                                <small class="form-text text-muted mt-1">
+                                    A marca será criada automaticamente ao salvar o modelo.
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="device_model_name" class="form-label">
+                                Nome <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="device_model_name" 
+                                   name="name" 
+                                   required 
+                                   placeholder="Ex: Galaxy S23, iPhone 15">
+                            <div class="invalid-feedback" id="device_model_name_error"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="device_model_commercial_name" class="form-label">
+                                Nome Comercial
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="device_model_commercial_name" 
+                                   name="commercial_name" 
+                                   placeholder="Ex: Galaxy S23 Ultra">
+                            <div class="invalid-feedback" id="device_model_commercial_name_error"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="device_model_code" class="form-label">
+                                Código
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="device_model_code" 
+                                   name="code" 
+                                   placeholder="Ex: SM-S918B">
+                            <div class="invalid-feedback" id="device_model_code_error"></div>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="device_model_description" class="form-label">
+                                Descrição
+                            </label>
+                            <textarea class="form-control" 
+                                      id="device_model_description" 
+                                      name="description" 
+                                      rows="3" 
+                                      placeholder="Descrição opcional do modelo"></textarea>
+                            <div class="invalid-feedback" id="device_model_description_error"></div>
+                        </div>
+                    </div>
+                    <div id="device_model_form_errors" class="alert alert-danger d-none mt-3"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="createDeviceModelSubmit">
+                        <i class="fas fa-save me-2"></i>
+                        Criar Modelo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

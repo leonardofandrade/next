@@ -3,6 +3,9 @@ Views para o app base_tables - Refatoradas usando BaseService e BaseViews
 """
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from django.http import JsonResponse
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from apps.core.mixins.views import (
     BaseListView, BaseCreateView, BaseUpdateView, BaseDeleteView
@@ -19,6 +22,7 @@ from apps.base_tables.models import (
     DeviceBrand,
     DeviceModel
 )
+from apps.core.services.base import ServiceException
 from apps.base_tables.forms import (
     OrganizationForm,
     AgencyForm,
@@ -644,6 +648,14 @@ class DeviceBrandListView(BaseListView):
         context = super().get_context_data(**kwargs)
         context['brands'] = context.get('object_list', [])
         return context
+    
+    def get(self, request, *args, **kwargs):
+        """Retorna JSON se for requisição AJAX"""
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            brands = DeviceBrand.objects.filter(deleted_at__isnull=True).order_by('name')
+            brands_data = [{'id': brand.id, 'name': brand.name} for brand in brands]
+            return JsonResponse({'brands': brands_data})
+        return super().get(request, *args, **kwargs)
 
 
 class DeviceBrandCreateView(BaseCreateView):
@@ -693,6 +705,42 @@ class DeviceBrandUpdateView(BaseUpdateView):
         return super(BaseUpdateView, self).form_valid(form)
 
 
+class DeviceBrandCreateAjaxView(LoginRequiredMixin, View):
+    """Criar DeviceBrand via AJAX (retorna JSON)"""
+    
+    def post(self, request):
+        """Processa criação de DeviceBrand via AJAX"""
+        form = DeviceBrandForm(request.POST)
+        
+        if form.is_valid():
+            try:
+                brand = form.save(commit=False)
+                brand.created_by = request.user
+                brand.save()
+                
+                return JsonResponse({
+                    'success': True,
+                    'id': brand.id,
+                    'name': brand.name,
+                    'acronym': brand.acronym or '',
+                    'message': 'Marca criada com sucesso!'
+                })
+            except Exception as e:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Erro ao criar marca: {str(e)}'
+                }, status=400)
+        else:
+            errors = {}
+            for field, field_errors in form.errors.items():
+                errors[field] = field_errors
+            return JsonResponse({
+                'success': False,
+                'errors': errors,
+                'error': 'Por favor, corrija os erros no formulário.'
+            }, status=400)
+
+
 class DeviceBrandDeleteView(BaseDeleteView):
     """Deletar marca de dispositivo (soft delete)"""
     model = DeviceBrand
@@ -717,6 +765,130 @@ class DeviceModelListView(BaseListView):
         context = super().get_context_data(**kwargs)
         context['models'] = context.get('object_list', [])
         return context
+
+
+class DeviceModelCreateAjaxView(LoginRequiredMixin, View):
+    """Criar DeviceModel via AJAX (retorna JSON) - Pode criar marca também"""
+    
+    def post(self, request):
+        """Processa criação de DeviceModel via AJAX, criando marca se necessário"""
+        create_new_brand = request.POST.get('create_new_brand') == 'on'
+        new_brand_name = request.POST.get('new_brand_name', '').strip()
+        
+        brand = None
+        
+        # Se deve criar nova marca
+        if create_new_brand:
+            if not new_brand_name:
+                return JsonResponse({
+                    'success': False,
+                    'errors': {'new_brand_name': ['Nome da marca é obrigatório.']},
+                    'error': 'Por favor, informe o nome da nova marca.'
+                }, status=400)
+            
+            # Verifica se a marca já existe (case-insensitive) antes de criar
+            brand = DeviceBrand.objects.filter(
+                name__iexact=new_brand_name,
+                deleted_at__isnull=True
+            ).first()
+            
+            if not brand:
+                # Cria a marca apenas se não existir
+                try:
+                    brand = DeviceBrand.objects.create(
+                        name=new_brand_name,
+                        created_by=request.user
+                    )
+                except Exception as e:
+                    # Se falhar, tenta buscar novamente (pode ter sido criado por outra requisição)
+                    brand = DeviceBrand.objects.filter(
+                        name__iexact=new_brand_name,
+                        deleted_at__isnull=True
+                    ).first()
+                    
+                    if not brand:
+                        return JsonResponse({
+                            'success': False,
+                            'error': f'Erro ao criar marca: {str(e)}'
+                        }, status=400)
+        else:
+            # Usa marca existente
+            brand_id = request.POST.get('brand')
+            if not brand_id:
+                return JsonResponse({
+                    'success': False,
+                    'errors': {'brand': ['Selecione uma marca ou crie uma nova.']},
+                    'error': 'Por favor, selecione uma marca ou crie uma nova.'
+                }, status=400)
+            
+            try:
+                brand = DeviceBrand.objects.get(pk=brand_id, deleted_at__isnull=True)
+            except DeviceBrand.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'errors': {'brand': ['Marca não encontrada.']},
+                    'error': 'Marca selecionada não encontrada.'
+                }, status=400)
+        
+        # Cria o modelo
+        form_data = request.POST.copy()
+        form_data['brand'] = brand.id
+        
+        form = DeviceModelForm(form_data)
+        
+        if form.is_valid():
+            try:
+                # Verifica se o modelo já existe (unique_together: brand, name)
+                existing_model = DeviceModel.objects.filter(
+                    brand=brand,
+                    name__iexact=form.cleaned_data['name'],
+                    deleted_at__isnull=True
+                ).first()
+                
+                if existing_model:
+                    return JsonResponse({
+                        'success': False,
+                        'errors': {'name': [f'Já existe um modelo "{form.cleaned_data["name"]}" para a marca "{brand.name}".']},
+                        'error': 'Este modelo já existe para esta marca.'
+                    }, status=400)
+                
+                model = form.save(commit=False)
+                model.created_by = request.user
+                model.save()
+                
+                return JsonResponse({
+                    'success': True,
+                    'id': model.id,
+                    'name': model.name,
+                    'brand_id': model.brand.id,
+                    'brand_name': model.brand.name,
+                    'display_name': str(model),
+                    'brand_created': create_new_brand,
+                    'message': f'Modelo criado com sucesso!{" A marca também foi criada." if create_new_brand else ""}'
+                })
+            except Exception as e:
+                # Verifica se é erro de unicidade do banco
+                error_msg = str(e)
+                if 'unique' in error_msg.lower() or 'duplicate' in error_msg.lower():
+                    return JsonResponse({
+                        'success': False,
+                        'errors': {'name': ['Este modelo já existe para esta marca.']},
+                        'error': 'Este modelo já existe para esta marca.'
+                    }, status=400)
+                
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Erro ao criar modelo: {str(e)}'
+                }, status=400)
+        else:
+            errors = {}
+            for field, field_errors in form.errors.items():
+                errors[field] = field_errors
+            return JsonResponse({
+                'success': False,
+                'errors': errors,
+                'error': 'Por favor, corrija os erros no formulário.'
+            }, status=400)
 
 
 class DeviceModelCreateView(BaseCreateView):

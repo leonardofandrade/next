@@ -28,6 +28,7 @@ from apps.cases.views.case_device_views import (
     CaseDeviceUpdateView,
     CaseDeviceDetailView,
     CaseDeviceDeleteView,
+    CaseDeviceFormModalView,
 )
 
 # Importa views relacionadas ao modelo CaseProcedure
@@ -58,6 +59,7 @@ __all__ = [
     'CaseDeviceUpdateView',
     'CaseDeviceDetailView',
     'CaseDeviceDeleteView',
+    'CaseDeviceFormModalView',
     # CaseProcedure views
     'CaseProcedureCreateView',
     'CaseProcedureDetailView',

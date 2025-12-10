@@ -9,6 +9,8 @@ from django.conf import settings
 from django.urls import reverse
 from django.db.models import QuerySet
 from typing import Dict, Any
+from django.http import JsonResponse
+from django.template.loader import render_to_string
 
 from apps.core.mixins.views import ServiceMixin, ExtractionUnitFilterMixin
 from apps.cases.models import Case, Extraction
@@ -304,6 +306,64 @@ class ExtractionFinishFormView(LoginRequiredMixin, DetailView):
         return context
 
 
+class ExtractionFinishFormModalView(LoginRequiredMixin, View):
+    """Retorna o formulário de finalização de extração para modal AJAX"""
+    
+    def get(self, request, pk):
+        service = ExtractionService(user=request.user)
+        
+        try:
+            extraction = service.get_object(pk)
+            
+            if not service.can_be_finished(extraction.pk):
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Apenas extrações em andamento ou pausadas podem ser finalizadas. Apenas o responsável pela extração pode finalizá-la.'
+                }, status=403)
+            
+            # Cria o formulário com dados iniciais da extração
+            initial_data = {
+                'extraction_result': extraction.extraction_result,
+                'finished_notes': extraction.finished_notes,
+                'extraction_results_notes': extraction.extraction_results_notes,
+                'logical_extraction': extraction.logical_extraction,
+                'logical_extraction_notes': extraction.logical_extraction_notes,
+                'physical_extraction': extraction.physical_extraction,
+                'physical_extraction_notes': extraction.physical_extraction_notes,
+                'full_file_system_extraction': extraction.full_file_system_extraction,
+                'full_file_system_extraction_notes': extraction.full_file_system_extraction_notes,
+                'cloud_extraction': extraction.cloud_extraction,
+                'cloud_extraction_notes': extraction.cloud_extraction_notes,
+                'cellebrite_premium': extraction.cellebrite_premium,
+                'cellebrite_premium_notes': extraction.cellebrite_premium_notes,
+                'cellebrite_premium_support': extraction.cellebrite_premium_support,
+                'cellebrite_premium_support_notes': extraction.cellebrite_premium_support_notes,
+                'extraction_size': extraction.extraction_size,
+                'storage_media': extraction.storage_media,
+            }
+            
+            form = ExtractionFinishForm(
+                initial=initial_data,
+                extraction_unit=extraction.case_device.case.extraction_unit
+            )
+            
+            # Renderiza apenas o formulário
+            form_html = render_to_string('extractions/includes/finish_form_modal.html', {
+                'form': form,
+                'extraction': extraction
+            }, request=request)
+            
+            return JsonResponse({
+                'success': True,
+                'html': form_html
+            })
+        except ServiceException as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+
+
 class ExtractionFinishView(LoginRequiredMixin, View):
     """Finaliza uma extração"""
     
@@ -318,6 +378,14 @@ class ExtractionFinishView(LoginRequiredMixin, View):
         )
         
         if not form.is_valid():
+            # Se for AJAX, retorna erro em JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Por favor, corrija os erros no formulário.',
+                    'errors': form.errors
+                }, status=400)
+            
             messages.error(request, 'Por favor, corrija os erros no formulário.')
             return render(request, 'extractions/extraction_finish_form.html', {
                 'extraction': extraction,
@@ -328,8 +396,23 @@ class ExtractionFinishView(LoginRequiredMixin, View):
         
         try:
             service.finish(pk, form.cleaned_data)
+            
+            # Se for AJAX, retorna JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Extração finalizada com sucesso!',
+                    'redirect_url': self.request.GET.get('next', '')
+                })
+            
             messages.success(request, 'Extração finalizada com sucesso!')
         except ServiceException as e:
+            # Se for AJAX, retorna erro em JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': str(e)
+                }, status=400)
             messages.error(request, str(e))
         
         return self._redirect_back(request, extraction)

@@ -19,6 +19,7 @@ urlpatterns = [
     path('<int:case_pk>/devices/create/', views.CaseDeviceCreateView.as_view(), name='device_create'),
     path('<int:case_pk>/devices/<int:pk>/', views.CaseDeviceDetailView.as_view(), name='device_detail'),
     path('<int:case_pk>/devices/<int:pk>/update/', views.CaseDeviceUpdateView.as_view(), name='device_update'),
+    path('<int:case_pk>/devices/<int:pk>/form-modal/', views.CaseDeviceFormModalView.as_view(), name='device_form_modal'),
     path('<int:case_pk>/devices/<int:pk>/delete/', views.CaseDeviceDeleteView.as_view(), name='device_delete'),
     path('<int:case_pk>/procedures/create/', views.CaseProcedureCreateView.as_view(), name='procedure_create'),
     path('<int:case_pk>/procedures/<int:pk>/', views.CaseProcedureDetailView.as_view(), name='procedure_detail'),

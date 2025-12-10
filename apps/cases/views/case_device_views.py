@@ -4,9 +4,10 @@ Views relacionadas ao modelo CaseDevice
 from django.shortcuts import redirect, get_object_or_404, render
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from django.views.generic import CreateView, UpdateView, DeleteView, DetailView
+from django.views.generic import CreateView, UpdateView, DeleteView, DetailView, View
 from django.utils import timezone
 from django.http import JsonResponse
+from django.template.loader import render_to_string
 
 from apps.cases.models import Case, CaseDevice
 from apps.cases.forms import CaseDeviceForm
@@ -201,32 +202,6 @@ class CaseDeviceUpdateView(LoginRequiredMixin, ServiceMixin, UpdateView):
         
         return super().form_invalid(form)
     
-    def form_valid(self, form):
-        """
-        Atualiza dispositivo usando service
-        """
-        service = self.get_service()
-        form_data = form.cleaned_data
-        
-        # Adiciona o case aos dados (caso não esteja no form_data)
-        if 'case' not in form_data:
-            form_data['case'] = self.case
-        
-        try:
-            device = service.update(self.get_object().pk, form_data)
-            
-            messages.success(
-                self.request,
-                'Dispositivo atualizado com sucesso!'
-            )
-            from_param = self.request.GET.get('from', '')
-            if from_param == 'devices':
-                return redirect('cases:devices', pk=self.case.pk)
-            return redirect('cases:update', pk=self.case.pk)
-        except ServiceException as e:
-            form.add_error(None, str(e))
-            return self.form_invalid(form)
-    
     def get_context_data(self, **kwargs):
         """
         Adiciona informações de página ao contexto
@@ -238,6 +213,47 @@ class CaseDeviceUpdateView(LoginRequiredMixin, ServiceMixin, UpdateView):
         context['device'] = self.get_object()
         context['action'] = 'update'
         return context
+    
+    def form_valid(self, form):
+        """
+        Atualiza dispositivo usando service - suporta AJAX
+        """
+        service = self.get_service()
+        form_data = form.cleaned_data
+        
+        # Adiciona o case aos dados (caso não esteja no form_data)
+        if 'case' not in form_data:
+            form_data['case'] = self.case
+        
+        try:
+            device = service.update(self.get_object().pk, form_data)
+            
+            # Se for requisição AJAX, retorna JSON
+            if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Dispositivo atualizado com sucesso!',
+                    'redirect_url': self.request.GET.get('next', '')
+                })
+            
+            messages.success(
+                self.request,
+                'Dispositivo atualizado com sucesso!'
+            )
+            from_param = self.request.GET.get('from', '')
+            if from_param == 'devices':
+                return redirect('cases:devices', pk=self.case.pk)
+            return redirect('cases:update', pk=self.case.pk)
+        except ServiceException as e:
+            # Se for AJAX, retorna erro em JSON
+            if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': str(e),
+                    'errors': form.errors
+                }, status=400)
+            form.add_error(None, str(e))
+            return self.form_invalid(form)
 
 
 class CaseDeviceDetailView(LoginRequiredMixin, DetailView):
@@ -292,6 +308,43 @@ class CaseDeviceDetailView(LoginRequiredMixin, DetailView):
             'is_sealed': device.is_sealed,
             'security_seal': device.security_seal or '',
             'additional_info': device.additional_info or '',
+        })
+
+
+class CaseDeviceFormModalView(LoginRequiredMixin, View):
+    """
+    Retorna o formulário de edição de dispositivo para modal AJAX
+    """
+    def get(self, request, case_pk, pk):
+        case = get_object_or_404(
+            Case.objects.filter(deleted_at__isnull=True),
+            pk=case_pk
+        )
+        
+        # Verifica permissão
+        if case.assigned_to and case.assigned_to != request.user:
+            return JsonResponse({
+                'success': False,
+                'error': 'Você não tem permissão para editar dispositivos deste processo.'
+            }, status=403)
+        
+        device = get_object_or_404(
+            CaseDevice.objects.filter(case=case, deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        form = CaseDeviceForm(instance=device, case=case)
+        
+        # Renderiza apenas o formulário
+        form_html = render_to_string('cases/includes/device_form_modal.html', {
+            'form': form,
+            'device': device,
+            'case': case
+        }, request=request)
+        
+        return JsonResponse({
+            'success': True,
+            'html': form_html
         })
 
 

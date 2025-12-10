@@ -14,5 +14,6 @@ urlpatterns = [
     path('<int:pk>/pause/', views.ExtractionPauseView.as_view(), name='pause'),
     path('<int:pk>/resume/', views.ExtractionResumeView.as_view(), name='resume'),
     path('<int:pk>/finish-form/', views.ExtractionFinishFormView.as_view(), name='finish_form'),
+    path('<int:pk>/finish-form-modal/', views.ExtractionFinishFormModalView.as_view(), name='finish_form_modal'),
     path('<int:pk>/finish/', views.ExtractionFinishView.as_view(), name='finish'),
 ]

@@ -1,0 +1,384 @@
+{% load form_tags %}
+<form method="post" action="{% url 'cases:device_update' case.pk device.pk %}?next={% url 'extractions:case_extractions' case.pk %}" class="ajax-form" novalidate>
+    {% csrf_token %}
+    
+    <!-- Informações Básicas do Dispositivo -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h6 class="card-title mb-0">
+                <i class="fas fa-mobile-alt me-2"></i>
+                Identificação do Dispositivo
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    {{ form.device_category|form_label_class }}
+                    {{ form.device_category }}
+                    {{ form.device_category.errors }}
+                </div>
+
+                <div class="col-md-7">
+                    {{ form.device_model|form_label_class }}
+                    {{ form.device_model }}
+                    {{ form.device_model.errors }}
+                </div>
+
+                <div class="col-md-2">
+                    {{ form.color|form_label_class }}
+                    {{ form.color }}
+                    {{ form.color.errors }}
+                </div>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <div class="form-check form-switch form-label">
+                        {{ form.is_imei_unknown }}
+                        <label class="form-check-label" for="{{ form.is_imei_unknown.id_for_label }}">
+                            {{ form.is_imei_unknown.label }}
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    {{ form.imei_01 }}
+                    {{ form.imei_01.errors }}
+                </div>
+
+                <div class="col-md-3">
+                    {{ form.imei_02 }}
+                    {{ form.imei_02.errors }}
+                </div>
+
+                <div class="col-md-3">
+                    {{ form.imei_03 }}
+                    {{ form.imei_03.errors }}
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    {{ form.owner_name|form_label_class }}
+                    {{ form.owner_name }}
+                    {{ form.owner_name.errors }}
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch form-label">
+                        {{ form.is_sealed }}
+                        <label class="form-check-label" for="{{ form.is_sealed.id_for_label }}">
+                            {{ form.is_sealed.label }}
+                        </label>
+                    </div>
+                    <div id="security_seal_field">{{ form.security_seal }}</div>
+                </div>
+                <div class="col-md-3">
+                    {{ form.internal_storage|form_label_class }}
+                    {{ form.internal_storage }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status do Dispositivo -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h6 class="card-title mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                Status e Segurança
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="form-check form-switch form-label">
+                        {{ form.is_turned_on }}
+                        <label class="form-check-label" for="{{ form.is_turned_on.id_for_label }}">
+                            {{ form.is_turned_on.label }}
+                        </label>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="form-check form-switch form-label">
+                        {{ form.is_locked }}
+                        <label class="form-check-label" for="{{ form.is_locked.id_for_label }}">
+                            {{ form.is_locked.label }}
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    {{ form.password_type|form_label_class }}
+                    {{ form.password_type }}
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch form-label">
+                        {{ form.is_password_known }}
+                        <label class="form-check-label" for="{{ form.is_password_known.id_for_label }}">
+                            {{ form.is_password_known.label }}
+                        </label>
+                    </div>
+                    <div id="password_field">{{ form.password }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Condição Física -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h6 class="card-title mb-0">
+                <i class="fas fa-tools me-2"></i>
+                Condição Física
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-check form-switch form-label">
+                        {{ form.is_damaged }}
+                        <label class="form-check-label" for="{{ form.is_damaged.id_for_label }}">
+                            {{ form.is_damaged.label }}
+                        </label>
+                    </div>
+                    <div id="damage_description_field">{{ form.damage_description }}</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-check form-switch form-label">
+                        <div id="has_fluids_field"> {{ form.has_fluids }}</div>
+                        <label class="form-check-label" for="{{ form.has_fluids.id_for_label }}">
+                            {{ form.has_fluids.label }}
+                        </label>
+                    </div>
+                    <div id="fluids_description_field">{{ form.fluids_description }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acessórios -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h6 class="card-title mb-0">
+                <i class="fas fa-sim-card me-2"></i>
+                Acessórios
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="form-check form-switch form-label">
+                        {{ form.has_sim_card }}
+                        <label class="form-check-label" for="{{ form.has_sim_card.id_for_label }}">
+                            {{ form.has_sim_card.label }}
+                        </label>
+                    </div>
+                    <div id="sim_card_info_field">{{ form.sim_card_info }}</div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-check form-switch form-label">
+                        {{ form.has_memory_card }}
+                        <label class="form-check-label" for="{{ form.has_memory_card.id_for_label }}">
+                            {{ form.has_memory_card.label }}
+                        </label>
+                    </div>
+                    <div id="memory_card_info_field">{{ form.memory_card_info }}</div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-check form-switch form-label">
+                        {{ form.has_other_accessories }}
+                        <label class="form-check-label" for="{{ form.has_other_accessories.id_for_label }}">
+                            {{ form.has_other_accessories.label }}
+                        </label>
+                    </div>
+                    <div id="other_accessories_info_field">{{ form.other_accessories_info }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informações Adicionais -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h6 class="card-title mb-0">
+                <i class="fas fa-sticky-note me-2"></i>
+                Informações Adicionais
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-12">
+                    <label for="{{ form.additional_info.id_for_label }}" class="form-label">
+                        {{ form.additional_info.label }}
+                    </label>
+                    {{ form.additional_info }}
+                    {% if form.additional_info.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.additional_info.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botões de Ação -->
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-2"></i>
+            Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save me-2"></i>
+            Salvar Alterações
+        </button>
+    </div>
+</form>
+
+<script>
+$(document).ready(function() {
+    // Inicializa Select2 para device_model
+    $('#{{ form.device_model.id_for_label }}').select2({
+        theme: 'bootstrap-5',
+        language: {
+            noResults: function() {
+                return "Nenhum resultado encontrado";
+            },
+            searching: function() {
+                return "Buscando...";
+            }
+        },
+        placeholder: 'Digite para pesquisar o modelo do dispositivo...',
+        allowClear: true,
+        width: '100%',
+        minimumInputLength: 0,
+        closeOnSelect: true,
+        dropdownParent: $('#editDeviceModal{{ device.pk }}')
+    });
+    
+    // Função para habilitar/desabilitar campos condicionais
+    function toggleField(checkboxId, fieldId) {
+        const checkbox = document.getElementById(checkboxId);
+        const field = document.getElementById(fieldId);
+        
+        if (checkbox && field) {
+            let input = field.querySelector('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea, select');
+            
+            if (!input) {
+                const allInputs = field.querySelectorAll('input, textarea, select');
+                for (let i = 0; i < allInputs.length; i++) {
+                    const elem = allInputs[i];
+                    const type = elem.type ? elem.type.toLowerCase() : '';
+                    if (type !== 'checkbox' && type !== 'radio' && type !== 'hidden') {
+                        input = elem;
+                        break;
+                    }
+                }
+            }
+            
+            let previousState = checkbox.checked;
+            
+            function updateFieldState() {
+                const isChecked = checkbox.checked;
+                
+                if (input) {
+                    input.disabled = !isChecked;
+                    
+                    if (isChecked) {
+                        input.classList.remove('bg-light');
+                        field.style.opacity = '1';
+                        if (!previousState && isChecked) {
+                            setTimeout(function() {
+                                if (input && !input.disabled) {
+                                    try {
+                                        input.focus();
+                                    } catch(e) {}
+                                }
+                            }, 50);
+                        }
+                    } else {
+                        input.classList.add('bg-light');
+                        field.style.opacity = '0.6';
+                    }
+                    
+                    previousState = isChecked;
+                }
+            }
+            
+            updateFieldState();
+            checkbox.addEventListener('change', updateFieldState);
+        }
+    }
+    
+    // Configurar campos condicionais
+    toggleField('{{ form.is_sealed.id_for_label }}', 'security_seal_field');
+    toggleField('{{ form.is_password_known.id_for_label }}', 'password_field');
+    toggleField('{{ form.is_damaged.id_for_label }}', 'damage_description_field');
+    toggleField('{{ form.has_fluids.id_for_label }}', 'fluids_description_field');
+    toggleField('{{ form.has_sim_card.id_for_label }}', 'sim_card_info_field');
+    toggleField('{{ form.has_memory_card.id_for_label }}', 'memory_card_info_field');
+    toggleField('{{ form.has_other_accessories.id_for_label }}', 'other_accessories_info_field');
+    
+    // Configurar campos de IMEI
+    function toggleMultipleFields(checkboxId, fieldIds, invertLogic) {
+        const checkbox = document.getElementById(checkboxId);
+        invertLogic = invertLogic || false;
+        
+        if (checkbox && Array.isArray(fieldIds) && fieldIds.length > 0) {
+            const inputs = [];
+            
+            fieldIds.forEach(function(fieldId) {
+                const input = document.getElementById(fieldId);
+                if (input) {
+                    inputs.push(input);
+                }
+            });
+            
+            if (inputs.length > 0) {
+                let previousState = checkbox.checked;
+                
+                function updateFieldsState() {
+                    const isChecked = checkbox.checked;
+                    const shouldEnable = invertLogic ? !isChecked : isChecked;
+                    
+                    inputs.forEach(function(input) {
+                        input.disabled = !shouldEnable;
+                        
+                        if (shouldEnable) {
+                            input.classList.remove('bg-light');
+                            input.style.opacity = '1';
+                        } else {
+                            input.classList.add('bg-light');
+                            input.style.opacity = '0.6';
+                        }
+                    });
+                    
+                    if (previousState !== isChecked && shouldEnable && inputs.length > 0) {
+                        setTimeout(function() {
+                            if (inputs[0] && !inputs[0].disabled) {
+                                try {
+                                    inputs[0].focus();
+                                } catch(e) {}
+                            }
+                        }, 50);
+                    }
+                    
+                    previousState = isChecked;
+                }
+                
+                updateFieldsState();
+                checkbox.addEventListener('change', updateFieldsState);
+            }
+        }
+    }
+    
+    toggleMultipleFields('{{ form.is_imei_unknown.id_for_label }}', [
+        '{{ form.imei_01.id_for_label }}',
+        '{{ form.imei_02.id_for_label }}',
+        '{{ form.imei_03.id_for_label }}'
+    ], true);
+});
+</script>
+

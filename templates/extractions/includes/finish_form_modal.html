@@ -1,0 +1,249 @@
+<form method="post" action="{% url 'extractions:finish' extraction.pk %}?next={% url 'extractions:case_extractions' extraction.case_device.case.pk %}" class="ajax-form" novalidate>
+    {% csrf_token %}
+    
+    <!-- Resultado da Extração -->
+    <div class="card mb-3">
+        <div class="card-header bg-primary text-white">
+            <h6 class="card-title mb-0">
+                <i class="fas fa-check-circle me-2"></i>
+                Resultado da Extração
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="{{ form.extraction_result.id_for_label }}" class="form-label">
+                        {{ form.extraction_result.label }} <span class="text-danger">*</span>
+                    </label>
+                    {{ form.extraction_result }}
+                    {% if form.extraction_result.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.extraction_result.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-12">
+                    <label for="{{ form.extraction_results_notes.id_for_label }}" class="form-label">
+                        {{ form.extraction_results_notes.label }}
+                    </label>
+                    {{ form.extraction_results_notes }}
+                    {% if form.extraction_results_notes.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.extraction_results_notes.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-12">
+                    <label for="{{ form.finished_notes.id_for_label }}" class="form-label">
+                        {{ form.finished_notes.label }}
+                    </label>
+                    {{ form.finished_notes }}
+                    {% if form.finished_notes.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.finished_notes.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tipos de Extração -->
+    <div class="card mb-3">
+        <div class="card-header bg-secondary text-white">
+            <h6 class="card-title mb-0">
+                <i class="fas fa-layer-group me-2"></i>
+                Tipos de Extração Realizados
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- Extração Lógica -->
+                <div class="col-md-12">
+                    <div class="form-check">
+                        {{ form.logical_extraction }}
+                        <label class="form-check-label" for="{{ form.logical_extraction.id_for_label }}">
+                            {{ form.logical_extraction.label }}
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-12" id="logical_extraction_notes_div" style="display: none;">
+                    <label for="{{ form.logical_extraction_notes.id_for_label }}" class="form-label">
+                        {{ form.logical_extraction_notes.label }}
+                    </label>
+                    {{ form.logical_extraction_notes }}
+                </div>
+
+                <!-- Extração Física -->
+                <div class="col-md-12">
+                    <div class="form-check">
+                        {{ form.physical_extraction }}
+                        <label class="form-check-label" for="{{ form.physical_extraction.id_for_label }}">
+                            {{ form.physical_extraction.label }}
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-12" id="physical_extraction_notes_div" style="display: none;">
+                    <label for="{{ form.physical_extraction_notes.id_for_label }}" class="form-label">
+                        {{ form.physical_extraction_notes.label }}
+                    </label>
+                    {{ form.physical_extraction_notes }}
+                </div>
+
+                <!-- Extração Completa do Sistema de Arquivos -->
+                <div class="col-md-12">
+                    <div class="form-check">
+                        {{ form.full_file_system_extraction }}
+                        <label class="form-check-label" for="{{ form.full_file_system_extraction.id_for_label }}">
+                            {{ form.full_file_system_extraction.label }}
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-12" id="full_file_system_extraction_notes_div" style="display: none;">
+                    <label for="{{ form.full_file_system_extraction_notes.id_for_label }}" class="form-label">
+                        {{ form.full_file_system_extraction_notes.label }}
+                    </label>
+                    {{ form.full_file_system_extraction_notes }}
+                </div>
+
+                <!-- Extração em Nuvem -->
+                <div class="col-md-12">
+                    <div class="form-check">
+                        {{ form.cloud_extraction }}
+                        <label class="form-check-label" for="{{ form.cloud_extraction.id_for_label }}">
+                            {{ form.cloud_extraction.label }}
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-12" id="cloud_extraction_notes_div" style="display: none;">
+                    <label for="{{ form.cloud_extraction_notes.id_for_label }}" class="form-label">
+                        {{ form.cloud_extraction_notes.label }}
+                    </label>
+                    {{ form.cloud_extraction_notes }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cellebrite Premium -->
+    <div class="card mb-3">
+        <div class="card-header bg-warning text-dark">
+            <h6 class="card-title mb-0">
+                <i class="fas fa-star me-2"></i>
+                Cellebrite Premium
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- Cellebrite Premium -->
+                <div class="col-md-12">
+                    <div class="form-check">
+                        {{ form.cellebrite_premium }}
+                        <label class="form-check-label" for="{{ form.cellebrite_premium.id_for_label }}">
+                            {{ form.cellebrite_premium.label }}
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-12" id="cellebrite_premium_notes_div" style="display: none;">
+                    <label for="{{ form.cellebrite_premium_notes.id_for_label }}" class="form-label">
+                        {{ form.cellebrite_premium_notes.label }}
+                    </label>
+                    {{ form.cellebrite_premium_notes }}
+                </div>
+
+                <!-- Suporte Cellebrite Premium -->
+                <div class="col-md-12">
+                    <div class="form-check">
+                        {{ form.cellebrite_premium_support }}
+                        <label class="form-check-label" for="{{ form.cellebrite_premium_support.id_for_label }}">
+                            {{ form.cellebrite_premium_support.label }}
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-12" id="cellebrite_premium_support_notes_div" style="display: none;">
+                    <label for="{{ form.cellebrite_premium_support_notes.id_for_label }}" class="form-label">
+                        {{ form.cellebrite_premium_support_notes.label }}
+                    </label>
+                    {{ form.cellebrite_premium_support_notes }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Armazenamento -->
+    <div class="card mb-3">
+        <div class="card-header bg-info text-white">
+            <h6 class="card-title mb-0">
+                <i class="fas fa-hdd me-2"></i>
+                Armazenamento
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="{{ form.extraction_size.id_for_label }}" class="form-label">
+                        {{ form.extraction_size.label }}
+                    </label>
+                    {{ form.extraction_size }}
+                    {% if form.extraction_size.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.extraction_size.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label for="{{ form.storage_media.id_for_label }}" class="form-label">
+                        {{ form.storage_media.label }}
+                    </label>
+                    {{ form.storage_media }}
+                    {% if form.storage_media.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.storage_media.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botões de Ação -->
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-2"></i>
+            Cancelar
+        </button>
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-check-circle me-2"></i>
+            Finalizar Extração
+        </button>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Função para mostrar/ocultar campos de notas baseado nos checkboxes
+    function toggleNotesField(checkboxId, divId) {
+        const checkbox = document.getElementById(checkboxId);
+        const notesDiv = document.getElementById(divId);
+        
+        if (checkbox && notesDiv) {
+            // Mostra/oculta no carregamento da página
+            notesDiv.style.display = checkbox.checked ? 'block' : 'none';
+            
+            // Adiciona listener para mudanças
+            checkbox.addEventListener('change', function() {
+                notesDiv.style.display = this.checked ? 'block' : 'none';
+            });
+        }
+    }
+    
+    // Aplica a função para todos os campos
+    toggleNotesField('id_logical_extraction', 'logical_extraction_notes_div');
+    toggleNotesField('id_physical_extraction', 'physical_extraction_notes_div');
+    toggleNotesField('id_full_file_system_extraction', 'full_file_system_extraction_notes_div');
+    toggleNotesField('id_cloud_extraction', 'cloud_extraction_notes_div');
+    toggleNotesField('id_cellebrite_premium', 'cellebrite_premium_notes_div');
+    toggleNotesField('id_cellebrite_premium_support', 'cellebrite_premium_support_notes_div');
+});
+</script>
+

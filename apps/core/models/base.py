@@ -281,10 +281,12 @@ class AbstractDeviceModel(AuditedModel):
     )
     PASSWORD_CHOICES = (
         ('pin', 'PIN'),
-        ('password', 'Senha'),
-        ('pattern', 'Padrão'),
-        ('bio', 'Biometria'),
-        ('none', 'Nenhum'),
+        ('numeric', 'Numérica'),
+        ('alphanumeric', 'Alfanumérica'),
+        ('pattern', 'Desenho de Padrão'),
+        ('biometric', 'Biométrica'),
+        ('none', 'Nenhuma Senha'),
+        ('other', 'Outras'),
     )
     password_type = models.CharField(
         _('Tipo de Senha'),

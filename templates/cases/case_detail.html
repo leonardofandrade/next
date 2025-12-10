@@ -140,20 +140,6 @@
                                 {% endif %}
                             </a>
                         </div>
-
-                        <!-- Solicitação -->
-                        {% if case.extraction_request %}
-                        <div class="col-md-2 col-sm-6">
-                            <a href="{% url 'requisitions:detail' case.extraction_request.pk %}?next={% url 'cases:detail' case.pk %}" 
-                               class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3"
-                               style="min-height: 100px;">
-                                <i class="fas fa-envelope-open-text fa-2x mb-2"></i>
-                                <span>Solicitação</span>
-                                <small class="badge bg-primary mt-1">#{{ case.extraction_request.pk }}</small>
-                            </a>
-                        </div>
-                        {% endif %}
-
                         <!-- Finalizar Cadastro -->
                         {% if not case.registration_completed_at %}
                             {% if not case.assigned_to or case.assigned_to == request.user %}
@@ -189,10 +175,25 @@
                                style="min-height: 100px;"
                                target="_blank">
                                 <i class="fas fa-file-pdf fa-2x mb-2"></i>
-                                <span>Gerar Capa PDF</span>
+                                <span>Gerar Capa</span>
                             </a>
                         </div>
                         {% endif %}
+
+                        <!-- Solicitação -->
+                        {% if case.extraction_request %}
+                        <div class="col-md-2 col-sm-6">
+                            <a href="{% url 'requisitions:detail' case.extraction_request.pk %}?next={% url 'cases:detail' case.pk %}" 
+                               class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3"
+                               style="min-height: 100px;">
+                                <i class="fas fa-envelope-open-text fa-2x mb-2"></i>
+                                <span>Solicitação</span>
+                                <small class="badge bg-primary mt-1">#{{ case.extraction_request.pk }}</small>
+                            </a>
+                        </div>
+                        {% endif %}
+
+                       
                     </div>
 
                     <!-- Ações Adicionais -->

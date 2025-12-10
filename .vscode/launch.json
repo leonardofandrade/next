@@ -27,34 +27,15 @@
             "program": "${workspaceFolder}\\manage.py"
         },
         {
-            "name": "NEXT - Create Test Extraction Requests (Interactive)",
+            "name": "NEXT - Create Extraction Requests (leo - 33 - 40)",
             "type": "debugpy",
             "request": "launch",
             "args": [
                 "extraction_request_create_test_data",
-                "--u",
-                "${input:extractionRequestUser}",
-                "--a",
-                "${input:extractionRequestAmount}",
-                "--d",
-                "${input:extractionRequestMaxDevices}"
-            ],
-            "django": true,
-            "program": "${workspaceFolder}\\manage.py",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "NEXT - Create Test Extraction Requests (Quick - admin, 13, 1)",
-            "type": "debugpy",
-            "request": "launch",
-            "args": [
-                "extraction_request_create_test_data",
-                "--u",
-                "admin",
-                "--a",
-                "13",
-                "--d",
-                "1"
+                "leo",
+                "33",
+                "--max-devices",
+                "40"
             ],
             "django": true,
             "program": "${workspaceFolder}\\manage.py",

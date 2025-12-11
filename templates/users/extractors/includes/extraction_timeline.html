@@ -114,18 +114,20 @@
             
             <!-- Coluna 5: Em Andamento -->
             <div class="col-auto">
-                <div class="timeline-step {% if extraction.status == 'in_progress' or extraction.status == 'paused' %}active{% elif extraction.status == 'completed' %}completed{% else %}disabled{% endif %}">
-                    <div class="timeline-marker d-flex align-items-center justify-content-center {% if extraction.status == 'completed' %}bg-success text-white border-success{% elif extraction.status == 'paused' %}bg-secondary text-white border-secondary{% elif extraction.status == 'in_progress' %}bg-primary text-white border-primary{% else %}bg-light border-secondary text-muted{% endif %} rounded mb-2" 
+                <div class="timeline-step {% if extraction.status == 'in_progress' or extraction.status == 'paused' %}active{% elif extraction.status == 'completed' %}completed{% else %}disabled{% endif %} {% if extraction.brute_force_started_at and not extraction.brute_force_finished_at %}brute-force-active{% endif %}">
+                    <div class="timeline-marker d-flex align-items-center justify-content-center {% if extraction.brute_force_started_at and not extraction.brute_force_finished_at %}bg-danger text-white border-danger{% elif extraction.status == 'completed' %}bg-success text-white border-success{% elif extraction.status == 'paused' %}bg-secondary text-white border-secondary{% elif extraction.status == 'in_progress' %}bg-primary text-white border-primary{% else %}bg-light border-secondary text-muted{% endif %} rounded mb-2" 
                          style="width: auto; min-width: 100px; padding: 4px 8px; margin: 0 auto; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                         <small class="fw-bold">
                             {% if extraction.status == 'paused' %}
                                 Pausada
+                            {% elif extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
+                                Força Bruta
                             {% else %}
                                 Em Andamento
                             {% endif %}
                         </small>
                     </div>
-                    <div class="card {% if extraction.status == 'completed' %}border-success{% elif extraction.status == 'paused' %}border-secondary{% elif extraction.status == 'in_progress' %}border-primary{% else %}border-secondary{% endif %} {% if extraction.status != 'in_progress' and extraction.status != 'paused' and extraction.status != 'completed' %}timeline-disabled{% endif %} timeline-card">
+                    <div class="card {% if extraction.brute_force_started_at and not extraction.brute_force_finished_at %}border-danger brute-force-card{% elif extraction.status == 'completed' %}border-success{% elif extraction.status == 'paused' %}border-secondary{% elif extraction.status == 'in_progress' %}border-primary{% else %}border-secondary{% endif %} {% if extraction.status != 'in_progress' and extraction.status != 'paused' and extraction.status != 'completed' %}timeline-disabled{% endif %} timeline-card">
                         <div class="card-body p-2">
                             <div class="d-flex align-items-center justify-content-end mb-1">
                                 <div class="d-flex flex-wrap gap-1">
@@ -298,6 +300,37 @@
 
 .timeline-disabled .btn {
     display: none;
+}
+
+/* Destaque para força bruta ativa */
+.brute-force-card {
+    border-width: 2px !important;
+    box-shadow: 0 0 10px rgba(220, 53, 69, 0.3);
+    animation: bruteForcePulse 2s infinite;
+}
+
+.brute-force-active .timeline-marker {
+    animation: bruteForceMarkerPulse 1.5s infinite;
+}
+
+@keyframes bruteForcePulse {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(220, 53, 69, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(220, 53, 69, 0.5);
+    }
+}
+
+@keyframes bruteForceMarkerPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.6);
+    }
 }
 
 /* Cards com dimensões fixas */

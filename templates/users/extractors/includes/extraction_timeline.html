@@ -1,142 +1,89 @@
-<div class="card mb-3 shadow-sm">
-    <div class="card-body p-4">
-        <!-- Timeline como diagrama linear -->
-        <div class="bg-light rounded p-4">
-            <div class="d-flex align-items-center position-relative" style="min-width: 100%;">
+<div class="timeline-row">
+    <!-- Timeline como diagrama linear -->
+    <div class="bg-light rounded p-3">
+        <div class="d-flex align-items-center position-relative" style="min-width: 100%;">
                 <!-- Card 0: Informações da Extração -->
-                <div class="timeline-item position-relative flex-fill" style="min-width: 180px; max-width: 220px;">
+                <div class="timeline-item position-relative flex-fill" style="min-width: 250px; max-width: 300px; flex: 0 0 auto;">
                     <div class="timeline-marker d-flex align-items-center justify-content-center bg-primary text-white border border-primary rounded" 
-                         style="width: auto; min-width: 80px; padding: 4px 8px; margin: 0 auto 12px; z-index: 2; box-shadow: 0 2px 6px rgba(0, 123, 255, 0.4);">
+                         style="width: auto; min-width: 100px; padding: 4px 8px; margin: 0 auto 10px; z-index: 2; box-shadow: 0 2px 6px rgba(0, 123, 255, 0.4);">
                         <small class="fw-bold">Dispositivo</small>
                     </div>
-                    <div class="card border-primary bg-light" style="min-height: 120px;">
-                        <div class="card-body p-3">
-                            <h6 class="card-title mb-2">
-                                <strong class="text-primary">#{{ extraction.pk }}</strong>
-                            </h6>
-                            {% if extraction.case_device.device_model %}
-                                <p class="card-text small mb-1">
-                                    <i class="fas fa-mobile-alt me-1"></i>
-                                    <strong>{{ extraction.case_device.device_model.brand.name }}</strong> {{ extraction.case_device.device_model.name }}
-                                </p>
-                            {% else %}
-                                <p class="card-text small mb-1">
-                                    <i class="fas fa-mobile-alt me-1"></i>Sem modelo
-                                </p>
-                            {% endif %}
-                            {% if extraction.case_device.imei_01 %}
-                                <p class="card-text small mb-1 text-muted">
-                                    <i class="fas fa-fingerprint me-1"></i>IMEI: {{ extraction.case_device.imei_01 }}
-                                </p>
-                            {% endif %}
-                            <p class="card-text small mb-1">
+                    <div class="card border-primary bg-light" style="min-height: 90px;">
+                        <div class="card-body p-2">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <h6 class="card-title mb-0">
+                                    <strong class="text-primary">#{{ extraction.pk }}</strong>
+                                </h6>
+                                <div class="d-flex gap-1">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-primary" 
+                                            title="Editar Dispositivo"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editDeviceModal{{ extraction.case_device.pk }}"
+                                            data-device-id="{{ extraction.case_device.pk }}"
+                                            data-case-id="{{ extraction.case_device.case.pk }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" 
+                                       class="btn btn-sm btn-outline-info" 
+                                       title="Ver Processo">
+                                        <i class="fas fa-folder-open"></i>
+                                    </a>
+                                    {% if not extraction.started_at %}
+                                        <form method="post" action="{% url 'extractions:unassign_from_me' extraction.pk %}" class="d-inline ajax-form">
+                                            {% csrf_token %}
+                                            <button type="submit" 
+                                                    class="btn btn-sm btn-outline-danger" 
+                                                    title="Desatribuir-me"
+                                                    onclick="return confirm('Tem certeza que deseja se desatribuir desta extração?');">
+                                                <i class="fas fa-user-times"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-3 align-items-center small">
+                                {% if extraction.case_device.device_model %}
+                                    <span>
+                                        <i class="fas fa-mobile-alt me-1"></i>
+                                        <strong>{{ extraction.case_device.device_model.brand.name }}</strong> {{ extraction.case_device.device_model.name }}
+                                    </span>
+                                {% else %}
+                                    <span>
+                                        <i class="fas fa-mobile-alt me-1"></i>Sem modelo
+                                    </span>
+                                {% endif %}
+                                {% if extraction.case_device.imei_01 %}
+                                    <span class="text-muted">
+                                        <i class="fas fa-fingerprint me-1"></i>IMEI: {{ extraction.case_device.imei_01 }}
+                                    </span>
+                                {% endif %}
                                 <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" class="text-decoration-none">
                                     <i class="fas fa-folder-open me-1"></i>{{ extraction.case_device.case.number|default:"Rascunho" }}
                                 </a>
-                            </p>
-                            <div class="d-flex gap-2 justify-content-center mt-2">
-                                <button type="button" 
-                                        class="btn btn-sm btn-outline-primary" 
-                                        title="Editar Dispositivo"
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#editDeviceModal{{ extraction.case_device.pk }}"
-                                        data-device-id="{{ extraction.case_device.pk }}"
-                                        data-case-id="{{ extraction.case_device.case.pk }}">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" 
-                                   class="btn btn-sm btn-outline-info" 
-                                   title="Ver Processo">
-                                    <i class="fas fa-folder-open"></i>
-                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
                         
-                <!-- Etapa 1: Pendente/Atribuída -->
-                <div class="timeline-item position-relative flex-fill {% if extraction.status == 'pending' or extraction.status == 'assigned' %}active{% elif extraction.assigned_at %}completed{% endif %}" 
-                     style="min-width: 180px; max-width: 220px;">
-                    <div class="timeline-marker d-flex align-items-center justify-content-center rounded {% if extraction.assigned_at %}bg-success text-white border-success{% elif extraction.status == 'pending' or extraction.status == 'assigned' %}bg-primary text-white border-primary{% else %}bg-white border-secondary{% endif %}" 
-                         style="width: 28px; height: 28px; margin: 0 auto 12px; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        {% if extraction.assigned_at %}
+                <!-- Etapa 1: Iniciar -->
+                <div class="timeline-item position-relative flex-fill {% if extraction.status == 'assigned' %}active{% elif extraction.started_at %}completed{% else %}disabled{% endif %}" 
+                     style="min-width: 250px; max-width: 300px; flex: 0 0 auto;">
+                    <div class="timeline-marker d-flex align-items-center justify-content-center rounded {% if extraction.started_at %}bg-success text-white border-success{% elif extraction.status == 'assigned' %}bg-primary text-white border-primary{% else %}bg-light border-secondary text-muted{% endif %}" 
+                         style="width: 28px; height: 28px; margin: 0 auto 10px; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        {% if extraction.started_at %}
                             <i class="fas fa-check" style="font-size: 13px;"></i>
-                        {% elif extraction.status == 'pending' or extraction.status == 'assigned' %}
+                        {% elif extraction.status == 'assigned' %}
                             <i class="fas fa-circle-notch fa-spin" style="font-size: 13px;"></i>
                         {% else %}
                             <i class="far fa-circle" style="font-size: 13px;"></i>
                         {% endif %}
                     </div>
-                    <div class="card {% if extraction.assigned_at %}border-success{% elif extraction.status == 'pending' or extraction.status == 'assigned' %}border-primary{% else %}border-secondary{% endif %}" style="min-height: 120px;">
-                        <div class="card-body p-3">
-                            <h6 class="card-title mb-2">
-                                {% if extraction.status == 'pending' %}
-                                    Pendente
-                                {% elif extraction.status == 'assigned' %}
-                                    Atribuída
-                                {% else %}
-                                    Atribuída
-                                {% endif %}
-                            </h6>
-                            {% if extraction.assigned_at %}
-                                <p class="card-text small mb-1 text-muted">
-                                    <i class="fas fa-calendar-alt me-1"></i>{{ extraction.assigned_at|date:"d/m H:i" }}
-                                </p>
-                            {% endif %}
-                            <div class="d-flex justify-content-center gap-2">
-                                {% if extraction.status == 'pending' %}
-                                    <button type="button" 
-                                            class="btn btn-sm btn-outline-success" 
-                                            title="Atribuir-me"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#assignModal{{ extraction.pk }}">
-                                        <i class="fas fa-user-check"></i>
-                                    </button>
-                                {% elif extraction.status == 'assigned' %}
-                                    <form method="post" action="{% url 'extractions:unassign_from_me' extraction.pk %}" class="d-inline">
-                                        {% csrf_token %}
-                                        <button type="submit" 
-                                                class="btn btn-sm btn-outline-danger" 
-                                                title="Desatribuir-me"
-                                                onclick="return confirm('Tem certeza que deseja se desatribuir desta extração?');">
-                                            <i class="fas fa-user-times"></i>
-                                        </button>
-                                    </form>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                        
-                <!-- Etapa 2: Iniciada -->
-                {% if extraction.started_at or extraction.status == 'in_progress' or extraction.status == 'paused' %}
-                <div class="timeline-item position-relative flex-fill {% if extraction.status == 'in_progress' or extraction.status == 'paused' %}active{% elif extraction.started_at %}completed{% endif %}" 
-                     style="min-width: 180px; max-width: 220px;">
-                    <div class="timeline-marker d-flex align-items-center justify-content-center rounded {% if extraction.started_at and extraction.status != 'in_progress' and extraction.status != 'paused' %}bg-success text-white border-success{% elif extraction.status == 'in_progress' or extraction.status == 'paused' %}bg-primary text-white border-primary{% else %}bg-white border-secondary{% endif %}" 
-                         style="width: 28px; height: 28px; margin: 0 auto 12px; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        {% if extraction.started_at and extraction.status != 'in_progress' and extraction.status != 'paused' %}
-                            <i class="fas fa-check" style="font-size: 13px;"></i>
-                        {% elif extraction.status == 'in_progress' or extraction.status == 'paused' %}
-                            <i class="fas fa-circle-notch fa-spin" style="font-size: 13px;"></i>
-                        {% else %}
-                            <i class="far fa-circle" style="font-size: 13px;"></i>
-                        {% endif %}
-                    </div>
-                    <div class="card {% if extraction.started_at and extraction.status != 'in_progress' and extraction.status != 'paused' %}border-success{% elif extraction.status == 'in_progress' or extraction.status == 'paused' %}border-primary{% else %}border-secondary{% endif %}" style="min-height: 120px;">
-                        <div class="card-body p-3">
-                            <h6 class="card-title mb-2">Iniciada</h6>
-                            {% if extraction.started_at %}
-                                <p class="card-text small mb-1 text-muted">
-                                    <i class="fas fa-calendar-alt me-1"></i>{{ extraction.started_at|date:"d/m H:i" }}
-                                </p>
-                                {% if extraction.started_notes %}
-                                    <p class="card-text small mb-2 text-muted" title="{{ extraction.started_notes }}">
-                                        <i class="fas fa-sticky-note me-1"></i>{{ extraction.started_notes|truncatewords:5 }}
-                                    </p>
-                                {% endif %}
-                            {% endif %}
-                            {% if extraction.status == 'assigned' %}
-                                <div class="d-flex justify-content-center">
+                    <div class="card {% if extraction.started_at %}border-success{% elif extraction.status == 'assigned' %}border-primary{% else %}border-secondary{% endif %} {% if not extraction.started_at and extraction.status != 'assigned' %}timeline-disabled{% endif %}" style="min-height: 90px;">
+                        <div class="card-body p-2">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <h6 class="card-title mb-0">Iniciar</h6>
+                                {% if extraction.status == 'assigned' %}
                                     <button type="button" 
                                             class="btn btn-sm btn-outline-primary" 
                                             title="Iniciar Extração"
@@ -144,126 +91,149 @@
                                             data-bs-target="#startModal{{ extraction.pk }}">
                                         <i class="fas fa-play"></i>
                                     </button>
-                                </div>
+                                {% endif %}
+                            </div>
+                            {% if extraction.started_at %}
+                                <p class="card-text small mb-0 text-muted">
+                                    <i class="fas fa-calendar-alt me-1"></i>{{ extraction.started_at|date:"d/m H:i" }}
+                                    {% if extraction.started_notes %}
+                                        <span class="ms-2" title="{{ extraction.started_notes }}">
+                                            <i class="fas fa-sticky-note me-1"></i>{{ extraction.started_notes|truncatewords:3 }}
+                                        </span>
+                                    {% endif %}
+                                </p>
                             {% endif %}
                         </div>
                     </div>
                 </div>
-                {% endif %}
                         
-                <!-- Etapa 3: Em Andamento / Pausada -->
-                {% if extraction.status == 'in_progress' or extraction.status == 'paused' %}
-                <div class="timeline-item position-relative flex-fill {% if extraction.status == 'paused' %}paused{% elif extraction.status == 'in_progress' %}active{% endif %}" 
-                     style="min-width: 180px; max-width: 220px;">
-                    <div class="timeline-marker d-flex align-items-center justify-content-center rounded {% if extraction.status == 'paused' %}bg-secondary text-white border-secondary{% elif extraction.status == 'in_progress' %}bg-primary text-white border-primary{% endif %}" 
-                         style="width: 28px; height: 28px; margin: 0 auto 12px; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        {% if extraction.status == 'paused' %}
+                <!-- Etapa 2: Em Andamento -->
+                <div class="timeline-item position-relative flex-fill {% if extraction.status == 'in_progress' or extraction.status == 'paused' %}active{% elif extraction.status == 'completed' %}completed{% else %}disabled{% endif %}" 
+                     style="min-width: 250px; max-width: 300px; flex: 0 0 auto;">
+                    <div class="timeline-marker d-flex align-items-center justify-content-center rounded {% if extraction.status == 'completed' %}bg-success text-white border-success{% elif extraction.status == 'paused' %}bg-secondary text-white border-secondary{% elif extraction.status == 'in_progress' %}bg-primary text-white border-primary{% else %}bg-light border-secondary text-muted{% endif %}" 
+                         style="width: 28px; height: 28px; margin: 0 auto 10px; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        {% if extraction.status == 'completed' %}
+                            <i class="fas fa-check" style="font-size: 13px;"></i>
+                        {% elif extraction.status == 'paused' %}
                             <i class="fas fa-pause" style="font-size: 13px;"></i>
                         {% elif extraction.status == 'in_progress' %}
                             <i class="fas fa-circle-notch fa-spin" style="font-size: 13px;"></i>
+                        {% else %}
+                            <i class="far fa-circle" style="font-size: 13px;"></i>
                         {% endif %}
                     </div>
-                    <div class="card {% if extraction.status == 'paused' %}border-secondary{% elif extraction.status == 'in_progress' %}border-primary{% endif %}" style="min-height: 120px;">
-                        <div class="card-body p-3">
-                            <h6 class="card-title mb-2">
-                                {% if extraction.status == 'paused' %}
-                                    Pausada
-                                {% else %}
-                                    Em Andamento
+                    <div class="card {% if extraction.status == 'completed' %}border-success{% elif extraction.status == 'paused' %}border-secondary{% elif extraction.status == 'in_progress' %}border-primary{% else %}border-secondary{% endif %} {% if extraction.status != 'in_progress' and extraction.status != 'paused' and extraction.status != 'completed' %}timeline-disabled{% endif %}" style="min-height: 90px;">
+                        <div class="card-body p-2">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <h6 class="card-title mb-0">
+                                    {% if extraction.status == 'paused' %}
+                                        Pausada
+                                    {% elif extraction.status == 'in_progress' %}
+                                        Em Andamento
+                                    {% elif extraction.status == 'completed' %}
+                                        Em Andamento
+                                    {% else %}
+                                        Em Andamento
+                                    {% endif %}
+                                </h6>
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% if extraction.status == 'in_progress' %}
+                                        {% if not extraction.brute_force_started_at %}
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-danger" 
+                                                    title="Iniciar Força Bruta"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#startBruteForceModal{{ extraction.pk }}">
+                                                <i class="fas fa-unlock-alt"></i>
+                                            </button>
+                                        {% elif extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-danger" 
+                                                    title="Finalizar Força Bruta"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#finishBruteForceModal{{ extraction.pk }}"
+                                                    data-extraction-id="{{ extraction.pk }}">
+                                                <i class="fas fa-unlock"></i>
+                                            </button>
+                                        {% endif %}
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-warning" 
+                                                title="Pausar Extração"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#pauseModal{{ extraction.pk }}">
+                                            <i class="fas fa-pause"></i>
+                                        </button>
+                                        <form method="post" action="{% url 'extractions:cancel' extraction.pk %}" class="d-inline ajax-form">
+                                            {% csrf_token %}
+                                            <button type="submit" 
+                                                    class="btn btn-sm btn-outline-secondary" 
+                                                    title="Cancelar Extração (volta para não iniciada)"
+                                                    onclick="return confirm('Tem certeza que deseja cancelar esta extração? Ela voltará para o status \"Aguardando Extrator\".');">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </form>
+                                        <a href="{% url 'extractions:finish_form' extraction.pk %}" 
+                                           class="btn btn-sm btn-outline-success" 
+                                           title="Finalizar Extração">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                    {% elif extraction.status == 'paused' %}
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-success" 
+                                                title="Retomar Extração"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#resumeModal{{ extraction.pk }}">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                        <a href="{% url 'extractions:finish_form' extraction.pk %}" 
+                                           class="btn btn-sm btn-outline-success" 
+                                           title="Finalizar Extração">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 align-items-center small">
+                                {% if extraction.status == 'paused' and extraction.paused_notes %}
+                                    <span class="text-muted" title="{{ extraction.paused_notes }}">
+                                        <i class="fas fa-sticky-note me-1"></i>{{ extraction.paused_notes|truncatewords:3 }}
+                                    </span>
                                 {% endif %}
-                            </h6>
-                            {% if extraction.status == 'paused' and extraction.paused_notes %}
-                                <p class="card-text small mb-2 text-muted" title="{{ extraction.paused_notes }}">
-                                    <i class="fas fa-sticky-note me-1"></i>{{ extraction.paused_notes|truncatewords:5 }}
-                                </p>
-                            {% endif %}
-                            <!-- Força Bruta dentro de Em Andamento -->
-                            {% if extraction.brute_force_started_at or extraction.brute_force_finished_at %}
-                                <p class="card-text small mb-2 text-muted">
-                                    <i class="fas fa-unlock-alt me-1"></i>
-                                    {% if extraction.brute_force_finished_at %}
-                                        {% if extraction.brute_force_result %}
-                                            <span class="badge bg-success">BF✓</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">BF</span>
+                                {% if extraction.brute_force_started_at or extraction.brute_force_finished_at %}
+                                    <span class="text-muted">
+                                        <i class="fas fa-unlock-alt me-1"></i>
+                                        {% if extraction.brute_force_finished_at %}
+                                            {% if extraction.brute_force_result %}
+                                                <span class="badge bg-success">BF✓</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">BF</span>
+                                            {% endif %}
+                                        {% elif extraction.brute_force_started_at %}
+                                            <span class="badge bg-danger">BF</span>
                                         {% endif %}
-                                        {% if extraction.brute_force_results_notes %}
-                                            <br><small title="{{ extraction.brute_force_results_notes }}">{{ extraction.brute_force_results_notes|truncatewords:4 }}</small>
-                                        {% endif %}
-                                    {% elif extraction.brute_force_started_at %}
-                                        <span class="badge bg-danger">BF</span>
-                                    {% endif %}
-                                </p>
-                            {% endif %}
-                            <div class="d-flex flex-wrap gap-2 justify-content-center">
-                                {% if extraction.status == 'in_progress' %}
-                                    <button type="button" 
-                                            class="btn btn-sm btn-outline-warning" 
-                                            title="Pausar Extração"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#pauseModal{{ extraction.pk }}">
-                                        <i class="fas fa-pause"></i>
-                                    </button>
-                                    {% if not extraction.brute_force_started_at %}
-                                        <button type="button" 
-                                                class="btn btn-sm btn-outline-danger" 
-                                                title="Iniciar Força Bruta"
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#startBruteForceModal{{ extraction.pk }}">
-                                            <i class="fas fa-unlock-alt"></i>
-                                        </button>
-                                    {% elif extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
-                                        <button type="button" 
-                                                class="btn btn-sm btn-outline-danger" 
-                                                title="Finalizar Força Bruta"
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#finishBruteForceModal{{ extraction.pk }}"
-                                                data-extraction-id="{{ extraction.pk }}">
-                                            <i class="fas fa-unlock"></i>
-                                        </button>
-                                    {% endif %}
-                                    <a href="{% url 'extractions:finish_form' extraction.pk %}" 
-                                       class="btn btn-sm btn-outline-success" 
-                                       title="Finalizar Extração">
-                                        <i class="fas fa-check"></i>
-                                    </a>
-                                {% elif extraction.status == 'paused' %}
-                                    <button type="button" 
-                                            class="btn btn-sm btn-outline-success" 
-                                            title="Retomar Extração"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#resumeModal{{ extraction.pk }}">
-                                        <i class="fas fa-play"></i>
-                                    </button>
-                                    <a href="{% url 'extractions:finish_form' extraction.pk %}" 
-                                       class="btn btn-sm btn-outline-success" 
-                                       title="Finalizar Extração">
-                                        <i class="fas fa-check"></i>
-                                    </a>
+                                    </span>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
                 </div>
-                {% endif %}
                         
-                <!-- Etapa 4: Finalizada -->
-                {% if extraction.status == 'completed' %}
-                <div class="timeline-item position-relative flex-fill completed" style="min-width: 180px; max-width: 220px;">
-                    <div class="timeline-marker d-flex align-items-center justify-content-center rounded bg-success text-white border-success" 
-                         style="width: 28px; height: 28px; margin: 0 auto 12px; z-index: 2; box-shadow: 0 2px 6px rgba(40, 167, 69, 0.4);">
-                        <i class="fas fa-check" style="font-size: 13px;"></i>
+                <!-- Etapa 3: Finalizada -->
+                <div class="timeline-item position-relative flex-fill {% if extraction.status == 'completed' %}completed{% else %}disabled{% endif %}" 
+                     style="min-width: 250px; max-width: 300px; flex: 0 0 auto;">
+                    <div class="timeline-marker d-flex align-items-center justify-content-center rounded {% if extraction.status == 'completed' %}bg-success text-white border-success{% else %}bg-light border-secondary text-muted{% endif %}" 
+                         style="width: 28px; height: 28px; margin: 0 auto 10px; z-index: 2; box-shadow: 0 2px 6px rgba(40, 167, 69, 0.4);">
+                        {% if extraction.status == 'completed' %}
+                            <i class="fas fa-check" style="font-size: 13px;"></i>
+                        {% else %}
+                            <i class="far fa-circle" style="font-size: 13px;"></i>
+                        {% endif %}
                     </div>
-                    <div class="card border-success" style="min-height: 120px;">
-                        <div class="card-body p-3">
-                            <h6 class="card-title mb-2">Finalizada</h6>
-                            {% if extraction.finished_at %}
-                                <p class="card-text small mb-2 text-muted">
-                                    <i class="fas fa-calendar-alt me-1"></i>{{ extraction.finished_at|date:"d/m H:i" }}
-                                </p>
-                            {% endif %}
-                            {% if extraction.extraction_result %}
-                                <div class="mb-2">
+                    <div class="card {% if extraction.status == 'completed' %}border-success{% else %}border-secondary timeline-disabled{% endif %}" style="min-height: 90px;">
+                        <div class="card-body p-2">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <h6 class="card-title mb-0">Finalizada</h6>
+                                {% if extraction.status == 'completed' and extraction.extraction_result %}
                                     {% if extraction.extraction_result == 'success' %}
                                         <span class="badge bg-success">✓ Sucesso</span>
                                     {% elif extraction.extraction_result == 'failed' %}
@@ -271,24 +241,35 @@
                                     {% elif extraction.extraction_result == 'partial' %}
                                         <span class="badge bg-warning">~ Parcial</span>
                                     {% endif %}
+                                {% endif %}
+                            </div>
+                            {% if extraction.status == 'completed' %}
+                                <div class="d-flex flex-wrap gap-2 align-items-center small">
+                                    {% if extraction.finished_at %}
+                                        <span class="text-muted">
+                                            <i class="fas fa-calendar-alt me-1"></i>{{ extraction.finished_at|date:"d/m H:i" }}
+                                        </span>
+                                    {% endif %}
+                                    {% if extraction.finished_notes %}
+                                        <span class="text-muted" title="{{ extraction.finished_notes }}">
+                                            <i class="fas fa-sticky-note me-1"></i>{{ extraction.finished_notes|truncatewords:3 }}
+                                        </span>
+                                    {% endif %}
                                 </div>
-                            {% endif %}
-                            {% if extraction.finished_notes %}
-                                <p class="card-text small mb-0 text-muted" title="{{ extraction.finished_notes }}">
-                                    <i class="fas fa-sticky-note me-1"></i>{{ extraction.finished_notes|truncatewords:5 }}
-                                </p>
                             {% endif %}
                         </div>
                     </div>
                 </div>
-                {% endif %}
-            </div>
         </div>
     </div>
 </div>
 
 <style>
 /* Layout específico da timeline - apenas o necessário */
+.timeline-row {
+    width: 100%;
+}
+
 .timeline-item {
     margin: 0 -1px;
 }
@@ -360,6 +341,30 @@
 
 .timeline-item.active .timeline-marker {
     animation: pulseFlow 2s infinite;
+}
+
+/* Cards desabilitados */
+.timeline-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    background-color: #f8f9fa;
+}
+
+.timeline-disabled .card-title,
+.timeline-disabled .card-text {
+    color: #6c757d !important;
+}
+
+.timeline-disabled .btn {
+    display: none;
+}
+
+/* Engates desabilitados */
+.timeline-item.disabled:not(:last-child)::after,
+.timeline-item.disabled:not(:first-child)::before {
+    background: #e9ecef;
+    border-color: #dee2e6;
+    opacity: 0.5;
 }
 
 /* Responsividade */

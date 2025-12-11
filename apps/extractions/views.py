@@ -137,20 +137,34 @@ class ExtractionUnassignFromMeView(LoginRequiredMixin, View):
     def post(self, request, pk):
         service = ExtractionService(user=request.user)
         
+        # Verifica se é uma requisição AJAX
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
         try:
             extraction = service.unassign_from_me(pk)
+            if is_ajax:
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Atribuição removida com sucesso!'
+                })
             messages.success(request, 'Atribuição removida com sucesso!')
         except ServiceException as e:
+            if is_ajax:
+                return JsonResponse({
+                    'success': False,
+                    'error': str(e)
+                }, status=400)
             messages.error(request, str(e))
             extraction = service.get_object(pk)
         
-        return self._redirect_back(request, extraction)
+        if not is_ajax:
+            return self._redirect_back(request, extraction)
     
     def _redirect_back(self, request, extraction):
         """Redireciona de acordo com o referer ou para as extrações do caso"""
         referer = request.META.get('HTTP_REFERER')
         if referer:
-            if 'extractions/my-extractions' in referer:
+            if 'extractions/my-extractions' in referer or 'users/my-extractions' in referer:
                 return redirect('users:my_extractions')
             if 'extractions/list' in referer:
                 return redirect('extractions:list')
@@ -164,20 +178,40 @@ class ExtractionStartView(LoginRequiredMixin, View):
         service = ExtractionService(user=request.user)
         notes = request.POST.get('notes', '')
         
+        # Verifica se é uma requisição AJAX
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
         try:
             extraction = service.start(pk, notes=notes if notes else None)
-            if not extraction.assigned_to or extraction.assigned_to.user == request.user:
-                if not extraction.assigned_to:
-                    messages.info(request, 'Extração atribuída automaticamente a você.')
-            messages.success(request, 'Extração iniciada com sucesso!')
-        except ServiceException as e:
-            if isinstance(e, ValidationServiceException):
-                messages.warning(request, str(e))
+            if is_ajax:
+                message = 'Extração iniciada com sucesso!'
+                if not extraction.assigned_to or extraction.assigned_to.user == request.user:
+                    if not extraction.assigned_to:
+                        message = 'Extração atribuída automaticamente a você e iniciada com sucesso!'
+                return JsonResponse({
+                    'success': True,
+                    'message': message
+                })
             else:
-                messages.error(request, str(e))
-            extraction = service.get_object(pk)
+                if not extraction.assigned_to or extraction.assigned_to.user == request.user:
+                    if not extraction.assigned_to:
+                        messages.info(request, 'Extração atribuída automaticamente a você.')
+                messages.success(request, 'Extração iniciada com sucesso!')
+        except ServiceException as e:
+            if is_ajax:
+                return JsonResponse({
+                    'success': False,
+                    'error': str(e)
+                }, status=400)
+            else:
+                if isinstance(e, ValidationServiceException):
+                    messages.warning(request, str(e))
+                else:
+                    messages.error(request, str(e))
+                extraction = service.get_object(pk)
         
-        return self._redirect_back(request, extraction)
+        if not is_ajax:
+            return self._redirect_back(request, extraction)
     
     def _redirect_back(self, request, extraction):
         """Redireciona de acordo com o referer ou para as extrações do caso"""
@@ -197,20 +231,34 @@ class ExtractionPauseView(LoginRequiredMixin, View):
         service = ExtractionService(user=request.user)
         notes = request.POST.get('notes', '')
         
+        # Verifica se é uma requisição AJAX
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
         try:
             extraction = service.pause(pk, notes=notes if notes else None)
+            if is_ajax:
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Extração pausada com sucesso!'
+                })
             messages.success(request, 'Extração pausada com sucesso!')
         except ServiceException as e:
+            if is_ajax:
+                return JsonResponse({
+                    'success': False,
+                    'error': str(e)
+                }, status=400)
             messages.error(request, str(e))
             extraction = service.get_object(pk)
         
-        return self._redirect_back(request, extraction)
+        if not is_ajax:
+            return self._redirect_back(request, extraction)
     
     def _redirect_back(self, request, extraction):
         """Redireciona de acordo com o referer ou para as extrações do caso"""
         referer = request.META.get('HTTP_REFERER')
         if referer:
-            if 'extractions/my-extractions' in referer:
+            if 'extractions/my-extractions' in referer or 'users/my-extractions' in referer:
                 return redirect('users:my_extractions')
             if 'extractions/list' in referer:
                 return redirect('extractions:list')
@@ -223,20 +271,74 @@ class ExtractionResumeView(LoginRequiredMixin, View):
     def post(self, request, pk):
         service = ExtractionService(user=request.user)
         
+        # Verifica se é uma requisição AJAX
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
         try:
             extraction = service.resume(pk)
+            if is_ajax:
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Extração retomada com sucesso!'
+                })
             messages.success(request, 'Extração retomada com sucesso!')
         except ServiceException as e:
+            if is_ajax:
+                return JsonResponse({
+                    'success': False,
+                    'error': str(e)
+                }, status=400)
             messages.error(request, str(e))
             extraction = service.get_object(pk)
         
-        return self._redirect_back(request, extraction)
+        if not is_ajax:
+            return self._redirect_back(request, extraction)
     
     def _redirect_back(self, request, extraction):
         """Redireciona de acordo com o referer ou para as extrações do caso"""
         referer = request.META.get('HTTP_REFERER')
         if referer:
-            if 'extractions/my-extractions' in referer:
+            if 'extractions/my-extractions' in referer or 'users/my-extractions' in referer:
+                return redirect('users:my_extractions')
+            if 'extractions/list' in referer:
+                return redirect('extractions:list')
+        return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
+
+
+class ExtractionCancelView(LoginRequiredMixin, View):
+    """Cancela uma extração em andamento, revertendo para status pending"""
+    
+    def post(self, request, pk):
+        service = ExtractionService(user=request.user)
+        
+        # Verifica se é uma requisição AJAX
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
+        try:
+            extraction = service.cancel(pk)
+            if is_ajax:
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Extração cancelada com sucesso! A extração voltou para o status "Aguardando Extrator".'
+                })
+            messages.success(request, 'Extração cancelada com sucesso! A extração voltou para o status "Aguardando Extrator".')
+        except ServiceException as e:
+            if is_ajax:
+                return JsonResponse({
+                    'success': False,
+                    'error': str(e)
+                }, status=400)
+            messages.error(request, str(e))
+            extraction = service.get_object(pk)
+        
+        if not is_ajax:
+            return self._redirect_back(request, extraction)
+    
+    def _redirect_back(self, request, extraction):
+        """Redireciona de acordo com o referer ou para as extrações do caso"""
+        referer = request.META.get('HTTP_REFERER')
+        if referer:
+            if 'extractions/my-extractions' in referer or 'users/my-extractions' in referer:
                 return redirect('users:my_extractions')
             if 'extractions/list' in referer:
                 return redirect('extractions:list')
@@ -402,8 +504,7 @@ class ExtractionFinishView(LoginRequiredMixin, View):
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({
                     'success': True,
-                    'message': 'Extração finalizada com sucesso!',
-                    'redirect_url': self.request.GET.get('next', '')
+                    'message': 'Extração finalizada com sucesso!'
                 })
             
             messages.success(request, 'Extração finalizada com sucesso!')
@@ -436,17 +537,31 @@ class BruteForceStartView(LoginRequiredMixin, View):
         service = ExtractionService(user=request.user)
         notes = request.POST.get('notes', '')
         
+        # Verifica se é uma requisição AJAX
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
         try:
             extraction = service.start_brute_force(pk, notes=notes if notes else None)
+            if is_ajax:
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Força bruta iniciada com sucesso!'
+                })
             messages.success(request, 'Força bruta iniciada com sucesso!')
         except ServiceException as e:
+            if is_ajax:
+                return JsonResponse({
+                    'success': False,
+                    'error': str(e)
+                }, status=400)
             if isinstance(e, ValidationServiceException):
                 messages.warning(request, str(e))
             else:
                 messages.error(request, str(e))
             extraction = service.get_object(pk)
         
-        return self._redirect_back(request, extraction)
+        if not is_ajax:
+            return self._redirect_back(request, extraction)
     
     def _redirect_back(self, request, extraction):
         """Redireciona de acordo com o referer ou para as extrações do caso"""
@@ -530,24 +645,27 @@ class BruteForceFinishView(LoginRequiredMixin, View):
             service.finish_brute_force(pk, form.cleaned_data)
             
             # Se for AJAX, retorna JSON
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+            if is_ajax:
                 return JsonResponse({
                     'success': True,
-                    'message': 'Força bruta finalizada com sucesso!',
-                    'redirect_url': request.GET.get('next', '')
+                    'message': 'Força bruta finalizada com sucesso!'
                 })
             
             messages.success(request, 'Força bruta finalizada com sucesso!')
         except ServiceException as e:
             # Se for AJAX, retorna erro em JSON
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+            if is_ajax:
                 return JsonResponse({
                     'success': False,
                     'error': str(e)
                 }, status=400)
             messages.error(request, str(e))
         
-        return self._redirect_back(request, extraction)
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if not is_ajax:
+            return self._redirect_back(request, extraction)
     
     def _redirect_back(self, request, extraction):
         """Redireciona de acordo com o referer ou para as extrações do caso"""

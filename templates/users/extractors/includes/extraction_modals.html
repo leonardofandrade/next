@@ -150,7 +150,7 @@
                     </div>
                 </div>
                 <hr>
-                <form id="startForm{{ extraction.pk }}" method="post" action="{% url 'extractions:start' extraction.pk %}">
+                <form id="startForm{{ extraction.pk }}" method="post" action="{% url 'extractions:start' extraction.pk %}" class="ajax-form">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="notes{{ extraction.pk }}" class="form-label">
@@ -209,7 +209,7 @@
                     </div>
                 </div>
                 <hr>
-                <form id="pauseForm{{ extraction.pk }}" method="post" action="{% url 'extractions:pause' extraction.pk %}">
+                <form id="pauseForm{{ extraction.pk }}" method="post" action="{% url 'extractions:pause' extraction.pk %}" class="ajax-form">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="pauseNotes{{ extraction.pk }}" class="form-label">
@@ -273,7 +273,7 @@
                     <i class="fas fa-times me-2"></i>
                     Cancelar
                 </button>
-                <form method="post" action="{% url 'extractions:resume' extraction.pk %}" style="display: inline;">
+                <form method="post" action="{% url 'extractions:resume' extraction.pk %}" style="display: inline;" class="ajax-form">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-play me-2"></i>
@@ -320,7 +320,7 @@
                     </div>
                 </div>
                 <hr>
-                <form id="startBruteForceForm{{ extraction.pk }}" method="post" action="{% url 'extractions:brute_force_start' extraction.pk %}">
+                <form id="startBruteForceForm{{ extraction.pk }}" method="post" action="{% url 'extractions:brute_force_start' extraction.pk %}" class="ajax-form">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="bruteForceNotes{{ extraction.pk }}" class="form-label">

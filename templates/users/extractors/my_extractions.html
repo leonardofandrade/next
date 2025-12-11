@@ -12,93 +12,48 @@ Painel de controle das extrações sob sua responsabilidade
 
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- Cards de Estatísticas -->
+    <!-- Resumo Rápido - O que precisa de ação -->
     <div class="row mb-4">
-        <div class="col-md-2 col-sm-6 mb-3">
-            <div class="card border-start border-warning border-4 h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-1">Aguardando</h6>
-                            <h3 class="mb-0 text-warning">{{ stats.pending|default:0 }}</h3>
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="mb-2">
+                                <i class="fas fa-tasks text-primary me-2"></i>
+                                Minhas Extrações
+                            </h4>
+                            <p class="text-muted mb-0">
+                                {% if stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused > 0 %}
+                                    Você tem <strong>{{ stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused }}</strong> extração{{ stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused|pluralize }} sob sua responsabilidade
+                                {% else %}
+                                    Nenhuma extração ativa no momento
+                                {% endif %}
+                            </p>
                         </div>
-                        <div class="text-warning">
-                            <i class="fas fa-clock fa-2x opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 col-sm-6 mb-3">
-            <div class="card border-start border-info border-4 h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-1">Atribuídas</h6>
-                            <h3 class="mb-0 text-info">{{ stats.assigned|default:0 }}</h3>
-                        </div>
-                        <div class="text-info">
-                            <i class="fas fa-user-check fa-2x opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 col-sm-6 mb-3">
-            <div class="card border-start border-primary border-4 h-100 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-1">Em Andamento</h6>
-                            <h3 class="mb-0 text-primary">{{ stats.in_progress|default:0 }}</h3>
-                        </div>
-                        <div class="text-primary">
-                            <i class="fas fa-spinner fa-spin fa-2x opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 col-sm-6 mb-3">
-            <div class="card border-start border-secondary border-4 h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-1">Pausadas</h6>
-                            <h3 class="mb-0 text-secondary">{{ stats.paused|default:0 }}</h3>
-                        </div>
-                        <div class="text-secondary">
-                            <i class="fas fa-pause fa-2x opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 col-sm-6 mb-3">
-            <div class="card border-start border-success border-4 h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-1">Finalizadas</h6>
-                            <h3 class="mb-0 text-success">{{ stats.completed|default:0 }}</h3>
-                        </div>
-                        <div class="text-success">
-                            <i class="fas fa-check-circle fa-2x opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 col-sm-6 mb-3">
-            <div class="card border-start border-dark border-4 h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-1">Total</h6>
-                            <h3 class="mb-0">{{ total_count }}</h3>
-                        </div>
-                        <div class="text-dark">
-                            <i class="fas fa-database fa-2x opacity-50"></i>
+                        <div class="col-md-4 text-end">
+                            <div class="d-flex gap-2 justify-content-md-end justify-content-start flex-wrap">
+                                {% if stats.pending > 0 %}
+                                    <span class="badge bg-warning fs-6 px-3 py-2">
+                                        <i class="fas fa-clock me-1"></i>{{ stats.pending }} Pendente{{ stats.pending|pluralize }}
+                                    </span>
+                                {% endif %}
+                                {% if stats.assigned > 0 %}
+                                    <span class="badge bg-info fs-6 px-3 py-2">
+                                        <i class="fas fa-user-check me-1"></i>{{ stats.assigned }} Atribuída{{ stats.assigned|pluralize }}
+                                    </span>
+                                {% endif %}
+                                {% if stats.in_progress > 0 %}
+                                    <span class="badge bg-primary fs-6 px-3 py-2">
+                                        <i class="fas fa-spinner fa-spin me-1"></i>{{ stats.in_progress }} Em Andamento
+                                    </span>
+                                {% endif %}
+                                {% if stats.paused > 0 %}
+                                    <span class="badge bg-secondary fs-6 px-3 py-2">
+                                        <i class="fas fa-pause me-1"></i>{{ stats.paused }} Pausada{{ stats.paused|pluralize }}
+                                    </span>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -106,303 +61,174 @@ Painel de controle das extrações sob sua responsabilidade
         </div>
     </div>
 
-    <!-- Filtros Colapsáveis -->
-    <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#filtersCollapse">
-            <h5 class="card-title mb-0">
-                <i class="fas fa-filter me-2"></i>
-                Filtros de Pesquisa
-            </h5>
-            <i class="fas fa-chevron-down"></i>
-        </div>
-        <div class="collapse" id="filtersCollapse">
-            <div class="card-body">
-                <form method="get" class="row g-3">
-                    <div class="col-md-4">
-                        {{ form.search.label_tag }}
-                        {{ form.search }}
-                    </div>
-                    <div class="col-md-3">
-                        {{ form.case_number.label_tag }}
-                        {{ form.case_number }}
-                    </div>
-                    <div class="col-md-2">
-                        {{ form.status.label_tag }}
-                        {{ form.status }}
-                    </div>
-                    <div class="col-md-3">
-                        {{ form.extraction_result.label_tag }}
-                        {{ form.extraction_result }}
-                    </div>
-                    <div class="col-md-3">
-                        {{ form.extraction_unit.label_tag }}
-                        {{ form.extraction_unit }}
-                    </div>
-                    <div class="col-md-3">
-                        {{ form.date_from.label_tag }}
-                        {{ form.date_from }}
-                    </div>
-                    <div class="col-md-3">
-                        {{ form.date_to.label_tag }}
-                        {{ form.date_to }}
-                    </div>
-                    <div class="col-12">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-search me-2"></i>
-                            Filtrar
-                        </button>
-                        <a href="{% url 'users:my_extractions' %}" class="btn btn-secondary">
-                            <i class="fas fa-times me-2"></i>
-                            Limpar
-                        </a>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Seção: Extrações em Andamento (Timeline) -->
+    <!-- Seção Principal: Extrações Sob Minha Responsabilidade -->
     {% if extractions_by_status.pending or extractions_by_status.assigned or extractions_by_status.in_progress or extractions_by_status.paused %}
-    <div class="card mb-4 border-primary">
-        <div class="card-header bg-primary bg-opacity-10">
-            <h5 class="card-title mb-0">
-                <i class="fas fa-tasks text-primary me-2"></i>
-                <strong>Extrações em Andamento</strong>
-                <span class="badge bg-primary ms-2">{{ stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused }}</span>
-            </h5>
+    <div class="card mb-4 border-primary shadow-sm">
+        <div class="card-header bg-primary bg-opacity-10 border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list-check text-primary me-2"></i>
+                    <strong>Extrações Sob Minha Responsabilidade</strong>
+                </h5>
+                <span class="badge bg-primary fs-6 px-3 py-2">
+                    {{ stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused }} ativa{{ stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused|pluralize }}
+                </span>
+            </div>
         </div>
-        <div class="card-body">
-            {% for extraction in extractions_by_status.pending %}
-                {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
-            {% endfor %}
-            {% for extraction in extractions_by_status.assigned %}
-                {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
-            {% endfor %}
-            {% for extraction in extractions_by_status.in_progress %}
-                {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
-            {% endfor %}
-            {% for extraction in extractions_by_status.paused %}
-                {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
-            {% endfor %}
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <tbody>
+                        {% if extractions_by_status.pending %}
+                            {% for extraction in extractions_by_status.pending %}
+                                <tr>
+                                    <td class="p-3">
+                                        {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% endif %}
+                        
+                        {% if extractions_by_status.assigned %}
+                            {% for extraction in extractions_by_status.assigned %}
+                                <tr>
+                                    <td class="p-3">
+                                        {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% endif %}
+                        
+                        {% if extractions_by_status.in_progress %}
+                            {% for extraction in extractions_by_status.in_progress %}
+                                <tr>
+                                    <td class="p-3">
+                                        {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% endif %}
+                        
+                        {% if extractions_by_status.paused %}
+                            {% for extraction in extractions_by_status.paused %}
+                                <tr>
+                                    <td class="p-3">
+                                        {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Estado Vazio -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-check-circle fa-4x text-success mb-4 opacity-50"></i>
+            <h4 class="text-muted mb-3">Nenhuma extração ativa</h4>
+            <p class="text-muted mb-4">Você não tem extrações pendentes, atribuídas, em andamento ou pausadas no momento.</p>
+            <a href="{% url 'extractions:list' %}" class="btn btn-primary">
+                <i class="fas fa-search me-2"></i>
+                Ver todas as extrações disponíveis
+            </a>
         </div>
     </div>
     {% endif %}
 
-    <!-- Seção: Todas as Extrações (Tabela Completa) -->
-    {% if page_obj %}
-    <div class="card">
+    <!-- Seção: Histórico de Extrações Finalizadas (Opcional - se houver muitas) -->
+    {% if stats.completed > 0 and page_obj %}
+    <div class="card mb-4">
         <div class="card-header">
-            <h5 class="card-title mb-0">
-                <i class="fas fa-list me-2"></i>
-                Todas as Extrações
-            </h5>
+            <h6 class="card-title mb-0">
+                <i class="fas fa-history me-2"></i>
+                Histórico de Extrações Finalizadas
+                <span class="badge bg-success ms-2">{{ stats.completed }}</span>
+            </h6>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle table-sm">
                     <thead class="table-light">
                         <tr>
                             <th style="width: 80px;">ID</th>
                             <th>Dispositivo</th>
                             <th style="width: 150px;">Processo</th>
-                            <th style="width: 120px;">Status</th>
-                            <th style="width: 120px;">Atribuído em</th>
-                            <th style="width: 120px;">Iniciado em</th>
                             <th style="width: 120px;">Finalizado em</th>
                             <th style="width: 100px;">Resultado</th>
-                            <th style="width: 100px;">Tamanho</th>
-                            <th style="width: 150px;" class="text-end">Ações</th>
+                            <th style="width: 100px;" class="text-end">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for extraction in extractions %}
-                        <tr>
-                            <td>
-                                <strong>#{{ extraction.pk }}</strong>
-                            </td>
-                            <td>
-                                {% if extraction.case_device.device_model %}
-                                    <strong>{{ extraction.case_device.device_model.brand.name }}</strong><br>
-                                    <small class="text-muted">{{ extraction.case_device.device_model.name }}</small>
-                                {% else %}
-                                    <span class="text-muted">Sem modelo</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" 
-                                   class="text-decoration-none">
-                                    <strong>{{ extraction.case_device.case.number|default:"Rascunho" }}</strong>
-                                </a>
-                            </td>
-                            <td>
-                                <span class="badge bg-{{ extraction.get_status_color }}">
-                                    {{ extraction.get_status_display }}
-                                </span>
-                            </td>
-                            <td>
-                                {% if extraction.assigned_at %}
-                                    {{ extraction.assigned_at|date:"d/m/Y H:i" }}
-                                {% else %}
-                                    <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if extraction.started_at %}
-                                    {{ extraction.started_at|date:"d/m/Y H:i" }}
-                                {% else %}
-                                    <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if extraction.finished_at %}
-                                    {{ extraction.finished_at|date:"d/m/Y H:i" }}
-                                {% else %}
-                                    <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if extraction.extraction_result %}
-                                    {% if extraction.extraction_result == 'success' %}
-                                        <span class="badge bg-success">Bem-Sucedida</span>
-                                    {% elif extraction.extraction_result == 'failed' %}
-                                        <span class="badge bg-danger">Falhou</span>
-                                    {% elif extraction.extraction_result == 'partial' %}
-                                        <span class="badge bg-warning">Parcial</span>
-                                    {% endif %}
-                                {% else %}
-                                    <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if extraction.extraction_size %}
-                                    {{ extraction.extraction_size }} GB
-                                {% else %}
-                                    <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-end">
-                                <div class="btn-group btn-group-sm" role="group">
-                                    {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
-                                    <button type="button" 
-                                            class="btn btn-outline-primary" 
-                                            title="Editar Dispositivo (dados descobertos na extração)"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#editDeviceModal{{ extraction.case_device.pk }}"
-                                            data-device-id="{{ extraction.case_device.pk }}"
-                                            data-case-id="{{ extraction.case_device.case.pk }}">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
+                            {% if extraction.status == 'completed' %}
+                            <tr>
+                                <td><strong>#{{ extraction.pk }}</strong></td>
+                                <td>
+                                    {% if extraction.case_device.device_model %}
+                                        <strong>{{ extraction.case_device.device_model.brand.name }}</strong><br>
+                                        <small class="text-muted">{{ extraction.case_device.device_model.name }}</small>
                                     {% else %}
-                                    <a href="{% url 'cases:device_update' extraction.case_device.case.pk extraction.case_device.pk %}" 
-                                       class="btn btn-outline-primary" 
-                                       title="Ver Dispositivo">
-                                        <i class="fas fa-mobile-alt"></i>
-                                    </a>
+                                        <span class="text-muted">Sem modelo</span>
                                     {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" class="text-decoration-none">
+                                        <strong>{{ extraction.case_device.case.number|default:"Rascunho" }}</strong>
+                                    </a>
+                                </td>
+                                <td>
+                                    {% if extraction.finished_at %}
+                                        {{ extraction.finished_at|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if extraction.extraction_result %}
+                                        {% if extraction.extraction_result == 'success' %}
+                                            <span class="badge bg-success">Sucesso</span>
+                                        {% elif extraction.extraction_result == 'failed' %}
+                                            <span class="badge bg-danger">Falhou</span>
+                                        {% elif extraction.extraction_result == 'partial' %}
+                                            <span class="badge bg-warning">Parcial</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
                                     <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" 
-                                       class="btn btn-outline-info" 
+                                       class="btn btn-sm btn-outline-info" 
                                        title="Ver Processo">
                                         <i class="fas fa-folder-open"></i>
                                     </a>
-                                    {% if extraction.status == 'pending' or extraction.status == 'assigned' or extraction.status == 'paused' %}
-                                    <button type="button" 
-                                            class="btn btn-outline-warning btn-sm" 
-                                            title="Desatribuir-me"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#unassignModal{{ extraction.pk }}">
-                                        <i class="fas fa-user-times"></i>
-                                    </button>
-                                    {% endif %}
-                                    {% if extraction.status == 'pending' or extraction.status == 'assigned' or extraction.status == 'paused' %}
-                                    <button type="button" 
-                                            class="btn btn-outline-primary btn-sm" 
-                                            title="Iniciar Extração"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#startModal{{ extraction.pk }}">
-                                        <i class="fas fa-play"></i>
-                                    </button>
-                                    {% endif %}
-                                    {% if extraction.status == 'in_progress' %}
-                                    <button type="button" 
-                                            class="btn btn-outline-warning btn-sm" 
-                                            title="Pausar Extração"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#pauseModal{{ extraction.pk }}">
-                                        <i class="fas fa-pause"></i>
-                                    </button>
-                                    {% endif %}
-                                    {% if extraction.status == 'paused' %}
-                                    <button type="button" 
-                                            class="btn btn-outline-success btn-sm" 
-                                            title="Retomar Extração"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#resumeModal{{ extraction.pk }}">
-                                        <i class="fas fa-play"></i>
-                                    </button>
-                                    {% endif %}
-                                    {% if extraction.status == 'in_progress' or extraction.status == 'paused' %}
-                                    <a href="{% url 'extractions:finish_form' extraction.pk %}" 
-                                       class="btn btn-outline-success btn-sm" 
-                                       title="Finalizar Extração">
-                                        <i class="fas fa-check-circle"></i>
-                                    </a>
-                                    {% endif %}
-                                    {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
-                                        {% if not extraction.brute_force_started_at %}
-                                        <button type="button" 
-                                                class="btn btn-outline-danger btn-sm" 
-                                                title="Iniciar Força Bruta"
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#startBruteForceModal{{ extraction.pk }}">
-                                            <i class="fas fa-unlock-alt"></i>
-                                        </button>
-                                        {% elif extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
-                                        <button type="button" 
-                                                class="btn btn-outline-danger btn-sm" 
-                                                title="Finalizar Força Bruta"
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#finishBruteForceModal{{ extraction.pk }}"
-                                                data-extraction-id="{{ extraction.pk }}">
-                                            <i class="fas fa-unlock"></i>
-                                        </button>
-                                        {% endif %}
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
+                                </td>
+                            </tr>
+                            {% endif %}
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-            <!-- Pagination -->
-            {% include '_global/layout/includes/pagination.html' %}
-        </div>
-    </div>
-    {% else %}
-    <div class="card">
-        <div class="card-body text-center py-5">
-            <i class="fas fa-database fa-3x text-muted mb-3"></i>
-            <p class="text-muted">Nenhuma extração atribuída a você</p>
-            <a href="{% url 'extractions:list' %}" class="btn btn-primary">
-                <i class="fas fa-search me-2"></i>
-                Ver todas as extrações
-            </a>
+            <!-- Pagination apenas para histórico -->
+            {% if page_obj.has_other_pages %}
+                {% include '_global/layout/includes/pagination.html' %}
+            {% endif %}
         </div>
     </div>
     {% endif %}
 </div>
 
 <!-- Modais de Confirmação -->
-{# Gerar modais para todas as extrações que aparecem nos cards ou na lista paginada #}
 {% for extraction in all_extractions_for_modals %}
     {% include 'users/extractors/includes/extraction_modals.html' with extraction=extraction %}
 {% endfor %}
 
 <!-- Modais de Formulários -->
-{# Gerar modais para todas as extrações que aparecem nos cards ou na lista paginada #}
 {% for extraction in all_extractions_for_modals %}
     <!-- Modal Editar Dispositivo -->
-    {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
     <div class="modal fade" id="editDeviceModal{{ extraction.case_device.pk }}" tabindex="-1" aria-labelledby="editDeviceModalLabel{{ extraction.case_device.pk }}" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
@@ -424,7 +250,6 @@ Painel de controle das extrações sob sua responsabilidade
             </div>
         </div>
     </div>
-    {% endif %}
 {% endfor %}
 
 {% endblock %}
@@ -469,7 +294,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         modalBody.innerHTML = data.html;
                         modalBody.dataset.loaded = 'true';
                         
-                        // Atualiza a URL de redirecionamento no formulário para voltar para my_extractions
                         const form = modalBody.querySelector('form.ajax-form');
                         if (form) {
                             const currentAction = form.action;
@@ -497,8 +321,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const modalBody = document.querySelector(modalId + ' .modal-body');
             
             if (modalBody && !modalBody.dataset.loaded) {
-                // Constrói a URL usando o padrão da URL do Django
-                // Formato: /next/cases/{case_pk}/devices/{device_pk}/form-modal/
                 const baseUrl = '{% url "cases:device_form_modal" 0 0 %}';
                 const url = baseUrl.replace('/cases/0/devices/0/', '/cases/' + caseId + '/devices/' + deviceId + '/');
                 fetch(url, {
@@ -512,19 +334,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         modalBody.innerHTML = data.html;
                         modalBody.dataset.loaded = 'true';
                         
-                        // Atualiza a URL de redirecionamento no formulário para voltar para my_extractions
                         const form = modalBody.querySelector('form.ajax-form');
                         if (form) {
                             const currentAction = form.action;
-                            // Remove o parâmetro next existente e adiciona o novo
                             const urlObj = new URL(currentAction, window.location.origin);
                             urlObj.searchParams.set('next', window.location.pathname);
                             form.action = urlObj.pathname + urlObj.search;
                         }
                         
-                        // Aguarda um pouco para garantir que o DOM foi atualizado
                         setTimeout(function() {
-                            // Executa scripts inline do HTML carregado
                             const scripts = modalBody.querySelectorAll('script');
                             scripts.forEach(function(oldScript) {
                                 const newScript = document.createElement('script');
@@ -535,7 +353,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 oldScript.parentNode.replaceChild(newScript, oldScript);
                             });
                             
-                            // Inicializa Select2 para device_model se existir
                             const selects = modalBody.querySelectorAll('select[id*="device_model"]');
                             if (selects.length > 0 && typeof $ !== 'undefined' && $.fn.select2) {
                                 const $select = $(selects[0]);
@@ -571,12 +388,28 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Processar cliques em botões que usam atributo form (botões fora do formulário)
+    document.addEventListener('click', function(e) {
+        const button = e.target.closest('button[type="submit"][form]');
+        if (button && button.hasAttribute('form')) {
+            const formId = button.getAttribute('form');
+            const form = document.getElementById(formId);
+            if (form && form.classList.contains('ajax-form') && form.closest('.modal')) {
+                e.preventDefault();
+                e.stopPropagation();
+                // Dispara o evento submit no formulário
+                const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+                form.dispatchEvent(submitEvent);
+            }
+        }
+    });
+
     // Processar submissão de formulários via AJAX usando event delegation
     document.addEventListener('submit', function(e) {
         const form = e.target;
         
-        // Verificar se é um formulário dentro de um modal com classe ajax-form
-        if (form && form.tagName === 'FORM' && form.closest('.modal') && form.classList.contains('ajax-form')) {
+        // Captura formulários com classe ajax-form (dentro ou fora de modais)
+        if (form && form.tagName === 'FORM' && form.classList.contains('ajax-form')) {
             e.preventDefault();
             e.stopPropagation();
             
@@ -584,7 +417,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const submitButton = form.querySelector('button[type="submit"]');
             const originalText = submitButton ? submitButton.innerHTML : '';
             
-            // Remove alertas anteriores
             const existingAlerts = form.querySelectorAll('.alert');
             existingAlerts.forEach(alert => alert.remove());
             
@@ -593,7 +425,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
             }
             
-            // Obtém CSRF token
             const csrftoken = getCSRFToken();
             
             fetch(form.action, {
@@ -606,19 +437,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 credentials: 'same-origin'
             })
             .then(response => {
-                // Verifica se a resposta é JSON
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {
                     return response.json();
                 } else {
-                    // Se não for JSON, tenta ler como texto e retornar como erro
                     return response.text().then(text => {
-                        // Se for erro 400, tenta parsear como JSON mesmo assim
                         if (response.status === 400) {
                             try {
                                 return JSON.parse(text);
                             } catch (e) {
-                                // Se não conseguir parsear, retorna erro genérico
                                 return {
                                     success: false,
                                     error: 'Erro de validação. Verifique os campos do formulário.',
@@ -632,7 +459,6 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(data => {
                 if (data.success) {
-                    // Mostrar mensagem de sucesso
                     if (data.message) {
                         const alertDiv = document.createElement('div');
                         alertDiv.className = 'alert alert-success alert-dismissible fade show';
@@ -644,7 +470,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                     
-                    // Fechar modal
                     const modal = form.closest('.modal');
                     if (modal) {
                         const bsModal = bootstrap.Modal.getInstance(modal);
@@ -653,21 +478,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                     
-                    // Recarregar página ou redirecionar
-                    if (data.redirect_url) {
+                    // Não redireciona se estiver na página my_extractions
+                    if (data.redirect_url && !window.location.pathname.includes('my-extractions')) {
                         window.location.href = data.redirect_url;
                     } else {
                         setTimeout(() => window.location.reload(), 1000);
                     }
                 } else {
-                    // Mostrar erros
                     const errorDiv = document.createElement('div');
                     errorDiv.className = 'alert alert-danger alert-dismissible fade show';
                     errorDiv.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>' + (data.error || 'Erro ao salvar. Verifique os campos.') +
                         '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
                     form.insertBefore(errorDiv, form.firstChild);
                     
-                    // Mostrar erros de campos se existirem
                     if (data.errors) {
                         Object.keys(data.errors).forEach(function(field) {
                             const fieldElement = form.querySelector('[name="' + field + '"]');

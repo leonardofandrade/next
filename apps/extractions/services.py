@@ -322,6 +322,30 @@ class ExtractionService(BaseService):
         
         return extraction
     
+    def cancel(self, extraction_pk: int) -> Extraction:
+        """Cancel extraction - reverts to pending status"""
+        extraction = self.get_object(extraction_pk)
+        extractor_user = self.get_extractor_user()
+        
+        if extraction.status != Extraction.STATUS_IN_PROGRESS:
+            raise ValidationServiceException("Apenas extrações em andamento podem ser canceladas")
+        
+        if extraction.assigned_to != extractor_user:
+            raise PermissionServiceException("Apenas o responsável pela extração pode cancelá-la")
+        
+        # Reverte para status pending e limpa campos relacionados
+        extraction.status = Extraction.STATUS_PENDING
+        extraction.started_at = None
+        extraction.started_by = None
+        extraction.started_notes = None
+        extraction.paused_notes = None
+        extraction.save()
+        
+        # Atualiza o status do Case
+        extraction.case_device.case.update_status_based_on_extractions()
+        
+        return extraction
+    
     def finish(self, extraction_pk: int, form_data: Dict[str, Any]) -> Extraction:
         """Finish extraction with form data"""
         extraction = self.get_object(extraction_pk)

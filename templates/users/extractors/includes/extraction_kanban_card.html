@@ -2,31 +2,43 @@
     <div class="card h-100 shadow-sm border-start border-4 border-{{ extraction.get_status_color }} hover-shadow">
         <div class="card-body p-3">
             <!-- Header do Card -->
-            <div class="mb-2">
-                <h6 class="card-title mb-1">
-                    <strong class="text-primary">#{{ extraction.pk }}</strong>
-                </h6>
-                {% if extraction.case_device.device_model %}
-                    <p class="mb-0 small text-muted">
-                        <i class="fas fa-mobile-alt me-1"></i>
-                        <strong>{{ extraction.case_device.device_model.brand.name }}</strong> {{ extraction.case_device.device_model.name }}
-                    </p>
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="flex-grow-1">
+                    <h6 class="card-title mb-1">
+                        <strong class="text-primary">#{{ extraction.pk }}</strong>
+                    </h6>
+                    {% if extraction.case_device.device_model %}
+                        <p class="mb-0 small text-muted">
+                            <i class="fas fa-mobile-alt me-1"></i>
+                            <strong>{{ extraction.case_device.device_model.brand.name }}</strong> {{ extraction.case_device.device_model.name }}
+                        </p>
+                    {% endif %}
+                </div>
+                {% if extraction.started_at %}
+                    <small class="text-muted text-nowrap ms-2">
+                        <i class="fas fa-clock me-1"></i>{{ extraction.started_at|date:"d/m H:i" }}
+                    </small>
                 {% endif %}
             </div>
             
-            <!-- Informações do Dispositivo -->
-            <div class="mb-2">
+            <!-- Informações do Dispositivo em Grid -->
+            <div class="row g-2 mb-2">
                 {% if extraction.case_device.imei_01 %}
-                    <small class="text-muted d-block">
-                        <i class="fas fa-fingerprint me-1"></i>IMEI: {{ extraction.case_device.imei_01 }}
-                    </small>
+                    <div class="col-12">
+                        <small class="text-muted">
+                            <i class="fas fa-fingerprint me-1"></i><strong>IMEI:</strong> {{ extraction.case_device.imei_01 }}
+                        </small>
+                    </div>
                 {% endif %}
-                <small class="text-muted d-block">
-                    <i class="fas fa-folder-open me-1"></i>
-                    <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" class="text-decoration-none">
-                        {{ extraction.case_device.case.number|default:"Rascunho" }}
-                    </a>
-                </small>
+                <div class="col-12">
+                    <small class="text-muted">
+                        <i class="fas fa-folder-open me-1"></i>
+                        <strong>Processo:</strong>
+                        <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" class="text-decoration-none">
+                            {{ extraction.case_device.case.number|default:"Rascunho" }}
+                        </a>
+                    </small>
+                </div>
             </div>
             
             <!-- Status e Ações -->
@@ -226,12 +238,6 @@
                 {% endif %}
             </div>
             
-            <!-- Informações adicionais -->
-            {% if extraction.started_at %}
-                <small class="text-muted d-block mt-2">
-                    <i class="fas fa-clock me-1"></i>Iniciada: {{ extraction.started_at|date:"d/m H:i" }}
-                </small>
-            {% endif %}
         </div>
     </div>
 </div>

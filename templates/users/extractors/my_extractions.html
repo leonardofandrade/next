@@ -12,49 +12,6 @@ Painel de controle das extrações sob sua responsabilidade
 
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- Resumo Rápido -->
-    <div class="row mb-3">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div>
-                    <h4 class="mb-1">
-                        <i class="fas fa-tasks text-primary me-2"></i>
-                        Minhas Extrações
-                    </h4>
-                    <p class="text-muted mb-0 small">
-                        {% if stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused > 0 %}
-                            <strong>{{ stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused }}</strong> extração{{ stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused|pluralize }} ativa{{ stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused|pluralize }}
-                        {% else %}
-                            Nenhuma extração ativa no momento
-                        {% endif %}
-                    </p>
-                </div>
-                <div class="d-flex gap-2 flex-wrap">
-                    {% if stats.pending > 0 %}
-                        <span class="badge bg-warning px-3 py-2">
-                            <i class="fas fa-clock me-1"></i>{{ stats.pending }} Pendente{{ stats.pending|pluralize }}
-                        </span>
-                    {% endif %}
-                    {% if stats.assigned > 0 %}
-                        <span class="badge bg-info px-3 py-2">
-                            <i class="fas fa-user-check me-1"></i>{{ stats.assigned }} Atribuída{{ stats.assigned|pluralize }}
-                        </span>
-                    {% endif %}
-                    {% if stats.in_progress > 0 %}
-                        <span class="badge bg-primary px-3 py-2">
-                            <i class="fas fa-spinner fa-spin me-1"></i>{{ stats.in_progress }} Em Andamento
-                        </span>
-                    {% endif %}
-                    {% if stats.paused > 0 %}
-                        <span class="badge bg-secondary px-3 py-2">
-                            <i class="fas fa-pause me-1"></i>{{ stats.paused }} Pausada{{ stats.paused|pluralize }}
-                        </span>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Board Kanban -->
     {% if extractions_by_status.pending or extractions_by_status.assigned or extractions_by_status.in_progress or extractions_by_status.paused or extractions_by_status.completed %}
     <div class="kanban-board">

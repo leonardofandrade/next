@@ -1,7 +1,36 @@
 <div class="kanban-card mb-3" data-extraction-id="{{ extraction.pk }}">
     <div class="card h-100 shadow-sm border-start border-4 border-{{ extraction.get_status_color }} hover-shadow">
         <div class="card-body p-3">
-            <!-- Header do Card -->
+            <!-- Primeira Linha: Dados do Caso e Ações -->
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                <div class="flex-grow-1">
+                    <small class="text-muted">
+                        <i class="fas fa-folder-open me-1"></i>
+                        <strong>Processo:</strong>
+                        <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" class="text-decoration-none">
+                            {{ extraction.case_device.case.number|default:"Rascunho" }}
+                        </a>
+                    </small>
+                </div>
+                <div class="d-flex gap-1">
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-primary" 
+                            title="Editar Dispositivo"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#editDeviceModal{{ extraction.case_device.pk }}"
+                            data-device-id="{{ extraction.case_device.pk }}"
+                            data-case-id="{{ extraction.case_device.case.pk }}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" 
+                       class="btn btn-sm btn-outline-info" 
+                       title="Ver Processo">
+                        <i class="fas fa-folder-open"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Segunda Linha: ID e Dispositivo -->
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <div class="flex-grow-1">
                     <h6 class="card-title mb-1">
@@ -21,53 +50,26 @@
                 {% endif %}
             </div>
             
-            <!-- Informações do Dispositivo em Grid -->
-            <div class="row g-2 mb-2">
-                {% if extraction.case_device.imei_01 %}
-                    <div class="col-12">
-                        <small class="text-muted">
-                            <i class="fas fa-fingerprint me-1"></i><strong>IMEI:</strong> {{ extraction.case_device.imei_01 }}
-                        </small>
-                    </div>
-                {% endif %}
-                <div class="col-12">
+            <!-- Informações do Dispositivo -->
+            {% if extraction.case_device.imei_01 %}
+                <div class="mb-2">
                     <small class="text-muted">
-                        <i class="fas fa-folder-open me-1"></i>
-                        <strong>Processo:</strong>
-                        <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" class="text-decoration-none">
-                            {{ extraction.case_device.case.number|default:"Rascunho" }}
-                        </a>
+                        <i class="fas fa-fingerprint me-1"></i><strong>IMEI:</strong> {{ extraction.case_device.imei_01 }}
                     </small>
                 </div>
-            </div>
+            {% endif %}
             
             <!-- Status e Ações -->
             <div class="border-top pt-2 mt-2">
                 {% if extraction.status == 'assigned' %}
-                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                    <div class="mb-2">
                         <button type="button" 
-                                class="btn btn-primary btn-sm" 
+                                class="btn btn-primary btn-sm w-100" 
                                 title="Iniciar Extração"
                                 data-bs-toggle="modal" 
                                 data-bs-target="#startModal{{ extraction.pk }}">
                             <i class="fas fa-play me-2"></i>Iniciar Extração
                         </button>
-                        <div class="d-flex gap-1">
-                            <button type="button" 
-                                    class="btn btn-sm btn-outline-primary" 
-                                    title="Editar Dispositivo"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#editDeviceModal{{ extraction.case_device.pk }}"
-                                    data-device-id="{{ extraction.case_device.pk }}"
-                                    data-case-id="{{ extraction.case_device.case.pk }}">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" 
-                               class="btn btn-sm btn-outline-info" 
-                               title="Ver Processo">
-                                <i class="fas fa-folder-open"></i>
-                            </a>
-                        </div>
                     </div>
                     {% if not extraction.started_at %}
                         <form method="post" action="{% url 'extractions:unassign_from_me' extraction.pk %}" class="ajax-form">
@@ -123,22 +125,6 @@
                                 <i class="fas fa-check"></i>
                             </a>
                         </div>
-                        <div class="d-flex gap-1">
-                            <button type="button" 
-                                    class="btn btn-sm btn-outline-primary" 
-                                    title="Editar Dispositivo"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#editDeviceModal{{ extraction.case_device.pk }}"
-                                    data-device-id="{{ extraction.case_device.pk }}"
-                                    data-case-id="{{ extraction.case_device.case.pk }}">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" 
-                               class="btn btn-sm btn-outline-info" 
-                               title="Ver Processo">
-                                <i class="fas fa-folder-open"></i>
-                            </a>
-                        </div>
                     </div>
                     {% if extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
                         <div class="alert alert-danger py-1 px-2 mb-0 small">
@@ -146,37 +132,19 @@
                         </div>
                     {% endif %}
                 {% elif extraction.status == 'paused' %}
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                        <div class="d-flex flex-wrap gap-1">
-                            <button type="button" 
-                                    class="btn btn-sm btn-outline-success" 
-                                    title="Retomar Extração"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#resumeModal{{ extraction.pk }}">
-                                <i class="fas fa-play"></i>
-                            </button>
-                            <a href="{% url 'extractions:finish_form' extraction.pk %}" 
-                               class="btn btn-sm btn-outline-success" 
-                               title="Finalizar Extração">
-                                <i class="fas fa-check"></i>
-                            </a>
-                        </div>
-                        <div class="d-flex gap-1">
-                            <button type="button" 
-                                    class="btn btn-sm btn-outline-primary" 
-                                    title="Editar Dispositivo"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#editDeviceModal{{ extraction.case_device.pk }}"
-                                    data-device-id="{{ extraction.case_device.pk }}"
-                                    data-case-id="{{ extraction.case_device.case.pk }}">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" 
-                               class="btn btn-sm btn-outline-info" 
-                               title="Ver Processo">
-                                <i class="fas fa-folder-open"></i>
-                            </a>
-                        </div>
+                    <div class="d-flex flex-wrap gap-1 mb-2">
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-success" 
+                                title="Retomar Extração"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#resumeModal{{ extraction.pk }}">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <a href="{% url 'extractions:finish_form' extraction.pk %}" 
+                           class="btn btn-sm btn-outline-success" 
+                           title="Finalizar Extração">
+                            <i class="fas fa-check"></i>
+                        </a>
                     </div>
                     {% if extraction.paused_notes %}
                         <div class="alert alert-secondary py-1 px-2 mb-0 small">
@@ -184,56 +152,21 @@
                         </div>
                     {% endif %}
                 {% elif extraction.status == 'completed' %}
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div>
-                            {% if extraction.extraction_result %}
-                                {% if extraction.extraction_result == 'success' %}
-                                    <span class="badge bg-success">✓ Sucesso</span>
-                                {% elif extraction.extraction_result == 'failed' %}
-                                    <span class="badge bg-danger">✗ Falhou</span>
-                                {% elif extraction.extraction_result == 'partial' %}
-                                    <span class="badge bg-warning">~ Parcial</span>
-                                {% endif %}
+                    <div class="mb-2">
+                        {% if extraction.extraction_result %}
+                            {% if extraction.extraction_result == 'success' %}
+                                <span class="badge bg-success">✓ Sucesso</span>
+                            {% elif extraction.extraction_result == 'failed' %}
+                                <span class="badge bg-danger">✗ Falhou</span>
+                            {% elif extraction.extraction_result == 'partial' %}
+                                <span class="badge bg-warning">~ Parcial</span>
                             {% endif %}
-                            {% if extraction.finished_at %}
-                                <small class="text-muted d-block mt-1">
-                                    <i class="fas fa-calendar-alt me-1"></i>{{ extraction.finished_at|date:"d/m/Y H:i" }}
-                                </small>
-                            {% endif %}
-                        </div>
-                        <div class="d-flex gap-1">
-                            <button type="button" 
-                                    class="btn btn-sm btn-outline-primary" 
-                                    title="Editar Dispositivo"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#editDeviceModal{{ extraction.case_device.pk }}"
-                                    data-device-id="{{ extraction.case_device.pk }}"
-                                    data-case-id="{{ extraction.case_device.case.pk }}">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" 
-                               class="btn btn-sm btn-outline-info" 
-                               title="Ver Processo">
-                                <i class="fas fa-folder-open"></i>
-                            </a>
-                        </div>
-                    </div>
-                {% elif extraction.status == 'pending' %}
-                    <div class="d-flex justify-content-end gap-1">
-                        <button type="button" 
-                                class="btn btn-sm btn-outline-primary" 
-                                title="Editar Dispositivo"
-                                data-bs-toggle="modal" 
-                                data-bs-target="#editDeviceModal{{ extraction.case_device.pk }}"
-                                data-device-id="{{ extraction.case_device.pk }}"
-                                data-case-id="{{ extraction.case_device.case.pk }}">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" 
-                           class="btn btn-sm btn-outline-info" 
-                           title="Ver Processo">
-                            <i class="fas fa-folder-open"></i>
-                        </a>
+                        {% endif %}
+                        {% if extraction.finished_at %}
+                            <small class="text-muted d-block mt-1">
+                                <i class="fas fa-calendar-alt me-1"></i>{{ extraction.finished_at|date:"d/m/Y H:i" }}
+                            </small>
+                        {% endif %}
                     </div>
                 {% endif %}
             </div>

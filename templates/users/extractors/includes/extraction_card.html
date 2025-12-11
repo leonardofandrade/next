@@ -24,9 +24,6 @@
                 {% else %}
                     <span class="text-muted">Sem modelo</span>
                 {% endif %}
-                {% if extraction.case_device.device_category %}
-                    <br><span class="badge bg-primary">{{ extraction.case_device.device_category.name }}</span>
-                {% endif %}
                 {% if extraction.case_device.imei_01 %}
                     <br><small class="text-muted"><i class="fas fa-fingerprint me-1"></i>IMEI: {{ extraction.case_device.imei_01 }}</small>
                 {% elif extraction.case_device.is_imei_unknown %}

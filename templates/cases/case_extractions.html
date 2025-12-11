@@ -76,9 +76,6 @@ Visualize as extrações e informações do processo
                                         {% else %}
                                             <span class="text-muted">-</span>
                                         {% endif %}
-                                        {% if extraction.case_device.device_category %}
-                                            <br><span class="badge bg-primary">{{ extraction.case_device.device_category.name }}</span>
-                                        {% endif %}
                                     </td>
                                     <td>
                                         <span class="badge bg-{{ extraction.get_status_color }}">
@@ -292,11 +289,6 @@ Visualize as extrações e informações do processo
                             <strong>Status:</strong> 
                             <span class="badge bg-{{ extraction.get_status_color }}">{{ extraction.get_status_display }}</span>
                         </div>
-                        {% if extraction.case_device.device_category %}
-                        <div class="col-6">
-                            <strong>Categoria:</strong> {{ extraction.case_device.device_category.name }}
-                        </div>
-                        {% endif %}
                     </div>
                     <hr>
                     <p class="text-muted mb-0">
@@ -432,11 +424,6 @@ Visualize as extrações e informações do processo
                         {% if extraction.assigned_to %}
                         <div class="col-12">
                             <strong>Atribuído a:</strong> {{ extraction.assigned_to.user.get_full_name|default:extraction.assigned_to.user.username }}
-                        </div>
-                        {% endif %}
-                        {% if extraction.case_device.device_category %}
-                        <div class="col-12">
-                            <strong>Categoria:</strong> {{ extraction.case_device.device_category.name }}
                         </div>
                         {% endif %}
                     </div>

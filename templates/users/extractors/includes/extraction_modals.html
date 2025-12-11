@@ -1,3 +1,59 @@
+<!-- Modal Atribuir-me -->
+{% if extraction.status == 'pending' %}
+<div class="modal fade" id="assignModal{{ extraction.pk }}" tabindex="-1" aria-labelledby="assignModalLabel{{ extraction.pk }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="assignModalLabel{{ extraction.pk }}">
+                    <i class="fas fa-user-check me-2"></i>
+                    Atribuir Extração a Mim
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Você está prestes a se tornar responsável por esta extração.
+                </div>
+                <div class="row g-2">
+                    <div class="col-12">
+                        <strong>Extração:</strong> #{{ extraction.pk }}
+                    </div>
+                    <div class="col-12">
+                        <strong>Dispositivo:</strong> 
+                        {% if extraction.case_device.device_model %}
+                            {{ extraction.case_device.device_model.brand.name }} - {{ extraction.case_device.device_model.name }}
+                        {% else %}
+                            Sem modelo
+                        {% endif %}
+                    </div>
+                    <div class="col-12">
+                        <strong>Processo:</strong> {{ extraction.case_device.case.number|default:"Rascunho" }}
+                    </div>
+                    <div class="col-6">
+                        <strong>Status:</strong> 
+                        <span class="badge bg-{{ extraction.get_status_color }}">{{ extraction.get_status_display }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>
+                    Cancelar
+                </button>
+                <form method="post" action="{% url 'extractions:assign_to_me' extraction.pk %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-user-check me-2"></i>
+                        Confirmar Atribuição
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Modal Desatribuir-me -->
 <div class="modal fade" id="unassignModal{{ extraction.pk }}" tabindex="-1" aria-labelledby="unassignModalLabel{{ extraction.pk }}" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">

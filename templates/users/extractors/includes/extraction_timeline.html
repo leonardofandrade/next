@@ -1,0 +1,413 @@
+<div class="card mb-3">
+    <div class="card-body">
+        <!-- Linha 1: Informações da Extração -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <strong class="me-2">#{{ extraction.pk }}</strong>
+                        <span class="badge bg-{{ extraction.get_status_color }}">
+                            {{ extraction.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 text-muted small">
+                        {% if extraction.case_device.device_model %}
+                            <div>
+                                <i class="fas fa-mobile-alt me-1"></i>
+                                <strong>{{ extraction.case_device.device_model.brand.name }}</strong> - {{ extraction.case_device.device_model.name }}
+                            </div>
+                        {% else %}
+                            <div>
+                                <i class="fas fa-mobile-alt me-1"></i>Sem modelo
+                            </div>
+                        {% endif %}
+                        <div>
+                            <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" class="text-decoration-none">
+                                <i class="fas fa-folder-open me-1"></i>{{ extraction.case_device.case.number|default:"Rascunho" }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Linha 2: Timeline -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="timeline-wrapper-horizontal">
+                    <div class="timeline-horizontal">
+                        <!-- Etapa 1: Pendente/Atribuída -->
+                        <div class="timeline-item {% if extraction.status == 'pending' or extraction.status == 'assigned' %}active{% elif extraction.assigned_at %}completed{% endif %}">
+                            <div class="timeline-marker">
+                                {% if extraction.assigned_at %}
+                                    <i class="fas fa-check-circle"></i>
+                                {% elif extraction.status == 'pending' or extraction.status == 'assigned' %}
+                                    <i class="fas fa-circle-notch fa-spin"></i>
+                                {% else %}
+                                    <i class="far fa-circle"></i>
+                                {% endif %}
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">
+                                    {% if extraction.status == 'pending' %}
+                                        Aguardando Extrator
+                                    {% elif extraction.status == 'assigned' %}
+                                        Atribuída
+                                    {% else %}
+                                        Atribuída
+                                    {% endif %}
+                                </div>
+                                {% if extraction.assigned_at %}
+                                    <div class="timeline-date">
+                                        <small>{{ extraction.assigned_at|date:"d/m/Y H:i" }}</small>
+                                    </div>
+                                {% endif %}
+                                {% if extraction.status == 'pending' %}
+                                    <div class="timeline-actions mt-2">
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-success" 
+                                                title="Atribuir-me"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#assignModal{{ extraction.pk }}">
+                                            <i class="fas fa-user-check me-1"></i>Atribuir-me
+                                        </button>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Etapa 2: Iniciada -->
+                        {% if extraction.started_at or extraction.status == 'in_progress' or extraction.status == 'paused' %}
+                        <div class="timeline-item {% if extraction.status == 'in_progress' or extraction.status == 'paused' %}active{% elif extraction.started_at %}completed{% endif %}">
+                            <div class="timeline-marker">
+                                {% if extraction.started_at and extraction.status != 'in_progress' and extraction.status != 'paused' %}
+                                    <i class="fas fa-check-circle"></i>
+                                {% elif extraction.status == 'in_progress' or extraction.status == 'paused' %}
+                                    <i class="fas fa-circle-notch fa-spin"></i>
+                                {% else %}
+                                    <i class="far fa-circle"></i>
+                                {% endif %}
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Iniciada</div>
+                                {% if extraction.started_at %}
+                                    <div class="timeline-date">
+                                        <small>{{ extraction.started_at|date:"d/m/Y H:i" }}</small>
+                                    </div>
+                                    {% if extraction.started_notes %}
+                                        <div class="timeline-notes">
+                                            <small class="text-muted"><i class="fas fa-sticky-note me-1"></i>{{ extraction.started_notes|truncatewords:10 }}</small>
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                                {% if extraction.status == 'assigned' %}
+                                    <div class="timeline-actions mt-2">
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-primary" 
+                                                title="Iniciar Extração"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#startModal{{ extraction.pk }}">
+                                            <i class="fas fa-play me-1"></i>Iniciar
+                                        </button>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Etapa 3: Em Andamento / Pausada -->
+                        {% if extraction.status == 'in_progress' or extraction.status == 'paused' %}
+                        <div class="timeline-item {% if extraction.status == 'paused' %}paused{% elif extraction.status == 'in_progress' %}active{% endif %}">
+                            <div class="timeline-marker">
+                                {% if extraction.status == 'paused' %}
+                                    <i class="fas fa-pause-circle"></i>
+                                {% elif extraction.status == 'in_progress' %}
+                                    <i class="fas fa-circle-notch fa-spin"></i>
+                                {% endif %}
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">
+                                    {% if extraction.status == 'paused' %}
+                                        Pausada
+                                    {% else %}
+                                        Em Andamento
+                                    {% endif %}
+                                </div>
+                                {% if extraction.paused_notes %}
+                                    <div class="timeline-notes">
+                                        <small class="text-muted"><i class="fas fa-sticky-note me-1"></i>{{ extraction.paused_notes|truncatewords:10 }}</small>
+                                    </div>
+                                {% endif %}
+                                <!-- Força Bruta dentro de Em Andamento -->
+                                {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
+                                    {% if extraction.brute_force_started_at or extraction.brute_force_finished_at %}
+                                        <div class="timeline-notes mt-1">
+                                            <small class="text-muted">
+                                                <i class="fas fa-unlock-alt me-1"></i>
+                                                {% if extraction.brute_force_finished_at %}
+                                                    Força Bruta: Finalizada
+                                                    {% if extraction.brute_force_result %}
+                                                        <span class="badge bg-success ms-1">Sucesso</span>
+                                                    {% endif %}
+                                                {% elif extraction.brute_force_started_at %}
+                                                    Força Bruta: Em Andamento
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                                <div class="timeline-actions mt-2">
+                                    {% if extraction.status == 'in_progress' %}
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-warning" 
+                                                title="Pausar Extração"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#pauseModal{{ extraction.pk }}">
+                                            <i class="fas fa-pause me-1"></i>Pausar
+                                        </button>
+                                        {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
+                                            {% if not extraction.brute_force_started_at %}
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-danger" 
+                                                        title="Iniciar Força Bruta"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#startBruteForceModal{{ extraction.pk }}">
+                                                    <i class="fas fa-unlock-alt me-1"></i>Força Bruta
+                                                </button>
+                                            {% elif extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-danger" 
+                                                        title="Finalizar Força Bruta"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#finishBruteForceModal{{ extraction.pk }}"
+                                                        data-extraction-id="{{ extraction.pk }}">
+                                                    <i class="fas fa-unlock me-1"></i>Finalizar BF
+                                                </button>
+                                            {% endif %}
+                                        {% endif %}
+                                        <a href="{% url 'extractions:finish_form' extraction.pk %}" 
+                                           class="btn btn-sm btn-outline-success" 
+                                           title="Finalizar Extração">
+                                            <i class="fas fa-check-circle me-1"></i>Finalizar
+                                        </a>
+                                    {% elif extraction.status == 'paused' %}
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-success" 
+                                                title="Retomar Extração"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#resumeModal{{ extraction.pk }}">
+                                            <i class="fas fa-play me-1"></i>Retomar
+                                        </button>
+                                        <a href="{% url 'extractions:finish_form' extraction.pk %}" 
+                                           class="btn btn-sm btn-outline-success" 
+                                           title="Finalizar Extração">
+                                            <i class="fas fa-check-circle me-1"></i>Finalizar
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Etapa 5: Finalizada -->
+                        {% if extraction.status == 'completed' %}
+                        <div class="timeline-item completed">
+                            <div class="timeline-marker">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Finalizada</div>
+                                {% if extraction.finished_at %}
+                                    <div class="timeline-date">
+                                        <small>{{ extraction.finished_at|date:"d/m/Y H:i" }}</small>
+                                    </div>
+                                {% endif %}
+                                {% if extraction.extraction_result %}
+                                    <div class="mt-1">
+                                        {% if extraction.extraction_result == 'success' %}
+                                            <span class="badge bg-success">Bem-Sucedida</span>
+                                        {% elif extraction.extraction_result == 'failed' %}
+                                            <span class="badge bg-danger">Falhou</span>
+                                        {% elif extraction.extraction_result == 'partial' %}
+                                            <span class="badge bg-warning">Parcial</span>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Linha 3: Ações Rápidas -->
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-end gap-2 flex-wrap">
+                    {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
+                    <button type="button" 
+                            class="btn btn-outline-primary btn-sm" 
+                            title="Editar Dispositivo"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#editDeviceModal{{ extraction.case_device.pk }}"
+                            data-device-id="{{ extraction.case_device.pk }}"
+                            data-case-id="{{ extraction.case_device.case.pk }}">
+                        <i class="fas fa-edit me-1"></i>Editar Dispositivo
+                    </button>
+                    {% endif %}
+                    <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" 
+                       class="btn btn-outline-info btn-sm" 
+                       title="Ver Processo">
+                        <i class="fas fa-folder-open me-1"></i>Ver Processo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline-wrapper-horizontal {
+    position: relative;
+    padding: 20px 0;
+    overflow-x: auto;
+}
+
+.timeline-horizontal {
+    display: flex;
+    align-items: flex-start;
+    position: relative;
+    min-width: 100%;
+    padding: 0 15px;
+}
+
+.timeline-item {
+    position: relative;
+    flex: 1;
+    min-width: 120px;
+    max-width: 200px;
+    padding: 0 10px;
+    text-align: center;
+}
+
+.timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 12px;
+    left: calc(50% + 12px);
+    right: -10px;
+    height: 2px;
+    background: #dee2e6;
+    z-index: 0;
+}
+
+.timeline-item.completed:not(:last-child)::after {
+    background: #28a745;
+}
+
+.timeline-item.active:not(:last-child)::after {
+    background: linear-gradient(to right, #28a745 0%, #28a745 50%, #dee2e6 50%, #dee2e6 100%);
+}
+
+.timeline-marker {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 2px solid #dee2e6;
+    margin: 0 auto 8px;
+    z-index: 1;
+}
+
+.timeline-item.completed .timeline-marker {
+    background: #28a745;
+    border-color: #28a745;
+    color: #fff;
+}
+
+.timeline-item.active .timeline-marker {
+    background: #007bff;
+    border-color: #007bff;
+    color: #fff;
+    animation: pulse 2s infinite;
+}
+
+.timeline-item.paused .timeline-marker {
+    background: #6c757d;
+    border-color: #6c757d;
+    color: #fff;
+}
+
+.timeline-marker i {
+    font-size: 12px;
+}
+
+.timeline-content {
+    min-height: 60px;
+}
+
+.timeline-title {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+    line-height: 1.2;
+}
+
+.timeline-date {
+    color: #6c757d;
+    font-size: 0.75rem;
+    margin-bottom: 4px;
+}
+
+.timeline-notes {
+    margin-top: 4px;
+    font-size: 0.7rem;
+    color: #6c757d;
+    line-height: 1.3;
+}
+
+.timeline-actions {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.timeline-actions .btn {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    white-space: nowrap;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .timeline-item {
+        min-width: 100px;
+        max-width: 150px;
+    }
+    
+    .timeline-title {
+        font-size: 0.75rem;
+    }
+    
+    .timeline-actions .btn {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+    }
+}
+</style>
+

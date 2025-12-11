@@ -184,42 +184,23 @@ Painel de controle das extrações sob sua responsabilidade
     </div>
     {% endif %}
 
-    <!-- Seção: Extrações em Andamento -->
-    {% if extractions_by_status.in_progress %}
+    <!-- Seção: Extrações em Andamento e Pausadas (Timeline) -->
+    {% if extractions_by_status.in_progress or extractions_by_status.paused %}
     <div class="card mb-4 border-primary">
         <div class="card-header bg-primary bg-opacity-10">
             <h5 class="card-title mb-0">
-                <i class="fas fa-spinner fa-spin text-primary me-2"></i>
-                <strong>Em Andamento</strong>
-                <span class="badge bg-primary ms-2">{{ stats.in_progress }}</span>
+                <i class="fas fa-tasks text-primary me-2"></i>
+                <strong>Extrações em Andamento</strong>
+                <span class="badge bg-primary ms-2">{{ stats.in_progress|add:stats.paused }}</span>
             </h5>
         </div>
         <div class="card-body">
-            <div class="row g-3">
-                {% for extraction in extractions_by_status.in_progress %}
-                    {% include 'users/extractors/includes/extraction_card.html' with extraction=extraction priority='high' %}
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Seção: Extrações Pausadas -->
-    {% if extractions_by_status.paused %}
-    <div class="card mb-4 border-secondary">
-        <div class="card-header bg-secondary bg-opacity-10">
-            <h5 class="card-title mb-0">
-                <i class="fas fa-pause text-secondary me-2"></i>
-                <strong>Pausadas</strong>
-                <span class="badge bg-secondary ms-2">{{ stats.paused }}</span>
-            </h5>
-        </div>
-        <div class="card-body">
-            <div class="row g-3">
-                {% for extraction in extractions_by_status.paused %}
-                    {% include 'users/extractors/includes/extraction_card.html' with extraction=extraction %}
-                {% endfor %}
-            </div>
+            {% for extraction in extractions_by_status.in_progress %}
+                {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
+            {% endfor %}
+            {% for extraction in extractions_by_status.paused %}
+                {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
+            {% endfor %}
         </div>
     </div>
     {% endif %}
@@ -262,9 +243,6 @@ Painel de controle das extrações sob sua responsabilidade
                                     <small class="text-muted">{{ extraction.case_device.device_model.name }}</small>
                                 {% else %}
                                     <span class="text-muted">Sem modelo</span>
-                                {% endif %}
-                                {% if extraction.case_device.device_category %}
-                                    <br><span class="badge bg-primary">{{ extraction.case_device.device_category.name }}</span>
                                 {% endif %}
                             </td>
                             <td>

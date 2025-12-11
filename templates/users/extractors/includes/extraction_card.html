@@ -141,6 +141,26 @@
                     <i class="fas fa-check-circle"></i>
                 </a>
                 {% endif %}
+                {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
+                    {% if not extraction.brute_force_started_at %}
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-danger" 
+                            title="Iniciar Força Bruta"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#startBruteForceModal{{ extraction.pk }}">
+                        <i class="fas fa-unlock-alt"></i>
+                    </button>
+                    {% elif extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-danger" 
+                            title="Finalizar Força Bruta"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#finishBruteForceModal{{ extraction.pk }}"
+                            data-extraction-id="{{ extraction.pk }}">
+                        <i class="fas fa-unlock"></i>
+                    </button>
+                    {% endif %}
+                {% endif %}
             </div>
         </div>
     </div>

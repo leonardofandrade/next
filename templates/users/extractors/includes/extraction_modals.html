@@ -220,3 +220,91 @@
     </div>
 </div>
 
+<!-- Modal Iniciar Força Bruta -->
+{% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
+{% if not extraction.brute_force_started_at %}
+<div class="modal fade" id="startBruteForceModal{{ extraction.pk }}" tabindex="-1" aria-labelledby="startBruteForceModalLabel{{ extraction.pk }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="startBruteForceModalLabel{{ extraction.pk }}">
+                    <i class="fas fa-unlock-alt me-2"></i>
+                    Iniciar Força Bruta
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning mb-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Você está prestes a iniciar a força bruta para desbloquear este dispositivo.
+                </div>
+                <div class="row g-2">
+                    <div class="col-12">
+                        <strong>Extração:</strong> #{{ extraction.pk }}
+                    </div>
+                    <div class="col-12">
+                        <strong>Dispositivo:</strong> 
+                        {% if extraction.case_device.device_model %}
+                            {{ extraction.case_device.device_model.brand.name }} - {{ extraction.case_device.device_model.name }}
+                        {% else %}
+                            Sem modelo
+                        {% endif %}
+                    </div>
+                    <div class="col-12">
+                        <strong>Processo:</strong> {{ extraction.case_device.case.number|default:"Rascunho" }}
+                    </div>
+                </div>
+                <hr>
+                <form id="startBruteForceForm{{ extraction.pk }}" method="post" action="{% url 'extractions:brute_force_start' extraction.pk %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="bruteForceNotes{{ extraction.pk }}" class="form-label">
+                            <i class="fas fa-sticky-note me-1"></i>
+                            Observações (Opcional)
+                        </label>
+                        <textarea class="form-control" id="bruteForceNotes{{ extraction.pk }}" name="notes" rows="3" 
+                                  placeholder="Adicione observações sobre o início da força bruta..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>
+                    Cancelar
+                </button>
+                <button type="submit" form="startBruteForceForm{{ extraction.pk }}" class="btn btn-danger">
+                    <i class="fas fa-unlock-alt me-2"></i>
+                    Iniciar Força Bruta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal Finalizar Força Bruta -->
+{% if extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
+<div class="modal fade" id="finishBruteForceModal{{ extraction.pk }}" tabindex="-1" aria-labelledby="finishBruteForceModalLabel{{ extraction.pk }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="finishBruteForceModalLabel{{ extraction.pk }}">
+                    <i class="fas fa-unlock me-2"></i>
+                    Finalizar Força Bruta
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="finishBruteForceModalBody{{ extraction.pk }}">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-danger" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Carregando formulário...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+

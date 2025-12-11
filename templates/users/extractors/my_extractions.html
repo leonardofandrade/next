@@ -386,6 +386,26 @@ Painel de controle das extrações sob sua responsabilidade
                                         <i class="fas fa-check-circle"></i>
                                     </a>
                                     {% endif %}
+                                    {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
+                                        {% if not extraction.brute_force_started_at %}
+                                        <button type="button" 
+                                                class="btn btn-outline-danger btn-sm" 
+                                                title="Iniciar Força Bruta"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#startBruteForceModal{{ extraction.pk }}">
+                                            <i class="fas fa-unlock-alt"></i>
+                                        </button>
+                                        {% elif extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
+                                        <button type="button" 
+                                                class="btn btn-outline-danger btn-sm" 
+                                                title="Finalizar Força Bruta"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#finishBruteForceModal{{ extraction.pk }}"
+                                                data-extraction-id="{{ extraction.pk }}">
+                                            <i class="fas fa-unlock"></i>
+                                        </button>
+                                        {% endif %}
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
@@ -465,6 +485,45 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return cookieValue;
     }
+
+    // Carregar formulário de finalização de força bruta
+    document.querySelectorAll('[data-bs-target^="#finishBruteForceModal"]').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const extractionId = this.getAttribute('data-extraction-id');
+            const modalId = this.getAttribute('data-bs-target');
+            const modalBody = document.querySelector(modalId + ' .modal-body');
+            
+            if (modalBody && !modalBody.dataset.loaded) {
+                const url = '{% url "extractions:brute_force_finish_form_modal" 999 %}'.replace('999', extractionId);
+                fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        modalBody.innerHTML = data.html;
+                        modalBody.dataset.loaded = 'true';
+                        
+                        // Atualiza a URL de redirecionamento no formulário para voltar para my_extractions
+                        const form = modalBody.querySelector('form.ajax-form');
+                        if (form) {
+                            const currentAction = form.action;
+                            const urlObj = new URL(currentAction, window.location.origin);
+                            urlObj.searchParams.set('next', window.location.pathname);
+                            form.action = urlObj.pathname + urlObj.search;
+                        }
+                    } else {
+                        modalBody.innerHTML = '<div class="alert alert-danger">' + data.error + '</div>';
+                    }
+                })
+                .catch(error => {
+                    modalBody.innerHTML = '<div class="alert alert-danger">Erro ao carregar formulário. Tente novamente.</div>';
+                });
+            }
+        });
+    });
 
     // Carregar formulário de edição de dispositivo
     document.querySelectorAll('[data-bs-target^="#editDeviceModal"]').forEach(function(button) {

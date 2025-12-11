@@ -14,9 +14,9 @@ from django.template.loader import render_to_string
 
 from apps.core.mixins.views import ServiceMixin, ExtractionUnitFilterMixin
 from apps.cases.models import Case, Extraction
-from apps.extractions.forms import ExtractionSearchForm, ExtractionFinishForm
+from apps.extractions.forms import ExtractionSearchForm, ExtractionFinishForm, BruteForceFinishForm
 from apps.extractions.services import ExtractionService
-from apps.core.services.base import ServiceException
+from apps.core.services.base import ServiceException, ValidationServiceException
 
 
 class ExtractionListView(ExtractionUnitFilterMixin, LoginRequiredMixin, ServiceMixin, ListView):
@@ -421,7 +421,138 @@ class ExtractionFinishView(LoginRequiredMixin, View):
         """Redireciona de acordo com o referer ou para as extrações do caso"""
         referer = request.META.get('HTTP_REFERER')
         if referer:
-            if 'extractions/my-extractions' in referer:
+            if 'extractions/my-extractions' in referer or 'users/my-extractions' in referer:
+                return redirect('users:my_extractions')
+            if 'extractions/list' in referer:
+                return redirect('extractions:list')
+        return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
+
+
+class BruteForceStartView(LoginRequiredMixin, View):
+    """Inicia a força bruta para uma extração"""
+    
+    def post(self, request, pk):
+        service = ExtractionService(user=request.user)
+        notes = request.POST.get('notes', '')
+        
+        try:
+            extraction = service.start_brute_force(pk, notes=notes if notes else None)
+            messages.success(request, 'Força bruta iniciada com sucesso!')
+        except ServiceException as e:
+            if isinstance(e, ValidationServiceException):
+                messages.warning(request, str(e))
+            else:
+                messages.error(request, str(e))
+            extraction = service.get_object(pk)
+        
+        return self._redirect_back(request, extraction)
+    
+    def _redirect_back(self, request, extraction):
+        """Redireciona de acordo com o referer ou para as extrações do caso"""
+        referer = request.META.get('HTTP_REFERER')
+        if referer:
+            if 'extractions/my-extractions' in referer or 'users/my-extractions' in referer:
+                return redirect('users:my_extractions')
+            if 'extractions/list' in referer:
+                return redirect('extractions:list')
+        return redirect('extractions:case_extractions', pk=extraction.case_device.case.pk)
+
+
+class BruteForceFinishFormModalView(LoginRequiredMixin, View):
+    """Retorna o formulário de finalização de força bruta para modal AJAX"""
+    
+    def get(self, request, pk):
+        service = ExtractionService(user=request.user)
+        
+        try:
+            extraction = service.get_object(pk)
+            
+            if not service.can_finish_brute_force(extraction.pk):
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Não é possível finalizar a força bruta. Verifique se ela foi iniciada e se você é o responsável pela extração.'
+                }, status=403)
+            
+            # Cria o formulário com dados iniciais da extração
+            initial_data = {
+                'brute_force_result': extraction.brute_force_result,
+                'brute_force_results_notes': extraction.brute_force_results_notes,
+            }
+            
+            form = BruteForceFinishForm(initial=initial_data)
+            
+            # Renderiza apenas o formulário
+            form_html = render_to_string('extractions/includes/brute_force_finish_modal.html', {
+                'form': form,
+                'extraction': extraction
+            }, request=request)
+            
+            return JsonResponse({
+                'success': True,
+                'html': form_html
+            })
+        except ServiceException as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+
+
+class BruteForceFinishView(LoginRequiredMixin, View):
+    """Finaliza a força bruta para uma extração"""
+    
+    def post(self, request, pk):
+        service = ExtractionService(user=request.user)
+        extraction = service.get_object(pk)
+        
+        # Valida o formulário
+        form = BruteForceFinishForm(request.POST)
+        
+        if not form.is_valid():
+            # Se for AJAX, retorna erro em JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Por favor, corrija os erros no formulário.',
+                    'errors': form.errors
+                }, status=400)
+            
+            messages.error(request, 'Por favor, corrija os erros no formulário.')
+            return render(request, 'extractions/brute_force_finish_form.html', {
+                'extraction': extraction,
+                'form': form,
+                'page_title': f'Finalizar Força Bruta - Extração #{extraction.pk}',
+                'page_icon': 'fa-unlock-alt'
+            })
+        
+        try:
+            service.finish_brute_force(pk, form.cleaned_data)
+            
+            # Se for AJAX, retorna JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Força bruta finalizada com sucesso!',
+                    'redirect_url': request.GET.get('next', '')
+                })
+            
+            messages.success(request, 'Força bruta finalizada com sucesso!')
+        except ServiceException as e:
+            # Se for AJAX, retorna erro em JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': str(e)
+                }, status=400)
+            messages.error(request, str(e))
+        
+        return self._redirect_back(request, extraction)
+    
+    def _redirect_back(self, request, extraction):
+        """Redireciona de acordo com o referer ou para as extrações do caso"""
+        referer = request.META.get('HTTP_REFERER')
+        if referer:
+            if 'extractions/my-extractions' in referer or 'users/my-extractions' in referer:
                 return redirect('users:my_extractions')
             if 'extractions/list' in referer:
                 return redirect('extractions:list')

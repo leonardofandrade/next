@@ -255,3 +255,27 @@ class ExtractionFinishForm(forms.Form):
                 deleted_at__isnull=True
             ).order_by('name')
 
+
+class BruteForceFinishForm(forms.Form):
+    """
+    Formulário para finalização de força bruta
+    """
+    brute_force_result = forms.BooleanField(
+        required=False,
+        label='Força Bruta Bem-Sucedida',
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input'
+        }),
+        help_text='Marque se a força bruta foi bem-sucedida em desbloquear o dispositivo'
+    )
+    
+    brute_force_results_notes = forms.CharField(
+        required=False,
+        label='Observações da Força Bruta',
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 4,
+            'placeholder': 'Descreva os resultados da força bruta, senha encontrada (se houver), tentativas realizadas, etc...'
+        }),
+        help_text='Observações sobre o processo e resultado da força bruta'
+    )

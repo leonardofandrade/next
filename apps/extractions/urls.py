@@ -16,4 +16,7 @@ urlpatterns = [
     path('<int:pk>/finish-form/', views.ExtractionFinishFormView.as_view(), name='finish_form'),
     path('<int:pk>/finish-form-modal/', views.ExtractionFinishFormModalView.as_view(), name='finish_form_modal'),
     path('<int:pk>/finish/', views.ExtractionFinishView.as_view(), name='finish'),
+    path('<int:pk>/brute-force/start/', views.BruteForceStartView.as_view(), name='brute_force_start'),
+    path('<int:pk>/brute-force/finish-form-modal/', views.BruteForceFinishFormModalView.as_view(), name='brute_force_finish_form_modal'),
+    path('<int:pk>/brute-force/finish/', views.BruteForceFinishView.as_view(), name='brute_force_finish'),
 ]

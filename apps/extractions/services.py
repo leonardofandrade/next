@@ -383,4 +383,83 @@ class ExtractionService(BaseService):
             return False
         
         return True
+    
+    def start_brute_force(self, extraction_pk: int, notes: Optional[str] = None) -> Extraction:
+        """Start brute force for extraction"""
+        extraction = self.get_object(extraction_pk)
+        extractor_user = self.get_extractor_user()
+        
+        # Verifica se a extração está atribuída ao extrator
+        if extraction.assigned_to != extractor_user:
+            raise PermissionServiceException("Apenas o responsável pela extração pode iniciar a força bruta")
+        
+        # Verifica se já foi iniciada
+        if extraction.brute_force_started_at:
+            raise ValidationServiceException("Força bruta já foi iniciada para esta extração")
+        
+        # Verifica se já foi finalizada
+        if extraction.brute_force_finished_at:
+            raise ValidationServiceException("Força bruta já foi finalizada para esta extração")
+        
+        extraction.brute_force_started_at = timezone.now()
+        extraction.brute_force_started_by = self.user
+        if notes:
+            extraction.brute_force_started_notes = notes
+        extraction.save()
+        
+        return extraction
+    
+    def finish_brute_force(self, extraction_pk: int, form_data: Dict[str, Any]) -> Extraction:
+        """Finish brute force with form data"""
+        extraction = self.get_object(extraction_pk)
+        extractor_user = self.get_extractor_user()
+        
+        # Verifica se a extração está atribuída ao extrator
+        if extraction.assigned_to != extractor_user:
+            raise PermissionServiceException("Apenas o responsável pela extração pode finalizar a força bruta")
+        
+        # Verifica se foi iniciada
+        if not extraction.brute_force_started_at:
+            raise ValidationServiceException("Força bruta não foi iniciada para esta extração")
+        
+        # Verifica se já foi finalizada
+        if extraction.brute_force_finished_at:
+            raise ValidationServiceException("Força bruta já foi finalizada para esta extração")
+        
+        extraction.brute_force_finished_at = timezone.now()
+        extraction.brute_force_finished_by = self.user
+        extraction.brute_force_result = form_data.get('brute_force_result', False)
+        extraction.brute_force_results_notes = form_data.get('brute_force_results_notes', '')
+        extraction.save()
+        
+        return extraction
+    
+    def can_start_brute_force(self, extraction_pk: int) -> bool:
+        """Check if brute force can be started"""
+        extraction = self.get_object(extraction_pk)
+        extractor_user = self.get_extractor_user()
+        
+        if extraction.assigned_to != extractor_user:
+            return False
+        
+        if extraction.brute_force_started_at:
+            return False
+        
+        return True
+    
+    def can_finish_brute_force(self, extraction_pk: int) -> bool:
+        """Check if brute force can be finished"""
+        extraction = self.get_object(extraction_pk)
+        extractor_user = self.get_extractor_user()
+        
+        if extraction.assigned_to != extractor_user:
+            return False
+        
+        if not extraction.brute_force_started_at:
+            return False
+        
+        if extraction.brute_force_finished_at:
+            return False
+        
+        return True
 

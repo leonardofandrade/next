@@ -1,0 +1,96 @@
+{% load form_tags %}
+<form method="post" action="{% url 'extractions:brute_force_finish' extraction.pk %}?next={% url 'users:my_extractions' %}" class="ajax-form" novalidate>
+    {% csrf_token %}
+    
+    <div class="alert alert-info mb-3">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Finalizar Força Bruta:</strong> Informe o resultado da tentativa de desbloqueio do dispositivo.
+    </div>
+    
+    <!-- Resultado da Força Bruta -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h6 class="card-title mb-0">
+                <i class="fas fa-unlock-alt me-2"></i>
+                Resultado da Força Bruta
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-12">
+                    <div class="form-check form-switch form-label">
+                        {{ form.brute_force_result }}
+                        <label class="form-check-label" for="{{ form.brute_force_result.id_for_label }}">
+                            {{ form.brute_force_result.label }}
+                        </label>
+                        {% if form.brute_force_result.help_text %}
+                            <small class="form-text text-muted d-block">{{ form.brute_force_result.help_text }}</small>
+                        {% endif %}
+                    </div>
+                    {{ form.brute_force_result.errors }}
+                </div>
+                
+                <div class="col-md-12">
+                    <label for="{{ form.brute_force_results_notes.id_for_label }}" class="form-label">
+                        {{ form.brute_force_results_notes.label }}
+                    </label>
+                    {{ form.brute_force_results_notes }}
+                    {% if form.brute_force_results_notes.help_text %}
+                        <small class="form-text text-muted">{{ form.brute_force_results_notes.help_text }}</small>
+                    {% endif %}
+                    {% if form.brute_force_results_notes.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.brute_force_results_notes.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Informações da Extração -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h6 class="card-title mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                Informações da Extração
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-12">
+                    <strong>Extração:</strong> #{{ extraction.pk }}
+                </div>
+                <div class="col-12">
+                    <strong>Dispositivo:</strong> 
+                    {% if extraction.case_device.device_model %}
+                        {{ extraction.case_device.device_model.brand.name }} - {{ extraction.case_device.device_model.name }}
+                    {% else %}
+                        Sem modelo
+                    {% endif %}
+                </div>
+                <div class="col-12">
+                    <strong>Processo:</strong> {{ extraction.case_device.case.number|default:"Rascunho" }}
+                </div>
+                {% if extraction.brute_force_started_at %}
+                <div class="col-12">
+                    <strong>Iniciado em:</strong> {{ extraction.brute_force_started_at|date:"d/m/Y H:i" }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Botões de Ação -->
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-2"></i>
+            Cancelar
+        </button>
+        <button type="submit" class="btn btn-danger">
+            <i class="fas fa-check-circle me-2"></i>
+            Finalizar Força Bruta
+        </button>
+    </div>
+</form>
+

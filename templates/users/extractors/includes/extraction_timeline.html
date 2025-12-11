@@ -2,6 +2,66 @@
     <!-- Timeline como diagrama linear -->
     <div class="timeline-diagram">
         <div class="timeline-items">
+                        <!-- Card 0: Informações da Extração -->
+                        <div class="timeline-item info-card">
+                            <div class="timeline-marker info-marker">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="timeline-content info-content">
+                                <div class="timeline-title">
+                                    <strong class="text-primary">#{{ extraction.pk }}</strong>
+                                    <span class="badge bg-{{ extraction.get_status_color }} ms-2">{{ extraction.get_status_display }}</span>
+                                </div>
+                                {% if extraction.case_device.device_model %}
+                                    <div class="timeline-info">
+                                        <small>
+                                            <i class="fas fa-mobile-alt me-1"></i>
+                                            <strong>{{ extraction.case_device.device_model.brand.name }}</strong> {{ extraction.case_device.device_model.name }}
+                                        </small>
+                                    </div>
+                                {% else %}
+                                    <div class="timeline-info">
+                                        <small><i class="fas fa-mobile-alt me-1"></i>Sem modelo</small>
+                                    </div>
+                                {% endif %}
+                                {% if extraction.case_device.imei_01 %}
+                                    <div class="timeline-info">
+                                        <small><i class="fas fa-fingerprint me-1"></i>IMEI: {{ extraction.case_device.imei_01 }}</small>
+                                    </div>
+                                {% endif %}
+                                <div class="timeline-info">
+                                    <small>
+                                        <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" class="text-decoration-none">
+                                            <i class="fas fa-folder-open me-1"></i>{{ extraction.case_device.case.number|default:"Rascunho" }}
+                                        </a>
+                                    </small>
+                                </div>
+                                {% if extraction.assigned_to %}
+                                    <div class="timeline-info">
+                                        <small><i class="fas fa-user me-1"></i>{{ extraction.assigned_to.user.get_full_name|default:extraction.assigned_to.user.username|truncatechars:20 }}</small>
+                                    </div>
+                                {% endif %}
+                                <div class="timeline-actions mt-2">
+                                    {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-primary" 
+                                            title="Editar Dispositivo"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editDeviceModal{{ extraction.case_device.pk }}"
+                                            data-device-id="{{ extraction.case_device.pk }}"
+                                            data-case-id="{{ extraction.case_device.case.pk }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    {% endif %}
+                                    <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" 
+                                       class="btn btn-sm btn-outline-info" 
+                                       title="Ver Processo">
+                                        <i class="fas fa-folder-open"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <!-- Etapa 1: Pendente/Atribuída -->
                         <div class="timeline-item {% if extraction.status == 'pending' or extraction.status == 'assigned' %}active{% elif extraction.assigned_at %}completed{% endif %}">
                             <div class="timeline-marker">
@@ -25,7 +85,12 @@
                                 </div>
                                 {% if extraction.assigned_at %}
                                     <div class="timeline-date">
-                                        <small>{{ extraction.assigned_at|date:"d/m H:i" }}</small>
+                                        <small><i class="fas fa-calendar-alt me-1"></i>{{ extraction.assigned_at|date:"d/m H:i" }}</small>
+                                    </div>
+                                {% endif %}
+                                {% if extraction.assigned_to %}
+                                    <div class="timeline-info">
+                                        <small class="text-muted"><i class="fas fa-user me-1"></i>{{ extraction.assigned_to.user.get_full_name|default:extraction.assigned_to.user.username|truncatechars:15 }}</small>
                                     </div>
                                 {% endif %}
                                 {% if extraction.status == 'pending' %}
@@ -58,8 +123,15 @@
                                 <div class="timeline-title">Iniciada</div>
                                 {% if extraction.started_at %}
                                     <div class="timeline-date">
-                                        <small>{{ extraction.started_at|date:"d/m H:i" }}</small>
+                                        <small><i class="fas fa-calendar-alt me-1"></i>{{ extraction.started_at|date:"d/m H:i" }}</small>
                                     </div>
+                                    {% if extraction.started_notes %}
+                                        <div class="timeline-notes">
+                                            <small class="text-muted" title="{{ extraction.started_notes }}">
+                                                <i class="fas fa-sticky-note me-1"></i>{{ extraction.started_notes|truncatewords:5 }}
+                                            </small>
+                                        </div>
+                                    {% endif %}
                                 {% endif %}
                                 {% if extraction.status == 'assigned' %}
                                     <div class="timeline-actions">
@@ -94,17 +166,27 @@
                                         Em Andamento
                                     {% endif %}
                                 </div>
+                                {% if extraction.status == 'paused' and extraction.paused_notes %}
+                                    <div class="timeline-notes">
+                                        <small class="text-muted" title="{{ extraction.paused_notes }}">
+                                            <i class="fas fa-sticky-note me-1"></i>{{ extraction.paused_notes|truncatewords:5 }}
+                                        </small>
+                                    </div>
+                                {% endif %}
                                 <!-- Força Bruta dentro de Em Andamento -->
                                 {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
                                     {% if extraction.brute_force_started_at or extraction.brute_force_finished_at %}
                                         <div class="timeline-notes">
                                             <small class="text-muted">
-                                                <i class="fas fa-unlock-alt"></i>
+                                                <i class="fas fa-unlock-alt me-1"></i>
                                                 {% if extraction.brute_force_finished_at %}
                                                     {% if extraction.brute_force_result %}
                                                         <span class="badge bg-success">BF✓</span>
                                                     {% else %}
                                                         <span class="badge bg-secondary">BF</span>
+                                                    {% endif %}
+                                                    {% if extraction.brute_force_results_notes %}
+                                                        <br><small title="{{ extraction.brute_force_results_notes }}">{{ extraction.brute_force_results_notes|truncatewords:4 }}</small>
                                                     {% endif %}
                                                 {% elif extraction.brute_force_started_at %}
                                                     <span class="badge bg-danger">BF</span>
@@ -176,18 +258,25 @@
                                 <div class="timeline-title">Finalizada</div>
                                 {% if extraction.finished_at %}
                                     <div class="timeline-date">
-                                        <small>{{ extraction.finished_at|date:"d/m H:i" }}</small>
+                                        <small><i class="fas fa-calendar-alt me-1"></i>{{ extraction.finished_at|date:"d/m H:i" }}</small>
                                     </div>
                                 {% endif %}
                                 {% if extraction.extraction_result %}
                                     <div class="mt-1">
                                         {% if extraction.extraction_result == 'success' %}
-                                            <span class="badge bg-success">✓</span>
+                                            <span class="badge bg-success">✓ Sucesso</span>
                                         {% elif extraction.extraction_result == 'failed' %}
-                                            <span class="badge bg-danger">✗</span>
+                                            <span class="badge bg-danger">✗ Falhou</span>
                                         {% elif extraction.extraction_result == 'partial' %}
-                                            <span class="badge bg-warning">~</span>
+                                            <span class="badge bg-warning">~ Parcial</span>
                                         {% endif %}
+                                    </div>
+                                {% endif %}
+                                {% if extraction.finished_notes %}
+                                    <div class="timeline-notes mt-1">
+                                        <small class="text-muted" title="{{ extraction.finished_notes }}">
+                                            <i class="fas fa-sticky-note me-1"></i>{{ extraction.finished_notes|truncatewords:5 }}
+                                        </small>
                                     </div>
                                 {% endif %}
                             </div>
@@ -204,6 +293,33 @@
     border-radius: 8px;
     padding: 15px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.timeline-item.info-card {
+    min-width: 180px;
+    max-width: 250px;
+}
+
+.timeline-item.info-card .timeline-marker.info-marker {
+    background: #007bff;
+    border-color: #0056b3;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(0, 123, 255, 0.4);
+}
+
+.timeline-item.info-card .timeline-content.info-content {
+    min-height: 120px;
+    background: linear-gradient(to bottom, #f0f7ff 0%, #fff 100%);
+    border-color: #007bff;
+}
+
+.timeline-item.info-card .timeline-content a {
+    color: #6c757d;
+    transition: color 0.2s;
+}
+
+.timeline-item.info-card .timeline-content a:hover {
+    color: #007bff;
 }
 
 .timeline-diagram {
@@ -388,9 +504,16 @@
     margin-top: 2px;
     font-size: 0.55rem;
     color: #6c757d;
-    line-height: 1.1;
-    max-height: 24px;
+    line-height: 1.2;
+    max-height: 32px;
     overflow: hidden;
+}
+
+.timeline-info {
+    margin-top: 2px;
+    font-size: 0.6rem;
+    color: #6c757d;
+    line-height: 1.2;
 }
 
 .timeline-actions {

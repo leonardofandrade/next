@@ -497,6 +497,12 @@ class Extraction(AuditedModel):
         null=True,
         help_text=_("Observações sobre o início da extração.")
     )
+    paused_notes = models.TextField(
+        _('Observações da Pausa da Extração'),
+        blank=True,
+        null=True,
+        help_text=_("Observações sobre a pausa da extração.")
+    )
     finished_at = models.DateTimeField(
         null=True,
         blank=True,
@@ -765,7 +771,7 @@ class Extraction(AuditedModel):
         
         self.status = self.STATUS_PAUSED
         if notes:
-            self.started_notes = notes
+            self.paused_notes = notes
         self.save()
         
         # Atualiza o status do Case baseado nas extrações

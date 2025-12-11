@@ -282,7 +282,7 @@ class ExtractionService(BaseService):
         
         return extraction
     
-    def pause(self, extraction_pk: int) -> Extraction:
+    def pause(self, extraction_pk: int, notes: Optional[str] = None) -> Extraction:
         """Pause extraction"""
         extraction = self.get_object(extraction_pk)
         extractor_user = self.get_extractor_user()
@@ -294,6 +294,8 @@ class ExtractionService(BaseService):
             raise PermissionServiceException("Apenas o responsável pela extração pode pausá-la")
         
         extraction.status = Extraction.STATUS_PAUSED
+        if notes:
+            extraction.paused_notes = notes
         extraction.save()
         
         # Atualiza o status do Case

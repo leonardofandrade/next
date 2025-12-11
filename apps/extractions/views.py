@@ -195,9 +195,10 @@ class ExtractionPauseView(LoginRequiredMixin, View):
     
     def post(self, request, pk):
         service = ExtractionService(user=request.user)
+        notes = request.POST.get('notes', '')
         
         try:
-            extraction = service.pause(pk)
+            extraction = service.pause(pk, notes=notes if notes else None)
             messages.success(request, 'Extração pausada com sucesso!')
         except ServiceException as e:
             messages.error(request, str(e))

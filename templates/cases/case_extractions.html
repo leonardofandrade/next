@@ -515,6 +515,18 @@ Visualize as extrações e informações do processo
                         {% endif %}
                     </div>
                     <hr>
+                    <form id="pauseForm{{ extraction.pk }}" method="post" action="{% url 'extractions:pause' extraction.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'extractions:case_extractions' case.pk %}">
+                        <div class="mb-3">
+                            <label for="pauseNotes{{ extraction.pk }}" class="form-label">
+                                <i class="fas fa-sticky-note me-1"></i>
+                                Observações (Opcional)
+                            </label>
+                            <textarea class="form-control" id="pauseNotes{{ extraction.pk }}" name="notes" rows="3" 
+                                      placeholder="Adicione observações sobre a pausa da extração...">{% if extraction.paused_notes %}{{ extraction.paused_notes }}{% endif %}</textarea>
+                        </div>
+                    </form>
                     <p class="text-muted mb-0">
                         <i class="fas fa-info-circle me-2"></i>
                         A extração poderá ser retomada posteriormente.
@@ -525,14 +537,10 @@ Visualize as extrações e informações do processo
                         <i class="fas fa-times me-2"></i>
                         Cancelar
                     </button>
-                    <form method="post" action="{% url 'extractions:pause' extraction.pk %}" style="display: inline;">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'extractions:case_extractions' case.pk %}">
-                        <button type="submit" class="btn btn-warning">
-                            <i class="fas fa-pause me-2"></i>
-                            Pausar Extração
-                        </button>
-                    </form>
+                    <button type="submit" form="pauseForm{{ extraction.pk }}" class="btn btn-warning">
+                        <i class="fas fa-pause me-2"></i>
+                        Pausar Extração
+                    </button>
                 </div>
             </div>
         </div>

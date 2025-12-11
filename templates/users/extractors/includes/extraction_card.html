@@ -1,0 +1,148 @@
+<div class="col-md-6 col-lg-4">
+    <div class="card h-100 {% if priority == 'high' %}border-warning shadow-sm{% endif %}">
+        <div class="card-header d-flex justify-content-between align-items-center {% if extraction.status == 'pending' or extraction.status == 'assigned' %}bg-warning bg-opacity-10{% elif extraction.status == 'in_progress' %}bg-primary bg-opacity-10{% elif extraction.status == 'paused' %}bg-secondary bg-opacity-10{% endif %}">
+            <div>
+                <strong>#{{ extraction.pk }}</strong>
+                <span class="badge bg-{{ extraction.get_status_color }} ms-2">
+                    {{ extraction.get_status_display }}
+                </span>
+            </div>
+            {% if extraction.status == 'in_progress' %}
+            <i class="fas fa-spinner fa-spin text-primary"></i>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <!-- Dispositivo -->
+            <div class="mb-3">
+                <h6 class="text-muted mb-1">
+                    <i class="fas fa-mobile-alt me-1"></i>
+                    Dispositivo
+                </h6>
+                {% if extraction.case_device.device_model %}
+                    <strong>{{ extraction.case_device.device_model.brand.name }}</strong><br>
+                    <small class="text-muted">{{ extraction.case_device.device_model.name }}</small>
+                {% else %}
+                    <span class="text-muted">Sem modelo</span>
+                {% endif %}
+                {% if extraction.case_device.device_category %}
+                    <br><span class="badge bg-primary">{{ extraction.case_device.device_category.name }}</span>
+                {% endif %}
+                {% if extraction.case_device.imei_01 %}
+                    <br><small class="text-muted"><i class="fas fa-fingerprint me-1"></i>IMEI: {{ extraction.case_device.imei_01 }}</small>
+                {% elif extraction.case_device.is_imei_unknown %}
+                    <br><span class="badge bg-warning text-dark">IMEI Desconhecido</span>
+                {% endif %}
+            </div>
+
+            <!-- Processo -->
+            <div class="mb-3">
+                <h6 class="text-muted mb-1">
+                    <i class="fas fa-folder-open me-1"></i>
+                    Processo
+                </h6>
+                <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" 
+                   class="text-decoration-none">
+                    <strong>{{ extraction.case_device.case.number|default:"Rascunho" }}</strong>
+                </a>
+                {% if extraction.case_device.case.extraction_unit %}
+                    <br><span class="badge bg-info">{{ extraction.case_device.case.extraction_unit.acronym }}</span>
+                {% endif %}
+            </div>
+
+            <!-- Informações de Tempo -->
+            <div class="mb-3">
+                {% if extraction.assigned_at %}
+                <small class="text-muted d-block">
+                    <i class="fas fa-user-check me-1"></i>
+                    Atribuído: {{ extraction.assigned_at|date:"d/m/Y H:i" }}
+                </small>
+                {% endif %}
+                {% if extraction.started_at %}
+                <small class="text-muted d-block">
+                    <i class="fas fa-play me-1"></i>
+                    Iniciado: {{ extraction.started_at|date:"d/m/Y H:i" }}
+                </small>
+                {% endif %}
+                {% if extraction.finished_at %}
+                <small class="text-success d-block">
+                    <i class="fas fa-check-circle me-1"></i>
+                    Finalizado: {{ extraction.finished_at|date:"d/m/Y H:i" }}
+                </small>
+                {% endif %}
+            </div>
+
+            <!-- Resultado e Tamanho -->
+            {% if extraction.extraction_result or extraction.extraction_size %}
+            <div class="mb-3">
+                {% if extraction.extraction_result %}
+                    {% if extraction.extraction_result == 'success' %}
+                        <span class="badge bg-success">Bem-Sucedida</span>
+                    {% elif extraction.extraction_result == 'failed' %}
+                        <span class="badge bg-danger">Falhou</span>
+                    {% elif extraction.extraction_result == 'partial' %}
+                        <span class="badge bg-warning">Parcial</span>
+                    {% endif %}
+                {% endif %}
+                {% if extraction.extraction_size %}
+                    <span class="badge bg-info">{{ extraction.extraction_size }} GB</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        <div class="card-footer bg-transparent">
+            <div class="btn-group w-100" role="group">
+                {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
+                <button type="button" 
+                        class="btn btn-sm btn-outline-primary" 
+                        title="Editar Dispositivo"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#editDeviceModal{{ extraction.case_device.pk }}"
+                        data-device-id="{{ extraction.case_device.pk }}"
+                        data-case-id="{{ extraction.case_device.case.pk }}">
+                    <i class="fas fa-edit"></i>
+                </button>
+                {% endif %}
+                <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" 
+                   class="btn btn-sm btn-outline-info" 
+                   title="Ver Processo">
+                    <i class="fas fa-folder-open"></i>
+                </a>
+                {% if extraction.status == 'pending' or extraction.status == 'assigned' or extraction.status == 'paused' %}
+                <button type="button" 
+                        class="btn btn-sm btn-outline-primary" 
+                        title="Iniciar Extração"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#startModal{{ extraction.pk }}">
+                    <i class="fas fa-play"></i>
+                </button>
+                {% endif %}
+                {% if extraction.status == 'in_progress' %}
+                <button type="button" 
+                        class="btn btn-sm btn-outline-warning" 
+                        title="Pausar Extração"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#pauseModal{{ extraction.pk }}">
+                    <i class="fas fa-pause"></i>
+                </button>
+                {% endif %}
+                {% if extraction.status == 'paused' %}
+                <button type="button" 
+                        class="btn btn-sm btn-outline-success" 
+                        title="Retomar Extração"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#resumeModal{{ extraction.pk }}">
+                    <i class="fas fa-play"></i>
+                </button>
+                {% endif %}
+                {% if extraction.status == 'in_progress' or extraction.status == 'paused' %}
+                <a href="{% url 'extractions:finish_form' extraction.pk %}" 
+                   class="btn btn-sm btn-outline-success" 
+                   title="Finalizar Extração">
+                    <i class="fas fa-check-circle"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -70,10 +70,30 @@ class MyExtractionsView(LoginRequiredMixin, ServiceMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Obtém o queryset completo antes da paginação para estatísticas
+        queryset = self.get_queryset()
+        
+        # Estatísticas por status
+        context['stats'] = {
+            'pending': queryset.filter(status='pending').count(),
+            'assigned': queryset.filter(status='assigned').count(),
+            'in_progress': queryset.filter(status='in_progress').count(),
+            'paused': queryset.filter(status='paused').count(),
+            'completed': queryset.filter(status='completed').count(),
+        }
+        
+        # Extrações agrupadas por status para exibição em seções (máximo 10 por status)
+        context['extractions_by_status'] = {
+            'pending': list(queryset.filter(status='pending')[:10]),
+            'assigned': list(queryset.filter(status='assigned')[:10]),
+            'in_progress': list(queryset.filter(status='in_progress')[:10]),
+            'paused': list(queryset.filter(status='paused')[:10]),
+        }
+        
         context['page_title'] = 'Minhas Extrações'
         context['page_icon'] = 'fa-user-check'
         context['form'] = self.search_form_class(self.request.GET or None)
-        context['total_count'] = self.get_queryset().count()
+        context['total_count'] = queryset.count()
         return context
 
 

@@ -714,24 +714,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             e.stopPropagation();
             
-            console.log('Formulário AJAX detectado:', form.action);
-            
-            // Debug: verificar campos do formulário antes de criar FormData
-            const deviceCategoryField = form.querySelector('[name="device_category"]');
-            if (deviceCategoryField) {
-                console.log('Campo device_category encontrado:', deviceCategoryField.value);
-            } else {
-                console.error('Campo device_category NÃO encontrado no formulário!');
-            }
-            
             const formData = new FormData(form);
-            
-            // Debug: verificar se device_category está sendo enviado
-            if (formData.has('device_category')) {
-                console.log('device_category no FormData:', formData.get('device_category'));
-            } else {
-                console.error('device_category NÃO está no FormData!');
-            }
             const submitButton = form.querySelector('button[type="submit"]');
             const originalText = submitButton ? submitButton.innerHTML : '';
             
@@ -782,7 +765,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .then(data => {
-                console.log('Dados recebidos:', data);
                 if (data.success) {
                     // Mostrar mensagem de sucesso
                     if (data.message) {

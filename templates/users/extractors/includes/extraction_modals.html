@@ -347,6 +347,33 @@
 </div>
 {% endif %}
 
+<!-- Modal Finalizar Extração -->
+{% if extraction.status == 'in_progress' or extraction.status == 'paused' %}
+{% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
+<div class="modal fade" id="finishExtractionModal{{ extraction.pk }}" tabindex="-1" aria-labelledby="finishExtractionModalLabel{{ extraction.pk }}" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="finishExtractionModalLabel{{ extraction.pk }}">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Finalizar Extração
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="finishExtractionModalBody{{ extraction.pk }}">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-success" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Carregando formulário...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+
 <!-- Modal Finalizar Força Bruta -->
 {% if extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
 <div class="modal fade" id="finishBruteForceModal{{ extraction.pk }}" tabindex="-1" aria-labelledby="finishBruteForceModalLabel{{ extraction.pk }}" aria-hidden="true">

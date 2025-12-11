@@ -1,4 +1,4 @@
-<form method="post" action="{% url 'extractions:finish' extraction.pk %}?next={% url 'extractions:case_extractions' extraction.case_device.case.pk %}" class="ajax-form" novalidate>
+<form method="post" action="{% url 'extractions:finish' extraction.pk %}" class="ajax-form" novalidate>
     {% csrf_token %}
     
     <!-- Resultado da Extração -->

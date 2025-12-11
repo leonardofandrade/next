@@ -132,11 +132,14 @@
                 </button>
                 {% endif %}
                 {% if extraction.status == 'in_progress' or extraction.status == 'paused' %}
-                <a href="{% url 'extractions:finish_form' extraction.pk %}" 
-                   class="btn btn-sm btn-outline-success" 
-                   title="Finalizar Extração">
+                <button type="button" 
+                        class="btn btn-sm btn-outline-success" 
+                        title="Finalizar Extração"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#finishExtractionModal{{ extraction.pk }}"
+                        data-extraction-id="{{ extraction.pk }}">
                     <i class="fas fa-check-circle"></i>
-                </a>
+                </button>
                 {% endif %}
                 {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
                     {% if not extraction.brute_force_started_at %}

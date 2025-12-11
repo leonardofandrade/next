@@ -119,11 +119,14 @@
                                     <i class="fas fa-times"></i>
                                 </button>
                             </form>
-                            <a href="{% url 'extractions:finish_form' extraction.pk %}" 
-                               class="btn btn-sm btn-outline-success" 
-                               title="Finalizar Extração">
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-success" 
+                                    title="Finalizar Extração"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#finishExtractionModal{{ extraction.pk }}"
+                                    data-extraction-id="{{ extraction.pk }}">
                                 <i class="fas fa-check"></i>
-                            </a>
+                            </button>
                         </div>
                     </div>
                     {% if extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
@@ -140,11 +143,14 @@
                                 data-bs-target="#resumeModal{{ extraction.pk }}">
                             <i class="fas fa-play"></i>
                         </button>
-                        <a href="{% url 'extractions:finish_form' extraction.pk %}" 
-                           class="btn btn-sm btn-outline-success" 
-                           title="Finalizar Extração">
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-success" 
+                                title="Finalizar Extração"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#finishExtractionModal{{ extraction.pk }}"
+                                data-extraction-id="{{ extraction.pk }}">
                             <i class="fas fa-check"></i>
-                        </a>
+                        </button>
                     </div>
                     {% if extraction.paused_notes %}
                         <div class="alert alert-secondary py-1 px-2 mb-0 small">

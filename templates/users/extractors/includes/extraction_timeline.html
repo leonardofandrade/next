@@ -167,11 +167,14 @@
                                                 <i class="fas fa-times"></i>
                                             </button>
                                         </form>
-                                        <a href="{% url 'extractions:finish_form' extraction.pk %}" 
-                                           class="btn btn-sm btn-outline-success" 
-                                           title="Finalizar Extração">
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-success" 
+                                                title="Finalizar Extração"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#finishExtractionModal{{ extraction.pk }}"
+                                                data-extraction-id="{{ extraction.pk }}">
                                             <i class="fas fa-check"></i>
-                                        </a>
+                                        </button>
                                     {% elif extraction.status == 'paused' %}
                                         <button type="button" 
                                                 class="btn btn-sm btn-outline-success" 
@@ -180,11 +183,14 @@
                                                 data-bs-target="#resumeModal{{ extraction.pk }}">
                                             <i class="fas fa-play"></i>
                                         </button>
-                                        <a href="{% url 'extractions:finish_form' extraction.pk %}" 
-                                           class="btn btn-sm btn-outline-success" 
-                                           title="Finalizar Extração">
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-success" 
+                                                title="Finalizar Extração"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#finishExtractionModal{{ extraction.pk }}"
+                                                data-extraction-id="{{ extraction.pk }}">
                                             <i class="fas fa-check"></i>
-                                        </a>
+                                        </button>
                                     {% endif %}
                                 </div>
                             </div>

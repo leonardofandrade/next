@@ -77,30 +77,31 @@
                 <div class="timeline-step {% if extraction.status == 'assigned' %}active{% elif extraction.started_at %}completed{% else %}disabled{% endif %}">
                     <div class="timeline-marker d-flex align-items-center justify-content-center {% if extraction.started_at %}bg-success text-white border-success{% elif extraction.status == 'assigned' %}bg-primary text-white border-primary{% else %}bg-light border-secondary text-muted{% endif %} rounded mb-2" 
                          style="width: auto; min-width: 100px; padding: 4px 8px; margin: 0 auto; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        <small class="fw-bold">Iniciar</small>
+                        <small class="fw-bold">Início</small>
                     </div>
                     <div class="card {% if extraction.started_at %}border-success{% elif extraction.status == 'assigned' %}border-primary{% else %}border-secondary{% endif %} {% if not extraction.started_at and extraction.status != 'assigned' %}timeline-disabled{% endif %} timeline-card">
-                        <div class="card-body p-2">
-                            <div class="d-flex align-items-center justify-content-end mb-1">
-                                {% if extraction.status == 'assigned' %}
-                                    <button type="button" 
-                                            class="btn btn-sm btn-outline-primary" 
-                                            title="Iniciar Extração"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#startModal{{ extraction.pk }}">
-                                        <i class="fas fa-play"></i>
-                                    </button>
-                                {% endif %}
-                            </div>
-                            {% if extraction.started_at %}
-                                <p class="card-text small mb-0 text-muted">
-                                    <i class="fas fa-calendar-alt me-1"></i>{{ extraction.started_at|date:"d/m H:i" }}
-                                    {% if extraction.started_notes %}
-                                        <span class="ms-2" title="{{ extraction.started_notes }}">
-                                            <i class="fas fa-sticky-note me-1"></i>{{ extraction.started_notes|truncatewords:3 }}
-                                        </span>
-                                    {% endif %}
-                                </p>
+                        <div class="card-body p-2 d-flex flex-column justify-content-center align-items-center">
+                            {% if extraction.status == 'assigned' %}
+                                <button type="button" 
+                                        class="btn btn-primary btn-lg w-100 mb-2" 
+                                        title="Iniciar Extração"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#startModal{{ extraction.pk }}">
+                                    <i class="fas fa-play me-2"></i>
+                                    Iniciar Extração
+                                </button>
+                            {% elif extraction.started_at %}
+                                <div class="w-100">
+                                    <p class="card-text small mb-0 text-muted text-center">
+                                        <i class="fas fa-calendar-alt me-1"></i>{{ extraction.started_at|date:"d/m H:i" }}
+                                        {% if extraction.started_notes %}
+                                            <br>
+                                            <span class="mt-1 d-block" title="{{ extraction.started_notes }}">
+                                                <i class="fas fa-sticky-note me-1"></i>{{ extraction.started_notes|truncatewords:5 }}
+                                            </span>
+                                        {% endif %}
+                                    </p>
+                                </div>
                             {% endif %}
                         </div>
                     </div>
@@ -121,7 +122,7 @@
                             {% if extraction.status == 'paused' %}
                                 Pausada
                             {% elif extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
-                                Força Bruta
+                                Em Força Bruta
                             {% else %}
                                 Em Andamento
                             {% endif %}
@@ -223,7 +224,7 @@
                 <div class="timeline-step {% if extraction.status == 'completed' %}completed{% else %}disabled{% endif %}">
                     <div class="timeline-marker d-flex align-items-center justify-content-center {% if extraction.status == 'completed' %}bg-success text-white border-success{% else %}bg-light border-secondary text-muted{% endif %} rounded mb-2" 
                          style="width: auto; min-width: 100px; padding: 4px 8px; margin: 0 auto; z-index: 2; box-shadow: 0 2px 6px rgba(40, 167, 69, 0.4);">
-                        <small class="fw-bold">Finalizada</small>
+                        <small class="fw-bold">Finalização</small>
                     </div>
                     <div class="card {% if extraction.status == 'completed' %}border-success{% else %}border-secondary timeline-disabled{% endif %} timeline-card">
                         <div class="card-body p-2">
@@ -270,21 +271,7 @@
     position: relative;
 }
 
-/* Animação para marcador ativo */
-@keyframes pulseFlow {
-    0%, 100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 0.9;
-        transform: scale(1.1);
-    }
-}
-
-.timeline-step.active .timeline-marker {
-    animation: pulseFlow 2s infinite;
-}
+/* Animação removida - títulos não oscilam mais */
 
 /* Cards desabilitados */
 .timeline-disabled {
@@ -302,35 +289,10 @@
     display: none;
 }
 
-/* Destaque para força bruta ativa */
+/* Destaque para força bruta ativa - sem animação */
 .brute-force-card {
     border-width: 2px !important;
     box-shadow: 0 0 10px rgba(220, 53, 69, 0.3);
-    animation: bruteForcePulse 2s infinite;
-}
-
-.brute-force-active .timeline-marker {
-    animation: bruteForceMarkerPulse 1.5s infinite;
-}
-
-@keyframes bruteForcePulse {
-    0%, 100% {
-        box-shadow: 0 0 10px rgba(220, 53, 69, 0.3);
-    }
-    50% {
-        box-shadow: 0 0 20px rgba(220, 53, 69, 0.5);
-    }
-}
-
-@keyframes bruteForceMarkerPulse {
-    0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    50% {
-        transform: scale(1.1);
-        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.6);
-    }
 }
 
 /* Cards com dimensões fixas */

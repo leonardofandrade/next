@@ -83,8 +83,8 @@
                                     <i class="fas fa-calendar-alt me-1"></i>{{ extraction.assigned_at|date:"d/m H:i" }}
                                 </p>
                             {% endif %}
-                            {% if extraction.status == 'pending' %}
-                                <div class="d-flex justify-content-center">
+                            <div class="d-flex justify-content-center gap-2">
+                                {% if extraction.status == 'pending' %}
                                     <button type="button" 
                                             class="btn btn-sm btn-outline-success" 
                                             title="Atribuir-me"
@@ -92,8 +92,18 @@
                                             data-bs-target="#assignModal{{ extraction.pk }}">
                                         <i class="fas fa-user-check"></i>
                                     </button>
-                                </div>
-                            {% endif %}
+                                {% elif extraction.status == 'assigned' %}
+                                    <form method="post" action="{% url 'extractions:unassign_from_me' extraction.pk %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" 
+                                                class="btn btn-sm btn-outline-danger" 
+                                                title="Desatribuir-me"
+                                                onclick="return confirm('Tem certeza que deseja se desatribuir desta extração?');">
+                                            <i class="fas fa-user-times"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>

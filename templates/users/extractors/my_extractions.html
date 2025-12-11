@@ -432,12 +432,14 @@ Painel de controle das extrações sob sua responsabilidade
 </div>
 
 <!-- Modais de Confirmação -->
-{% for extraction in extractions %}
+{# Gerar modais para todas as extrações que aparecem nos cards ou na lista paginada #}
+{% for extraction in all_extractions_for_modals %}
     {% include 'users/extractors/includes/extraction_modals.html' with extraction=extraction %}
 {% endfor %}
 
 <!-- Modais de Formulários -->
-{% for extraction in extractions %}
+{# Gerar modais para todas as extrações que aparecem nos cards ou na lista paginada #}
+{% for extraction in all_extractions_for_modals %}
     <!-- Modal Editar Dispositivo -->
     {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
     <div class="modal fade" id="editDeviceModal{{ extraction.case_device.pk }}" tabindex="-1" aria-labelledby="editDeviceModalLabel{{ extraction.case_device.pk }}" aria-hidden="true">

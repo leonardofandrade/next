@@ -83,12 +83,40 @@ class MyExtractionsView(LoginRequiredMixin, ServiceMixin, ListView):
         }
         
         # Extrações agrupadas por status para exibição em seções (máximo 10 por status)
-        context['extractions_by_status'] = {
+        extractions_by_status = {
             'pending': list(queryset.filter(status='pending')[:10]),
             'assigned': list(queryset.filter(status='assigned')[:10]),
             'in_progress': list(queryset.filter(status='in_progress')[:10]),
             'paused': list(queryset.filter(status='paused')[:10]),
         }
+        context['extractions_by_status'] = extractions_by_status
+        
+        # Coletar todas as extrações únicas que precisam de modais (da lista paginada + dos cards por status)
+        # Usar um dicionário para evitar duplicatas baseado no PK
+        extractions_for_modals = {}
+        
+        # Adicionar extrações da lista paginada (pode ser um queryset ou lista)
+        paginated_extractions = context.get('extractions', [])
+        if paginated_extractions:
+            # Se for um queryset ou lista, iterar sobre ele
+            try:
+                for extraction in paginated_extractions:
+                    extractions_for_modals[extraction.pk] = extraction
+            except (TypeError, AttributeError):
+                # Se não for iterável, pular
+                pass
+        
+        # Adicionar extrações dos cards por status
+        for status_extractions in extractions_by_status.values():
+            for extraction in status_extractions:
+                if extraction.pk not in extractions_for_modals:
+                    extractions_for_modals[extraction.pk] = extraction
+        
+        # Converter para lista ordenada por PK
+        context['all_extractions_for_modals'] = sorted(
+            extractions_for_modals.values(),
+            key=lambda x: x.pk
+        )
         
         context['page_title'] = 'Minhas Extrações'
         context['page_icon'] = 'fa-user-check'

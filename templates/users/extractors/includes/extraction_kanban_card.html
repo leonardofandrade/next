@@ -1,0 +1,185 @@
+<div class="kanban-card mb-3" data-extraction-id="{{ extraction.pk }}">
+    <div class="card h-100 shadow-sm border-start border-4 border-{{ extraction.get_status_color }} hover-shadow">
+        <div class="card-body p-3">
+            <!-- Header do Card -->
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h6 class="card-title mb-1">
+                        <strong class="text-primary">#{{ extraction.pk }}</strong>
+                    </h6>
+                    {% if extraction.case_device.device_model %}
+                        <p class="mb-0 small text-muted">
+                            <i class="fas fa-mobile-alt me-1"></i>
+                            <strong>{{ extraction.case_device.device_model.brand.name }}</strong> {{ extraction.case_device.device_model.name }}
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="d-flex gap-1">
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-primary" 
+                            title="Editar Dispositivo"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#editDeviceModal{{ extraction.case_device.pk }}"
+                            data-device-id="{{ extraction.case_device.pk }}"
+                            data-case-id="{{ extraction.case_device.case.pk }}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" 
+                       class="btn btn-sm btn-outline-info" 
+                       title="Ver Processo">
+                        <i class="fas fa-folder-open"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Informações do Dispositivo -->
+            <div class="mb-2">
+                {% if extraction.case_device.imei_01 %}
+                    <small class="text-muted d-block">
+                        <i class="fas fa-fingerprint me-1"></i>IMEI: {{ extraction.case_device.imei_01 }}
+                    </small>
+                {% endif %}
+                <small class="text-muted d-block">
+                    <i class="fas fa-folder-open me-1"></i>
+                    <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" class="text-decoration-none">
+                        {{ extraction.case_device.case.number|default:"Rascunho" }}
+                    </a>
+                </small>
+            </div>
+            
+            <!-- Status e Ações -->
+            <div class="border-top pt-2 mt-2">
+                {% if extraction.status == 'assigned' %}
+                    <button type="button" 
+                            class="btn btn-primary btn-sm w-100" 
+                            title="Iniciar Extração"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#startModal{{ extraction.pk }}">
+                        <i class="fas fa-play me-2"></i>Iniciar Extração
+                    </button>
+                    {% if not extraction.started_at %}
+                        <form method="post" action="{% url 'extractions:unassign_from_me' extraction.pk %}" class="mt-2 ajax-form">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="btn btn-outline-danger btn-sm w-100" 
+                                    title="Desatribuir-me"
+                                    onclick="return confirm('Tem certeza que deseja se desatribuir desta extração?');">
+                                <i class="fas fa-user-times me-2"></i>Desatribuir-me
+                            </button>
+                        </form>
+                    {% endif %}
+                {% elif extraction.status == 'in_progress' %}
+                    <div class="d-flex flex-wrap gap-1 mb-2">
+                        {% if not extraction.brute_force_started_at %}
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-danger" 
+                                    title="Iniciar Força Bruta"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#startBruteForceModal{{ extraction.pk }}">
+                                <i class="fas fa-unlock-alt"></i>
+                            </button>
+                        {% elif extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-danger" 
+                                    title="Finalizar Força Bruta"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#finishBruteForceModal{{ extraction.pk }}"
+                                    data-extraction-id="{{ extraction.pk }}">
+                                <i class="fas fa-unlock"></i>
+                            </button>
+                        {% endif %}
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-warning" 
+                                title="Pausar Extração"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#pauseModal{{ extraction.pk }}">
+                            <i class="fas fa-pause"></i>
+                        </button>
+                        <form method="post" action="{% url 'extractions:cancel' extraction.pk %}" class="d-inline ajax-form">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="btn btn-sm btn-outline-secondary" 
+                                    title="Cancelar Extração"
+                                    onclick="return confirm('Tem certeza que deseja cancelar esta extração?');">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </form>
+                        <a href="{% url 'extractions:finish_form' extraction.pk %}" 
+                           class="btn btn-sm btn-outline-success" 
+                           title="Finalizar Extração">
+                            <i class="fas fa-check"></i>
+                        </a>
+                    </div>
+                    {% if extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
+                        <div class="alert alert-danger py-1 px-2 mb-0 small">
+                            <i class="fas fa-unlock-alt me-1"></i><strong>Força Bruta Ativa</strong>
+                        </div>
+                    {% endif %}
+                {% elif extraction.status == 'paused' %}
+                    <div class="d-flex flex-wrap gap-1 mb-2">
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-success" 
+                                title="Retomar Extração"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#resumeModal{{ extraction.pk }}">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <a href="{% url 'extractions:finish_form' extraction.pk %}" 
+                           class="btn btn-sm btn-outline-success" 
+                           title="Finalizar Extração">
+                            <i class="fas fa-check"></i>
+                        </a>
+                    </div>
+                    {% if extraction.paused_notes %}
+                        <div class="alert alert-secondary py-1 px-2 mb-0 small">
+                            <i class="fas fa-sticky-note me-1"></i>{{ extraction.paused_notes|truncatewords:5 }}
+                        </div>
+                    {% endif %}
+                {% elif extraction.status == 'completed' %}
+                    {% if extraction.extraction_result %}
+                        <div class="mb-2">
+                            {% if extraction.extraction_result == 'success' %}
+                                <span class="badge bg-success">✓ Sucesso</span>
+                            {% elif extraction.extraction_result == 'failed' %}
+                                <span class="badge bg-danger">✗ Falhou</span>
+                            {% elif extraction.extraction_result == 'partial' %}
+                                <span class="badge bg-warning">~ Parcial</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    {% if extraction.finished_at %}
+                        <small class="text-muted d-block">
+                            <i class="fas fa-calendar-alt me-1"></i>{{ extraction.finished_at|date:"d/m/Y H:i" }}
+                        </small>
+                    {% endif %}
+                {% endif %}
+            </div>
+            
+            <!-- Informações adicionais -->
+            {% if extraction.started_at %}
+                <small class="text-muted d-block mt-2">
+                    <i class="fas fa-clock me-1"></i>Iniciada: {{ extraction.started_at|date:"d/m H:i" }}
+                </small>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.kanban-card .card {
+    transition: all 0.2s ease;
+}
+
+.kanban-card .card:hover {
+    transform: translateY(-2px);
+}
+
+.hover-shadow {
+    transition: box-shadow 0.2s ease;
+}
+
+.hover-shadow:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+</style>
+

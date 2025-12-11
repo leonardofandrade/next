@@ -88,6 +88,7 @@ class MyExtractionsView(LoginRequiredMixin, ServiceMixin, ListView):
             'assigned': list(queryset.filter(status='assigned')[:10]),
             'in_progress': list(queryset.filter(status='in_progress')[:10]),
             'paused': list(queryset.filter(status='paused')[:10]),
+            'completed': list(queryset.filter(status='completed')[:10]),
         }
         context['extractions_by_status'] = extractions_by_status
         

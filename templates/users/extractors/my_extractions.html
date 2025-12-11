@@ -55,53 +55,123 @@ Painel de controle das extrações sob sua responsabilidade
         </div>
     </div>
 
-    <!-- Seção Principal: Extrações Sob Minha Responsabilidade -->
-    {% if extractions_by_status.pending or extractions_by_status.assigned or extractions_by_status.in_progress or extractions_by_status.paused %}
-    <div class="card mb-4 border-primary shadow-sm">
-        <div class="card-header bg-primary bg-opacity-10 border-bottom">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-list-check text-primary me-2"></i>
-                    <strong>Extrações Sob Minha Responsabilidade</strong>
-                </h5>
-                <span class="badge bg-primary fs-6 px-3 py-2">
-                    {{ stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused }} ativa{{ stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused|pluralize }}
-                </span>
+    <!-- Board Kanban -->
+    {% if extractions_by_status.pending or extractions_by_status.assigned or extractions_by_status.in_progress or extractions_by_status.paused or extractions_by_status.completed %}
+    <div class="kanban-board">
+        <div class="row g-3">
+            <!-- Coluna: À Iniciar -->
+            <div class="col-lg-3 col-md-6">
+                <div class="kanban-column h-100">
+                    <div class="kanban-column-header bg-info bg-opacity-10 border-info border-start border-4 rounded-top p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold">
+                                <i class="fas fa-play-circle text-info me-2"></i>
+                                À Iniciar
+                            </h6>
+                            <span class="badge bg-info">{{ stats.pending|add:stats.assigned }}</span>
+                        </div>
+                    </div>
+                    <div class="kanban-column-body p-3">
+                        {% if extractions_by_status.pending or extractions_by_status.assigned %}
+                            {% if extractions_by_status.pending %}
+                                {% for extraction in extractions_by_status.pending %}
+                                    {% include 'users/extractors/includes/extraction_kanban_card.html' with extraction=extraction %}
+                                {% endfor %}
+                            {% endif %}
+                            {% if extractions_by_status.assigned %}
+                                {% for extraction in extractions_by_status.assigned %}
+                                    {% include 'users/extractors/includes/extraction_kanban_card.html' with extraction=extraction %}
+                                {% endfor %}
+                            {% endif %}
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-2x mb-2 opacity-25"></i>
+                                <p class="small mb-0">Nenhuma extração para iniciar</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="card-body p-0">
-            <div class="extractions-list p-3">
-                {% if extractions_by_status.pending %}
-                    {% for extraction in extractions_by_status.pending %}
-                        <div class="extraction-row mb-3">
-                            {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
+            
+            <!-- Coluna: Em Andamento -->
+            <div class="col-lg-3 col-md-6">
+                <div class="kanban-column h-100">
+                    <div class="kanban-column-header bg-primary bg-opacity-10 border-primary border-start border-4 rounded-top p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold">
+                                <i class="fas fa-spinner fa-spin text-primary me-2"></i>
+                                Em Andamento
+                            </h6>
+                            <span class="badge bg-primary">{{ stats.in_progress }}</span>
                         </div>
-                    {% endfor %}
-                {% endif %}
-                
-                {% if extractions_by_status.assigned %}
-                    {% for extraction in extractions_by_status.assigned %}
-                        <div class="extraction-row mb-3">
-                            {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
+                    </div>
+                    <div class="kanban-column-body p-3">
+                        {% if extractions_by_status.in_progress %}
+                            {% for extraction in extractions_by_status.in_progress %}
+                                {% include 'users/extractors/includes/extraction_kanban_card.html' with extraction=extraction %}
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-2x mb-2 opacity-25"></i>
+                                <p class="small mb-0">Nenhuma extração em andamento</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Coluna: Pausadas -->
+            <div class="col-lg-3 col-md-6">
+                <div class="kanban-column h-100">
+                    <div class="kanban-column-header bg-secondary bg-opacity-10 border-secondary border-start border-4 rounded-top p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold">
+                                <i class="fas fa-pause text-secondary me-2"></i>
+                                Pausadas
+                            </h6>
+                            <span class="badge bg-secondary">{{ stats.paused }}</span>
                         </div>
-                    {% endfor %}
-                {% endif %}
-                
-                {% if extractions_by_status.in_progress %}
-                    {% for extraction in extractions_by_status.in_progress %}
-                        <div class="extraction-row mb-3">
-                            {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
+                    </div>
+                    <div class="kanban-column-body p-3">
+                        {% if extractions_by_status.paused %}
+                            {% for extraction in extractions_by_status.paused %}
+                                {% include 'users/extractors/includes/extraction_kanban_card.html' with extraction=extraction %}
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-2x mb-2 opacity-25"></i>
+                                <p class="small mb-0">Nenhuma extração pausada</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Coluna: Finalizadas -->
+            <div class="col-lg-3 col-md-6">
+                <div class="kanban-column h-100">
+                    <div class="kanban-column-header bg-success bg-opacity-10 border-success border-start border-4 rounded-top p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Finalizadas
+                            </h6>
+                            <span class="badge bg-success">{{ stats.completed }}</span>
                         </div>
-                    {% endfor %}
-                {% endif %}
-                
-                {% if extractions_by_status.paused %}
-                    {% for extraction in extractions_by_status.paused %}
-                        <div class="extraction-row mb-3">
-                            {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
-                        </div>
-                    {% endfor %}
-                {% endif %}
+                    </div>
+                    <div class="kanban-column-body p-3">
+                        {% if extractions_by_status.completed %}
+                            {% for extraction in extractions_by_status.completed %}
+                                {% include 'users/extractors/includes/extraction_kanban_card.html' with extraction=extraction %}
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-2x mb-2 opacity-25"></i>
+                                <p class="small mb-0">Nenhuma extração finalizada</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -513,31 +583,69 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-/* Melhorias no layout da página */
-.extractions-list {
+/* Layout Kanban */
+.kanban-board {
+    margin-bottom: 2rem;
+}
+
+.kanban-column {
+    background: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
+    min-height: 400px;
 }
 
-.extraction-row {
-    transition: transform 0.2s ease;
+.kanban-column-header {
+    border-bottom: 1px solid #dee2e6;
+    flex-shrink: 0;
 }
 
-.extraction-row:hover {
+.kanban-column-body {
+    flex: 1;
+    overflow-y: auto;
+    max-height: calc(100vh - 300px);
+    min-height: 300px;
+}
+
+.kanban-column-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.kanban-column-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.kanban-column-body::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.kanban-column-body::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Cards Kanban */
+.kanban-card .card {
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.kanban-card .card:hover {
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
-.extraction-row:last-child {
-    margin-bottom: 0 !important;
-}
-
-@media (max-width: 768px) {
-    .extractions-list {
-        padding: 1rem !important;
+@media (max-width: 992px) {
+    .kanban-column {
+        margin-bottom: 1.5rem;
     }
     
-    .extraction-row {
-        margin-bottom: 1rem !important;
+    .kanban-column-body {
+        max-height: none;
+        min-height: 200px;
     }
 }
 </style>

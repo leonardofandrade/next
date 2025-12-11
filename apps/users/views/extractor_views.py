@@ -95,24 +95,22 @@ class MyExtractionsView(LoginRequiredMixin, ServiceMixin, ListView):
         # Usar um dicionário para evitar duplicatas baseado no PK
         extractions_for_modals = {}
         
-        # Adicionar extrações da lista paginada (pode ser um queryset ou lista)
+        # Adicionar extrações da lista paginada
+        # O ListView já adiciona 'extractions' ao contexto (context_object_name)
         paginated_extractions = context.get('extractions', [])
         if paginated_extractions:
-            # Se for um queryset ou lista, iterar sobre ele
-            try:
-                for extraction in paginated_extractions:
-                    extractions_for_modals[extraction.pk] = extraction
-            except (TypeError, AttributeError):
-                # Se não for iterável, pular
-                pass
+            for extraction in paginated_extractions:
+                extractions_for_modals[extraction.pk] = extraction
         
-        # Adicionar extrações dos cards por status
+        # Adicionar extrações dos cards por status (essas são as que aparecem nas seções de status)
+        # Isso garante que mesmo se uma extração não estiver na página paginada atual,
+        # seus modais ainda serão gerados se ela aparecer nos cards
         for status_extractions in extractions_by_status.values():
             for extraction in status_extractions:
                 if extraction.pk not in extractions_for_modals:
                     extractions_for_modals[extraction.pk] = extraction
         
-        # Converter para lista ordenada por PK
+        # Converter para lista ordenada por PK para garantir ordem consistente
         context['all_extractions_for_modals'] = sorted(
             extractions_for_modals.values(),
             key=lambda x: x.pk

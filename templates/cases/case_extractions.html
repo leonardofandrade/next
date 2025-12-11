@@ -640,123 +640,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }
                             }
                             
-                            // Adiciona listener direto no formulário carregado
-                            const form = modalBody.querySelector('form.ajax-form');
-                            if (form) {
-                                form.addEventListener('submit', function(e) {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    
-                                    const formData = new FormData(this);
-                                    const submitButton = this.querySelector('button[type="submit"]');
-                                    const originalText = submitButton ? submitButton.innerHTML : '';
-                                    
-                                    // Remove alertas anteriores
-                                    const existingAlerts = this.querySelectorAll('.alert');
-                                    existingAlerts.forEach(alert => alert.remove());
-                                    
-                                    if (submitButton) {
-                                        submitButton.disabled = true;
-                                        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
-                                    }
-                                    
-                                    // Obtém CSRF token
-                                    const csrftoken = getCSRFToken();
-                                    
-                                    fetch(this.action, {
-                                        method: 'POST',
-                                        body: formData,
-                                        headers: {
-                                            'X-Requested-With': 'XMLHttpRequest',
-                                            'X-CSRFToken': csrftoken
-                                        },
-                                        credentials: 'same-origin'
-                                    })
-                                    .then(response => {
-                                        const contentType = response.headers.get('content-type');
-                                        if (contentType && contentType.includes('application/json')) {
-                                            return response.json();
-                                        } else {
-                                            return response.text().then(text => {
-                                                throw new Error('Resposta não é JSON. Status: ' + response.status);
-                                            });
-                                        }
-                                    })
-                                    .then(data => {
-                                        if (data.success) {
-                                            // Mostrar mensagem de sucesso
-                                            if (data.message) {
-                                                const alertDiv = document.createElement('div');
-                                                alertDiv.className = 'alert alert-success alert-dismissible fade show';
-                                                alertDiv.innerHTML = '<i class="fas fa-check-circle me-2"></i>' + data.message + 
-                                                    '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
-                                                const container = document.querySelector('.container-fluid');
-                                                if (container) {
-                                                    container.insertBefore(alertDiv, container.firstChild);
-                                                }
-                                            }
-                                            
-                                            // Fechar modal
-                                            const modal = this.closest('.modal');
-                                            if (modal) {
-                                                const bsModal = bootstrap.Modal.getInstance(modal);
-                                                if (bsModal) {
-                                                    bsModal.hide();
-                                                }
-                                            }
-                                            
-                                            // Recarregar página ou redirecionar
-                                            if (data.redirect_url) {
-                                                window.location.href = data.redirect_url;
-                                            } else {
-                                                setTimeout(() => window.location.reload(), 1000);
-                                            }
-                                        } else {
-                                            // Mostrar erros
-                                            const errorDiv = document.createElement('div');
-                                            errorDiv.className = 'alert alert-danger alert-dismissible fade show';
-                                            errorDiv.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>' + (data.error || 'Erro ao salvar. Verifique os campos.') +
-                                                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
-                                            this.insertBefore(errorDiv, this.firstChild);
-                                            
-                                            // Mostrar erros de campos se existirem
-                                            if (data.errors) {
-                                                const formElement = this;
-                                                Object.keys(data.errors).forEach(function(field) {
-                                                    const fieldElement = formElement.querySelector('[name="' + field + '"]');
-                                                    if (fieldElement) {
-                                                        const fieldError = document.createElement('div');
-                                                        fieldError.className = 'invalid-feedback d-block';
-                                                        fieldError.textContent = data.errors[field][0];
-                                                        fieldElement.parentNode.appendChild(fieldError);
-                                                        fieldElement.classList.add('is-invalid');
-                                                    }
-                                                });
-                                            }
-                                            
-                                            if (submitButton) {
-                                                submitButton.disabled = false;
-                                                submitButton.innerHTML = originalText;
-                                            }
-                                        }
-                                    })
-                                    .catch(error => {
-                                        console.error('Erro ao processar formulário:', error);
-                                        const errorDiv = document.createElement('div');
-                                        errorDiv.className = 'alert alert-danger alert-dismissible fade show';
-                                        errorDiv.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Erro ao processar requisição: ' + error.message + 
-                                            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
-                                        this.insertBefore(errorDiv, this.firstChild);
-                                        
-                                        if (submitButton) {
-                                            submitButton.disabled = false;
-                                            submitButton.innerHTML = originalText;
-                                        }
-                                    });
-                                    
-                                    return false;
-                                });
-                            }
+                            // Não adiciona listener duplicado - o event delegation global já cuida disso
                         }, 150);
                     } else {
                         modalBody.innerHTML = '<div class="alert alert-danger">' + data.error + '</div>';
@@ -832,7 +716,22 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log('Formulário AJAX detectado:', form.action);
             
+            // Debug: verificar campos do formulário antes de criar FormData
+            const deviceCategoryField = form.querySelector('[name="device_category"]');
+            if (deviceCategoryField) {
+                console.log('Campo device_category encontrado:', deviceCategoryField.value);
+            } else {
+                console.error('Campo device_category NÃO encontrado no formulário!');
+            }
+            
             const formData = new FormData(form);
+            
+            // Debug: verificar se device_category está sendo enviado
+            if (formData.has('device_category')) {
+                console.log('device_category no FormData:', formData.get('device_category'));
+            } else {
+                console.error('device_category NÃO está no FormData!');
+            }
             const submitButton = form.querySelector('button[type="submit"]');
             const originalText = submitButton ? submitButton.innerHTML : '';
             
@@ -863,8 +762,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (contentType && contentType.includes('application/json')) {
                     return response.json();
                 } else {
-                    // Se não for JSON, tenta ler como texto
+                    // Se não for JSON, tenta ler como texto e retornar como erro
                     return response.text().then(text => {
+                        // Se for erro 400, tenta parsear como JSON mesmo assim
+                        if (response.status === 400) {
+                            try {
+                                return JSON.parse(text);
+                            } catch (e) {
+                                // Se não conseguir parsear, retorna erro genérico
+                                return {
+                                    success: false,
+                                    error: 'Erro de validação. Verifique os campos do formulário.',
+                                    errors: {}
+                                };
+                            }
+                        }
                         throw new Error('Resposta não é JSON: ' + text.substring(0, 100));
                     });
                 }

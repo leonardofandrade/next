@@ -1,14 +1,14 @@
 <div class="timeline-row">
-    <!-- Timeline como diagrama linear -->
     <div class="bg-light rounded p-3">
-        <div class="d-flex align-items-center position-relative" style="min-width: 100%;">
-                <!-- Card 0: Informações da Extração -->
-                <div class="timeline-item position-relative flex-fill" style="min-width: 250px; max-width: 300px; flex: 0 0 auto;">
-                    <div class="timeline-marker d-flex align-items-center justify-content-center bg-primary text-white border border-primary rounded" 
-                         style="width: auto; min-width: 100px; padding: 4px 8px; margin: 0 auto 10px; z-index: 2; box-shadow: 0 2px 6px rgba(0, 123, 255, 0.4);">
+        <div class="row g-0 align-items-center">
+            <!-- Coluna 1: Dados do Dispositivo -->
+            <div class="col-auto">
+                <div class="timeline-step">
+                    <div class="timeline-marker d-flex align-items-center justify-content-center bg-primary text-white border border-primary rounded mb-2" 
+                         style="width: auto; min-width: 100px; padding: 4px 8px; z-index: 2; box-shadow: 0 2px 6px rgba(0, 123, 255, 0.4);">
                         <small class="fw-bold">Dispositivo</small>
                     </div>
-                    <div class="card border-primary bg-light" style="min-height: 90px;">
+                    <div class="card border-primary bg-light timeline-card">
                         <div class="card-body p-2">
                             <div class="d-flex align-items-center justify-content-between mb-1">
                                 <h6 class="card-title mb-0">
@@ -65,24 +65,23 @@
                         </div>
                     </div>
                 </div>
-                        
-                <!-- Etapa 1: Iniciar -->
-                <div class="timeline-item position-relative flex-fill {% if extraction.status == 'assigned' %}active{% elif extraction.started_at %}completed{% else %}disabled{% endif %}" 
-                     style="min-width: 250px; max-width: 300px; flex: 0 0 auto;">
-                    <div class="timeline-marker d-flex align-items-center justify-content-center rounded {% if extraction.started_at %}bg-success text-white border-success{% elif extraction.status == 'assigned' %}bg-primary text-white border-primary{% else %}bg-light border-secondary text-muted{% endif %}" 
-                         style="width: 28px; height: 28px; margin: 0 auto 10px; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        {% if extraction.started_at %}
-                            <i class="fas fa-check" style="font-size: 13px;"></i>
-                        {% elif extraction.status == 'assigned' %}
-                            <i class="fas fa-circle-notch fa-spin" style="font-size: 13px;"></i>
-                        {% else %}
-                            <i class="far fa-circle" style="font-size: 13px;"></i>
-                        {% endif %}
+            </div>
+            
+            <!-- Coluna 2: Espaçamento com Seta -->
+            <div class="col-auto d-flex align-items-center justify-content-center px-2">
+                <i class="fas fa-arrow-right text-muted" style="font-size: 1.5rem;"></i>
+            </div>
+            
+            <!-- Coluna 3: Iniciar -->
+            <div class="col-auto">
+                <div class="timeline-step {% if extraction.status == 'assigned' %}active{% elif extraction.started_at %}completed{% else %}disabled{% endif %}">
+                    <div class="timeline-marker d-flex align-items-center justify-content-center {% if extraction.started_at %}bg-success text-white border-success{% elif extraction.status == 'assigned' %}bg-primary text-white border-primary{% else %}bg-light border-secondary text-muted{% endif %} rounded mb-2" 
+                         style="width: auto; min-width: 100px; padding: 4px 8px; margin: 0 auto; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <small class="fw-bold">Iniciar</small>
                     </div>
-                    <div class="card {% if extraction.started_at %}border-success{% elif extraction.status == 'assigned' %}border-primary{% else %}border-secondary{% endif %} {% if not extraction.started_at and extraction.status != 'assigned' %}timeline-disabled{% endif %}" style="min-height: 90px;">
+                    <div class="card {% if extraction.started_at %}border-success{% elif extraction.status == 'assigned' %}border-primary{% else %}border-secondary{% endif %} {% if not extraction.started_at and extraction.status != 'assigned' %}timeline-disabled{% endif %} timeline-card">
                         <div class="card-body p-2">
-                            <div class="d-flex align-items-center justify-content-between mb-1">
-                                <h6 class="card-title mb-0">Iniciar</h6>
+                            <div class="d-flex align-items-center justify-content-end mb-1">
                                 {% if extraction.status == 'assigned' %}
                                     <button type="button" 
                                             class="btn btn-sm btn-outline-primary" 
@@ -106,36 +105,29 @@
                         </div>
                     </div>
                 </div>
-                        
-                <!-- Etapa 2: Em Andamento -->
-                <div class="timeline-item position-relative flex-fill {% if extraction.status == 'in_progress' or extraction.status == 'paused' %}active{% elif extraction.status == 'completed' %}completed{% else %}disabled{% endif %}" 
-                     style="min-width: 250px; max-width: 300px; flex: 0 0 auto;">
-                    <div class="timeline-marker d-flex align-items-center justify-content-center rounded {% if extraction.status == 'completed' %}bg-success text-white border-success{% elif extraction.status == 'paused' %}bg-secondary text-white border-secondary{% elif extraction.status == 'in_progress' %}bg-primary text-white border-primary{% else %}bg-light border-secondary text-muted{% endif %}" 
-                         style="width: 28px; height: 28px; margin: 0 auto 10px; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        {% if extraction.status == 'completed' %}
-                            <i class="fas fa-check" style="font-size: 13px;"></i>
-                        {% elif extraction.status == 'paused' %}
-                            <i class="fas fa-pause" style="font-size: 13px;"></i>
-                        {% elif extraction.status == 'in_progress' %}
-                            <i class="fas fa-circle-notch fa-spin" style="font-size: 13px;"></i>
-                        {% else %}
-                            <i class="far fa-circle" style="font-size: 13px;"></i>
-                        {% endif %}
+            </div>
+            
+            <!-- Coluna 4: Espaçamento com Seta -->
+            <div class="col-auto d-flex align-items-center justify-content-center px-2">
+                <i class="fas fa-arrow-right text-muted" style="font-size: 1.5rem;"></i>
+            </div>
+            
+            <!-- Coluna 5: Em Andamento -->
+            <div class="col-auto">
+                <div class="timeline-step {% if extraction.status == 'in_progress' or extraction.status == 'paused' %}active{% elif extraction.status == 'completed' %}completed{% else %}disabled{% endif %}">
+                    <div class="timeline-marker d-flex align-items-center justify-content-center {% if extraction.status == 'completed' %}bg-success text-white border-success{% elif extraction.status == 'paused' %}bg-secondary text-white border-secondary{% elif extraction.status == 'in_progress' %}bg-primary text-white border-primary{% else %}bg-light border-secondary text-muted{% endif %} rounded mb-2" 
+                         style="width: auto; min-width: 100px; padding: 4px 8px; margin: 0 auto; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <small class="fw-bold">
+                            {% if extraction.status == 'paused' %}
+                                Pausada
+                            {% else %}
+                                Em Andamento
+                            {% endif %}
+                        </small>
                     </div>
-                    <div class="card {% if extraction.status == 'completed' %}border-success{% elif extraction.status == 'paused' %}border-secondary{% elif extraction.status == 'in_progress' %}border-primary{% else %}border-secondary{% endif %} {% if extraction.status != 'in_progress' and extraction.status != 'paused' and extraction.status != 'completed' %}timeline-disabled{% endif %}" style="min-height: 90px;">
+                    <div class="card {% if extraction.status == 'completed' %}border-success{% elif extraction.status == 'paused' %}border-secondary{% elif extraction.status == 'in_progress' %}border-primary{% else %}border-secondary{% endif %} {% if extraction.status != 'in_progress' and extraction.status != 'paused' and extraction.status != 'completed' %}timeline-disabled{% endif %} timeline-card">
                         <div class="card-body p-2">
-                            <div class="d-flex align-items-center justify-content-between mb-1">
-                                <h6 class="card-title mb-0">
-                                    {% if extraction.status == 'paused' %}
-                                        Pausada
-                                    {% elif extraction.status == 'in_progress' %}
-                                        Em Andamento
-                                    {% elif extraction.status == 'completed' %}
-                                        Em Andamento
-                                    {% else %}
-                                        Em Andamento
-                                    {% endif %}
-                                </h6>
+                            <div class="d-flex align-items-center justify-content-end mb-1">
                                 <div class="d-flex flex-wrap gap-1">
                                     {% if extraction.status == 'in_progress' %}
                                         {% if not extraction.brute_force_started_at %}
@@ -217,22 +209,23 @@
                         </div>
                     </div>
                 </div>
-                        
-                <!-- Etapa 3: Finalizada -->
-                <div class="timeline-item position-relative flex-fill {% if extraction.status == 'completed' %}completed{% else %}disabled{% endif %}" 
-                     style="min-width: 250px; max-width: 300px; flex: 0 0 auto;">
-                    <div class="timeline-marker d-flex align-items-center justify-content-center rounded {% if extraction.status == 'completed' %}bg-success text-white border-success{% else %}bg-light border-secondary text-muted{% endif %}" 
-                         style="width: 28px; height: 28px; margin: 0 auto 10px; z-index: 2; box-shadow: 0 2px 6px rgba(40, 167, 69, 0.4);">
-                        {% if extraction.status == 'completed' %}
-                            <i class="fas fa-check" style="font-size: 13px;"></i>
-                        {% else %}
-                            <i class="far fa-circle" style="font-size: 13px;"></i>
-                        {% endif %}
+            </div>
+            
+            <!-- Coluna 6: Espaçamento com Seta -->
+            <div class="col-auto d-flex align-items-center justify-content-center px-2">
+                <i class="fas fa-arrow-right text-muted" style="font-size: 1.5rem;"></i>
+            </div>
+            
+            <!-- Coluna 7: Finalizada -->
+            <div class="col-auto">
+                <div class="timeline-step {% if extraction.status == 'completed' %}completed{% else %}disabled{% endif %}">
+                    <div class="timeline-marker d-flex align-items-center justify-content-center {% if extraction.status == 'completed' %}bg-success text-white border-success{% else %}bg-light border-secondary text-muted{% endif %} rounded mb-2" 
+                         style="width: auto; min-width: 100px; padding: 4px 8px; margin: 0 auto; z-index: 2; box-shadow: 0 2px 6px rgba(40, 167, 69, 0.4);">
+                        <small class="fw-bold">Finalizada</small>
                     </div>
-                    <div class="card {% if extraction.status == 'completed' %}border-success{% else %}border-secondary timeline-disabled{% endif %}" style="min-height: 90px;">
+                    <div class="card {% if extraction.status == 'completed' %}border-success{% else %}border-secondary timeline-disabled{% endif %} timeline-card">
                         <div class="card-body p-2">
-                            <div class="d-flex align-items-center justify-content-between mb-1">
-                                <h6 class="card-title mb-0">Finalizada</h6>
+                            <div class="d-flex align-items-center justify-content-end mb-1">
                                 {% if extraction.status == 'completed' and extraction.extraction_result %}
                                     {% if extraction.extraction_result == 'success' %}
                                         <span class="badge bg-success">✓ Sucesso</span>
@@ -260,6 +253,7 @@
                         </div>
                     </div>
                 </div>
+            </div>
         </div>
     </div>
 </div>
@@ -270,61 +264,8 @@
     width: 100%;
 }
 
-.timeline-item {
-    margin: 0 -1px;
-}
-
-/* Engate do vagão - parte esquerda */
-.timeline-item:not(:first-child)::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 10px;
-    height: 24px;
-    background: #dee2e6;
-    z-index: 1;
-    border-radius: 0 4px 4px 0;
-    border: 1px solid #ced4da;
-    border-left: none;
-}
-
-/* Engate do vagão - parte direita */
-.timeline-item:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 10px;
-    height: 24px;
-    background: #dee2e6;
-    z-index: 1;
-    border-radius: 4px 0 0 4px;
-    border: 1px solid #ced4da;
-    border-right: none;
-}
-
-/* Engates completados */
-.timeline-item.completed:not(:last-child)::after,
-.timeline-item.completed:not(:first-child)::before {
-    background: #28a745;
-    border-color: #1e7e34;
-    box-shadow: 0 0 4px rgba(40, 167, 69, 0.4);
-}
-
-/* Engates da etapa ativa */
-.timeline-item.active:not(:last-child)::after {
-    background: linear-gradient(to right, #28a745 0%, #28a745 50%, #dee2e6 50%, #dee2e6 100%);
-    border-color: #1e7e34;
-    box-shadow: 0 0 6px rgba(40, 167, 69, 0.4);
-}
-
-.timeline-item.active:not(:first-child)::before {
-    background: #28a745;
-    border-color: #1e7e34;
-    box-shadow: 0 0 4px rgba(40, 167, 69, 0.4);
+.timeline-step {
+    position: relative;
 }
 
 /* Animação para marcador ativo */
@@ -339,7 +280,7 @@
     }
 }
 
-.timeline-item.active .timeline-marker {
+.timeline-step.active .timeline-marker {
     animation: pulseFlow 2s infinite;
 }
 
@@ -359,26 +300,45 @@
     display: none;
 }
 
-/* Engates desabilitados */
-.timeline-item.disabled:not(:last-child)::after,
-.timeline-item.disabled:not(:first-child)::before {
-    background: #e9ecef;
-    border-color: #dee2e6;
-    opacity: 0.5;
+/* Cards com dimensões fixas */
+.timeline-card {
+    width: 280px;
+    min-height: 120px;
+    height: auto;
+}
+
+.timeline-card .card-body {
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 /* Responsividade */
-@media (max-width: 768px) {
-    .timeline-item {
-        min-width: 100px !important;
-        max-width: 140px !important;
+@media (max-width: 1200px) {
+    .timeline-card {
+        width: 240px;
+        min-height: 110px;
     }
     
-    .timeline-item:not(:first-child)::before,
-    .timeline-item:not(:last-child)::after {
-        width: 6px;
-        height: 16px;
+    .timeline-card .card-body {
+        min-height: 110px;
+    }
+}
+
+@media (max-width: 768px) {
+    .timeline-card {
+        width: 200px;
+        min-height: 100px;
+    }
+    
+    .timeline-card .card-body {
+        min-height: 100px;
+    }
+    
+    .timeline-step .timeline-marker {
+        width: 24px !important;
+        height: 24px !important;
     }
 }
 </style>
-

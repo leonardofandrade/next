@@ -12,50 +12,44 @@ Painel de controle das extrações sob sua responsabilidade
 
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- Resumo Rápido - O que precisa de ação -->
-    <div class="row mb-4">
+    <!-- Resumo Rápido -->
+    <div class="row mb-3">
         <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-4">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h4 class="mb-2">
-                                <i class="fas fa-tasks text-primary me-2"></i>
-                                Minhas Extrações
-                            </h4>
-                            <p class="text-muted mb-0">
-                                {% if stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused > 0 %}
-                                    Você tem <strong>{{ stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused }}</strong> extração{{ stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused|pluralize }} sob sua responsabilidade
-                                {% else %}
-                                    Nenhuma extração ativa no momento
-                                {% endif %}
-                            </p>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <div class="d-flex gap-2 justify-content-md-end justify-content-start flex-wrap">
-                                {% if stats.pending > 0 %}
-                                    <span class="badge bg-warning fs-6 px-3 py-2">
-                                        <i class="fas fa-clock me-1"></i>{{ stats.pending }} Pendente{{ stats.pending|pluralize }}
-                                    </span>
-                                {% endif %}
-                                {% if stats.assigned > 0 %}
-                                    <span class="badge bg-info fs-6 px-3 py-2">
-                                        <i class="fas fa-user-check me-1"></i>{{ stats.assigned }} Atribuída{{ stats.assigned|pluralize }}
-                                    </span>
-                                {% endif %}
-                                {% if stats.in_progress > 0 %}
-                                    <span class="badge bg-primary fs-6 px-3 py-2">
-                                        <i class="fas fa-spinner fa-spin me-1"></i>{{ stats.in_progress }} Em Andamento
-                                    </span>
-                                {% endif %}
-                                {% if stats.paused > 0 %}
-                                    <span class="badge bg-secondary fs-6 px-3 py-2">
-                                        <i class="fas fa-pause me-1"></i>{{ stats.paused }} Pausada{{ stats.paused|pluralize }}
-                                    </span>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h4 class="mb-1">
+                        <i class="fas fa-tasks text-primary me-2"></i>
+                        Minhas Extrações
+                    </h4>
+                    <p class="text-muted mb-0 small">
+                        {% if stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused > 0 %}
+                            <strong>{{ stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused }}</strong> extração{{ stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused|pluralize }} ativa{{ stats.pending|add:stats.assigned|add:stats.in_progress|add:stats.paused|pluralize }}
+                        {% else %}
+                            Nenhuma extração ativa no momento
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    {% if stats.pending > 0 %}
+                        <span class="badge bg-warning px-3 py-2">
+                            <i class="fas fa-clock me-1"></i>{{ stats.pending }} Pendente{{ stats.pending|pluralize }}
+                        </span>
+                    {% endif %}
+                    {% if stats.assigned > 0 %}
+                        <span class="badge bg-info px-3 py-2">
+                            <i class="fas fa-user-check me-1"></i>{{ stats.assigned }} Atribuída{{ stats.assigned|pluralize }}
+                        </span>
+                    {% endif %}
+                    {% if stats.in_progress > 0 %}
+                        <span class="badge bg-primary px-3 py-2">
+                            <i class="fas fa-spinner fa-spin me-1"></i>{{ stats.in_progress }} Em Andamento
+                        </span>
+                    {% endif %}
+                    {% if stats.paused > 0 %}
+                        <span class="badge bg-secondary px-3 py-2">
+                            <i class="fas fa-pause me-1"></i>{{ stats.paused }} Pausada{{ stats.paused|pluralize }}
+                        </span>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -76,50 +70,38 @@ Painel de controle das extrações sob sua responsabilidade
             </div>
         </div>
         <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <tbody>
-                        {% if extractions_by_status.pending %}
-                            {% for extraction in extractions_by_status.pending %}
-                                <tr>
-                                    <td class="p-3">
-                                        {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        {% endif %}
-                        
-                        {% if extractions_by_status.assigned %}
-                            {% for extraction in extractions_by_status.assigned %}
-                                <tr>
-                                    <td class="p-3">
-                                        {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        {% endif %}
-                        
-                        {% if extractions_by_status.in_progress %}
-                            {% for extraction in extractions_by_status.in_progress %}
-                                <tr>
-                                    <td class="p-3">
-                                        {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        {% endif %}
-                        
-                        {% if extractions_by_status.paused %}
-                            {% for extraction in extractions_by_status.paused %}
-                                <tr>
-                                    <td class="p-3">
-                                        {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        {% endif %}
-                    </tbody>
-                </table>
+            <div class="extractions-list p-3">
+                {% if extractions_by_status.pending %}
+                    {% for extraction in extractions_by_status.pending %}
+                        <div class="extraction-row mb-3">
+                            {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                {% if extractions_by_status.assigned %}
+                    {% for extraction in extractions_by_status.assigned %}
+                        <div class="extraction-row mb-3">
+                            {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                {% if extractions_by_status.in_progress %}
+                    {% for extraction in extractions_by_status.in_progress %}
+                        <div class="extraction-row mb-3">
+                            {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                {% if extractions_by_status.paused %}
+                    {% for extraction in extractions_by_status.paused %}
+                        <div class="extraction-row mb-3">
+                            {% include 'users/extractors/includes/extraction_timeline.html' with extraction=extraction %}
+                        </div>
+                    {% endfor %}
+                {% endif %}
             </div>
         </div>
     </div>
@@ -529,4 +511,34 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<style>
+/* Melhorias no layout da página */
+.extractions-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.extraction-row {
+    transition: transform 0.2s ease;
+}
+
+.extraction-row:hover {
+    transform: translateY(-2px);
+}
+
+.extraction-row:last-child {
+    margin-bottom: 0 !important;
+}
+
+@media (max-width: 768px) {
+    .extractions-list {
+        padding: 1rem !important;
+    }
+    
+    .extraction-row {
+        margin-bottom: 1rem !important;
+    }
+}
+</style>
 {% endblock %}

@@ -32,19 +32,23 @@ Gerenciar os dispositivos do processo
     {% include 'cases/includes/case_detail_include.html' with case=case %}
 
     <!-- Formulário de Dispositivo -->
-    <div class="row mt-4">
+    <div class="row mt-4 collapse{% if editing_device_id %} show{% endif %}" id="deviceFormCollapse">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">
                         {% if editing_device_id %}
                             <i class="fas fa-edit me-2"></i>
                             Editar Dispositivo
+                            <span class="badge bg-secondary ms-2">ID: {{ editing_device_id }}</span>
                         {% else %}
                             <i class="fas fa-plus me-2"></i>
                             Adicionar Dispositivo
                         {% endif %}
                     </h5>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#deviceFormCollapse" aria-expanded="false" aria-controls="deviceFormCollapse">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
                 <form method="post" action="{% if editing_device_id %}{% url 'cases:device_update' case_pk=case.pk pk=editing_device_id %}?from=devices{% else %}{% url 'cases:device_create' case_pk=case.pk %}?from=devices{% endif %}" novalidate>
                     {% csrf_token %}
@@ -282,18 +286,18 @@ Gerenciar os dispositivos do processo
                     </div>
                     <div class="card-footer">
                         <div class="d-flex justify-content-between align-items-center">
-                            <button type="submit" class="btn btn-primary">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    {% if editing_device_id %}
+                                    <i class="fas fa-check me-2"></i>
+                                    Salvar Alterações
+                                    {% else %}
+                                    <i class="fas fa-plus me-2"></i>
+                                    Adicionar Dispositivo
+                                    {% endif %}
+                                </button>
                                 {% if editing_device_id %}
-                                <i class="fas fa-check me-2"></i>
-                                Salvar Alterações
-                                {% else %}
-                                <i class="fas fa-plus me-2"></i>
-                                Adicionar Dispositivo
-                                {% endif %}
-                            </button>
-                            {% if editing_device_id %}
-                            <div>
-                                <a href="{% url 'cases:devices' pk=case.pk %}" class="btn btn-success me-2">
+                                <a href="{% url 'cases:devices' pk=case.pk %}" class="btn btn-success">
                                     <i class="fas fa-plus me-2"></i>
                                     Novo
                                 </a>
@@ -301,8 +305,13 @@ Gerenciar os dispositivos do processo
                                     <i class="fas fa-times me-2"></i>
                                     Cancelar
                                 </a>
+                                {% else %}
+                                <button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#deviceFormCollapse" aria-expanded="false" aria-controls="deviceFormCollapse">
+                                    <i class="fas fa-times me-2"></i>
+                                    Cancelar
+                                </button>
+                                {% endif %}
                             </div>
-                            {% endif %}
                         </div>
                     </div>
                 </form>
@@ -322,6 +331,10 @@ Gerenciar os dispositivos do processo
                             <span class="badge bg-primary">{{ devices.count }}</span>
                         {% endif %}
                     </h5>
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#deviceFormCollapse" aria-expanded="false" aria-controls="deviceFormCollapse" id="addDeviceBtn">
+                        <i class="fas fa-plus me-2"></i>
+                        Adicionar Novo Dispositivo
+                    </button>
                 </div>
                 <div class="card-body">
                     {% if devices %}
@@ -356,8 +369,9 @@ Gerenciar os dispositivos do processo
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm" role="group">
                                             <a href="{% url 'cases:devices' pk=case.pk %}?edit={{ device.pk }}" 
-                                               class="btn btn-outline-primary" 
-                                               title="Editar">
+                                               class="btn btn-outline-primary edit-device-btn" 
+                                               title="Editar"
+                                               data-device-id="{{ device.pk }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             <button type="button" 
@@ -451,6 +465,26 @@ Gerenciar os dispositivos do processo
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // ===== COLLAPSE DO FORMULÁRIO =====
+    const deviceFormCollapse = document.getElementById('deviceFormCollapse');
+    
+    // Quando o formulário é exibido, rola a página até ele (exceto no carregamento inicial se já estiver editando)
+    if (deviceFormCollapse) {
+        deviceFormCollapse.addEventListener('shown.bs.collapse', function() {
+            // Só faz scroll se não estiver editando (para não fazer scroll no carregamento inicial)
+            {% if not editing_device_id %}
+            deviceFormCollapse.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            {% endif %}
+        });
+        
+        // Se estiver editando, faz scroll suave até o formulário após um pequeno delay
+        {% if editing_device_id %}
+        setTimeout(function() {
+            deviceFormCollapse.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+        {% endif %}
+    }
+    
     // Inicializa Select2 no formulário
     if (typeof $ !== 'undefined' && $.fn.select2) {
         $('form select').select2({

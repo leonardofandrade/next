@@ -22,62 +22,311 @@
 <div class="container-fluid py-4">
 
     <div class="row">
-        {% comment %} 
-         <!-- Alerta de Cadastro Incompleto -->
-        {% if not case.registration_completed_at %}
-        <div class="col-12 mb-3">
-            <div class="alert alert-warning" role="alert">
-                <div class="d-flex align-items-start justify-content-between">
-                    <div class="d-flex align-items-start">
-                        <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
-                        <div>
-                            <h5 class="alert-heading mb-2">Cadastro Pendente</h5>
-                            <p class="mb-2">
-                                O cadastro deste processo ainda não foi finalizado.
-                            </p>
-                            {% if devices_count == 0 %}
-                            <p class="mb-0">
-                                <strong>Atenção:</strong> É necessário cadastrar pelo menos um dispositivo antes de finalizar o cadastro.
-                            </p>
-                            {% else %}
-                            <p class="mb-0">
-                                <strong>{{ devices_count }} dispositivo(s)</strong> cadastrado(s). Você já pode finalizar o cadastro.
-                            </p>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% if devices_count > 0 %}
-                    <div>
-                        <a href="{% url 'cases:complete_registration' case.pk %}" class="btn btn-success">
-                            <i class="fas fa-check-circle me-2"></i>
-                            Finalizar Cadastro
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        {% endif %} 
-         {% endcomment %}
-        
         <!-- Informações Principais -->
         <div class="col-12 mb-4">
             {% include 'cases/includes/case_detail_include.html' with case=case %}
         </div>
 
-        <!-- Ações Rápidas -->
+        <!-- Indicador de Progresso do Workflow -->
+        {% if not case.registration_completed_at %}
+        <div class="col-12 mb-4">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-tasks me-2"></i>
+                        Progresso do Cadastro
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <!-- Step 1: Procedimentos -->
+                        <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    {% if procedures_count > 0 %}
+                                    <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    {% else %}
+                                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <span>1</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-0 {% if procedures_count == 0 %}text-primary fw-bold{% endif %}">Procedimentos</h6>
+                                    <small class="text-muted">
+                                        {% if procedures_count > 0 %}
+                                        {{ procedures_count }} cadastrado(s)
+                                        {% else %}
+                                        <span class="text-primary">Próximo passo</span>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-1 d-none d-md-block text-center">
+                            <i class="fas fa-arrow-right text-muted"></i>
+                        </div>
+                        <!-- Step 2: Dispositivos -->
+                        <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    {% if devices_count > 0 %}
+                                    <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    {% elif procedures_count > 0 %}
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <span>2</span>
+                                    </div>
+                                    {% else %}
+                                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <span>2</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-0 {% if procedures_count > 0 and devices_count == 0 %}text-primary fw-bold{% endif %}">Dispositivos</h6>
+                                    <small class="text-muted">
+                                        {% if devices_count > 0 %}
+                                        {{ devices_count }} cadastrado(s)
+                                        {% elif procedures_count > 0 %}
+                                        <span class="text-primary">Próximo passo</span>
+                                        {% else %}
+                                        Aguardando procedimentos
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-1 d-none d-md-block text-center">
+                            <i class="fas fa-arrow-right text-muted"></i>
+                        </div>
+                        <!-- Step 3: Finalizar -->
+                        <div class="col-md-3 col-sm-6">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    {% if case.registration_completed_at %}
+                                    <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    {% elif devices_count > 0 and procedures_count > 0 %}
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <span>3</span>
+                                    </div>
+                                    {% else %}
+                                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <span>3</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-0 {% if devices_count > 0 and procedures_count > 0 and not case.registration_completed_at %}text-primary fw-bold{% endif %}">Finalizar Cadastro</h6>
+                                    <small class="text-muted">
+                                        {% if case.registration_completed_at %}
+                                        Concluído
+                                        {% elif devices_count > 0 and procedures_count > 0 %}
+                                        <span class="text-primary">Próximo passo</span>
+                                        {% else %}
+                                        Aguardando requisitos
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Ações do Workflow - Pré Finalização -->
+        {% if not case.registration_completed_at %}
+        <div class="col-12 mb-4">
+            <div class="card border-primary">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clipboard-list me-2 text-primary"></i>
+                        Etapas de Cadastro
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Procedimentos -->
+                        <div class="col-md-4 col-sm-6">
+                            <a href="{% url 'cases:procedures' case.pk %}?next={% url 'cases:detail' case.pk %}" 
+                               class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4 {% if procedures_count == 0 %}border-2 border-primary{% endif %}"
+                               style="min-height: 120px;">
+                                <i class="fas fa-gavel fa-3x mb-3 {% if procedures_count == 0 %}text-primary{% endif %}"></i>
+                                <span class="fw-bold {% if procedures_count == 0 %}text-primary{% endif %}">Procedimentos</span>
+                                {% if procedures_count %}
+                                <small class="badge bg-warning mt-2">{{ procedures_count }} cadastrado(s)</small>
+                                {% else %}
+                                <small class="badge bg-primary mt-2">Pendente</small>
+                                {% endif %}
+                            </a>
+                        </div>
+                        <!-- Dispositivos -->
+                        <div class="col-md-4 col-sm-6">
+                            <a href="{% url 'cases:devices' case.pk %}?next={% url 'cases:detail' case.pk %}" 
+                               class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4 {% if procedures_count > 0 and devices_count == 0 %}border-2 border-primary{% endif %}"
+                               style="min-height: 120px;">
+                                <i class="fas fa-mobile-alt fa-3x mb-3 {% if procedures_count > 0 and devices_count == 0 %}text-primary{% endif %}"></i>
+                                <span class="fw-bold {% if procedures_count > 0 and devices_count == 0 %}text-primary{% endif %}">Dispositivos</span>
+                                {% if devices_count %}
+                                <small class="badge bg-info mt-2">{{ devices_count }} cadastrado(s)</small>
+                                {% elif procedures_count > 0 %}
+                                <small class="badge bg-primary mt-2">Próximo passo</small>
+                                {% else %}
+                                <small class="badge bg-secondary mt-2">Aguardando procedimentos</small>
+                                {% endif %}
+                            </a>
+                        </div>
+                        <!-- Finalizar Cadastro -->
+                        <div class="col-md-4 col-sm-6">
+                            {% if devices_count > 0 and procedures_count > 0 %}
+                                {% if not case.assigned_to or case.assigned_to == request.user %}
+                                <button type="button" 
+                                        class="btn btn-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4 border-2 border-primary"
+                                        style="min-height: 120px;"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#completeRegistrationModal">
+                                    <i class="fas fa-check-circle fa-3x mb-3"></i>
+                                    <span class="fw-bold">Finalizar Cadastro</span>
+                                    <small class="badge bg-primary mt-2">Pronto para finalizar</small>
+                                </button>
+                                {% else %}
+                                <button type="button" 
+                                        class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4"
+                                        style="min-height: 120px;"
+                                        disabled
+                                        title="Você precisa estar atribuído ao processo para finalizar o cadastro">
+                                    <i class="fas fa-check-circle fa-3x mb-3"></i>
+                                    <span class="fw-bold">Finalizar Cadastro</span>
+                                    <small class="badge bg-secondary mt-2">Aguardando atribuição</small>
+                                </button>
+                                {% endif %}
+                            {% else %}
+                            <button type="button" 
+                                    class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4"
+                                    style="min-height: 120px;"
+                                    disabled
+                                    title="{% if devices_count == 0 and procedures_count == 0 %}É necessário cadastrar pelo menos 1 dispositivo e 1 procedimento{% elif devices_count == 0 %}É necessário cadastrar pelo menos 1 dispositivo{% else %}É necessário cadastrar pelo menos 1 procedimento{% endif %}">
+                                <i class="fas fa-check-circle fa-3x mb-3"></i>
+                                <span class="fw-bold">Finalizar Cadastro</span>
+                                <small class="badge bg-secondary mt-2">
+                                    {% if devices_count == 0 and procedures_count == 0 %}
+                                    Falta: procedimentos e dispositivos
+                                    {% elif devices_count == 0 %}
+                                    Falta: dispositivos
+                                    {% else %}
+                                    Falta: procedimentos
+                                    {% endif %}
+                                </small>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Ações Pós Finalização -->
+        {% if case.registration_completed_at %}
+        <div class="col-12 mb-4">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Cadastro Finalizado - Ações Disponíveis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Extrações -->
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'extractions:case_extractions' case.pk %}?next={% url 'cases:detail' case.pk %}" 
+                                class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4"
+                                style="min-height: 120px;">
+                                <i class="fas fa-database fa-3x mb-3"></i>
+                                <span class="fw-bold">Extrações</span>
+                                {% if extractions_count %}
+                                <small class="badge bg-success mt-2">{{ extractions_count }} extração(ões)</small>
+                                {% else %}
+                                <small class="badge bg-secondary mt-2">Nenhuma extração</small>
+                                {% endif %}
+                            </a>
+                        </div>
+                        <!-- Atribuir-me / Desatribuir-me -->
+                        {% if case.assigned_to == request.user %}
+                        <div class="col-md-3 col-sm-6">
+                            <button type="button" 
+                                    class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4"
+                                    style="min-height: 120px;"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#unassignModal">
+                                <i class="fas fa-user-times fa-3x mb-3"></i>
+                                <span class="fw-bold">Desatribuir-me</span>
+                                <small class="badge bg-warning mt-2">Você está atribuído</small>
+                            </button>
+                        </div>
+                        {% elif not case.assigned_to %}
+                        <div class="col-md-3 col-sm-6">
+                            <button type="button" 
+                                    class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4"
+                                    style="min-height: 120px;"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#assignModal">
+                                <i class="fas fa-user-check fa-3x mb-3"></i>
+                                <span class="fw-bold">Atribuir-me</span>
+                                <small class="badge bg-primary mt-2">Disponível</small>
+                            </button>
+                        </div>
+                        {% endif %}
+                        <!-- Gerar Capa PDF -->
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'cases:cover_pdf' case.pk %}" 
+                               class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4"
+                               style="min-height: 120px;"
+                               target="_blank">
+                                <i class="fas fa-file-pdf fa-3x mb-3"></i>
+                                <span class="fw-bold">Gerar Capa</span>
+                                <small class="badge bg-info mt-2">PDF</small>
+                            </a>
+                        </div>
+                        <!-- Solicitação -->
+                        {% if case.extraction_request %}
+                        <div class="col-md-3 col-sm-6">
+                            <a href="{% url 'requisitions:detail' case.extraction_request.pk %}?next={% url 'cases:detail' case.pk %}" 
+                               class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4"
+                               style="min-height: 120px;">
+                                <i class="fas fa-envelope-open-text fa-3x mb-3"></i>
+                                <span class="fw-bold">Solicitação</span>
+                                <small class="badge bg-primary mt-2">#{{ case.extraction_request.pk }}</small>
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Ações Gerais -->
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-wrench me-2"></i>
-                        Ações Disponíveis
+                        <i class="fas fa-cog me-2"></i>
+                        Outras Ações
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
                         <!-- Editar Processo -->
-                        <div class="col-md-2 col-sm-6">
+                        <div class="col-md-3 col-sm-6">
                             <a href="{% url 'cases:update' case.pk %}?next={% url 'cases:detail' case.pk %}" 
                                class="btn btn-outline-secondary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3"
                                style="min-height: 100px;">
@@ -85,8 +334,8 @@
                                 <span>Editar Processo</span>
                             </a>
                         </div>
-                        <!-- Dispositivos -->
-                        <div class="col-md-2 col-sm-6">
+                        <!-- Dispositivos (sempre visível para edição) -->
+                        <div class="col-md-3 col-sm-6">
                             <a href="{% url 'cases:devices' case.pk %}?next={% url 'cases:detail' case.pk %}" 
                                class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3"
                                style="min-height: 100px;">
@@ -97,60 +346,8 @@
                                 {% endif %}
                             </a>
                         </div>
-
-                        <!-- Extrações -->
-                        <div class="col-md-2 col-sm-6">
-                            {% if case.registration_completed_at %}
-                            <a href="{% url 'extractions:case_extractions' case.pk %}?next={% url 'cases:detail' case.pk %}" 
-                                class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3"
-                                style="min-height: 100px;">
-                                <i class="fas fa-database fa-2x mb-2"></i>
-                                <span>Extrações</span>
-                                {% if extractions_count %}
-                                <small class="badge bg-success mt-1">{{ extractions_count }}</small>
-                                {% endif %}
-                            </a>
-                            {% else %}
-                            <button type="button" 
-                                class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3 disabled"
-                                style="min-height: 100px;"
-                                title="Complete o cadastro do processo para acessar as extrações">
-                                <i class="fas fa-database fa-2x mb-2"></i>
-                                <span>Extrações</span>
-                                {% if extractions_count %}
-                                <small class="badge bg-success mt-1">{{ extractions_count }}</small>
-                                {% endif %}
-                            </button>
-                            {% endif %}
-                        </div>
-
-                        <!-- Atribuir-me / Desatribuir-me -->
-                        {% if case.assigned_to == request.user %}
-                        <div class="col-md-2 col-sm-6">
-                            <button type="button" 
-                                    class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3"
-                                    style="min-height: 100px;"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#unassignModal">
-                                <i class="fas fa-user-times fa-2x mb-2"></i>
-                                <span>Desatribuir-me</span>
-                            </button>
-                        </div>
-                        {% elif not case.assigned_to %}
-                        <div class="col-md-2 col-sm-6">
-                            <button type="button" 
-                                    class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3"
-                                    style="min-height: 100px;"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#assignModal">
-                                <i class="fas fa-user-check fa-2x mb-2"></i>
-                                <span>Atribuir-me</span>
-                            </button>
-                        </div>
-                        {% endif %}
-
-                        <!-- Procedimentos -->
-                        <div class="col-md-2 col-sm-6">
+                        <!-- Procedimentos (sempre visível para edição) -->
+                        <div class="col-md-3 col-sm-6">
                             <a href="{% url 'cases:procedures' case.pk %}?next={% url 'cases:detail' case.pk %}" 
                                class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3"
                                style="min-height: 100px;">
@@ -161,58 +358,6 @@
                                 {% endif %}
                             </a>
                         </div>
-                        <!-- Finalizar Cadastro -->
-                        {% if not case.registration_completed_at %}
-                            {% if not case.assigned_to or case.assigned_to == request.user %}
-                                {% if devices_count > 0 and procedures_count > 0 %}
-                                <div class="col-md-2 col-sm-6">
-                                    <button type="button" 
-                                            class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3"
-                                            style="min-height: 100px;"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#completeRegistrationModal">
-                                        <i class="fas fa-check-circle fa-2x mb-2"></i>
-                                        <span>Finalizar Cadastro</span>
-                                    </button>
-                                </div>
-                                {% else %}
-                                <div class="col-md-2 col-sm-6">
-                                    <button type="button" 
-                                            class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3"
-                                            style="min-height: 100px;"
-                                            disabled
-                                            title="{% if devices_count == 0 and procedures_count == 0 %}É necessário cadastrar pelo menos 1 dispositivo e 1 procedimento{% elif devices_count == 0 %}É necessário cadastrar pelo menos 1 dispositivo{% else %}É necessário cadastrar pelo menos 1 procedimento{% endif %}">
-                                        <i class="fas fa-check-circle fa-2x mb-2"></i>
-                                        <span>Finalizar Cadastro</span>
-                                    </button>
-                                </div>
-                                {% endif %}
-                            {% endif %}
-                        {% else %}
-                        <!-- Gerar Capa PDF -->
-                        <div class="col-md-2 col-sm-6">
-                            <a href="{% url 'cases:cover_pdf' case.pk %}" 
-                               class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3"
-                               style="min-height: 100px;"
-                               target="_blank">
-                                <i class="fas fa-file-pdf fa-2x mb-2"></i>
-                                <span>Gerar Capa</span>
-                            </a>
-                        </div>
-                        {% endif %}
-
-                        <!-- Solicitação -->
-                        {% if case.extraction_request %}
-                        <div class="col-md-2 col-sm-6">
-                            <a href="{% url 'requisitions:detail' case.extraction_request.pk %}?next={% url 'cases:detail' case.pk %}" 
-                               class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3"
-                               style="min-height: 100px;">
-                                <i class="fas fa-envelope-open-text fa-2x mb-2"></i>
-                                <span>Solicitação</span>
-                                <small class="badge bg-primary mt-1">#{{ case.extraction_request.pk }}</small>
-                            </a>
-                        </div>
-                        {% endif %}
 
                        
                     </div>

@@ -104,7 +104,11 @@ class CaseDeviceCreateView(LoginRequiredMixin, ServiceMixin, CreateView):
                     self.request,
                     'Dispositivo adicionado com sucesso! Você pode adicionar outro dispositivo abaixo.'
                 )
-                # Preserva o parâmetro 'from' se existir
+                # Se veio da página de dispositivos, redireciona de volta para lá
+                # com parâmetro para abrir o formulário automaticamente
+                if from_param == 'devices':
+                    return redirect(f"{reverse('cases:devices', kwargs={'pk': self.case.pk})}?add_another=1")
+                # Caso contrário, redireciona para a página de criação
                 url = reverse('cases:device_create', kwargs={'case_pk': self.case.pk})
                 if from_param:
                     url = f"{url}?from={from_param}"

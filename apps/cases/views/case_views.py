@@ -599,6 +599,15 @@ class CreateExtractionsView(LoginRequiredMixin, ServiceMixin, View):
         
         try:
             case = service.get_object(pk)
+            
+            # Valida se o cadastro do processo foi completado
+            if not case.registration_completed_at:
+                messages.error(
+                    request,
+                    'Não é possível criar extrações. Complete o cadastro do processo primeiro.'
+                )
+                return redirect('cases:detail', pk=case.pk)
+            
             extractions = service.create_extractions_for_case(case)
             created_count = len(extractions)
             

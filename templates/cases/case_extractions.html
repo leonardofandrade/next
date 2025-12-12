@@ -31,7 +31,7 @@ Visualize as extrações e informações do processo
                         Extrações do Processo
                     </h5>
                     <div class="d-flex align-items-center gap-2">
-                        {% if has_devices_without_extractions %}
+                        {% if case.registration_completed_at and has_devices_without_extractions %}
                         <form method="post" action="{% url 'cases:create_extractions' case.pk %}" style="display: inline;">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-sm btn-success" title="Criar extrações para dispositivos sem extração">
@@ -235,10 +235,15 @@ Visualize as extrações e informações do processo
                     <div class="text-center py-3">
                         <i class="fas fa-database fa-2x text-muted mb-2"></i>
                         <p class="text-muted mb-0">Nenhuma extração encontrada para este processo.</p>
-                        {% if has_devices_without_extractions %}
+                        {% if case.registration_completed_at and has_devices_without_extractions %}
                         <div class="alert alert-info d-inline-block mt-3 mb-0" role="alert">
                             <i class="fas fa-info-circle me-2"></i>
                             Existem dispositivos cadastrados sem extração. Clique em "Criar Extrações" para gerá-las automaticamente.
+                        </div>
+                        {% elif not case.registration_completed_at %}
+                        <div class="alert alert-warning d-inline-block mt-3 mb-0" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Complete o cadastro do processo para criar extrações.
                         </div>
                         {% else %}
                         <small class="text-muted">Adicione dispositivos ao processo para iniciar as extrações.</small>

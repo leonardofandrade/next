@@ -95,6 +95,7 @@
 
                         <!-- Extrações -->
                         <div class="col-md-2 col-sm-6">
+                            {% if case.registration_completed_at %}
                             <a href="{% url 'extractions:case_extractions' case.pk %}?next={% url 'cases:detail' case.pk %}" 
                                 class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3"
                                 style="min-height: 100px;">
@@ -104,6 +105,18 @@
                                 <small class="badge bg-success mt-1">{{ extractions_count }}</small>
                                 {% endif %}
                             </a>
+                            {% else %}
+                            <button type="button" 
+                                class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3 disabled"
+                                style="min-height: 100px;"
+                                title="Complete o cadastro do processo para acessar as extrações">
+                                <i class="fas fa-database fa-2x mb-2"></i>
+                                <span>Extrações</span>
+                                {% if extractions_count %}
+                                <small class="badge bg-success mt-1">{{ extractions_count }}</small>
+                                {% endif %}
+                            </button>
+                            {% endif %}
                         </div>
 
                         <!-- Atribuir-me / Desatribuir-me -->

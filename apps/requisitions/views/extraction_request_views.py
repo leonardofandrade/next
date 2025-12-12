@@ -280,7 +280,7 @@ class CreateCaseFromRequestView(LoginRequiredMixin, View):
                 request,
                 f'Processo criado com sucesso a partir da solicitação #{pk}!'
             )
-            return redirect('cases:update', pk=case.pk)
+            return redirect('cases:detail', pk=case.pk)
         except ServiceException as e:
             messages.error(request, str(e))
             return redirect('requisitions:not_received')

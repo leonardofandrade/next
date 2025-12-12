@@ -110,15 +110,13 @@
                                     data-bs-target="#pauseModal{{ extraction.pk }}">
                                 <i class="fas fa-pause"></i>
                             </button>
-                            <form method="post" action="{% url 'extractions:cancel' extraction.pk %}" class="d-inline ajax-form">
-                                {% csrf_token %}
-                                <button type="submit" 
-                                        class="btn btn-sm btn-outline-secondary" 
-                                        title="Cancelar Extração"
-                                        onclick="return confirm('Tem certeza que deseja cancelar esta extração?');">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </form>
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-secondary" 
+                                    title="Cancelar Extração"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#cancelExtractionModal{{ extraction.pk }}">
+                                <i class="fas fa-times"></i>
+                            </button>
                             <button type="button" 
                                     class="btn btn-sm btn-outline-success" 
                                     title="Finalizar Extração"

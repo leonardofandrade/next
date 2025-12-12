@@ -443,12 +443,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (button && button.hasAttribute('form')) {
             const formId = button.getAttribute('form');
             const form = document.getElementById(formId);
-            if (form && form.classList.contains('ajax-form') && form.closest('.modal')) {
-                e.preventDefault();
-                e.stopPropagation();
-                // Dispara o evento submit no formulário
-                const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
-                form.dispatchEvent(submitEvent);
+            if (form) {
+                // Verifica se é um formulário AJAX dentro de um modal
+                if (form.classList.contains('ajax-form') && form.closest('.modal')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Dispara o evento submit no formulário
+                    const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+                    form.dispatchEvent(submitEvent);
+                }
             }
         }
     });

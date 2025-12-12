@@ -120,14 +120,14 @@
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="startModalLabel{{ extraction.pk }}">
                     <i class="fas fa-play me-2"></i>
-                    Iniciar Extração
+                    {% if extraction.status == 'paused' %}Retomar{% else %}Iniciar{% endif %} Extração
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-info mb-3">
                     <i class="fas fa-info-circle me-2"></i>
-                    Você está prestes a iniciar esta extração.
+                    Você está prestes a {% if extraction.status == 'paused' %}retomar{% else %}iniciar{% endif %} esta extração.
                 </div>
                 <div class="row g-2">
                     <div class="col-12">
@@ -150,8 +150,9 @@
                     </div>
                 </div>
                 <hr>
-                <form id="startForm{{ extraction.pk }}" method="post" action="{% url 'extractions:start' extraction.pk %}" class="ajax-form">
+                <form id="startForm{{ extraction.pk }}" method="post" action="{% if extraction.status == 'paused' %}{% url 'extractions:resume' extraction.pk %}{% else %}{% url 'extractions:start' extraction.pk %}{% endif %}" class="ajax-form">
                     {% csrf_token %}
+                    {% if extraction.status != 'paused' %}
                     <div class="mb-3">
                         <label for="notes{{ extraction.pk }}" class="form-label">
                             <i class="fas fa-sticky-note me-1"></i>
@@ -160,6 +161,7 @@
                         <textarea class="form-control" id="notes{{ extraction.pk }}" name="notes" rows="3" 
                                   placeholder="Adicione observações sobre o início da extração..."></textarea>
                     </div>
+                    {% endif %}
                 </form>
             </div>
             <div class="modal-footer">
@@ -169,7 +171,7 @@
                 </button>
                 <button type="submit" form="startForm{{ extraction.pk }}" class="btn btn-primary">
                     <i class="fas fa-play me-2"></i>
-                    Iniciar Extração
+                    {% if extraction.status == 'paused' %}Retomar{% else %}Iniciar{% endif %} Extração
                 </button>
             </div>
         </div>

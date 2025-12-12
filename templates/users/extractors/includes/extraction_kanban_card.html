@@ -61,7 +61,17 @@
             
             <!-- Status e Ações -->
             <div class="border-top pt-2 mt-2">
-                {% if extraction.status == 'assigned' %}
+                {% if extraction.status == 'pending' %}
+                    <div class="mb-2">
+                        <button type="button" 
+                                class="btn btn-primary btn-sm w-100" 
+                                title="Iniciar Extração"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#startModal{{ extraction.pk }}">
+                            <i class="fas fa-play me-2"></i>Iniciar Extração
+                        </button>
+                    </div>
+                {% elif extraction.status == 'assigned' %}
                     <div class="mb-2">
                         <button type="button" 
                                 class="btn btn-primary btn-sm w-100" 
@@ -85,23 +95,25 @@
                 {% elif extraction.status == 'in_progress' %}
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
                         <div class="d-flex flex-wrap gap-1">
-                            {% if not extraction.brute_force_started_at %}
-                                <button type="button" 
-                                        class="btn btn-sm btn-outline-danger" 
-                                        title="Iniciar Força Bruta"
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#startBruteForceModal{{ extraction.pk }}">
-                                    <i class="fas fa-unlock-alt"></i>
-                                </button>
-                            {% elif extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
-                                <button type="button" 
-                                        class="btn btn-sm btn-outline-danger" 
-                                        title="Finalizar Força Bruta"
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#finishBruteForceModal{{ extraction.pk }}"
-                                        data-extraction-id="{{ extraction.pk }}">
-                                    <i class="fas fa-unlock"></i>
-                                </button>
+                            {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
+                                {% if not extraction.brute_force_started_at %}
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger" 
+                                            title="Iniciar Força Bruta"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#startBruteForceModal{{ extraction.pk }}">
+                                        <i class="fas fa-unlock-alt"></i>
+                                    </button>
+                                {% elif extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger" 
+                                            title="Finalizar Força Bruta"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#finishBruteForceModal{{ extraction.pk }}"
+                                            data-extraction-id="{{ extraction.pk }}">
+                                        <i class="fas fa-unlock"></i>
+                                    </button>
+                                {% endif %}
                             {% endif %}
                             <button type="button" 
                                     class="btn btn-sm btn-outline-warning" 
@@ -133,6 +145,15 @@
                         </div>
                     {% endif %}
                 {% elif extraction.status == 'paused' %}
+                    <div class="mb-2">
+                        <button type="button" 
+                                class="btn btn-primary btn-sm w-100" 
+                                title="Iniciar Extração"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#startModal{{ extraction.pk }}">
+                            <i class="fas fa-play me-2"></i>Iniciar Extração
+                        </button>
+                    </div>
                     <div class="d-flex flex-wrap gap-1 mb-2">
                         <button type="button" 
                                 class="btn btn-sm btn-outline-success" 

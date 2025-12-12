@@ -89,8 +89,10 @@ class CaseDetailView(ExtractionUnitFilterMixin, BaseDetailView):
         """Add page information and counts to context"""
         context = super().get_context_data(**kwargs)
         case = self.get_object()
-        context['page_title'] = f'Processo {case.number if case.number else f"#{case.pk}"}'
-        context['page_icon'] = 'fa-file-alt'
+        case_number = case.number if case.number else f"#{case.pk}"
+        acronym = f" - {case.requester_agency_unit.acronym}" if case.requester_agency_unit and case.requester_agency_unit.acronym else ""
+        context['page_title'] = f'Processo {case_number}{acronym}'
+        context['page_icon'] = 'fa-briefcase'
         
         # Add device and procedure counts for complete registration button
         context['devices_count'] = case.case_devices.filter(deleted_at__isnull=True).count()

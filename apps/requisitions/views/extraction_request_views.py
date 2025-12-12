@@ -192,6 +192,11 @@ class ExtractionRequestUpdateView(ExtractionUnitFilterMixin, BaseUpdateView):
         context['page_title'] = f'Editar Solicitação #{self.object.pk}'
         context['page_icon'] = 'fa-edit'
         context['action'] = 'update'
+        
+        # Add distribution summary for sidebar (same as create view)
+        from apps.requisitions.services import get_distribution_summary
+        context['distribution_summary'] = get_distribution_summary()
+        
         return context
 
 

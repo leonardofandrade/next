@@ -29,10 +29,10 @@
 {% endblock page_actions %}
 
 {% block content %}
-<div class="{% if action == 'update' %}container py-4{% elif distribution_summary %}container-fluid py-4{% else %}container py-4{% endif %}">
+<div class="container-fluid py-4">
     <!-- Form -->
-    <div class="row {% if action == 'update' %}justify-content-center{% endif %}">
-        <div class="{% if action == 'update' %}col-lg-10 col-xl-8{% elif distribution_summary %}col-lg-8{% else %}col-lg-10 col-xl-8{% endif %}">
+    <div class="row">
+        <div class="col-lg-8">
             <form method="post" novalidate>
                 {% csrf_token %}
                 
@@ -142,7 +142,7 @@
                                     Criar e Adicionar Outra
                                 </button>
                                 {% endif %}
-                                <button type="submit" class="btn btn-primary">
+                                <button type="submit" class="btn btn-primary me-2">
                                     <i class="fas fa-save me-2"></i>
                                     {% if action == 'create' %}
                                         Criar Solicitação
@@ -150,6 +150,12 @@
                                         Salvar Alterações
                                     {% endif %}
                                 </button>
+                                {% if action == 'update' and object.extraction_unit %}
+                                <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#emailModal" onclick="loadEmailContent({{ object.pk }})">
+                                    <i class="fas fa-envelope me-2"></i>
+                                    Gerar Email de Resposta
+                                </button>
+                                {% endif %}
                             </div>
                             <a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'requisitions:list' %}{% endif %}" class="btn btn-secondary">
                                 <i class="fas fa-times me-2"></i>
@@ -162,7 +168,6 @@
         </div>
         
         <!-- Resumo de Distribuição - Coluna Lateral -->
-        {% if action == 'create' and distribution_summary %}
         <div class="col-lg-4">
             <div class="card h-100">
                 <div class="card-header">
@@ -191,42 +196,50 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for unit_data in distribution_summary %}
-                                    <tr class="{% if unit_data.is_overloaded %}table-danger{% elif unit_data.is_available %}table-success{% else %}table-warning{% endif %}">
-                                        <td>
-                                            <div class="fw-bold">{{ unit_data.unit.acronym|default:unit_data.unit.name|truncatechars:20 }}</div>
-                                            <small class="text-muted">{{ unit_data.unit.name|truncatechars:25 }}</small>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge bg-primary fs-6">{{ unit_data.total_requests }}</span>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge bg-info fs-6">{{ unit_data.total_devices }}</span>
-                                        </td>
-                                        <td class="text-center">
-                                            {% if unit_data.is_overloaded %}
-                                                <i class="fas fa-exclamation-triangle text-danger" title="Sobrecarregada"></i>
-                                            {% elif unit_data.is_available %}
-                                                <i class="fas fa-check-circle text-success" title="Disponível"></i>
-                                            {% else %}
-                                                <i class="fas fa-exclamation-circle text-warning" title="Atenção"></i>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% empty %}
-                                    <tr>
-                                        <td colspan="4" class="text-center text-muted py-3">
-                                            <i class="fas fa-info-circle me-2"></i>
-                                            Nenhuma unidade de extração encontrada.
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
+                                    {% if distribution_summary %}
+                                        {% for unit_data in distribution_summary %}
+                                        <tr class="{% if unit_data.is_overloaded %}table-danger{% elif unit_data.is_available %}table-success{% else %}table-warning{% endif %}">
+                                            <td>
+                                                <div class="fw-bold">{{ unit_data.unit.acronym|default:unit_data.unit.name|truncatechars:20 }}</div>
+                                                <small class="text-muted">{{ unit_data.unit.name|truncatechars:25 }}</small>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-primary fs-6">{{ unit_data.total_requests }}</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-info fs-6">{{ unit_data.total_devices }}</span>
+                                            </td>
+                                            <td class="text-center">
+                                                {% if unit_data.is_overloaded %}
+                                                    <i class="fas fa-exclamation-triangle text-danger" title="Sobrecarregada"></i>
+                                                {% elif unit_data.is_available %}
+                                                    <i class="fas fa-check-circle text-success" title="Disponível"></i>
+                                                {% else %}
+                                                    <i class="fas fa-exclamation-circle text-warning" title="Atenção"></i>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-3">
+                                                <i class="fas fa-info-circle me-2"></i>
+                                                Nenhuma unidade de extração encontrada.
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-3">
+                                                <i class="fas fa-info-circle me-2"></i>
+                                                Nenhuma unidade de extração encontrada.
+                                            </td>
+                                        </tr>
+                                    {% endif %}
                                 </tbody>
                             </table>
                         </div>
                         
                         <!-- Gráfico Compacto -->
-                        {% if action == 'create' and distribution_summary %}
                         <div class="p-3 border-top">
                             <h6 class="mb-3">
                                 <i class="fas fa-chart-pie me-2"></i>
@@ -234,9 +247,16 @@
                             </h6>
                             <div style="position: relative; height: 250px;">
                                 <canvas id="compactChart"></canvas>
+                                {% if not distribution_summary %}
+                                <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.9);">
+                                    <div class="text-center">
+                                        <i class="fas fa-info-circle fa-2x mb-2"></i>
+                                        <p class="mb-0">Nenhum dado disponível</p>
+                                    </div>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
-                        {% endif %}
                     </div>
                     
                     <!-- Visualização Detalhada (Cards + Gráfico) -->
@@ -251,6 +271,14 @@
                                 <div class="col-md-8">
                                     <div style="position: relative; height: 300px;">
                                         <canvas id="requestsChart"></canvas>
+                                        {% if not distribution_summary %}
+                                        <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.9);">
+                                            <div class="text-center">
+                                                <i class="fas fa-info-circle fa-2x mb-2"></i>
+                                                <p class="mb-0">Nenhum dado disponível</p>
+                                            </div>
+                                        </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -279,7 +307,8 @@
                         
                         <!-- Cards Detalhados -->
                         <div class="p-3">
-                            {% for unit_data in distribution_summary %}
+                            {% if distribution_summary %}
+                                {% for unit_data in distribution_summary %}
                             <div class="card mb-3 {% if unit_data.is_overloaded %}border-danger{% elif unit_data.is_available %}border-success{% else %}border-warning{% endif %}">
                                 <div class="card-header py-2 {% if unit_data.is_overloaded %}bg-danger text-white{% elif unit_data.is_available %}bg-success text-white{% else %}bg-warning text-dark{% endif %}">
                                     <h6 class="mb-0">
@@ -323,7 +352,13 @@
                                     </div>
                                 </div>
                             </div>
-                            {% endfor %}
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Nenhuma unidade de extração encontrada.
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -340,7 +375,6 @@
                 </div>
             </div>
         </div>
-        {% endif %}
     </div>
 </div>
 
@@ -578,7 +612,6 @@ function loadEmailContent(pk) {
     }
     {% endif %}
     
-    {% if action == 'create' and distribution_summary %}
     // Distribution Summary Charts
     document.addEventListener('DOMContentLoaded', function() {
         initDistributionCharts();
@@ -618,28 +651,26 @@ function loadEmailContent(pk) {
             return;
         }
         
-        {% if action == 'create' and distribution_summary %}
-        const distributionData = [
-            {% for unit_data in distribution_summary %}
-            {
-                unit: '{{ unit_data.unit.acronym|default:unit_data.unit.name|truncatechars:15|escapejs }}',
-                total: {{ unit_data.total_requests }},
-                pending: {{ unit_data.pending_requests }},
-                in_progress: {{ unit_data.in_progress_requests }},
-                received: {{ unit_data.received_requests }}
-            }{% if not forloop.last %},{% endif %}
-            {% endfor %}
-        ];
+        {% if distribution_summary %}
+            const distributionData = [
+                {% for unit_data in distribution_summary %}
+                {
+                    unit: '{{ unit_data.unit.acronym|default:unit_data.unit.name|truncatechars:15|escapejs }}',
+                    total: {{ unit_data.total_requests }},
+                    pending: {{ unit_data.pending_requests }},
+                    in_progress: {{ unit_data.in_progress_requests }},
+                    received: {{ unit_data.received_requests }}
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ];
+        {% else %}
+            const distributionData = [];
+        {% endif %}
         
         // Filter out units with zero requests for charts (but keep all in table)
         const chartData = distributionData.filter(function(item) {
             return item.total > 0;
         });
-        
-        if (distributionData.length === 0) {
-            console.warn('No distribution data available');
-            return;
-        }
         
         // Compact Chart (Pie Chart) - only show units with requests
         const compactCtx = document.getElementById('compactChart');
@@ -780,10 +811,6 @@ function loadEmailContent(pk) {
                 }
             });
         }
-        {% else %}
-        console.warn('Distribution summary not available');
-        {% endif %}
     }
-    {% endif %}
 </script>
 {% endblock %}

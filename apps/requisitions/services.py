@@ -129,11 +129,15 @@ class ExtractionRequestService(BaseService):
         )
     
     @transaction.atomic
-    def create_case_from_request(self, request_pk: int) -> 'Case':
+    def create_case_from_request(self, request_pk: int, receipt_notes: str = None) -> 'Case':
         """
         Cria um Case a partir de um ExtractionRequest e marca o request como recebido.
         Operação atômica: criação do Case e atualização do ExtractionRequest são executadas
         em uma única transação. Se falharem, tudo será revertido.
+        
+        Args:
+            request_pk: ID da ExtractionRequest
+            receipt_notes: Observações sobre o recebimento do material (opcional)
         
         Nota: Falhas no parsing de procedimentos (CaseProcedure) não impedem a criação do case.
         
@@ -150,7 +154,8 @@ class ExtractionRequestService(BaseService):
         case = case_service.create_case_from_requisition(
             requisition=extraction_request,
             user=self.user,
-            mark_request_as_received=True
+            mark_request_as_received=True,
+            receipt_notes=receipt_notes
         )
         
         return case

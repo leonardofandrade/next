@@ -350,7 +350,7 @@ class CaseService(BaseService):
         return queryset
     
     @transaction.atomic
-    def create_case_from_requisition(self, requisition, user, mark_request_as_received: bool = False) -> Case:
+    def create_case_from_requisition(self, requisition, user, mark_request_as_received: bool = False, receipt_notes: str = None) -> Case:
         """
         Cria um Case a partir de uma ExtractionRequest.
         
@@ -358,6 +358,7 @@ class CaseService(BaseService):
             requisition: Instância de ExtractionRequest
             user: Usuário que está criando o caso (para created_by)
             mark_request_as_received: Se True, marca o ExtractionRequest como recebido e atualiza status
+            receipt_notes: Observações sobre o recebimento do material (opcional)
         
         Returns:
             Case: Caso criado
@@ -429,6 +430,10 @@ class CaseService(BaseService):
                 ExtractionRequest.REQUEST_STATUS_RECEIVED
             ]:
                 requisition.status = ExtractionRequest.REQUEST_STATUS_ASSIGNED
+            
+            # Salva as observações de recebimento se fornecidas
+            if receipt_notes:
+                requisition.receipt_notes = receipt_notes.strip() if receipt_notes else None
             
             requisition.updated_by = user
             requisition.version += 1

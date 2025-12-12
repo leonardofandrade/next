@@ -190,37 +190,35 @@ Solicitações pendentes ou aguardando material (não recebidas)
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <p>Tem certeza que deseja criar um processo a partir da solicitação <strong>#{{ request.pk }}</strong>?</p>
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <strong>Atenção:</strong> Esta ação irá:
-                    <ul class="mb-0 mt-2">
-                        <li>Criar um novo processo com os dados da solicitação</li>
-                        <li>Marcar a solicitação como recebida automaticamente</li>
-                        <li>Tentar criar procedimentos do caso baseado nos procedimentos informados</li>
-                        <li>Redirecionar para a edição do processo criado</li>
-                    </ul>
+            <form method="post" action="{% url 'requisitions:create_case' request.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="mb-3">Você confirma o recebimento do material?</p>
+                    <p class="text-muted mb-3">Se sim, será criado um novo processo <strong>(SEM NÚMERO)</strong> e você será redirecionado para a tela do processo, onde você poderá cadastrar o material recebido.</p>
+                    
+                    <div class="mb-3">
+                        <label for="receipt_notes_{{ request.pk }}" class="form-label">
+                            <i class="fas fa-sticky-note me-2"></i>Observações sobre o recebimento <small class="text-muted">(opcional)</small>
+                        </label>
+                        <textarea 
+                            class="form-control" 
+                            id="receipt_notes_{{ request.pk }}" 
+                            name="receipt_notes" 
+                            rows="3" 
+                            placeholder="Informe observações sobre o recebimento do material, se necessário..."></textarea>
+                    </div>
                 </div>
-                {% if request.request_procedures %}
-                <div class="mb-2">
-                    <strong>Procedimentos:</strong> {{ request.request_procedures }}
-                </div>
-                {% endif %}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>
-                    Cancelar
-                </button>
-                <form method="post" action="{% url 'requisitions:create_case' request.pk %}" style="display: inline;">
-                    {% csrf_token %}
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>
+                        Cancelar
+                    </button>
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-check me-2"></i>
                         Confirmar e Criar Processo
                     </button>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     </div>
     </div>

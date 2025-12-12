@@ -4,8 +4,9 @@
 {% block page_title %}<i class="fas {{ page_icon }} me-2"></i> {{ page_title }}{% endblock page_title %}
 {% block page_description %}{{ page_description }}{% endblock page_description %}
 {% block page_icon %}{{ page_icon }}{% endblock page_icon %}
+
 {% block content %}
-<div class="row g3">
+<div class="row g-3">
     <div class="col-12">
         <div class="card">
             <div class="card-body">
@@ -13,5 +14,24 @@
             </div>
         </div>
     </div>
+    {% if is_extractor_user %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary bg-opacity-10">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt text-primary me-2"></i>Ações Rápidas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'requisitions:not_received' %}" class="btn btn-primary">
+                        <i class="fas fa-inbox me-2"></i>
+                        Solicitações Não Recebidas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

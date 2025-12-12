@@ -274,8 +274,11 @@ class CreateCaseFromRequestView(LoginRequiredMixin, View):
     def post(self, request, pk):
         service = ExtractionRequestService(user=request.user)
         
+        # Obtém as observações de recebimento do formulário
+        receipt_notes = request.POST.get('receipt_notes', '').strip() or None
+        
         try:
-            case = service.create_case_from_request(pk)
+            case = service.create_case_from_request(pk, receipt_notes=receipt_notes)
             messages.success(
                 request,
                 f'Processo criado com sucesso a partir da solicitação #{pk}!'

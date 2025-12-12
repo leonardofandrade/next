@@ -2,6 +2,7 @@
 Views relacionadas ao modelo CaseDevice
 """
 from django.shortcuts import redirect, get_object_or_404, render
+from django.urls import reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.views.generic import CreateView, UpdateView, DeleteView, DetailView, View
@@ -103,7 +104,11 @@ class CaseDeviceCreateView(LoginRequiredMixin, ServiceMixin, CreateView):
                     self.request,
                     'Dispositivo adicionado com sucesso! Você pode adicionar outro dispositivo abaixo.'
                 )
-                return redirect('cases:device_create', case_pk=self.case.pk)
+                # Preserva o parâmetro 'from' se existir
+                url = reverse('cases:device_create', kwargs={'case_pk': self.case.pk})
+                if from_param:
+                    url = f"{url}?from={from_param}"
+                return redirect(url)
             else:
                 messages.success(
                     self.request,

@@ -7,7 +7,7 @@
 {% endblock page_title %}
 
 {% block page_description %}
-Painel de controle das extrações sob sua responsabilidade
+Painel de controle das extrações sob sua responsabilidade - Visualização em Fluxo de Trabalho
 {% endblock page_description %}
 
 {% block content %}
@@ -118,7 +118,7 @@ Painel de controle das extrações sob sua responsabilidade
         </div>
     </div>
 
-    <!-- Extrações Ativas (Não Finalizadas) - Visualização em Fluxo de Trabalho -->
+    <!-- Extrações Ativas (Não Finalizadas) - Visualização em Fluxo -->
     {% if extractions_by_status.pending or extractions_by_status.assigned or extractions_by_status.in_progress or extractions_by_status.paused %}
     <div class="row mb-4">
         <div class="col-12">
@@ -564,16 +564,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-
-<style>
-/* Dashboard cards */
-.card.border-start {
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.card.border-start:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-</style>
 {% endblock %}

@@ -22,17 +22,36 @@ from apps.core.services.base import ServiceException
 from apps.cases.models import Case
 from apps.cases.forms import CaseSearchForm
 from apps.cases.services import CaseService
+from apps.requisitions.models import ExtractionRequest
+from apps.cases.models import Case, Extraction
+from django.db.models import Count, Q
 
 
 @login_required
 def home_view(request):
     """
-    View da página inicial do usuário autenticado.
+    View da página inicial do usuário autenticado (Dashboard).
     """
+    # KPIs
+    total_cases = Case.objects.filter(deleted_at__isnull=True).count()
+    active_cases = Case.objects.filter(status=Case.CASE_STATUS_IN_PROGRESS, deleted_at__isnull=True).count()
+    pending_requests = ExtractionRequest.objects.filter(status=ExtractionRequest.REQUEST_STATUS_PENDING, deleted_at__isnull=True).count()
+    active_extractions = Extraction.objects.filter(status=Extraction.STATUS_IN_PROGRESS, deleted_at__isnull=True).count()
+    
+    # Recent Activity (Last 5 updated cases)
+    recent_cases = Case.objects.filter(deleted_at__isnull=True).order_by('-updated_at')[:5]
+
     context = {
-        'page_title': 'Página Inicial',
-        'page_description': 'Bem-vindo ao sistema de gestão de extrações digitais',
-        'page_icon': 'fa-home',
+        'page_title': 'Dashboard',
+        'page_description': 'Visão geral do sistema',
+        'page_icon': 'fa-chart-line',
+        'stats': {
+            'total_cases': total_cases,
+            'active_cases': active_cases,
+            'pending_requests': pending_requests,
+            'active_extractions': active_extractions,
+        },
+        'recent_cases': recent_cases,
     }
     return render(request, 'users/home.html', context)
 

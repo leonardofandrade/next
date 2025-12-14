@@ -74,7 +74,10 @@ class ExtractionService(BaseService):
         Filtra queryset baseado nas extraction_units do usuário extrator.
         Superusuários veem todos os dados.
         """
-        if not self.user or self.user.is_superuser:
+        if not self.user or not hasattr(self.user, 'is_authenticated') or not self.user.is_authenticated:
+            return queryset
+        
+        if hasattr(self.user, 'is_superuser') and self.user.is_superuser:
             return queryset
         
         try:
@@ -142,7 +145,12 @@ class ExtractionService(BaseService):
         
         assigned_to = filters.get('assigned_to')
         if assigned_to:
-            queryset = queryset.filter(assigned_to__user=assigned_to)
+            # Ensure assigned_to is a valid user ID or User instance, not AnonymousUser
+            if hasattr(assigned_to, 'is_authenticated') and not assigned_to.is_authenticated:
+                # Skip filter if AnonymousUser
+                pass
+            else:
+                queryset = queryset.filter(assigned_to__user=assigned_to)
         
         extraction_result = filters.get('extraction_result')
         if extraction_result:
@@ -160,7 +168,7 @@ class ExtractionService(BaseService):
     
     def get_my_extractions(self) -> QuerySet:
         """Get extractions assigned to current user"""
-        if not self.user:
+        if not self.user or not hasattr(self.user, 'is_authenticated') or not self.user.is_authenticated:
             raise PermissionServiceException("Usuário não autenticado")
         
         try:
@@ -181,7 +189,7 @@ class ExtractionService(BaseService):
     
     def get_extractor_user(self) -> ExtractorUser:
         """Get ExtractorUser for current user"""
-        if not self.user:
+        if not self.user or not hasattr(self.user, 'is_authenticated') or not self.user.is_authenticated:
             raise PermissionServiceException("Usuário não autenticado")
         
         try:

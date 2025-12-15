@@ -1,5 +1,6 @@
 <!-- Modal para Criar DeviceModel -->
-<div class="modal fade" id="createDeviceModelModal" tabindex="-1" aria-labelledby="createDeviceModelModalLabel" aria-hidden="true">
+<div class="modal fade" id="createDeviceModelModal" tabindex="-1" aria-labelledby="createDeviceModelModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -19,29 +20,22 @@
                                     Marca <span class="text-danger">*</span>
                                 </label>
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" 
-                                           type="checkbox" 
-                                           id="device_model_brand_mode" 
-                                           name="create_new_brand">
+                                    <input class="form-check-input" type="checkbox" id="device_model_brand_mode"
+                                        name="create_new_brand">
                                     <label class="form-check-label" for="device_model_brand_mode">
                                         <small class="text-muted">Criar nova marca</small>
                                     </label>
                                 </div>
                             </div>
                             <div id="device_model_brand_select_container">
-                                <select class="form-select" 
-                                        id="device_model_brand" 
-                                        name="brand">
+                                <select class="form-select" id="device_model_brand" name="brand">
                                     <option value="">Selecione uma marca</option>
                                 </select>
                                 <div class="invalid-feedback" id="device_model_brand_error"></div>
                             </div>
                             <div id="device_model_brand_input_container" style="display: none;">
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="device_model_new_brand_name" 
-                                       name="new_brand_name" 
-                                       placeholder="Nome da nova marca (Ex: Samsung, Apple)">
+                                <input type="text" class="form-control" id="device_model_new_brand_name"
+                                    name="new_brand_name" placeholder="Nome da nova marca (Ex: Samsung, Apple)">
                                 <div class="invalid-feedback" id="device_model_new_brand_name_error"></div>
                                 <small class="form-text text-muted mt-1">
                                     A marca será criada automaticamente ao salvar o modelo.
@@ -50,47 +44,34 @@
                         </div>
                         <div class="col-md-6">
                             <label for="device_model_name" class="form-label">
-                                Nome <span class="text-danger">*</span>
+                                Nome
                             </label>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="device_model_name" 
-                                   name="name" 
-                                   required 
-                                   placeholder="Ex: Galaxy S23, iPhone 15">
+                            <input type="text" class="form-control" id="device_model_name" name="name" required
+                                placeholder="Ex: Galaxy S23, iPhone 15">
                             <div class="invalid-feedback" id="device_model_name_error"></div>
                         </div>
                         <div class="col-md-6">
                             <label for="device_model_commercial_name" class="form-label">
                                 Nome Comercial
                             </label>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="device_model_commercial_name" 
-                                   name="commercial_name" 
-                                   placeholder="Ex: Galaxy S23 Ultra">
+                            <input type="text" class="form-control" id="device_model_commercial_name"
+                                name="commercial_name" placeholder="Ex: Galaxy S23 Ultra">
                             <div class="invalid-feedback" id="device_model_commercial_name_error"></div>
                         </div>
                         <div class="col-md-6">
                             <label for="device_model_code" class="form-label">
                                 Código
                             </label>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="device_model_code" 
-                                   name="code" 
-                                   placeholder="Ex: SM-S918B">
+                            <input type="text" class="form-control" id="device_model_code" name="code"
+                                placeholder="Ex: SM-S918B">
                             <div class="invalid-feedback" id="device_model_code_error"></div>
                         </div>
                         <div class="col-md-12">
                             <label for="device_model_description" class="form-label">
                                 Descrição
                             </label>
-                            <textarea class="form-control" 
-                                      id="device_model_description" 
-                                      name="description" 
-                                      rows="3" 
-                                      placeholder="Descrição opcional do modelo"></textarea>
+                            <textarea class="form-control" id="device_model_description" name="description" rows="3"
+                                placeholder="Descrição opcional do modelo"></textarea>
                             <div class="invalid-feedback" id="device_model_description_error"></div>
                         </div>
                     </div>
@@ -110,4 +91,3 @@
         </div>
     </div>
 </div>
-

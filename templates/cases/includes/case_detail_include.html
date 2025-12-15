@@ -6,18 +6,18 @@ Uso: {% include 'cases/includes/case_detail_include.html' with case=case %}
 <div class="accordion" id="caseDetailAccordion">
     <div class="accordion-item">
         <h2 class="accordion-header" id="caseDetailHeading">
-            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
-                    data-bs-target="#caseDetailCollapse" aria-expanded="false" 
-                    aria-controls="caseDetailCollapse">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#caseDetailCollapse" aria-expanded="false" aria-controls="caseDetailCollapse">
                 <div class="w-100">
                     <!-- Primeira Linha -->
                     <div class="row g-2 mb-2">
                         <div class="col-md-2">
                             <div class="form-label fw-bold"><i class="fas fa-hashtag me-1"></i>Número/ID:</div>
                             <div class="text-primary fs-6">{{ case.number|default:case.id }}</div>
-                        </div>            
+                        </div>
                         <div class="col-md-2">
-                            <div class="form-label fw-bold"><i class="fas fa-building-shield me-1"></i>Solicitante:</div>
+                            <div class="form-label fw-bold"><i class="fas fa-building-shield me-1"></i>Solicitante:
+                            </div>
                             <span class="mb-3 text-primary fs-6">{{ case.requester_agency_unit.acronym }}</span>
                         </div>
                         <div class="col-md-2">
@@ -27,66 +27,68 @@ Uso: {% include 'cases/includes/case_detail_include.html' with case=case %}
                             </span>
                         </div>
                         <div class="col-md-2">
-                            <div class="form-label fw-bold"><i class="fas fa-exclamation-triangle me-1"></i>Prioridade:</div>
+                            <div class="form-label fw-bold"><i class="fas fa-exclamation-triangle me-1"></i>Prioridade:
+                            </div>
                             <div class="badge bg-{{ case.get_priority_color }} fs-6">
                                 {{ case.get_priority_display }}
                             </div>
                         </div>
                         <div class="col-md-2">
-                            <div class="form-label fw-bold"><i class="fas fa-microscope me-1"></i>Distribuído para:</div>
+                            <div class="form-label fw-bold"><i class="fas fa-microscope me-1"></i>Distribuído para:
+                            </div>
                             {% if case.extraction_unit %}
-                                <span>
-                                    {{ case.extraction_unit.acronym|default:case.extraction_unit.name }}
-                                </span>
-                            {% else %}                                
-                                <span class="text-danger fw-bold fs-6">Não distribuído</span>
+                            <span>
+                                {{ case.extraction_unit.acronym|default:case.extraction_unit.name }}
+                            </span>
+                            {% else %}
+                            <span class="text-danger fw-bold fs-6">Não distribuído</span>
                             {% endif %}
                         </div>
                         <div class="col-md-2">
                             <div class="form-label fw-bold"><i class="fas fa-user-secret me-1"></i>Responsável:</div>
                             {% if case.assigned_to %}
-                                <span>
-                                    {{ case.assigned_to.get_full_name|default:case.assigned_to.username }}
-                                </span>
+                            <span>
+                                {{ case.assigned_to.get_full_name|default:case.assigned_to.username }}
+                            </span>
                             {% else %}
-                                
-                                <span class="text-danger fw-bold fs-6">Não atribuído</span>
+
+                            <span class="text-danger fw-bold fs-6">Não atribuído</span>
                             {% endif %}
                         </div>
                     </div>
-                    
+
                     <!-- Segunda Linha -->
                     <div class="row g-2 align-items-center border-top mt-2">
                         <div class="col-md-12 text-center">
-                            <i class="fas fa-info-circle text-primary me-1"></i>
                             <small class="text-info">Clique para ver mais detalhes</small>
-                            <p class="text-info mb-0"><i id="chevronIcon" class="fas fa-chevron-down text-info ms-1 chevron-icon"></i></p>
+                            <p class="text-info mb-0"><i id="chevronIcon"
+                                    class="fas fa-chevron-down text-info ms-1 chevron-icon"></i></p>
                         </div>
                     </div>
                 </div>
             </button>
-            
+
         </h2>
-        <div id="caseDetailCollapse" class="accordion-collapse collapse" 
-             aria-labelledby="caseDetailHeading" data-bs-parent="#caseDetailAccordion">
+        <div id="caseDetailCollapse" class="accordion-collapse collapse" aria-labelledby="caseDetailHeading"
+            data-bs-parent="#caseDetailAccordion">
             <div class="accordion-body">
                 <div class="row g-3">
-                    
+
                     <!-- Unidade Solicitante -->
                     <div class="col-md-6">
                         <strong>Unidade Solicitante:</strong><br>
                         {% if case.requester_agency_unit %}
-                            {{ case.requester_agency_unit.name }}
+                        {{ case.requester_agency_unit.name }}
                         {% else %}
-                            <span class="text-muted">-</span>
+                        <span class="text-muted">-</span>
                         {% endif %}
                         <p class="text-muted">{{ case.requester_reply_email|default:"-" }}</p>
-                    </div>       
+                    </div>
                     <!-- Autoridade Solicitante -->
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                         <strong>Autoridade Solicitante:</strong><br>
                         {% if case.requester_authority_position %}
-                            {{ case.requester_authority_position.acronym|default:"-" }}
+                        {{ case.requester_authority_position.acronym|default:"-" }}
                         {% endif %}
                         {{ case.requester_authority_name|default:"-" }}
                     </div>
@@ -95,13 +97,7 @@ Uso: {% include 'cases/includes/case_detail_include.html' with case=case %}
                         <strong>Dispositivos:</strong><br>
                         {{ case.requested_device_amount|default:"-" }}
                     </div>
-                    
-                    <!-- Quantidade de Extrações -->
-                    <div class="col-md-2">
-                        <strong>Extrações:</strong><br>
-                        {{ extractions_count|default:"0" }}
-                    </div>
-                        
+
                     <!-- Procedimentos -->
                     {% if case.request_procedures %}
                     <div class="col-md-4">
@@ -109,20 +105,17 @@ Uso: {% include 'cases/includes/case_detail_include.html' with case=case %}
                         {{ case.request_procedures }}
                     </div>
                     {% endif %}
-                                        
-           
+
                     <!-- Data da Solicitação -->
                     <div class="col-md-2">
                         <strong>Data da Solicitação:</strong><br>
                         {% if case.requested_at %}
-                            {{ case.requested_at|date:"d/m/Y H:i" }}
+                        {{ case.requested_at|date:"d/m/Y H:i" }}
                         {% else %}
-                            <span class="text-muted">-</span>
+                        <span class="text-muted">-</span>
                         {% endif %}
                     </div>
- 
-                   
-                    
+
                     <!-- Categoria de Crime -->
                     {% if case.crime_category %}
                     <div class="col-md-2">
@@ -130,9 +123,7 @@ Uso: {% include 'cases/includes/case_detail_include.html' with case=case %}
                         {{ case.crime_category.name }}
                     </div>
                     {% endif %}
-                
 
-                    
                     <!-- Informações Adicionais -->
                     {% if case.additional_info %}
                     <div class="col-md-12">
@@ -142,18 +133,18 @@ Uso: {% include 'cases/includes/case_detail_include.html' with case=case %}
                         </div>
                     </div>
                     {% endif %}
-                    
+
                     <!-- Data de Criação -->
                     <div class="col-md-6">
                         <strong>Criado em:</strong><br>
                         <small class="text-muted">
                             {{ case.created_at|date:"d/m/Y H:i" }}
                             {% if case.created_by %}
-                                por {{ case.created_by.get_full_name|default:case.created_by.username }}
+                            por {{ case.created_by.get_full_name|default:case.created_by.username }}
                             {% endif %}
                         </small>
                     </div>
-                    
+
                     <!-- Última Atualização -->
                     {% if case.updated_at %}
                     <div class="col-md-6">
@@ -161,7 +152,7 @@ Uso: {% include 'cases/includes/case_detail_include.html' with case=case %}
                         <small class="text-muted">
                             {{ case.updated_at|date:"d/m/Y H:i" }}
                             {% if case.updated_by %}
-                                por {{ case.updated_by.get_full_name|default:case.updated_by.username }}
+                            por {{ case.updated_by.get_full_name|default:case.updated_by.username }}
                             {% endif %}
                         </small>
                     </div>
@@ -173,18 +164,18 @@ Uso: {% include 'cases/includes/case_detail_include.html' with case=case %}
 </div>
 
 <style>
-/* Remove o chevron do accordion */
-#caseDetailAccordion .accordion-button::after {
-    display: none;
-}
+    /* Remove o chevron do accordion */
+    #caseDetailAccordion .accordion-button::after {
+        display: none;
+    }
 
-/* Animação de rotação do chevron */
-#caseDetailAccordion .chevron-icon {
-    transition: transform 0.3s ease;
-    display: inline-block;
-}
+    /* Animação de rotação do chevron */
+    #caseDetailAccordion .chevron-icon {
+        transition: transform 0.3s ease;
+        display: inline-block;
+    }
 
-#caseDetailAccordion .accordion-button:not(.collapsed) .chevron-icon {
-    transform: rotate(180deg);
-}
+    #caseDetailAccordion .accordion-button:not(.collapsed) .chevron-icon {
+        transform: rotate(180deg);
+    }
 </style>

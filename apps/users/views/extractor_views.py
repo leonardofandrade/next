@@ -26,7 +26,7 @@ class MyExtractionsView(LoginRequiredMixin, ServiceMixin, ListView):
     model = Extraction
     service_class = ExtractionService
     search_form_class = ExtractionSearchForm
-    template_name = 'users/extractors/my_extractions.html'
+    template_name = 'users/extractors/my_extractions_workflow.html'
     context_object_name = 'extractions'
     paginate_by = settings.PAGINATE_BY
     

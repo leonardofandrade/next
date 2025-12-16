@@ -368,3 +368,16 @@ class DeviceModel(AuditedModel):
 
     def __str__(self):
         return f"{self.brand} - {self.name}"
+
+
+class DocumentCategory(BaseTable):
+    """
+    DocumentCategory model represents a category of a document.
+    It can have a name and an acronym.
+    It can have a description.
+    """
+    class Meta:
+        db_table = 'document_category'
+        verbose_name = 'Categoria de Documento'
+        verbose_name_plural = 'Categorias de Documento'
+        ordering = ['name']

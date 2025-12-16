@@ -6,7 +6,7 @@ from apps.core.models import (
     AuditedModel, AbstractCaseModel, ExtractionUnit, 
     ExtractionUnitStorageMedia, ExtractorUser
     )
-from apps.base_tables.models import ProcedureCategory
+from apps.base_tables.models import ProcedureCategory, DocumentCategory
 from apps.requisitions.models import ExtractionRequest
 from apps.core.models import AbstractDeviceModel
 
@@ -840,3 +840,55 @@ class Extraction(AuditedModel):
         }
         return status_map.get(self.status, self.status.title())
     
+
+    
+class CaseDocument(AuditedModel):
+    """ Model for Case Documents """
+    case = models.ForeignKey(
+        Case,
+        on_delete=models.PROTECT,
+        related_name='documents',
+        help_text=_("Processo.")
+    )
+    number = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text=_("Número do documento.")
+    )
+    document_category = models.ForeignKey(
+        DocumentCategory,
+        on_delete=models.PROTECT,
+        related_name='case_documents',
+        null=True,
+        blank=True,
+        help_text=_("Categoria do documento.")
+    )
+    document_file = models.BinaryField(
+        blank=True,
+        null=True,
+        help_text=_("Arquivo do documento.")
+    )
+    original_filename = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("Nome original do arquivo.")
+    )
+    content_type = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text=_("Tipo de conteúdo do arquivo (MIME type).")
+    )
+
+    class Meta:
+        db_table = 'case_document'
+        verbose_name = "Documento do Processo"
+        verbose_name_plural = "Documentos do Processo"
+        unique_together = ('case', 'number', 'document_category')
+        indexes = [
+            models.Index(fields=['case']),
+            models.Index(fields=['created_at']),
+        ]
+        

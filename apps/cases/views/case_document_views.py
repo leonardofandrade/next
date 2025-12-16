@@ -79,16 +79,11 @@ class CaseDocumentCreateView(LoginRequiredMixin, ServiceMixin, CreateView):
     
     def form_valid(self, form):
         """
-        Cria documento usando service
+        Cria documento usando form.save() que processa o arquivo corretamente
         """
-        service = self.get_service()
-        form_data = form.cleaned_data
-        
-        # Adiciona o case aos dados
-        form_data['case'] = self.case
-        
         try:
-            document = service.create(form_data)
+            # Usa form.save() que processa o arquivo binário corretamente
+            document = form.save()
             
             messages.success(
                 self.request,
@@ -100,7 +95,7 @@ class CaseDocumentCreateView(LoginRequiredMixin, ServiceMixin, CreateView):
                 return redirect('cases:documents', pk=self.case.pk)
             
             return redirect('cases:update', pk=self.case.pk)
-        except ServiceException as e:
+        except Exception as e:
             form.add_error(None, str(e))
             return self.form_invalid(form)
     
@@ -215,17 +210,11 @@ class CaseDocumentUpdateView(LoginRequiredMixin, ServiceMixin, UpdateView):
     
     def form_valid(self, form):
         """
-        Atualiza documento usando service
+        Atualiza documento usando form.save() que processa o arquivo corretamente
         """
-        service = self.get_service()
-        form_data = form.cleaned_data
-        
-        # Adiciona o case aos dados (caso não esteja no form_data)
-        if 'case' not in form_data:
-            form_data['case'] = self.case
-        
         try:
-            document = service.update(self.get_object().pk, form_data)
+            # Usa form.save() que processa o arquivo binário corretamente
+            document = form.save()
             
             messages.success(
                 self.request,
@@ -244,7 +233,7 @@ class CaseDocumentUpdateView(LoginRequiredMixin, ServiceMixin, UpdateView):
                 return redirect('cases:documents', pk=self.case.pk)
             
             return redirect('cases:update', pk=self.case.pk)
-        except ServiceException as e:
+        except Exception as e:
             form.add_error(None, str(e))
             return self.form_invalid(form)
     

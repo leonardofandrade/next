@@ -1,12 +1,12 @@
 <div class="col-12">
     <div class="card shadow-sm border-0 mb-2 extraction-workflow-card-horizontal">
-        <div class="card-body p-3">
+        <div class="card-body p-2">
             <!-- Header Row -->
-            <div class="d-flex justify-content-between align-items-start mb-3 pb-2 border-bottom">
+            <div class="d-flex justify-content-between align-items-start mb-2 pb-2 border-bottom">
                 <div class="extraction-info flex-grow-1">
-                    <div class="d-flex align-items-center gap-2 mb-1">
+                    <div class="d-flex align-items-center gap-2 mb-0">
                         <span class="badge bg-primary">#{{ extraction.pk }}</span>
-                        <h6 class="mb-0">
+                        <h6 class="mb-0" style="font-size: 0.9rem;">
                             {% if extraction.case_device.device_model %}
                                 <strong>{{ extraction.case_device.device_model.brand.name }}</strong>
                                 {{ extraction.case_device.device_model.name }}
@@ -15,7 +15,7 @@
                             {% endif %}
                         </h6>
                     </div>
-                    <div class="d-flex gap-3 flex-wrap small text-muted">
+                    <div class="d-flex gap-2 flex-wrap small text-muted mt-1">
                         <span>
                             <i class="fas fa-folder-open me-1"></i>
                             <a href="{% url 'cases:detail' extraction.case_device.case.pk %}" class="text-decoration-none">
@@ -27,7 +27,92 @@
                         {% endif %}
                     </div>
                 </div>
-                <div class="d-flex gap-1 flex-shrink-0">
+                <div class="d-flex gap-1 flex-shrink-0 align-items-center flex-wrap">
+                    <!-- Action Buttons -->
+                    {% if extraction.status == 'pending' %}
+                        <button type="button" 
+                                class="btn btn-primary btn-sm" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#startModal{{ extraction.pk }}">
+                            <i class="fas fa-play me-1"></i>Iniciar
+                        </button>
+                    {% elif extraction.status == 'assigned' %}
+                        <button type="button" 
+                                class="btn btn-primary btn-sm" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#startModal{{ extraction.pk }}">
+                            <i class="fas fa-play me-1"></i>Iniciar
+                        </button>
+                        {% if not extraction.started_at %}
+                            <form method="post" action="{% url 'extractions:unassign_from_me' extraction.pk %}" class="ajax-form d-inline">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        class="btn btn-outline-danger btn-sm" 
+                                        onclick="return confirm('Desatribuir esta extração?');">
+                                    <i class="fas fa-user-times"></i>
+                                </button>
+                            </form>
+                        {% endif %}
+                    {% elif extraction.status == 'in_progress' %}
+                        {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
+                            {% if not extraction.brute_force_started_at %}
+                                <button type="button" 
+                                        class="btn btn-outline-danger btn-sm" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#startBruteForceModal{{ extraction.pk }}">
+                                    <i class="fas fa-unlock-alt me-1"></i>Força Bruta
+                                </button>
+                            {% elif extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
+                                <button type="button" 
+                                        class="btn btn-danger btn-sm" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#finishBruteForceModal{{ extraction.pk }}"
+                                        data-extraction-id="{{ extraction.pk }}">
+                                    <i class="fas fa-unlock me-1"></i>Finalizar Força Bruta
+                                </button>
+                            {% endif %}
+                        {% endif %}
+                        <button type="button" 
+                                class="btn btn-outline-warning btn-sm" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#pauseModal{{ extraction.pk }}">
+                            <i class="fas fa-pause me-1"></i>Pausar
+                        </button>
+                        <button type="button" 
+                                class="btn btn-outline-secondary btn-sm" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#cancelExtractionModal{{ extraction.pk }}">
+                            <i class="fas fa-times me-1"></i>Cancelar
+                        </button>
+                        <button type="button" 
+                                class="btn btn-success btn-sm" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#finishExtractionModal{{ extraction.pk }}"
+                                data-extraction-id="{{ extraction.pk }}">
+                            <i class="fas fa-check me-1"></i>Finalizar
+                        </button>
+                    {% elif extraction.status == 'paused' %}
+                        <button type="button" 
+                                class="btn btn-primary btn-sm" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#resumeModal{{ extraction.pk }}">
+                            <i class="fas fa-play me-1"></i>Retomar
+                        </button>
+                        <button type="button" 
+                                class="btn btn-success btn-sm" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#finishExtractionModal{{ extraction.pk }}"
+                                data-extraction-id="{{ extraction.pk }}">
+                            <i class="fas fa-check me-1"></i>Finalizar
+                        </button>
+                    {% elif extraction.status == 'completed' %}
+                        <span class="text-success small">
+                            <i class="fas fa-check-circle me-1"></i>
+                            Extração Concluída
+                        </span>
+                    {% endif %}
+                    
+                    <!-- Info Buttons -->
                     <button type="button" 
                             class="btn btn-sm btn-outline-primary" 
                             title="Editar Dispositivo"
@@ -46,7 +131,7 @@
             </div>
             
             <!-- Horizontal Workflow Diagram -->
-            <div class="workflow-horizontal d-flex align-items-stretch gap-2 mb-3">
+            <div class="workflow-horizontal d-flex align-items-stretch gap-2 mb-2">
                 <!-- Step 1: Pending -->
                 <div class="workflow-step-h {% if extraction.status == 'pending' %}active{% elif extraction.assigned_at %}completed{% endif %}">
                     <div class="step-rectangle-h">
@@ -178,92 +263,6 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Action Buttons Row -->
-            <div class="d-flex gap-2 flex-wrap align-items-center">
-                {% if extraction.status == 'pending' %}
-                    <button type="button" 
-                            class="btn btn-primary btn-sm" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#startModal{{ extraction.pk }}">
-                        <i class="fas fa-play me-1"></i>Iniciar
-                    </button>
-                {% elif extraction.status == 'assigned' %}
-                    <button type="button" 
-                            class="btn btn-primary btn-sm" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#startModal{{ extraction.pk }}">
-                        <i class="fas fa-play me-1"></i>Iniciar
-                    </button>
-                    {% if not extraction.started_at %}
-                        <form method="post" action="{% url 'extractions:unassign_from_me' extraction.pk %}" class="ajax-form d-inline">
-                            {% csrf_token %}
-                            <button type="submit" 
-                                    class="btn btn-outline-danger btn-sm" 
-                                    onclick="return confirm('Desatribuir esta extração?');">
-                                <i class="fas fa-user-times"></i>
-                            </button>
-                        </form>
-                    {% endif %}
-                {% elif extraction.status == 'in_progress' %}
-                    {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
-                        {% if not extraction.brute_force_started_at %}
-                            <button type="button" 
-                                    class="btn btn-outline-danger btn-sm" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#startBruteForceModal{{ extraction.pk }}">
-                                <i class="fas fa-unlock-alt me-1"></i>Força Bruta
-                            </button>
-                        {% elif extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
-                            <button type="button" 
-                                    class="btn btn-danger btn-sm" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#finishBruteForceModal{{ extraction.pk }}"
-                                    data-extraction-id="{{ extraction.pk }}">
-                                <i class="fas fa-unlock me-1"></i>Finalizar Força Bruta
-                            </button>
-                        {% endif %}
-                    {% endif %}
-                    <button type="button" 
-                            class="btn btn-outline-warning btn-sm" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#pauseModal{{ extraction.pk }}">
-                        <i class="fas fa-pause me-1"></i>Pausar
-                    </button>
-                    <button type="button" 
-                            class="btn btn-outline-secondary btn-sm" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#cancelExtractionModal{{ extraction.pk }}">
-                        <i class="fas fa-times me-1"></i>Cancelar
-                    </button>
-                    <button type="button" 
-                            class="btn btn-success btn-sm" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#finishExtractionModal{{ extraction.pk }}"
-                            data-extraction-id="{{ extraction.pk }}">
-                        <i class="fas fa-check me-1"></i>Finalizar
-                    </button>
-                {% elif extraction.status == 'paused' %}
-                    <button type="button" 
-                            class="btn btn-primary btn-sm" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#resumeModal{{ extraction.pk }}">
-                        <i class="fas fa-play me-1"></i>Retomar
-                    </button>
-                    <button type="button" 
-                            class="btn btn-success btn-sm" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#finishExtractionModal{{ extraction.pk }}"
-                            data-extraction-id="{{ extraction.pk }}">
-                        <i class="fas fa-check me-1"></i>Finalizar
-                    </button>
-                {% elif extraction.status == 'completed' %}
-                    <span class="text-success">
-                        <i class="fas fa-check-circle me-1"></i>
-                        Extração Concluída
-                    </span>
-                {% endif %}
-            </div>
         </div>
     </div>
 </div>
@@ -309,7 +308,7 @@
 
 .workflow-step-h {
     flex: 1;
-    min-width: 140px;
+    min-width: 120px;
     position: relative;
 }
 
@@ -317,15 +316,15 @@
     background: #ffffff;
     border: 2px solid #212529;
     border-radius: 12px;
-    padding: 12px;
+    padding: 8px;
     height: 100%;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
+    gap: 4px;
     position: relative;
     transition: all 0.3s ease;
-    min-height: 100px;
+    min-height: 70px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -344,16 +343,16 @@
 
 .step-check-icon {
     position: absolute;
-    top: 4px;
-    right: 4px;
+    top: 3px;
+    right: 3px;
     color: #198754;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     z-index: 1;
     background: #ffffff;
     border: 2px solid #198754;
     border-radius: 8px;
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -362,11 +361,11 @@
 
 .step-icon {
     color: #212529;
-    font-size: 1.5rem;
-    margin-bottom: 6px;
+    font-size: 1.2rem;
+    margin-bottom: 4px;
     transition: color 0.3s ease;
     border-bottom: 1px solid #dee2e6;
-    padding-bottom: 6px;
+    padding-bottom: 4px;
     width: 100%;
     text-align: center;
 }
@@ -385,18 +384,18 @@
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     flex-grow: 1;
 }
 
 .step-label-h {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 700;
     color: #212529;
-    line-height: 1.3;
+    line-height: 1.2;
     text-align: center;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 .workflow-step-h.active .step-label-h {
@@ -408,33 +407,33 @@
 }
 
 .step-info-h {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: #495057;
-    line-height: 1.3;
+    line-height: 1.2;
     text-align: center;
     font-weight: 500;
     border-top: 1px solid #e9ecef;
-    padding-top: 4px;
-    margin-top: 4px;
+    padding-top: 3px;
+    margin-top: 3px;
 }
 
 .step-badge-h {
-    margin-top: 4px;
+    margin-top: 2px;
     text-align: center;
 }
 
 .step-badge-h .badge {
-    font-size: 0.7rem;
-    padding: 0.3rem 0.6rem;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
     border-radius: 6px;
     font-weight: 600;
     border: 1px solid transparent;
 }
 
 .step-date-h {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: #495057;
-    line-height: 1.2;
+    line-height: 1.1;
     text-align: center;
     font-weight: 500;
     font-family: 'Courier New', monospace;
@@ -494,17 +493,17 @@
     }
     
     .workflow-step-h {
-        min-width: 120px;
+        min-width: 100px;
     }
     
     .step-rectangle-h {
-        padding: 10px;
-        min-height: 90px;
+        padding: 8px;
+        min-height: 65px;
     }
     
     .step-icon {
-        font-size: 1.3rem;
-        padding-bottom: 4px;
+        font-size: 1.1rem;
+        padding-bottom: 3px;
     }
     
     .step-label-h {
@@ -517,9 +516,9 @@
     }
     
     .step-check-icon {
-        width: 24px;
-        height: 24px;
-        font-size: 1.2rem;
+        width: 20px;
+        height: 20px;
+        font-size: 1rem;
     }
     
     .line-h {

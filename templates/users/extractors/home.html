@@ -92,14 +92,21 @@
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-2 align-items-center">
                     <span class="me-3 fw-bold text-muted"><i class="fas fa-bolt me-2 text-warning"></i>Ações Rápidas:</span>
-                    <a href="{% url 'users:my_extractions' %}?next={{ request.path }}" class="btn btn-outline-primary">
-                        <i class="fas fa-tasks me-2"></i>Minhas Extrações
+                    <a href="{% url 'cases:create' %}?next={{ request.path }}" class="btn btn-success d-flex flex-column align-items-center justify-content-center" style="width: 120px; height: 120px; padding: 0.5rem;">
+                        <i class="fas fa-plus fa-2x mb-2"></i>
+                        <span class="small">Novo Processo</span>
                     </a>
-                    <a href="{% url 'users:my_cases' %}?next={{ request.path }}" class="btn btn-outline-info">
-                        <i class="fas fa-folder-open me-2"></i>Meus Processos
+                    <a href="{% url 'users:my_extractions' %}?next={{ request.path }}" class="btn btn-outline-primary d-flex flex-column align-items-center justify-content-center" style="width: 120px; height: 120px; padding: 0.5rem;">
+                        <i class="fas fa-tasks fa-2x mb-2"></i>
+                        <span class="small">Minhas Extrações</span>
                     </a>
-                    <a href="{% url 'requisitions:not_received' %}?next={{ request.path }}" class="btn btn-outline-warning">
-                        <i class="fas fa-inbox me-2"></i>Solicitações Não Recebidas
+                    <a href="{% url 'users:my_cases' %}?next={{ request.path }}" class="btn btn-outline-info d-flex flex-column align-items-center justify-content-center" style="width: 120px; height: 120px; padding: 0.5rem;">
+                        <i class="fas fa-folder-open fa-2x mb-2"></i>
+                        <span class="small">Meus Processos</span>
+                    </a>
+                    <a href="{% url 'requisitions:not_received' %}?next={{ request.path }}" class="btn btn-outline-warning d-flex flex-column align-items-center justify-content-center" style="width: 120px; height: 120px; padding: 0.5rem;">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <span class="small">Solicitações Não Recebidas</span>
                     </a>
                 </div>
             </div>

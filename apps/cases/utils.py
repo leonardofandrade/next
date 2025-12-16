@@ -38,18 +38,22 @@ def parse_request_procedures(request_procedures_text: str, case: Case, user: Use
             continue
         
         # Tenta extrair o acrônimo e o número
-        match = re.match(r'^([A-Z]{1,10})\s+([0-9/]+)', procedure_text, re.IGNORECASE)
-        if not match:
-            match = re.match(r'^([A-Z]{1,10})', procedure_text, re.IGNORECASE)
-            if match:
-                acronym = match.group(1).upper()
-                procedure_number = procedure_text.replace(acronym, '').strip()
-            else:
-                errors.append(f"Não foi possível parsear: {procedure_text}")
-                continue
-        else:
-            acronym = match.group(1).upper()
-            procedure_number = match.group(2).strip()
+        # Primeiro identifica o acrônimo (1-10 letras maiúsculas) no início
+        acronym_match = re.match(r'^([A-Z]{1,10})', procedure_text, re.IGNORECASE)
+        if not acronym_match:
+            errors.append(f"Não foi possível identificar acrônimo em: {procedure_text}")
+            continue
+        
+        acronym = acronym_match.group(1).upper()
+        
+        # Remove o acrônimo do início do texto e pega tudo que sobrar como número
+        # Isso garante que capturamos hífens, pontos, barras, etc.
+        procedure_number = procedure_text[len(acronym):].strip()
+        
+        # Se não houver número após o acrônimo, pula
+        if not procedure_number:
+            errors.append(f"Não foi possível extrair número do procedimento: {procedure_text}")
+            continue
         
         # Busca ProcedureCategory pelo acronym
         try:

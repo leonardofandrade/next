@@ -410,17 +410,20 @@ class Command(BaseCommand):
                 continue
             
             # Tenta extrair o acrônimo e o número
-            match = re.match(r'^([A-Z]{1,10})\s+([0-9/]+)', procedure_text, re.IGNORECASE)
-            if not match:
-                match = re.match(r'^([A-Z]{1,10})', procedure_text, re.IGNORECASE)
-                if match:
-                    acronym = match.group(1).upper()
-                    procedure_number = procedure_text.replace(acronym, '').strip()
-                else:
-                    continue
-            else:
-                acronym = match.group(1).upper()
-                procedure_number = match.group(2).strip()
+            # Primeiro identifica o acrônimo (1-10 letras maiúsculas) no início
+            acronym_match = re.match(r'^([A-Z]{1,10})', procedure_text, re.IGNORECASE)
+            if not acronym_match:
+                continue
+            
+            acronym = acronym_match.group(1).upper()
+            
+            # Remove o acrônimo do início do texto e pega tudo que sobrar como número
+            # Isso garante que capturamos hífens, pontos, barras, etc.
+            procedure_number = procedure_text[len(acronym):].strip()
+            
+            # Se não houver número após o acrônimo, pula
+            if not procedure_number:
+                continue
             
             # Busca ProcedureCategory pelo acronym
             procedure_category = None

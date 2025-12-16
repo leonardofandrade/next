@@ -48,16 +48,25 @@
             </div>
             
             <!-- Horizontal Workflow Diagram -->
-            <div class="workflow-horizontal d-flex align-items-center gap-2 mb-3">
+            <div class="workflow-horizontal d-flex align-items-stretch gap-2 mb-3">
                 <!-- Step 1: Processo Criado -->
                 <div class="workflow-step-h completed">
-                    <div class="step-circle-h">
-                        <i class="fas fa-plus-circle"></i>
+                    <div class="step-rectangle-h">
+                        {% if case.created_at %}
+                        <div class="step-check-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        {% endif %}
+                        <div class="step-icon">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-label-h">Processo Criado</div>
+                            {% if case.created_at %}
+                                <div class="step-date-h">{{ case.created_at|date:"d/m/Y H:i" }}</div>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="step-label-h">Processo Criado</div>
-                    {% if case.created_at %}
-                        <div class="step-date-h">{{ case.created_at|date:"d/m H:i" }}</div>
-                    {% endif %}
                 </div>
                 
                 <!-- Connector -->
@@ -68,15 +77,24 @@
                 
                 <!-- Step 2: Cadastro Finalizado -->
                 <div class="workflow-step-h {% if case.registration_completed_at %}completed{% elif case.status == 'draft' %}active{% endif %}">
-                    <div class="step-circle-h">
-                        <i class="fas fa-clipboard-check"></i>
+                    <div class="step-rectangle-h">
+                        {% if case.registration_completed_at %}
+                        <div class="step-check-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        {% endif %}
+                        <div class="step-icon">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-label-h">Cadastro Finalizado</div>
+                            {% if case.status == 'draft' %}
+                                <div class="step-badge-h"><span class="badge bg-danger">Pendente</span></div>
+                            {% elif case.registration_completed_at %}
+                                <div class="step-date-h">{{ case.registration_completed_at|date:"d/m/Y H:i" }}</div>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="step-label-h">Cadastro Finalizado</div>
-                    {% if case.status == 'draft' %}
-                        <div class="step-badge-h"><span class="badge bg-danger">Pendente</span></div>
-                    {% elif case.registration_completed_at %}
-                        <div class="step-date-h">{{ case.registration_completed_at|date:"d/m H:i" }}</div>
-                    {% endif %}
                 </div>
                 
                 <!-- Connector -->
@@ -87,18 +105,27 @@
                 
                 <!-- Step 3: Responsável Atribuído -->
                 <div class="workflow-step-h {% if case.assigned_to %}completed{% elif case.registration_completed_at and not case.assigned_to %}active{% endif %}">
-                    <div class="step-circle-h">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                    <div class="step-label-h">Responsável Atribuído</div>
-                    {% if case.assigned_to %}
-                        <div class="step-info-h">{{ case.assigned_to.get_full_name|default:case.assigned_to.username|truncatechars:15 }}</div>
-                        {% if case.assigned_at %}
-                            <div class="step-date-h">{{ case.assigned_at|date:"d/m H:i" }}</div>
+                    <div class="step-rectangle-h">
+                        {% if case.assigned_to %}
+                        <div class="step-check-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
                         {% endif %}
-                    {% elif case.registration_completed_at %}
-                        <div class="step-badge-h"><span class="badge bg-warning">Aguardando</span></div>
-                    {% endif %}
+                        <div class="step-icon">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-label-h">Responsável Atribuído</div>
+                            {% if case.assigned_to %}
+                                <div class="step-info-h">{{ case.assigned_to.get_full_name|default:case.assigned_to.username|truncatechars:20 }}</div>
+                                {% if case.assigned_at %}
+                                    <div class="step-date-h">{{ case.assigned_at|date:"d/m/Y H:i" }}</div>
+                                {% endif %}
+                            {% elif case.registration_completed_at %}
+                                <div class="step-badge-h"><span class="badge bg-warning">Aguardando</span></div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Connector -->
@@ -109,35 +136,44 @@
                 
                 <!-- Step 4: Extrações Iniciadas -->
                 <div class="workflow-step-h {% if case.status == 'completed' %}completed{% elif case.status in 'in_progress,paused,waiting_collect' %}active{% endif %}">
-                    <div class="step-circle-h">
-                        {% if case.status == 'in_progress' %}
-                            <i class="fas fa-spinner fa-spin"></i>
-                        {% elif case.status == 'paused' %}
-                            <i class="fas fa-pause"></i>
-                        {% elif case.status == 'waiting_collect' %}
-                            <i class="fas fa-hourglass-half"></i>
-                        {% else %}
-                            <i class="fas fa-database"></i>
+                    <div class="step-rectangle-h">
+                        {% if case.status == 'completed' %}
+                        <div class="step-check-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
                         {% endif %}
+                        <div class="step-icon">
+                            {% if case.status == 'in_progress' %}
+                                <i class="fas fa-spinner fa-spin"></i>
+                            {% elif case.status == 'paused' %}
+                                <i class="fas fa-pause"></i>
+                            {% elif case.status == 'waiting_collect' %}
+                                <i class="fas fa-hourglass-half"></i>
+                            {% else %}
+                                <i class="fas fa-database"></i>
+                            {% endif %}
+                        </div>
+                        <div class="step-content">
+                            <div class="step-label-h">
+                                {% if case.status == 'paused' %}Pausado
+                                {% elif case.status == 'waiting_collect' %}Aguardando Coleta
+                                {% elif case.status == 'completed' %}Concluído
+                                {% else %}Extrações{% endif %}
+                            </div>
+                            {% if case.status == 'in_progress' %}
+                                <div class="step-badge-h"><span class="badge bg-primary">Em Andamento</span></div>
+                            {% elif case.status == 'paused' %}
+                                <div class="step-badge-h"><span class="badge bg-secondary">Pausado</span></div>
+                            {% elif case.status == 'waiting_collect' %}
+                                <div class="step-badge-h"><span class="badge bg-info">Aguardando</span></div>
+                            {% elif case.status == 'completed' %}
+                                <div class="step-badge-h"><span class="badge bg-success">Concluído</span></div>
+                            {% endif %}
+                            {% if case.devices_count %}
+                                <div class="step-info-h">{{ case.devices_count }} dispositivo(s)</div>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="step-label-h">
-                        {% if case.status == 'paused' %}Pausado
-                        {% elif case.status == 'waiting_collect' %}Aguardando Coleta
-                        {% elif case.status == 'completed' %}Concluído
-                        {% else %}Extrações{% endif %}
-                    </div>
-                    {% if case.status == 'in_progress' %}
-                        <div class="step-badge-h"><span class="badge bg-primary">Em Andamento</span></div>
-                    {% elif case.status == 'paused' %}
-                        <div class="step-badge-h"><span class="badge bg-secondary">Pausado</span></div>
-                    {% elif case.status == 'waiting_collect' %}
-                        <div class="step-badge-h"><span class="badge bg-info">Aguardando</span></div>
-                    {% elif case.status == 'completed' %}
-                        <div class="step-badge-h"><span class="badge bg-success">Concluído</span></div>
-                    {% endif %}
-                    {% if case.devices_count %}
-                        <div class="step-info-h">{{ case.devices_count }} dispositivo(s)</div>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -192,80 +228,136 @@
 }
 
 .workflow-step-h {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
-    min-width: 90px;
+    flex: 1;
+    min-width: 140px;
     position: relative;
 }
 
-.step-circle-h {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+.step-rectangle-h {
+    background: #ffffff;
+    border: 2px solid #212529;
+    border-radius: 12px;
+    padding: 12px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    position: relative;
+    transition: all 0.3s ease;
+    min-height: 100px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.workflow-step-h.active .step-rectangle-h {
+    background: #ffffff;
+    border-color: #0d6efd;
+    border-width: 3px;
+    box-shadow: 0 2px 6px rgba(13, 110, 253, 0.2);
+}
+
+.workflow-step-h.completed .step-rectangle-h {
+    background: #ffffff;
+    border-color: #198754;
+    border-width: 2px;
+}
+
+.step-check-icon {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    color: #198754;
+    font-size: 1.4rem;
+    z-index: 1;
+    background: #ffffff;
+    border: 2px solid #198754;
+    border-radius: 8px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #e9ecef;
-    color: #6c757d;
-    font-size: 1.1rem;
-    transition: all 0.3s ease;
-    border: 2px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
-.workflow-step-h.active .step-circle-h {
-    background: #0d6efd;
-    color: white;
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
-    animation: pulse-h 2s infinite;
+.step-icon {
+    color: #212529;
+    font-size: 1.5rem;
+    margin-bottom: 6px;
+    transition: color 0.3s ease;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 6px;
+    width: 100%;
+    text-align: center;
 }
 
-.workflow-step-h.completed .step-circle-h {
-    background: #198754;
-    color: white;
-    border-color: #198754;
+.workflow-step-h.active .step-icon {
+    color: #0d6efd;
+    border-bottom-color: #0d6efd;
 }
 
-@keyframes pulse-h {
-    0%, 100% {
-        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
-    }
-    50% {
-        box-shadow: 0 0 0 8px rgba(13, 110, 253, 0.2);
-    }
+.workflow-step-h.completed .step-icon {
+    color: #198754;
+    border-bottom-color: #198754;
+}
+
+.step-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-grow: 1;
 }
 
 .step-label-h {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1.3;
     text-align: center;
-    color: #495057;
-    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.workflow-step-h.active .step-label-h {
+    color: #0d6efd;
+}
+
+.workflow-step-h.completed .step-label-h {
+    color: #198754;
 }
 
 .step-info-h {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
+    color: #495057;
+    line-height: 1.3;
     text-align: center;
-    color: #6c757d;
-    white-space: nowrap;
+    font-weight: 500;
+    border-top: 1px solid #e9ecef;
+    padding-top: 4px;
+    margin-top: 4px;
 }
 
 .step-badge-h {
-    margin-top: 0.25rem;
+    margin-top: 4px;
+    text-align: center;
 }
 
 .step-badge-h .badge {
-    font-size: 0.65rem;
-    padding: 0.2rem 0.4rem;
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    font-weight: 600;
+    border: 1px solid transparent;
 }
 
 .step-date-h {
-    font-size: 0.65rem;
-    color: #6c757d;
+    font-size: 0.7rem;
+    color: #495057;
+    line-height: 1.2;
     text-align: center;
-    margin-top: 0.1rem;
+    font-weight: 500;
+    font-family: 'Courier New', monospace;
 }
 
 /* Horizontal Connector */
@@ -274,13 +366,15 @@
     align-items: center;
     gap: 0.25rem;
     flex-shrink: 0;
+    padding: 0 4px;
 }
 
 .line-h {
     width: 30px;
-    height: 2px;
-    background: #dee2e6;
+    height: 3px;
+    background: #212529;
     transition: background 0.3s ease;
+    border-radius: 0;
 }
 
 .connector-h.completed .line-h {
@@ -288,8 +382,9 @@
 }
 
 .arrow-h {
-    color: #dee2e6;
-    font-size: 0.8rem;
+    color: #212529;
+    font-size: 0.9rem;
+    font-weight: bold;
     transition: color 0.3s ease;
 }
 
@@ -304,21 +399,37 @@
     }
     
     .workflow-step-h {
-        min-width: 70px;
+        min-width: 120px;
     }
     
-    .step-circle-h {
-        width: 35px;
-        height: 35px;
-        font-size: 0.9rem;
+    .step-rectangle-h {
+        padding: 10px;
+        min-height: 90px;
+    }
+    
+    .step-icon {
+        font-size: 1.3rem;
+        padding-bottom: 4px;
     }
     
     .step-label-h {
-        font-size: 0.7rem;
+        font-size: 0.75rem;
+    }
+    
+    .step-info-h,
+    .step-date-h {
+        font-size: 0.65rem;
+    }
+    
+    .step-check-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 1.2rem;
     }
     
     .line-h {
         width: 20px;
+        height: 2px;
     }
 }
 </style>

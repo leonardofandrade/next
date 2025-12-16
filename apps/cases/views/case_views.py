@@ -916,11 +916,23 @@ class CaseCoverPDFView(LoginRequiredMixin, View):
                 'responsavel': case.assigned_to.get_full_name() if case.assigned_to.get_full_name() else case.assigned_to.username
             })
         
+        # Busca documentos do caso
+        documents = case.documents.filter(deleted_at__isnull=True).select_related(
+            'document_category'
+        )
+        
+        # Busca todos os Ofícios de Solicitação (OFS) nos documentos
+        ofs_documents = documents.filter(
+            document_category__acronym__iexact='OFS'
+        ) if documents else []
+        
         # Prepara contexto
         context = {
             'case': case,
             'devices': devices,
             'procedures': procedures,
+            'documents': documents,
+            'ofs_documents': ofs_documents,
             'tramitacoes': tramitacoes,
             'extraction_unit': case.extraction_unit,
             'requester_agency_unit': case.requester_agency_unit,
@@ -1104,6 +1116,32 @@ class CaseCoverPDFView(LoginRequiredMixin, View):
         elements.append(Paragraph(doc_number, doc_number_style))
         elements.append(Spacer(1, 0.5*cm))
         
+        # Quadro de Assunto
+        subject_data = []
+        subject_data.append([Paragraph("<b>Assunto</b>", bold_style)])
+        subject_data.append([Paragraph("Extração de dados", normal_style)])
+        
+        subject_table = Table(subject_data, colWidths=[18*cm])
+        subject_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('BOX', (0, 0), (-1, -1), 1, colors.grey),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 10),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 1), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 5),
+        ]))
+        elements.append(subject_table)
+        elements.append(Spacer(1, 0.5*cm))
+        
         # Quadro de Procedimentos
         if procedures:
             procedures_data = []
@@ -1138,208 +1176,137 @@ class CaseCoverPDFView(LoginRequiredMixin, View):
                 elements.append(procedures_table)
                 elements.append(Spacer(1, 0.5*cm))
         
-        # Informações do processo
-        if case.extraction_request and case.extraction_request.request_procedures:
-            elements.append(Paragraph(f"<b>PROCESSO JUDICIAL Nº:</b> {case.extraction_request.request_procedures}", normal_style))
+        # Quadro de Documentos
+        if documents:
+            documents_data = []
+            documents_data.append([Paragraph("<b>Documentos</b>", bold_style)])
+            for document in documents:
+                if document.document_category:
+                    document_text = document.document_category.name
+                    if document.number:
+                        document_text += f" - {document.number}"
+                    documents_data.append([Paragraph(document_text, normal_style)])
+            
+            if len(documents_data) > 1:  # Se há pelo menos um documento além do título
+                # Largura da página A4 menos margens (21cm - 3cm = 18cm)
+                documents_table = Table(documents_data, colWidths=[18*cm])
+                documents_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 11),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                    ('FONTSIZE', (0, 1), (-1, -1), 10),
+                    ('BOX', (0, 0), (-1, -1), 1, colors.grey),
+                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                    ('LEFTPADDING', (0, 0), (-1, -1), 10),
+                    ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+                    ('TOPPADDING', (0, 1), (-1, -1), 5),
+                    ('BOTTOMPADDING', (0, 1), (-1, -1), 5),
+                ]))
+                elements.append(documents_table)
+                elements.append(Spacer(1, 0.5*cm))
         
-        elements.append(Spacer(1, 0.3*cm))
+        # Quadro de Origem
+        # Busca todos os Ofícios de Solicitação (OFS) nos documentos
+        ofs_documents = documents.filter(
+            document_category__acronym__iexact='OFS'
+        ) if documents else []
         
-        # Duas colunas
-        # Coluna esquerda
-        left_data = []
-        left_data.append([Paragraph("<b>Origem:</b>", bold_style), 
-                         Paragraph(case.requester_agency_unit.name if case.requester_agency_unit else "-", normal_style)])
+        origin_data = []
+        origin_data.append([Paragraph("<b>Origem</b>", bold_style)])
         
-        if case.extraction_request and case.extraction_request.request_procedures:
-            left_data.append([Paragraph("<b>Ofício nº:</b>", bold_style), 
-                             Paragraph(case.extraction_request.request_procedures, normal_style)])
+        # Unidade
+        origin_unit = case.requester_agency_unit.name if case.requester_agency_unit else "-"
+        origin_data.append([Paragraph(f"<b>Unidade:</b> {origin_unit}", normal_style)])
         
-        solicitante_text = ""
+        # E-mail
+        if case.requester_reply_email:
+            origin_data.append([Paragraph(f"<b>E-mail:</b> {case.requester_reply_email}", normal_style)])
+        
+        # Autoridade (nome e cargo)
         if case.requester_authority_name:
-            solicitante_text = case.requester_authority_name
+            autoridade_text = case.requester_authority_name
             if case.requester_authority_position:
-                solicitante_text += f"<br/>{case.requester_authority_position.name}"
-        else:
-            solicitante_text = "-"
+                autoridade_text += f" - {case.requester_authority_position.name}"
+            origin_data.append([Paragraph(f"<b>Autoridade:</b> {autoridade_text}", normal_style)])
         
-        left_data.append([Paragraph("<b>Solicitante:</b>", bold_style), 
-                         Paragraph(solicitante_text, normal_style)])
+        # Ofícios
+        if ofs_documents:
+            oficio_numbers = []
+            for ofs_document in ofs_documents:
+                oficio_text = ofs_document.number if ofs_document.number else "-"
+                oficio_numbers.append(oficio_text)
+            oficio_text = ", ".join(oficio_numbers)
+            origin_data.append([Paragraph(f"<b>Ofício:</b> {oficio_text}", normal_style)])
+        elif case.extraction_request and case.extraction_request.request_procedures:
+            origin_data.append([Paragraph(f"<b>Ofício:</b> {case.extraction_request.request_procedures}", normal_style)])
         
-        # Coluna direita
-        right_data = []
-        docs_text = "Ofício;<br/>"
-        if procedures:
-            for procedure in procedures:
-                if procedure.procedure_category:
-                    docs_text += f"{procedure.procedure_category.name}"
-                    if procedure.number:
-                        docs_text += f" - {procedure.number}"
-                    docs_text += ";<br/>"
-        docs_text += "Termo de Autorização;<br/>Auto de Apresentação e Apreensão;<br/>Formulário de Entrega de Aparelho."
+        if len(origin_data) > 1:  # Se há pelo menos um item além do título
+            origin_table = Table(origin_data, colWidths=[18*cm])
+            origin_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 11),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 10),
+                ('BOX', (0, 0), (-1, -1), 1, colors.grey),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('LEFTPADDING', (0, 0), (-1, -1), 10),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+                ('TOPPADDING', (0, 1), (-1, -1), 5),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 5),
+            ]))
+            elements.append(origin_table)
+            elements.append(Spacer(1, 0.5*cm))
         
-        right_data.append([Paragraph("<b>Documentos em anexo:</b>", bold_style), 
-                          Paragraph(docs_text, normal_style)])
-        
-        right_data.append([Spacer(1, 0.2*cm), Spacer(1, 0.2*cm)])
-        
-        devices_text = "<b>APARELHOS:</b><br/>"
-        for idx, device in enumerate(devices, 1):
-            device_name = ""
-            if device.device_model:
-                device_name = f"{device.device_model.brand.name.upper()} {device.device_model.name.upper()}"
-            else:
-                device_name = "DISPOSITIVO"
-            
-            devices_text += f"{idx}. {device_name}<br/>"
-            
-            imeis = []
-            if device.imei_01:
-                imeis.append(f"({device.imei_01})")
-            if device.imei_02:
-                imeis.append(f"({device.imei_02})")
-            if device.imei_03:
-                imeis.append(f"({device.imei_03})")
-            if device.imei_04:
-                imeis.append(f"({device.imei_04})")
-            if device.imei_05:
-                imeis.append(f"({device.imei_05})")
-            
-            if imeis:
-                devices_text += "<br/>".join(imeis) + "<br/>"
-            devices_text += "<br/>"
-        
-        if not devices:
-            devices_text += "Nenhum dispositivo cadastrado."
-        
-        right_data.append([Paragraph(devices_text, normal_style)])
-        
-        # Tabela de duas colunas - usando uma única tabela com 4 colunas
-        two_col_data = []
-        
-        # Linha 1: Origem e Documentos
-        two_col_data.append([
-            Paragraph("<b>Origem:</b>", bold_style),
-            Paragraph(case.requester_agency_unit.name if case.requester_agency_unit else "-", normal_style),
-            Paragraph("<b>Documentos em anexo:</b>", bold_style),
-            Paragraph("Ofício;", normal_style)
-        ])
-        
-        # Linha 2: Ofício e continuação dos documentos
-        oficio_text = "-"
-        if case.extraction_request and case.extraction_request.request_procedures:
-            oficio_text = case.extraction_request.request_procedures
-        
-        docs_list = []
-        if procedures:
-            for procedure in procedures:
-                if procedure.procedure_category:
-                    proc_text = procedure.procedure_category.name
-                    if procedure.number:
-                        proc_text += f" - {procedure.number}"
-                    docs_list.append(proc_text + ";")
-        
-        docs_text = "<br/>".join(docs_list) if docs_list else ""
-        if docs_text:
-            docs_text += "<br/>"
-        docs_text += "Termo de Autorização;<br/>Auto de Apresentação e Apreensão;<br/>Formulário de Entrega de Aparelho."
-        
-        two_col_data.append([
-            Paragraph("<b>Ofício nº:</b>", bold_style),
-            Paragraph(oficio_text, normal_style),
-            Spacer(1, 0.1*cm),
-            Paragraph(docs_text, normal_style)
-        ])
-        
-        # Linha 3: Solicitante e cabeçalho dos Aparelhos
-        solicitante_text = ""
-        if case.requester_authority_name:
-            solicitante_text = case.requester_authority_name
-            if case.requester_authority_position:
-                solicitante_text += f"<br/>{case.requester_authority_position.name}"
-        else:
-            solicitante_text = "-"
-        
-        two_col_data.append([
-            Paragraph("<b>Solicitante:</b>", bold_style),
-            Paragraph(solicitante_text, normal_style),
-            Spacer(1, 0.1*cm),
-            Spacer(1, 0.1*cm)
-        ])
-        
-        # Tabela de duas colunas com 4 colunas para dados do processo
-        two_col_table = Table(two_col_data, colWidths=[2.5*cm, 5.5*cm, 2.5*cm, 5.5*cm])
-        two_col_table.setStyle(TableStyle([
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('LEFTPADDING', (0, 0), (-1, -1), 2),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 2),
-            ('TOPPADDING', (0, 0), (-1, -1), 2),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
-        ]))
-        
-        elements.append(two_col_table)
-        elements.append(Spacer(1, 0.5*cm))
-        
-        # Tabela de aparelhos em 2 colunas
-        elements.append(Paragraph("<b>APARELHOS:</b>", bold_style))
-        elements.append(Spacer(1, 0.2*cm))
-        
+        # Quadro de Aparelhos
         if devices:
             # Preparar dados dos aparelhos para tabela de 2 colunas
             devices_table_data = []
+            # Primeira linha: título que ocupa as 2 colunas
+            devices_table_data.append([Paragraph(f"<b>Aparelhos ({len(devices)})</b>", bold_style), ""])
+            
             # Dividir dispositivos em pares (2 colunas)
             for i in range(0, len(devices), 2):
                 row = []
                 # Primeira coluna
                 device1 = devices[i]
-                device1_name = ""
+                device1_text = ""
                 if device1.device_model:
-                    device1_name = f"{device1.device_model.brand.name.upper()} {device1.device_model.name.upper()}"
+                    device1_text = f"{device1.device_model.brand.name} {device1.device_model.name}"
                 else:
-                    device1_name = "DISPOSITIVO"
+                    device1_text = "DISPOSITIVO"
                 
-                device1_text = f"{i + 1}. {device1_name}"
-                imeis1 = []
+                if device1.color:
+                    device1_text += f" - {device1.color}"
+                
                 if device1.imei_01:
-                    imeis1.append(f"({device1.imei_01})")
-                if device1.imei_02:
-                    imeis1.append(f"({device1.imei_02})")
-                if device1.imei_03:
-                    imeis1.append(f"({device1.imei_03})")
-                if device1.imei_04:
-                    imeis1.append(f"({device1.imei_04})")
-                if device1.imei_05:
-                    imeis1.append(f"({device1.imei_05})")
-                
-                if imeis1:
-                    device1_text += "<br/>" + "<br/>".join(imeis1)
+                    device1_text += f" - IMEI: {device1.imei_01}"
                 
                 row.append(Paragraph(device1_text, normal_style))
                 
                 # Segunda coluna (se houver segundo dispositivo)
                 if i + 1 < len(devices):
                     device2 = devices[i + 1]
-                    device2_name = ""
+                    device2_text = ""
                     if device2.device_model:
-                        device2_name = f"{device2.device_model.brand.name.upper()} {device2.device_model.name.upper()}"
+                        device2_text = f"{device2.device_model.brand.name} {device2.device_model.name}"
                     else:
-                        device2_name = "DISPOSITIVO"
+                        device2_text = "DISPOSITIVO"
                     
-                    device2_text = f"{i + 2}. {device2_name}"
-                    imeis2 = []
+                    if device2.color:
+                        device2_text += f" - {device2.color}"
+                    
                     if device2.imei_01:
-                        imeis2.append(f"({device2.imei_01})")
-                    if device2.imei_02:
-                        imeis2.append(f"({device2.imei_02})")
-                    if device2.imei_03:
-                        imeis2.append(f"({device2.imei_03})")
-                    if device2.imei_04:
-                        imeis2.append(f"({device2.imei_04})")
-                    if device2.imei_05:
-                        imeis2.append(f"({device2.imei_05})")
-                    
-                    if imeis2:
-                        device2_text += "<br/>" + "<br/>".join(imeis2)
+                        device2_text += f" - IMEI: {device2.imei_01}"
                     
                     row.append(Paragraph(device2_text, normal_style))
                 else:
@@ -1348,42 +1315,57 @@ class CaseCoverPDFView(LoginRequiredMixin, View):
                 
                 devices_table_data.append(row)
             
-            # Criar tabela de 2 colunas para aparelhos
-            devices_table = Table(devices_table_data, colWidths=[8*cm, 8*cm])
+            # Criar tabela do quadro de aparelhos
+            devices_table = Table(devices_table_data, colWidths=[9*cm, 9*cm])
             devices_table.setStyle(TableStyle([
-                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('LEFTPADDING', (0, 0), (-1, -1), 5),
-                ('RIGHTPADDING', (0, 0), (-1, -1), 5),
-                ('TOPPADDING', (0, 0), (-1, -1), 3),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 11),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                ('SPAN', (0, 0), (-1, 0)),  # Título ocupa as 2 colunas
+                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 10),
+                ('BOX', (0, 0), (-1, -1), 1, colors.grey),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('LEFTPADDING', (0, 0), (-1, -1), 10),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+                ('TOPPADDING', (0, 1), (-1, -1), 5),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 5),
             ]))
             
             elements.append(devices_table)
-        else:
-            elements.append(Paragraph("Nenhum dispositivo cadastrado.", normal_style))
-        elements.append(Spacer(1, 0.5*cm))
+            elements.append(Spacer(1, 0.5*cm))
         
-        # Assunto
-        elements.append(Paragraph("<b>Assunto:</b>", bold_style))
-        elements.append(Paragraph("Extração de dados", normal_style))
-        elements.append(Spacer(1, 0.5*cm))
+        # Quadro de Tramitações
+        tramitacoes_box_data = []
+        # Título do quadro
+        tramitacoes_box_data.append([Paragraph("<b>Tramitações do Processo</b>", bold_style)])
         
-        # Tabela de tramitações
+        # Tabela de tramitações dentro do quadro
+        # Header
         tramitacoes_data = [
-            ['DE', 'PARA', 'DATA', 'RESPONSÁVEL PELO TRAMITE']
+            ['DE', 'PARA', 'DATA', 'RESPONSÁVEL']
         ]
         
-        for tramitacao in tramitacoes:
-            tramitacoes_data.append([
-                tramitacao['de'],
-                tramitacao['para'],
-                tramitacao['data'],
-                tramitacao['responsavel']
-            ])
+        # Dados (se houver)
+        if tramitacoes:
+            for tramitacao in tramitacoes:
+                tramitacoes_data.append([
+                    tramitacao['de'],
+                    tramitacao['para'],
+                    tramitacao['data'],
+                    tramitacao['responsavel']
+                ])
+        else:
+            # Uma linha vazia se não houver dados
+            tramitacoes_data.append(['', '', '', ''])
         
-        if not tramitacoes:
-            tramitacoes_data.append(['', '', '', 'Nenhuma tramitação registrada.'])
+        # Adicionar 5 linhas vazias para preenchimento manual
+        for i in range(5):
+            tramitacoes_data.append(['', '', '', ''])
         
         tramitacoes_table = Table(tramitacoes_data, colWidths=[4*cm, 4*cm, 3*cm, 5*cm])
         tramitacoes_table.setStyle(TableStyle([
@@ -1392,16 +1374,39 @@ class CaseCoverPDFView(LoginRequiredMixin, View):
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 0),
             ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
             ('FONTSIZE', (0, 1), (-1, -1), 10),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+            ('TOPPADDING', (0, 0), (-1, -1), 0),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 0),
         ]))
         
-        elements.append(Paragraph("<b>TRAMITAÇÕES DO PROCESSO</b>", bold_style))
-        elements.append(Spacer(1, 0.2*cm))
-        elements.append(tramitacoes_table)
+        # Adicionar tabela de tramitações ao quadro
+        tramitacoes_box_data.append([tramitacoes_table])
+        
+        # Criar tabela do quadro de tramitações
+        tramitacoes_box_table = Table(tramitacoes_box_data, colWidths=[18*cm])
+        tramitacoes_box_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('BOX', (0, 0), (-1, -1), 1, colors.grey),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 10),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 1), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 5),
+        ]))
+        
+        elements.append(tramitacoes_box_table)
         
         # Rodapé - usando configurações de relatórios se disponível
         if reports_settings:

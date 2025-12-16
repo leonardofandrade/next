@@ -54,6 +54,23 @@
             justify-content: center;
         }
         
+        .subject-box {
+            background-color: #f5f5f5;
+            border: 1px solid #999;
+            padding: 10px;
+            margin: 15px 0;
+        }
+        
+        .subject-box-title {
+            font-weight: bold;
+            font-size: 11pt;
+            margin-bottom: 8px;
+        }
+        
+        .subject-box-content {
+            font-size: 10pt;
+        }
+        
         .procedures-box {
             background-color: #f5f5f5;
             border: 1px solid #999;
@@ -70,6 +87,106 @@
         .procedures-box-item {
             margin-bottom: 5px;
             font-size: 10pt;
+        }
+        
+        .documents-box {
+            background-color: #f5f5f5;
+            border: 1px solid #999;
+            padding: 10px;
+            margin: 15px 0;
+        }
+        
+        .documents-box-title {
+            font-weight: bold;
+            font-size: 11pt;
+            margin-bottom: 8px;
+        }
+        
+        .documents-box-item {
+            margin-bottom: 5px;
+            font-size: 10pt;
+        }
+        
+        .origin-box {
+            background-color: #f5f5f5;
+            border: 1px solid #999;
+            padding: 10px;
+            margin: 15px 0;
+        }
+        
+        .origin-box-title {
+            font-weight: bold;
+            font-size: 11pt;
+            margin-bottom: 8px;
+        }
+        
+        .origin-box-item {
+            margin-bottom: 5px;
+            font-size: 10pt;
+        }
+        
+        .origin-box-label {
+            font-weight: bold;
+            display: inline-block;
+            min-width: 100px;
+        }
+        
+        .devices-box {
+            background-color: #f5f5f5;
+            border: 1px solid #999;
+            padding: 10px;
+            margin: 15px 0;
+        }
+        
+        .devices-box-title {
+            font-weight: bold;
+            font-size: 11pt;
+            margin-bottom: 8px;
+        }
+        
+        .devices-box-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .devices-box-item {
+            font-size: 10pt;
+            margin-bottom: 5px;
+        }
+        
+        .tramitacoes-box {
+            background-color: #f5f5f5;
+            border: 1px solid #999;
+            padding: 10px;
+            margin: 15px 0;
+        }
+        
+        .tramitacoes-box-title {
+            font-weight: bold;
+            font-size: 11pt;
+            margin-bottom: 8px;
+            background-color: transparent;
+        }
+        
+        .tramitacoes-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10pt;
+            margin-top: 0;
+        }
+        
+        .tramitacoes-table th {
+            background-color: #e0e0e0;
+            border: 1px solid #999;
+            padding: 0;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        .tramitacoes-table td {
+            border: 1px solid #999;
+            padding: 0;
         }
         
         .info-section {
@@ -137,26 +254,6 @@
             margin-bottom: 5px;
         }
         
-        .tramitacoes-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 10pt;
-        }
-        
-        .tramitacoes-table th {
-            background-color: #e0e0e0;
-            border: 1px solid #999;
-            padding: 8px;
-            text-align: left;
-            font-weight: bold;
-        }
-        
-        .tramitacoes-table td {
-            border: 1px solid #999;
-            padding: 8px;
-        }
-        
         .procedures-list {
             list-style: none;
             padding-left: 0;
@@ -184,6 +281,11 @@
         {{ case.number|default:case.pk }} - {% if case.extraction_unit %}{{ case.extraction_unit.acronym }}{% else %}NEXT{% endif %}
     </div>
     
+    <div class="subject-box">
+        <div class="subject-box-title">Assunto</div>
+        <div class="subject-box-content">Extração de dados</div>
+    </div>
+    
     {% if procedures %}
     <div class="procedures-box">
         <div class="procedures-box-title">Procedimentos</div>
@@ -197,107 +299,79 @@
     </div>
     {% endif %}
     
-    <div class="info-section">
-        {% if case.extraction_request %}
-        <div class="info-row">
-            <span class="info-label">PROCESSO JUDICIAL Nº:</span>
-            <span class="info-value">{{ case.extraction_request.request_procedures|default:"-" }}</span>
+    {% if documents %}
+    <div class="documents-box">
+        <div class="documents-box-title">Documentos</div>
+        {% for document in documents %}
+            {% if document.document_category %}
+            <div class="documents-box-item">
+                {{ document.document_category.name }}{% if document.number %} - {{ document.number }}{% endif %}
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="origin-box">
+        <div class="origin-box-title">Origem</div>
+        <div class="origin-box-item">
+            <span class="origin-box-label">Unidade:</span>
+            {{ case.requester_agency_unit.name|default:"-" }}
+        </div>
+        {% if case.requester_reply_email %}
+        <div class="origin-box-item">
+            <span class="origin-box-label">E-mail:</span>
+            {{ case.requester_reply_email }}
+        </div>
+        {% endif %}
+        {% if case.requester_authority_name %}
+        <div class="origin-box-item">
+            <span class="origin-box-label">Autoridade:</span>
+            {{ case.requester_authority_name }}{% if case.requester_authority_position %} - {{ case.requester_authority_position.name }}{% endif %}
+        </div>
+        {% endif %}
+        {% if ofs_documents %}
+        <div class="origin-box-item">
+            <span class="origin-box-label">Ofício:</span>
+            {% for ofs_document in ofs_documents %}
+                {% if ofs_document.number %}{{ ofs_document.number }}{% else %}-{% endif %}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </div>
+        {% elif case.extraction_request and case.extraction_request.request_procedures %}
+        <div class="origin-box-item">
+            <span class="origin-box-label">Ofício:</span>
+            {{ case.extraction_request.request_procedures }}
         </div>
         {% endif %}
     </div>
     
-    <div class="two-columns">
-        <div class="column">
-            <div class="info-section">
-                <div class="info-row">
-                    <span class="info-label">Origem:</span>
-                    <span class="info-value">{{ case.requester_agency_unit.name|default:"-" }}</span>
-                </div>
-                {% if case.extraction_request %}
-                <div class="info-row">
-                    <span class="info-label">Ofício nº:</span>
-                    <span class="info-value">{{ case.extraction_request.request_procedures|default:"-" }}</span>
-                </div>
+    {% if devices %}
+    <div class="devices-box">
+        <div class="devices-box-title">Aparelhos ({{ devices|length }})</div>
+        <div class="devices-box-content">
+            {% for device in devices %}
+            <div class="devices-box-item">
+                {% if device.device_model %}
+                    {{ device.device_model.brand.name }} {{ device.device_model.name }}{% if device.color %} - {{ device.color }}{% endif %}{% if device.imei_01 %} - IMEI: {{ device.imei_01 }}{% endif %}
+                {% else %}
+                    DISPOSITIVO{% if device.color %} - {{ device.color }}{% endif %}{% if device.imei_01 %} - IMEI: {{ device.imei_01 }}{% endif %}
                 {% endif %}
-                <div class="info-row">
-                    <span class="info-label">Solicitante:</span>
-                    <span class="info-value">
-                        {% if case.requester_authority_name %}
-                            {{ case.requester_authority_name }}
-                            {% if case.requester_authority_position %}
-                                <br>{{ case.requester_authority_position.name }}
-                            {% endif %}
-                        {% else %}
-                            -
-                        {% endif %}
-                    </span>
-                </div>
             </div>
-        </div>
-        
-        <div class="column">
-            <div class="info-section">
-                <div class="info-label">Documentos em anexo:</div>
-                <ul class="procedures-list">
-                    <li>Ofício;</li>
-                    {% if procedures %}
-                        {% for procedure in procedures %}
-                            {% if procedure.procedure_category %}
-                                <li>{{ procedure.procedure_category.name }}{% if procedure.number %} - {{ procedure.number }}{% endif %};</li>
-                            {% endif %}
-                        {% endfor %}
-                    {% endif %}
-                    <li>Termo de Autorização;</li>
-                    <li>Auto de Apresentação e Apreensão;</li>
-                    <li>Formulário de Entrega de Aparelho.</li>
-                </ul>
-                
-                <div class="info-label" style="margin-top: 15px;">APARELHOS:</div>
-                <div class="devices-list">
-                    {% for device in devices %}
-                    <div class="device-item">
-                        <strong>{{ forloop.counter }}. 
-                            {% if device.device_model %}
-                                {{ device.device_model.brand.name|upper }} {{ device.device_model.name|upper }}
-                            {% else %}
-                                DISPOSITIVO
-                            {% endif %}
-                        </strong>
-                        {% if device.imei_01 or device.imei_02 %}
-                        <div class="imei-list">
-                            {% if device.imei_01 %}({{ device.imei_01 }}){% endif %}
-                            {% if device.imei_02 %}<br>({{ device.imei_02 }}){% endif %}
-                            {% if device.imei_03 %}<br>({{ device.imei_03 }}){% endif %}
-                            {% if device.imei_04 %}<br>({{ device.imei_04 }}){% endif %}
-                            {% if device.imei_05 %}<br>({{ device.imei_05 }}){% endif %}
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% empty %}
-                    <div class="device-item">Nenhum dispositivo cadastrado.</div>
-                    {% endfor %}
-                </div>
-            </div>
+            {% endfor %}
         </div>
     </div>
+    {% endif %}
     
-    <div class="subject">
-        <div class="subject-label">Assunto:</div>
-        <div>Extração de dados</div>
-    </div>
-    
-    <div class="info-section">
-        <div class="info-label" style="margin-bottom: 10px;">TRAMITAÇÕES DO PROCESSO</div>
+    <div class="tramitacoes-box">
+        <div class="tramitacoes-box-title">Tramitações do Processo</div>
         <table class="tramitacoes-table">
-            <thead>
-                <tr>
-                    <th>DE</th>
-                    <th>PARA</th>
-                    <th>DATA</th>
-                    <th>RESPONSÁVEL PELO TRAMITE</th>
-                </tr>
-            </thead>
-            <tbody>
+            <tr>
+                <th>DE</th>
+                <th>PARA</th>
+                <th>DATA</th>
+                <th>RESPONSÁVEL</th>
+            </tr>
+            {% if tramitacoes %}
                 {% for tramitacao in tramitacoes %}
                 <tr>
                     <td>{{ tramitacao.de }}</td>
@@ -305,12 +379,23 @@
                     <td>{{ tramitacao.data }}</td>
                     <td>{{ tramitacao.responsavel }}</td>
                 </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" style="text-align: center;">Nenhuma tramitação registrada.</td>
-                </tr>
                 {% endfor %}
-            </tbody>
+            {% else %}
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            {% endif %}
+            {% for i in "12345" %}
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            {% endfor %}
         </table>
     </div>
 </body>

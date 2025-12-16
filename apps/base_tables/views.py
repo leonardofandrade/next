@@ -137,6 +137,28 @@ class AgencyListView(BaseListView):
         context = super().get_context_data(**kwargs)
         context['agencies'] = context.get('object_list', [])
         return context
+    
+    def get(self, request, *args, **kwargs):
+        """Retorna JSON se solicitado via AJAX"""
+        # Verifica se é uma requisição AJAX ou se foi solicitado formato JSON
+        is_ajax = (
+            request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 
+            request.GET.get('format') == 'json' or
+            'application/json' in request.headers.get('Accept', '')
+        )
+        
+        if is_ajax:
+            # Usa o service para obter o queryset filtrado
+            service = self.service_class(user=request.user)
+            agencies = service.get_queryset().select_related('organization').order_by('organization__name', 'name')
+            agencies_data = [{
+                'id': agency.id,
+                'name': agency.name,
+                'acronym': agency.acronym or '',
+                'organization': agency.organization.name if agency.organization else ''
+            } for agency in agencies]
+            return JsonResponse({'agencies': agencies_data}, safe=False)
+        return super().get(request, *args, **kwargs)
 
 
 class AgencyCreateView(BaseCreateView):
@@ -306,6 +328,43 @@ class AgencyUnitCreateView(BaseCreateView):
         from django.contrib import messages
         messages.success(self.request, _('Unidade operacional criada com sucesso!'))
         return super(BaseCreateView, self).form_valid(form)
+
+
+class AgencyUnitCreateAjaxView(LoginRequiredMixin, View):
+    """Criar AgencyUnit via AJAX (retorna JSON)"""
+    
+    def post(self, request):
+        """Processa criação de AgencyUnit via AJAX"""
+        form = AgencyUnitForm(request.POST)
+        
+        if form.is_valid():
+            try:
+                agency_unit = form.save(commit=False)
+                agency_unit.created_by = request.user
+                agency_unit.save()
+                
+                return JsonResponse({
+                    'success': True,
+                    'id': agency_unit.id,
+                    'name': agency_unit.name,
+                    'acronym': agency_unit.acronym or '',
+                    'display_name': str(agency_unit),
+                    'message': 'Unidade solicitante criada com sucesso!'
+                })
+            except Exception as e:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Erro ao criar unidade: {str(e)}'
+                }, status=400)
+        else:
+            errors = {}
+            for field, field_errors in form.errors.items():
+                errors[field] = field_errors
+            return JsonResponse({
+                'success': False,
+                'errors': errors,
+                'error': 'Por favor, corrija os erros no formulário.'
+            }, status=400)
 
 
 class AgencyUnitUpdateView(BaseUpdateView):

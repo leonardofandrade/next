@@ -48,7 +48,13 @@ Preencha os dados para criar um novo processo
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                {{ form.requester_agency_unit|form_label_class }}
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    {{ form.requester_agency_unit|form_label_class }}
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="btnNewAgencyUnit" data-bs-toggle="modal" data-bs-target="#newAgencyUnitModal">
+                                        <i class="fas fa-plus me-1"></i>
+                                        Nova Unidade
+                                    </button>
+                                </div>
                                 {{ form.requester_agency_unit }}
                                 {{ form.requester_agency_unit.errors }}
                             </div>
@@ -126,6 +132,9 @@ Preencha os dados para criar um novo processo
     </div>
 </div>
 
+<!-- Modal para Nova Unidade Solicitante -->
+{% include '_global/layout/includes/modal/agency_unit_modal.html' %}
+
 {% endblock %}
 
 {% block extra_js %}
@@ -166,6 +175,165 @@ $(document).ready(function() {
         minimumInputLength: 0,
         closeOnSelect: true
     });
+    
+    // Event listener para o botão de nova unidade
+    $('#btnNewAgencyUnit').on('click', function(e) {
+        e.preventDefault();
+        initAgencyUnitModal();
+    });
+    
+    // Também inicializa quando o modal é aberto via Bootstrap
+    $('#newAgencyUnitModal').on('show.bs.modal', function() {
+        initAgencyUnitModal();
+    });
+});
+
+// Função para inicializar o modal de AgencyUnit (definida no escopo global)
+function initAgencyUnitModal() {
+    console.log('Inicializando modal de AgencyUnit');
+    
+    // Verifica se o modal existe
+    if (!$('#newAgencyUnitModal').length) {
+        console.error('Modal #newAgencyUnitModal não encontrado!');
+        return;
+    }
+    
+    // Aguarda um pouco para garantir que o modal está totalmente renderizado
+    setTimeout(function() {
+        // Verifica se o select existe dentro do modal
+        const select = $('#newAgencyUnitModal #newAgencyUnitAgency');
+        if (!select.length) {
+            console.error('Select #newAgencyUnitAgency não encontrado no modal!');
+            return;
+        }
+        
+        // Carrega agências no select
+        loadAgencies();
+    }, 100);
+    
+    // Handler do formulário
+    $('#newAgencyUnitForm').off('submit').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            name: $('#newAgencyUnitName').val(),
+            acronym: $('#newAgencyUnitShortName').val(),
+            agency: $('#newAgencyUnitAgency').val(),
+            primary_email: $('#newAgencyUnitEmail').val() || '',
+            csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val()
+        };
+        
+            // Validação básica
+            if (!formData.name || !formData.acronym || !formData.agency) {
+                showAgencyUnitModalAlert('Por favor, preencha todos os campos obrigatórios.', 'danger');
+                return;
+            }
+        
+        // Envia requisição AJAX
+        $.ajax({
+            url: '{% url "base_tables:agency_unit_create_ajax" %}',
+            method: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    // Adiciona a nova opção ao Select2
+                    const selectId = '#{{ form.requester_agency_unit.id_for_label }}';
+                    const newOption = new Option(response.display_name || response.name, response.id, true, true);
+                    $(selectId).append(newOption).trigger('change');
+                    
+                    // Fecha o modal
+                    $('#newAgencyUnitModal').modal('hide');
+                    
+                    // Limpa o formulário
+                    $('#newAgencyUnitForm')[0].reset();
+                    $('#agencyUnitModalAlerts').empty();
+                    
+                    // Mostra mensagem de sucesso
+                    showAgencyUnitModalAlert(response.message || 'Unidade criada com sucesso!', 'success');
+                } else {
+                    showAgencyUnitModalAlert(response.error || 'Erro ao criar unidade.', 'danger');
+                }
+            },
+            error: function(xhr) {
+                let errorMsg = 'Erro ao criar unidade.';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    const errors = Object.values(xhr.responseJSON.errors).flat().join(', ');
+                    errorMsg = errors;
+                }
+                showAgencyUnitModalAlert(errorMsg, 'danger');
+            }
+        });
+    });
+}
+
+// Função para carregar agências
+function loadAgencies() {
+    console.log('Carregando agências...');
+    const select = $('#newAgencyUnitAgency');
+    
+    if (!select.length) {
+        console.error('Select #newAgencyUnitAgency não encontrado!');
+        return;
+    }
+    
+    $.ajax({
+        url: '{% url "base_tables:agency_list" %}?format=json',
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        dataType: 'json',
+        success: function(data) {
+            console.log('Agências carregadas:', data);
+            select.empty().append('<option value="">Selecione uma agência</option>');
+            
+            if (data.agencies && data.agencies.length > 0) {
+                data.agencies.forEach(function(agency) {
+                    const displayName = agency.acronym ? `${agency.acronym} - ${agency.name}` : agency.name;
+                    select.append(`<option value="${agency.id}">${displayName}</option>`);
+                });
+                console.log(`${data.agencies.length} agências adicionadas ao select`);
+            } else {
+                console.warn('Nenhuma agência encontrada');
+                select.append('<option value="">Nenhuma agência disponível</option>');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Erro ao carregar agências:', {
+                status: status,
+                error: error,
+                responseText: xhr.responseText,
+                statusCode: xhr.status
+            });
+            select.empty().append('<option value="">Erro ao carregar agências</option>');
+        }
+    });
+}
+
+// Função para mostrar alertas no modal
+function showAgencyUnitModalAlert(message, type) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+    $('#agencyUnitModalAlerts').html(alertHtml);
+    
+    // Remove o alerta após 5 segundos se for sucesso
+    if (type === 'success') {
+        setTimeout(function() {
+            $('#agencyUnitModalAlerts').empty();
+        }, 5000);
+    }
+}
+
+// Limpa o formulário quando o modal é fechado
+$('#newAgencyUnitModal').on('hidden.bs.modal', function() {
+    $('#newAgencyUnitForm')[0].reset();
+    $('#agencyUnitModalAlerts').empty();
 });
 </script>
 {% endblock %}

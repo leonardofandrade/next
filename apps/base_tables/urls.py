@@ -25,6 +25,7 @@ urlpatterns = [
     # AgencyUnit URLs
     path('agency-units/', views.AgencyUnitListView.as_view(), name='agency_unit_list'),
     path('agency-units/create/', views.AgencyUnitCreateView.as_view(), name='agency_unit_create'),
+    path('agency-units/create-ajax/', views.AgencyUnitCreateAjaxView.as_view(), name='agency_unit_create_ajax'),
     path('agency-units/<int:pk>/edit/', views.AgencyUnitUpdateView.as_view(), name='agency_unit_edit'),
     path('agency-units/<int:pk>/delete/', views.AgencyUnitDeleteView.as_view(), name='agency_unit_delete'),
     

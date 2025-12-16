@@ -9,7 +9,7 @@ from django.utils import timezone
 from apps.base_tables.models import (
     Organization, Agency, Department, AgencyUnit,
     EmployeePosition, CrimeCategory, DeviceCategory,
-    DeviceBrand, DeviceModel, ProcedureCategory
+    DeviceBrand, DeviceModel, ProcedureCategory, DocumentCategory
 )
 from apps.users.models import UserProfile
 from apps.core.models import (
@@ -83,6 +83,7 @@ class Command(BaseCommand):
         DeviceCategory.objects.all().delete()
         CrimeCategory.objects.all().delete()
         ProcedureCategory.objects.all().delete()
+        DocumentCategory.objects.all().delete()
         EmployeePosition.objects.all().delete()
         AgencyUnit.objects.all().delete()
         Department.objects.all().delete()
@@ -105,6 +106,7 @@ class Command(BaseCommand):
             '10_extraction_agency_and_settings.json',
             '11_storage_media.json',
             '12_evidence_storage_locations.json',
+            '13_document_category.json',
         ]
 
         for file_name in files:
@@ -146,6 +148,8 @@ class Command(BaseCommand):
             self.load_storage_media(data)
         elif file_name == '12_evidence_storage_locations.json':
             self.load_evidence_storage_locations(data)
+        elif file_name == '13_document_category.json':
+            self.load_document_categories(data)
 
     def load_employee_positions(self, data):
         """Carrega cargos de funcionários"""
@@ -745,3 +749,19 @@ class Command(BaseCommand):
                 location.save()
 
         self.stdout.write(self.style.SUCCESS(f'  {count} locais de armazenamento de evidências criados'))
+
+    def load_document_categories(self, data):
+        """Carrega categorias de documentos"""
+        count = 0
+        for item in data:
+            _, created = DocumentCategory.objects.get_or_create(
+                acronym=item['acronym'],
+                defaults={
+                    'name': item['name'],
+                    'description': item.get('description', ''),
+                    'default_selection': item.get('default_selection', False)
+                }
+            )
+            if created:
+                count += 1
+        self.stdout.write(self.style.SUCCESS(f'  {count} categorias de documento criadas'))

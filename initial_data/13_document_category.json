@@ -1,4 +1,7 @@
 [
+    {"acronym": "OFS",
+     "name": "Ofício de Solicitação",
+     "description": "Ofício de solicitação"},
     {"acronym": "DJ",
      "name": "Decisão Judicial",
      "description": "Decisão judicial contendo o compartilhamento com a COIN e DIP"},

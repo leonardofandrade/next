@@ -19,7 +19,6 @@ class CaseCreateForm(forms.ModelForm):
     class Meta:
         model = Case
         fields = [
-            'extraction_request',
             'requester_agency_unit',
             'request_procedures',
             'crime_category',
@@ -29,13 +28,9 @@ class CaseCreateForm(forms.ModelForm):
             'requester_authority_position',
             'extraction_unit',
             'priority',
-            'assigned_to',
             'additional_info',
         ]
         widgets = {
-            'extraction_request': forms.Select(attrs={
-                'class': 'form-select',
-            }),
             'requester_agency_unit': forms.Select(attrs={
                 'class': 'form-select select2',
                 'data-placeholder': 'Digite para pesquisar...',
@@ -70,17 +65,14 @@ class CaseCreateForm(forms.ModelForm):
             'priority': forms.Select(attrs={
                 'class': 'form-select',
             }),
-            'assigned_to': forms.Select(attrs={
-                'class': 'form-select',
-            }),
+
             'additional_info': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 4,
+                'rows': 1,
                 'placeholder': 'Informações adicionais sobre o processo'
             }),
         }
         labels = {
-            'extraction_request': 'Solicitação de Extração',
             'requester_agency_unit': 'Unidade Solicitante',
             'request_procedures': 'Procedimentos',
             'crime_category': 'Categoria de Crime',
@@ -90,11 +82,9 @@ class CaseCreateForm(forms.ModelForm):
             'requester_authority_position': 'Cargo da Autoridade Solicitante',
             'extraction_unit': 'Unidade de Extração',
             'priority': 'Prioridade',
-            'assigned_to': 'Atribuído a',
             'additional_info': 'Informações Adicionais',
         }
         help_texts = {
-            'extraction_request': 'Solicitação de extração vinculada (opcional)',
             'requester_agency_unit': 'Unidade que está fazendo a solicitação',
             'request_procedures': 'Número dos procedimentos relacionados (IP, PJ, etc)',
             'crime_category': 'Tipo de crime relacionado à investigação',
@@ -104,7 +94,6 @@ class CaseCreateForm(forms.ModelForm):
             'requester_authority_position': 'Cargo da autoridade',
             'extraction_unit': 'Unidade responsável pela extração',
             'priority': 'Nível de prioridade do processo',
-            'assigned_to': 'Usuário responsável pelo processo',
             'additional_info': 'Qualquer informação adicional relevante',
         }
 
@@ -113,21 +102,23 @@ class CaseCreateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         
         # Ordena os querysets
-        # Na criação, apenas solicitações sem processo vinculado
-        self.fields['extraction_request'].queryset = ExtractionRequest.objects.filter(
-            deleted_at__isnull=True,
-            case__isnull=True
-        ).order_by('-requested_at')
         self.fields['requester_agency_unit'].queryset = AgencyUnit.objects.all().order_by('acronym')
         self.fields['extraction_unit'].queryset = ExtractionUnit.objects.all().order_by('acronym')
         self.fields['requester_authority_position'].queryset = EmployeePosition.objects.all().order_by('-default_selection', 'name')
         self.fields['crime_category'].queryset = CrimeCategory.objects.all().order_by('-default_selection', 'name')
-        self.fields['assigned_to'].queryset = User.objects.filter(is_active=True).order_by('first_name', 'username')
         
-        # Torna campos opcionais
-        self.fields['extraction_request'].required = False
-        self.fields['extraction_unit'].required = False
-        self.fields['assigned_to'].required = False
+        # Torna campos obrigatórios
+        self.fields['extraction_unit'].required = True
+        self.fields['priority'].required = True
+        self.fields['requester_agency_unit'].required = True
+        self.fields['request_procedures'].required = True
+        self.fields['requested_device_amount'].required = True
+        
+        # Configura empty_label para campos obrigatórios Select
+        self.fields['extraction_unit'].empty_label = 'Selecione uma unidade de extração...'
+        self.fields['priority'].empty_label = 'Selecione uma prioridade...'
+        self.fields['requester_agency_unit'].empty_label = 'Selecione uma unidade solicitante...'
+        
 
     def clean_requested_device_amount(self):
         amount = self.cleaned_data.get('requested_device_amount')

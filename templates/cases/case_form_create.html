@@ -39,47 +39,19 @@ Preencha os dados para criar um novo processo
                         </div>                        
                     </div>
                     <div class="card-body">
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                {{ form.extraction_unit|form_label_class }}
-                                {{ form.extraction_unit }}
-                                {{ form.extraction_unit.errors }}
-                            </div>
 
-                            <div class="col-md-6">
-                                {{ form.priority|form_label_class }}
-                                {{ form.priority }}
-                                {{ form.priority.errors }}
-                            </div>
-                        </div>
                         <div class="row mb-3 border-bottom text-primary">
                             <div class="col-12">
-                                <h5 class="mb-3"><i class="fas fa-envelope-open-text me-2"></i>Dados da Solicitação
-                                    {% if form.extraction_request.value %}
-                                        <span class="badge bg-info text-dark fs-6">
-                                            <i class="fas fa-hashtag me-1"></i>
-                                            {{ form.extraction_request.value }}
-                                        </span>
-                                    {% endif %}
-                                </h5>
+                                <h5 class="mb-3"><i class="fas fa-envelope-open-text me-2"></i>Dados da Solicitação</h5>
                             </div>
                         </div>
 
                         <div class="row g-3 mb-3">
-                            {% if form.extraction_request %}
-                            <div class="col-md-12">
-                                {{ form.extraction_request|form_label_class }}
-                                {{ form.extraction_request }}
-                                {{ form.extraction_request.errors }}
-                            </div>
-                            {% endif %}
-                           
                             <div class="col-md-6">
                                 {{ form.requester_agency_unit|form_label_class }}
                                 {{ form.requester_agency_unit }}
                                 {{ form.requester_agency_unit.errors }}
                             </div>
-
                             <div class="col-md-2">
                                 {{ form.requested_device_amount|form_label_class }}
                                 {{ form.requested_device_amount }}
@@ -100,34 +72,39 @@ Preencha os dados para criar um novo processo
                                 {{ form.requester_authority_name }}
                                 {{ form.requester_authority_name.errors }}
                             </div>
-
                             <div class="col-md-4">
                                 {{ form.requester_authority_position|form_label_class }}
                                 {{ form.requester_authority_position }}
                                 {{ form.requester_authority_position.errors }}
                             </div>                            
-                        </div>
- 
+                        </div> 
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
                                 {{ form.crime_category|form_label_class }}
                                 {{ form.crime_category }}
                                 {{ form.crime_category.errors }}
                             </div>
-                            <div class="col-md-4">
-                                {{ form.assigned_to|form_label_class }}
-                                {{ form.assigned_to }}
-                                {{ form.assigned_to.errors }}
-                            </div>
-                            <div class="col-md-4">
-                                <!-- Espaço reservado -->
-                            </div>
-                        </div>
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-12">
+                            <div class="col-md-8">
                                 {{ form.additional_info|form_label_class }}
                                 {{ form.additional_info }}
                                 {{ form.additional_info.errors }}
+                            </div>
+                        </div>
+                        <div class="row mb-3 border-bottom text-primary">
+                            <div class="col-12">
+                                <h5 class="mb-3"><i class="fas fa-microscope me-2"></i>Dados da Distribuição</h5>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                {{ form.extraction_unit|form_label_class }}
+                                {{ form.extraction_unit }}
+                                {{ form.extraction_unit.errors }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.priority|form_label_class }}
+                                {{ form.priority }}
+                                {{ form.priority.errors }}
                             </div>
                         </div>
                     </div>

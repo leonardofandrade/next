@@ -136,7 +136,6 @@ class CaseCreateView(BaseCreateView):
                     case__isnull=True
                 )
                 initial.update({
-                    'extraction_request': extraction_request.pk,
                     'requester_agency_unit': extraction_request.requester_agency_unit,
                     'request_procedures': extraction_request.request_procedures,
                     'crime_category': extraction_request.crime_category,

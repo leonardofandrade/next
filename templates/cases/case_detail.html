@@ -248,7 +248,34 @@
                                 <i class="fas fa-file-word fa-2x mb-2"></i>
                                 <span class="small">Gerar Capa ODT</span>
                             </a>
+                            {% endif %}
                             
+                            <!-- Ofício de Resposta -->
+                            {% if case.status == 'completed' %}
+                                {% if case.dispatch_number %}
+                                    <a href="{% url 'cases:dispatch_download' case.pk %}" 
+                                       class="btn btn-outline-warning d-flex flex-column align-items-center justify-content-center" 
+                                       style="width: 120px; height: 120px; padding: 0.5rem;"
+                                       target="_blank">
+                                        <i class="fas fa-file-alt fa-2x mb-2"></i>
+                                        <span class="small">Baixar Ofício</span>
+                                        <span class="badge bg-warning text-dark mt-1">{{ case.dispatch_number }}</span>
+                                    </a>
+                                {% else %}
+                                    <form method="post" action="{% url 'cases:dispatch_generate' case.pk %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" 
+                                                class="btn btn-outline-warning d-flex flex-column align-items-center justify-content-center" 
+                                                style="width: 120px; height: 120px; padding: 0.5rem;"
+                                                onclick="return confirm('Deseja gerar o ofício de resposta para este processo?');">
+                                            <i class="fas fa-file-alt fa-2x mb-2"></i>
+                                            <span class="small">Gerar Ofício</span>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            {% endif %}
+                            
+                            {% if case.registration_completed_at %}
                             <!-- Solicitação -->
                             {% if case.extraction_request %}
                             <a href="{% url 'requisitions:detail' case.extraction_request.pk %}?next={% url 'cases:detail' case.pk %}" 

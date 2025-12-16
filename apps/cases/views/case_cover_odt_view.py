@@ -456,3 +456,97 @@ class CaseCoverODTView(LoginRequiredMixin, View):
                 f'Erro ao gerar o ODT da capa: {str(e)}'
             )
             return redirect('cases:detail', pk=case.pk)
+
+
+class CaseDispatchGenerateView(LoginRequiredMixin, View):
+    """
+    Gera ofício de resposta para um caso
+    """
+    
+    def post(self, request, pk):
+        """
+        Gera o ofício de resposta do processo
+        """
+        from django.shortcuts import get_object_or_404
+        from django.contrib import messages
+        from apps.cases.models import Case
+        
+        case = get_object_or_404(
+            Case.objects.filter(deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        # Verifica se o processo está finalizado
+        if case.status != Case.CASE_STATUS_COMPLETED:
+            messages.error(
+                request,
+                'O ofício só pode ser gerado para processos finalizados.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        # Verifica se já existe ofício gerado
+        if case.dispatch_number:
+            messages.warning(
+                request,
+                f'Já existe um ofício gerado para este processo: {case.dispatch_number}. '
+                'Para gerar um novo, é necessário remover o ofício existente primeiro.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        try:
+            from apps.core.services.dispatch_service import DispatchService
+            dispatch_service = DispatchService()
+            dispatch_data = dispatch_service.generate_dispatch(case)
+            
+            # Atualiza o caso com os dados do ofício
+            case.dispatch_number = dispatch_data['number']
+            case.dispatch_date = dispatch_data['date']
+            case.dispatch_file = dispatch_data['file']
+            case.dispatch_filename = dispatch_data['filename']
+            case.dispatch_content_type = dispatch_data['content_type']
+            case.save()
+            
+            messages.success(
+                request,
+                f'Ofício {dispatch_data["number"]} gerado com sucesso!'
+            )
+            
+        except Exception as e:
+            messages.error(
+                request,
+                f'Erro ao gerar o ofício: {str(e)}'
+            )
+        
+        return redirect('cases:detail', pk=case.pk)
+
+
+class CaseDispatchDownloadView(LoginRequiredMixin, View):
+    """
+    Download do ofício de resposta de um caso
+    """
+    
+    def get(self, request, pk):
+        """
+        Faz download do ofício de resposta do processo
+        """
+        from django.shortcuts import get_object_or_404
+        from django.contrib import messages
+        from django.http import HttpResponse
+        from apps.cases.models import Case
+        
+        case = get_object_or_404(
+            Case.objects.filter(deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        if not case.dispatch_file:
+            messages.error(
+                request,
+                'Não há ofício gerado para este processo.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        response = HttpResponse(case.dispatch_file, content_type=case.dispatch_content_type or 'application/vnd.oasis.opendocument.text')
+        filename = case.dispatch_filename or f'oficio_{case.dispatch_number}.odt'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response

@@ -89,19 +89,18 @@ class DispatchService(BaseService):
         # Obtém template
         if not template:
             template = self.get_template(case.extraction_unit)
-            if not template:
-                raise ServiceException(f"Nenhum template de ofício encontrado para a unidade {case.extraction_unit.acronym}")
         
         # Obtém próximo número
         year = timezone.now().year
         dispatch_number = self.get_next_dispatch_number(case.extraction_unit, year)
         
         # Gera o arquivo ODT
-        if template.template_file:
+        if template and template.template_file:
             # Usa template existente
             odt_file = self._generate_from_template(case, template, dispatch_number, year)
         else:
-            # Gera template básico
+            # Gera template básico (mesmo sem template configurado)
+            # Isso permite gerar ofícios mesmo sem template específico da unidade
             odt_file = self._generate_basic_dispatch(case, dispatch_number, year)
         
         # Formata número do ofício

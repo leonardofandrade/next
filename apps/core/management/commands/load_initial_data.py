@@ -15,7 +15,8 @@ from apps.users.models import UserProfile
 from apps.core.models import (
     ExtractionAgency, ExtractionUnit, ExtractorUser,
     GeneralSettings, EmailSettings, ReportsSettings,
-    ExtractionUnitStorageMedia, ExtractionUnitEvidenceLocation
+    ExtractionUnitStorageMedia, ExtractionUnitEvidenceLocation,
+    DispatchTemplate
 )
 
 
@@ -150,6 +151,8 @@ class Command(BaseCommand):
             self.load_evidence_storage_locations(data)
         elif file_name == '13_document_category.json':
             self.load_document_categories(data)
+        elif file_name == '14_dispatch_templates.json':
+            self.load_dispatch_templates(data)
 
     def load_employee_positions(self, data):
         """Carrega cargos de funcionários"""
@@ -765,3 +768,69 @@ class Command(BaseCommand):
             if created:
                 count += 1
         self.stdout.write(self.style.SUCCESS(f'  {count} categorias de documento criadas'))
+
+    def load_dispatch_templates(self, data):
+        """Carrega templates de ofícios"""
+        count = 0
+        for item in data:
+            # Busca a unidade de extração
+            try:
+                extraction_unit = ExtractionUnit.objects.get(
+                    acronym=item['extraction_unit_acronym']
+                )
+            except ExtractionUnit.DoesNotExist:
+                self.stdout.write(self.style.WARNING(
+                    f'  Pulando template {item.get("name", "N/A")}: '
+                    f'Unidade de extração {item["extraction_unit_acronym"]} não encontrada'
+                ))
+                continue
+
+            # Prepara os dados do template
+            template_data = {
+                'extraction_unit': extraction_unit,
+                'name': item['name'],
+                'description': item.get('description', ''),
+                'template_filename': item.get('template_filename', ''),
+                'is_active': item.get('is_active', True),
+                'is_default': item.get('is_default', False),
+            }
+
+            # Carrega arquivo template se existir
+            if item.get('template_file_base64'):
+                try:
+                    template_bytes = base64.b64decode(item['template_file_base64'])
+                    template_data['template_file'] = template_bytes
+                except Exception as e:
+                    self.stdout.write(self.style.WARNING(
+                        f'  Erro ao decodificar template {item["name"]}: {str(e)}'
+                    ))
+
+            # Cria ou atualiza o template
+            template, created = DispatchTemplate.objects.get_or_create(
+                extraction_unit=extraction_unit,
+                name=item['name'],
+                defaults=template_data
+            )
+
+            if created:
+                count += 1
+            else:
+                # Atualiza campos se já existia
+                template.description = item.get('description', '')
+                template.template_filename = item.get('template_filename', '')
+                template.is_active = item.get('is_active', True)
+                template.is_default = item.get('is_default', False)
+                
+                # Atualiza arquivo se fornecido
+                if item.get('template_file_base64'):
+                    try:
+                        template_bytes = base64.b64decode(item['template_file_base64'])
+                        template.template_file = template_bytes
+                    except Exception as e:
+                        self.stdout.write(self.style.WARNING(
+                            f'  Erro ao decodificar template {item["name"]}: {str(e)}'
+                        ))
+                
+                template.save()
+
+        self.stdout.write(self.style.SUCCESS(f'  {count} templates de ofício criados'))

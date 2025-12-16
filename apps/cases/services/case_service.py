@@ -74,6 +74,37 @@ class CaseService(BaseService):
             # Em caso de erro, retorna queryset completo
             return queryset
     
+    @transaction.atomic
+    def create(self, data: Dict[str, Any]) -> Case:
+        """
+        Cria um novo Case e faz o parsing dos procedimentos se houver request_procedures.
+        Sobrescreve o método do BaseService para adicionar lógica específica de parsing.
+        """
+        # Chama o método create do BaseService
+        case = super().create(data)
+        
+        # Tenta parsear request_procedures e criar CaseProcedure
+        # Se falhar, não impede a criação do case
+        request_procedures_text = data.get('request_procedures')
+        if request_procedures_text:
+            try:
+                from apps.cases.utils import parse_request_procedures
+                import logging
+                
+                errors = parse_request_procedures(request_procedures_text, case, self.user)
+                # Loga erros se houver, mas não interrompe o fluxo
+                if errors:
+                    logger = logging.getLogger(__name__)
+                    for error in errors:
+                        logger.warning(f"Erro ao parsear procedimentos do Case #{case.pk}: {error}")
+            except Exception as e:
+                # Captura qualquer exceção não tratada e loga, mas não interrompe
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Erro inesperado ao parsear procedimentos do Case #{case.pk}: {str(e)}", exc_info=True)
+        
+        return case
+    
     def validate_business_rules(self, data: Dict[str, Any], instance: Optional[Case] = None) -> Dict[str, Any]:
         """Validate Case business rules"""
         

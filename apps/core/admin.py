@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import DispatchSequenceNumber, DispatchTemplate
+from .models import DispatchSequenceNumber, DocumentTemplate
 
 
 @admin.register(DispatchSequenceNumber)
@@ -10,10 +10,10 @@ class DispatchSequenceNumberAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at', 'created_by', 'updated_by')
 
 
-@admin.register(DispatchTemplate)
-class DispatchTemplateAdmin(admin.ModelAdmin):
-    list_display = ('name', 'extraction_unit', 'is_active', 'is_default', 'created_at')
-    list_filter = ('extraction_unit', 'is_active', 'is_default')
+@admin.register(DocumentTemplate)
+class DocumentTemplateAdmin(admin.ModelAdmin):
+    list_display = ('name', 'extraction_unit', 'is_default', 'created_at')
+    list_filter = ('extraction_unit', 'is_default')
     search_fields = ('name', 'extraction_unit__name', 'extraction_unit__acronym', 'description')
     readonly_fields = ('created_at', 'updated_at', 'created_by', 'updated_by')
     
@@ -21,11 +21,17 @@ class DispatchTemplateAdmin(admin.ModelAdmin):
         ('Informações Básicas', {
             'fields': ('extraction_unit', 'name', 'description')
         }),
-        ('Template', {
-            'fields': ('template_file', 'template_filename')
+        ('Cabeçalho', {
+            'fields': ('header_left_logo', 'header_right_logo', 'header_text')
+        }),
+        ('Conteúdo', {
+            'fields': ('subject_text', 'body_text', 'signature_text')
+        }),
+        ('Rodapé e Água-Marinha', {
+            'fields': ('footer_left_logo', 'footer_right_logo', 'footer_text', 'watermark_text', 'watermark_logo')
         }),
         ('Status', {
-            'fields': ('is_active', 'is_default')
+            'fields': ('is_default',)
         }),
         ('Auditoria', {
             'fields': ('created_at', 'updated_at', 'created_by', 'updated_by'),

@@ -11,7 +11,7 @@ from odf.style import Style, TextProperties
 import re
 import locale
 
-from apps.core.models import ExtractionUnit, DispatchSequenceNumber, DispatchTemplate
+from apps.core.models import ExtractionUnit, DispatchSequenceNumber, DocumentTemplate
 from apps.cases.models import Case
 from apps.core.services.base import BaseService, ServiceException
 
@@ -37,7 +37,7 @@ class DispatchService(BaseService):
         
         return DispatchSequenceNumber.get_next_number(extraction_unit, year)
     
-    def get_template(self, extraction_unit: ExtractionUnit, template_name: Optional[str] = None) -> Optional[DispatchTemplate]:
+    def get_template(self, extraction_unit: ExtractionUnit, template_name: Optional[str] = None) -> Optional[DocumentTemplate]:
         """
         Obtém o template de ofício para uma extraction unit.
         
@@ -50,29 +50,26 @@ class DispatchService(BaseService):
         """
         if template_name:
             try:
-                return DispatchTemplate.objects.get(
+                return DocumentTemplate.objects.get(
                     extraction_unit=extraction_unit,
-                    name=template_name,
-                    is_active=True
+                    name=template_name
                 )
-            except DispatchTemplate.DoesNotExist:
+            except DocumentTemplate.DoesNotExist:
                 return None
         
         # Busca template padrão
         try:
-            return DispatchTemplate.objects.get(
+            return DocumentTemplate.objects.get(
                 extraction_unit=extraction_unit,
-                is_default=True,
-                is_active=True
+                is_default=True
             )
-        except DispatchTemplate.DoesNotExist:
-            # Busca qualquer template ativo
-            return DispatchTemplate.objects.filter(
-                extraction_unit=extraction_unit,
-                is_active=True
+        except DocumentTemplate.DoesNotExist:
+            # Busca qualquer template da unidade
+            return DocumentTemplate.objects.filter(
+                extraction_unit=extraction_unit
             ).first()
     
-    def generate_dispatch(self, case: Case, template: Optional[DispatchTemplate] = None) -> Dict[str, Any]:
+    def generate_dispatch(self, case: Case, template: Optional[DocumentTemplate] = None) -> Dict[str, Any]:
         """
         Gera um ofício de resposta para um caso.
         
@@ -95,8 +92,8 @@ class DispatchService(BaseService):
         dispatch_number = self.get_next_dispatch_number(case.extraction_unit, year)
         
         # Gera o arquivo ODT
-        if template and template.template_file:
-            # Usa template existente
+        if template and self._template_has_content(template):
+            # Usa template configurado
             odt_file = self._generate_from_template(case, template, dispatch_number, year)
         else:
             # Gera template básico (mesmo sem template configurado)
@@ -115,25 +112,89 @@ class DispatchService(BaseService):
             'content_type': 'application/vnd.oasis.opendocument.text'
         }
     
-    def _generate_from_template(self, case: Case, template: DispatchTemplate, dispatch_number: int, year: int) -> bytes:
+    def _template_has_content(self, template: DocumentTemplate) -> bool:
         """
-        Gera ofício a partir de um template ODT existente.
+        Verifica se o template tem conteúdo configurado.
+        
+        Args:
+            template: Template a verificar
+            
+        Returns:
+            True se o template tem conteúdo
+        """
+        return bool(
+            template.header_text or
+            template.subject_text or
+            template.body_text or
+            template.signature_text
+        )
+    
+    def _generate_from_template(self, case: Case, template: DocumentTemplate, dispatch_number: int, year: int) -> bytes:
+        """
+        Gera ofício a partir de um template configurado.
         
         Args:
             case: Caso
-            template: Template ODT
-            oficio_number: Número do ofício
+            template: Template configurado
+            dispatch_number: Número do ofício
             year: Ano
             
         Returns:
             Arquivo ODT em bytes
         """
-        # Carrega template
-        template_bytes = BytesIO(template.template_file)
-        doc = load(template_bytes)
         
-        # Substitui variáveis no template
-        self._replace_template_variables(doc, case, dispatch_number, year)
+        doc = OpenDocumentText()
+        
+        # Prepara variáveis para substituição
+        variables = self._prepare_variables(case, dispatch_number, year)
+        
+        # Cabeçalho com logos e texto
+        # TODO: Implementar suporte a imagens quando necessário
+        # Por enquanto, apenas texto do cabeçalho
+        if template.header_text:
+            header_text = self._replace_variables_in_text(template.header_text, variables)
+            # Divide em parágrafos (por quebras de linha)
+            for line in header_text.split('\n'):
+                if line.strip():
+                    p = P()
+                    p.addText(line.strip())
+                    doc.text.addElement(p)
+        
+        # Assunto
+        if template.subject_text:
+            subject_text = self._replace_variables_in_text(template.subject_text, variables)
+            p = P()
+            p.addText(subject_text)
+            doc.text.addElement(p)
+        
+        # Corpo do ofício
+        if template.body_text:
+            body_text = self._replace_variables_in_text(template.body_text, variables)
+            # Divide em parágrafos (por quebras de linha)
+            for line in body_text.split('\n'):
+                if line.strip():
+                    p = P()
+                    p.addText(line.strip())
+                    doc.text.addElement(p)
+        
+        # Assinatura
+        if template.signature_text:
+            signature_text = self._replace_variables_in_text(template.signature_text, variables)
+            for line in signature_text.split('\n'):
+                if line.strip():
+                    p = P()
+                    p.addText(line.strip())
+                    doc.text.addElement(p)
+        
+        # Rodapé com texto
+        # TODO: Implementar suporte a imagens quando necessário
+        if template.footer_text:
+            footer_text = self._replace_variables_in_text(template.footer_text, variables)
+            for line in footer_text.split('\n'):
+                if line.strip():
+                    p = P()
+                    p.addText(line.strip())
+                    doc.text.addElement(p)
         
         # Salva em bytes
         output = BytesIO()
@@ -216,6 +277,58 @@ class DispatchService(BaseService):
         doc.write(output)
         return output.getvalue()
     
+    def _prepare_variables(self, case: Case, dispatch_number: int, year: int) -> Dict[str, str]:
+        """
+        Prepara dicionário de variáveis para substituição.
+        
+        Args:
+            case: Caso
+            dispatch_number: Número do ofício
+            year: Ano
+            
+        Returns:
+            Dicionário com variáveis
+        """
+        return {
+            'dispatch_number': f"{dispatch_number:03d}",
+            'dispatch_number_formatted': f"{dispatch_number:03d}_{year}",
+            'dispatch_full_number': f"Ofício {dispatch_number:03d}_{year} {case.extraction_unit.acronym if case.extraction_unit else 'NEXT'}",
+            # Mantém compatibilidade com nomes antigos
+            'oficio_number': f"{dispatch_number:03d}",
+            'oficio_number_formatted': f"{dispatch_number:03d}_{year}",
+            'oficio_full_number': f"Ofício {dispatch_number:03d}_{year} {case.extraction_unit.acronym if case.extraction_unit else 'NEXT'}",
+            'year': str(year),
+            'date': timezone.now().strftime('%d/%m/%Y'),
+            'case_number': case.number or str(case.pk),
+            'requester_unit': case.requester_agency_unit.name if case.requester_agency_unit else '',
+            'requester_unit_acronym': case.requester_agency_unit.acronym if case.requester_agency_unit and case.requester_agency_unit.acronym else case.requester_agency_unit.name if case.requester_agency_unit else '',
+            'extraction_unit': case.extraction_unit.name if case.extraction_unit else '',
+            'extraction_unit_acronym': case.extraction_unit.acronym if case.extraction_unit else 'NEXT',
+            'incharge_name': case.extraction_unit.incharge_name if case.extraction_unit else '',
+            'incharge_position': case.extraction_unit.incharge_position if case.extraction_unit else '',
+        }
+    
+    def _replace_variables_in_text(self, text: str, variables: Dict[str, str]) -> str:
+        """
+        Substitui variáveis em um texto.
+        
+        Args:
+            text: Texto com variáveis
+            variables: Dicionário de variáveis
+            
+        Returns:
+            Texto com variáveis substituídas
+        """
+        if not text:
+            return text
+        
+        result = text
+        for key, value in variables.items():
+            result = result.replace(f"{{{{{key}}}}}", str(value))
+            result = result.replace(f"{{{{ {key} }}}}", str(value))  # Com espaços
+        
+        return result
+    
     def _replace_template_variables(self, doc: OpenDocumentText, case: Case, dispatch_number: int, year: int):
         """
         Substitui variáveis no template ODT.
@@ -241,24 +354,7 @@ class DispatchService(BaseService):
             year: Ano
         """
         # Prepara variáveis
-        variables = {
-            'dispatch_number': f"{dispatch_number:03d}",
-            'dispatch_number_formatted': f"{dispatch_number:03d}_{year}",
-            'dispatch_full_number': f"Ofício {dispatch_number:03d}_{year} {case.extraction_unit.acronym if case.extraction_unit else 'NEXT'}",
-            # Mantém compatibilidade com nomes antigos
-            'oficio_number': f"{dispatch_number:03d}",
-            'oficio_number_formatted': f"{dispatch_number:03d}_{year}",
-            'oficio_full_number': f"Ofício {dispatch_number:03d}_{year} {case.extraction_unit.acronym if case.extraction_unit else 'NEXT'}",
-            'year': str(year),
-            'date': timezone.now().strftime('%d/%m/%Y'),
-            'case_number': case.number or str(case.pk),
-            'requester_unit': case.requester_agency_unit.name if case.requester_agency_unit else '',
-            'requester_unit_acronym': case.requester_agency_unit.acronym if case.requester_agency_unit and case.requester_agency_unit.acronym else case.requester_agency_unit.name if case.requester_agency_unit else '',
-            'extraction_unit': case.extraction_unit.name if case.extraction_unit else '',
-            'extraction_unit_acronym': case.extraction_unit.acronym if case.extraction_unit else 'NEXT',
-            'incharge_name': case.extraction_unit.incharge_name if case.extraction_unit else '',
-            'incharge_position': case.extraction_unit.incharge_position if case.extraction_unit else '',
-        }
+        variables = self._prepare_variables(case, dispatch_number, year)
         
         # Substitui em todos os parágrafos
         for para in doc.getElementsByType(P):

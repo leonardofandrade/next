@@ -3,7 +3,7 @@ Forms para o app core
 """
 from django import forms
 from .models import (
-    ExtractionAgency, ExtractionUnit, DispatchTemplate,
+    ExtractionAgency, ExtractionUnit, DocumentTemplate,
     ExtractorUser, ExtractionUnitExtractor,
     ExtractionUnitStorageMedia, ExtractionUnitEvidenceLocation,
     GeneralSettings, EmailSettings, ReportsSettings
@@ -83,64 +83,80 @@ class ExtractionUnitForm(forms.ModelForm):
         }
 
 
-class DispatchTemplateForm(forms.ModelForm):
-    """Form para Template de Ofício"""
+class DocumentTemplateForm(forms.ModelForm):
+    """Form para Template de Documento"""
     
-    # Campo customizado para upload de arquivo (não é um campo do modelo)
-    template_file_upload = forms.FileField(
+    # Campos customizados para upload de imagens (não são campos do modelo diretamente)
+    header_left_logo_upload = forms.ImageField(
         required=False,
-        label='Arquivo Template',
-        help_text='Faça upload de um arquivo ODT',
-        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.odt'})
+        label='Logo do Cabeçalho Esquerdo',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
+    header_right_logo_upload = forms.ImageField(
+        required=False,
+        label='Logo do Cabeçalho Direito',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
+    footer_left_logo_upload = forms.ImageField(
+        required=False,
+        label='Logo do Rodapé Esquerdo',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
+    footer_right_logo_upload = forms.ImageField(
+        required=False,
+        label='Logo do Rodapé Direito',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
+    watermark_logo_upload = forms.ImageField(
+        required=False,
+        label='Logo da Água-Marinha',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
     )
     
     class Meta:
-        model = DispatchTemplate
+        model = DocumentTemplate
         fields = [
             'extraction_unit', 'name', 'description',
-            'template_filename',
-            'is_active', 'is_default'
+            'header_text', 'subject_text', 'body_text', 'signature_text',
+            'footer_text', 'watermark_text',
+            'is_default'
         ]
         widgets = {
             'extraction_unit': forms.Select(attrs={'class': 'form-select'}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'template_filename': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'header_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Texto do cabeçalho. Use variáveis como {{dispatch_number}}, {{date}}, etc.'}),
+            'subject_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Texto do assunto do ofício'}),
+            'body_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 8, 'placeholder': 'Corpo do ofício. Use variáveis como {{case_number}}, {{requester_unit}}, etc.'}),
+            'signature_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Texto da assinatura. Use {{incharge_name}}, {{incharge_position}}, etc.'}),
+            'footer_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Texto do rodapé'}),
+            'watermark_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Texto da água-marinha'}),
             'is_default': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['extraction_unit'].queryset = ExtractionUnit.objects.filter(deleted_at__isnull=True)
-        
-        # Se estiver editando, mostra o nome do arquivo atual
-        if self.instance and self.instance.pk and self.instance.template_filename:
-            self.fields['template_filename'].initial = self.instance.template_filename
-            self.fields['template_filename'].widget.attrs['readonly'] = True
-            self.fields['template_file_upload'].help_text = f'Arquivo atual: {self.instance.template_filename}. Faça upload de um novo arquivo para substituir.'
-    
-    def clean_template_file_upload(self):
-        """Valida o arquivo template"""
-        file = self.cleaned_data.get('template_file_upload')
-        
-        if file:
-            # Verifica se é um arquivo ODT pela extensão
-            if hasattr(file, 'name'):
-                if not file.name.lower().endswith('.odt'):
-                    raise forms.ValidationError('Apenas arquivos ODT são permitidos.')
-        
-        return file
     
     def save(self, commit=True):
-        """Salva o template convertendo o arquivo para binário"""
+        """Salva o template convertendo as imagens para binário"""
         instance = super().save(commit=False)
         
-        # Se há um arquivo novo, converte para binário
-        uploaded_file = self.cleaned_data.get('template_file_upload')
-        if uploaded_file:
-            instance.template_file = uploaded_file.read()
-            instance.template_filename = uploaded_file.name
+        # Processa uploads de imagens
+        if self.cleaned_data.get('header_left_logo_upload'):
+            instance.header_left_logo = self.cleaned_data['header_left_logo_upload'].read()
+        
+        if self.cleaned_data.get('header_right_logo_upload'):
+            instance.header_right_logo = self.cleaned_data['header_right_logo_upload'].read()
+        
+        if self.cleaned_data.get('footer_left_logo_upload'):
+            instance.footer_left_logo = self.cleaned_data['footer_left_logo_upload'].read()
+        
+        if self.cleaned_data.get('footer_right_logo_upload'):
+            instance.footer_right_logo = self.cleaned_data['footer_right_logo_upload'].read()
+        
+        if self.cleaned_data.get('watermark_logo_upload'):
+            instance.watermark_logo = self.cleaned_data['watermark_logo_upload'].read()
         
         if commit:
             instance.save()

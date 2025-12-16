@@ -358,14 +358,14 @@ class DispatchSequenceNumber(AuditedModel):
         return sequence.last_number
 
 
-class DispatchTemplate(AuditedModel):
+class DocumentTemplate(AuditedModel):
     """
-    Modelo para armazenar templates de ofícios de resposta por extraction unit.
+    Modelo para armazenar templates de documentos por extraction unit.
     """
     extraction_unit = models.ForeignKey(
         ExtractionUnit,
         on_delete=models.PROTECT,
-        related_name='dispatch_templates',
+        related_name='document_templates',
         verbose_name=_('Unidade de Extração'),
         help_text=_('Unidade de extração'),
     )
@@ -382,37 +382,96 @@ class DispatchTemplate(AuditedModel):
         verbose_name=_('Descrição'),
         help_text=_('Descrição do template'),
     )
-    template_file = models.BinaryField(
+    # Campos para logo do cabeçalho
+
+    header_left_logo = models.BinaryField(
         null=True,
         blank=True,
-        verbose_name=_('Arquivo Template'),
-        help_text=_('Arquivo ODT do template'),
+        verbose_name=_('Logo do Cabeçalho Esquerdo'),
+        help_text=_('Logo do cabeçalho esquerdo do template'),
     )
-    template_filename = models.CharField(
-        max_length=255,
+    header_right_logo = models.BinaryField(
         null=True,
         blank=True,
-        verbose_name=_('Nome do Arquivo'),
-        help_text=_('Nome original do arquivo template'),
+        verbose_name=_('Logo do Cabeçalho Direito'),
+        help_text=_('Logo do cabeçalho direito do template'),
     )
-    is_active = models.BooleanField(
-        default=True,
-        verbose_name=_('Ativo'),
-        help_text=_('Indica se o template está ativo e pode ser usado'),
+    header_text = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_('Texto do Cabeçalho'),
+        help_text=_('Texto do cabeçalho do template'),
     )
+
+    # Campos para texto do corpo
+
+    subject_text = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_('Texto do Assunto'),
+        help_text=_('Texto do assunto do template'),
+    )
+    
+    body_text = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_('Texto do Corpo do Template'),
+        help_text=_('Texto do corpo do template'),
+    )
+
+    signature_text = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_('Texto da Assinatura'),
+        help_text=_('Texto da assinatura do template'),
+    )
+
+    watermark_text = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_('Texto da Água-Marinha'),
+        help_text=_('Texto da água-marinha do template'),
+    )
+    watermark_logo = models.BinaryField(
+        null=True,
+        blank=True,
+        verbose_name=_('Logo da Água-Marinha'),
+        help_text=_('Logo da água-marinha do template'),
+    )
+
+    # Campos para logo do rodapé
+    footer_left_logo = models.BinaryField(
+        null=True,
+        blank=True,
+        verbose_name=_('Logo do Rodapé Esquerdo'),
+        help_text=_('Logo do rodapé esquerdo do template'),
+    )
+    footer_right_logo = models.BinaryField(
+        null=True,
+        blank=True,
+        verbose_name=_('Logo do Rodapé Direito'),
+        help_text=_('Logo do rodapé direito do template'),
+    )
+    footer_text = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_('Texto do Rodapé'),
+        help_text=_('Texto do rodapé do template'),
+    )
+
     is_default = models.BooleanField(
         default=False,
         verbose_name=_('Padrão'),
         help_text=_('Indica se este é o template padrão para a unidade'),
     )
 
+
     class Meta:
-        db_table = 'dispatch_template'
-        verbose_name = _('Template de Ofício')
-        verbose_name_plural = _('Templates de Ofícios')
-        ordering = ['-is_default', '-is_active', 'name']
+        db_table = 'document_template'
+        verbose_name = _('Template de Documento')
+        verbose_name_plural = _('Templates de Documentos')
+        ordering = ['-is_default', 'name']
         indexes = [
-            models.Index(fields=['extraction_unit', 'is_active']),
             models.Index(fields=['extraction_unit', 'is_default']),
         ]
 
@@ -424,7 +483,7 @@ class DispatchTemplate(AuditedModel):
         """Garante que apenas um template padrão existe por extraction unit."""
         if self.is_default:
             # Desativa outros templates padrão da mesma unidade
-            DispatchTemplate.objects.filter(
+            DocumentTemplate.objects.filter(
                 extraction_unit=self.extraction_unit,
                 is_default=True
             ).exclude(pk=self.pk).update(is_default=False)

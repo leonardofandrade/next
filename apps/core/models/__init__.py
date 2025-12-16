@@ -20,5 +20,5 @@ __all__ = [
     'EmailSettings',
     'ReportsSettings',
     'DispatchSequenceNumber',
-    'DispatchTemplate',
+    'DocumentTemplate',
 ]

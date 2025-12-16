@@ -1,12 +1,12 @@
 from django.urls import path
 from . import views
-from .views.dispatch_template_views import (
-    DispatchTemplateListView,
-    DispatchTemplateCreateView,
-    DispatchTemplateDetailView,
-    DispatchTemplateUpdateView,
-    DispatchTemplateDeleteView,
-    DispatchTemplateDownloadView,
+from .views.document_template_views import (
+    DocumentTemplateListView,
+    DocumentTemplateCreateView,
+    DocumentTemplateDetailView,
+    DocumentTemplateUpdateView,
+    DocumentTemplateDeleteView,
+    DocumentTemplateDownloadView,
 )
 
 app_name = 'core'
@@ -60,11 +60,11 @@ urlpatterns = [
     path('user-extractor-management/extractor/<int:extractor_user_id>/associate-all-units/', views.associate_all_units, name='associate_all_units'),
     path('user-extractor-management/user/<int:user_id>/info/', views.get_user_extractor_info, name='get_user_extractor_info'),
     
-    # Dispatch Template URLs
-    path('dispatch-templates/', DispatchTemplateListView.as_view(), name='dispatch_template_list'),
-    path('dispatch-templates/create/', DispatchTemplateCreateView.as_view(), name='dispatch_template_create'),
-    path('dispatch-templates/<int:pk>/', DispatchTemplateDetailView.as_view(), name='dispatch_template_detail'),
-    path('dispatch-templates/<int:pk>/edit/', DispatchTemplateUpdateView.as_view(), name='dispatch_template_update'),
-    path('dispatch-templates/<int:pk>/delete/', DispatchTemplateDeleteView.as_view(), name='dispatch_template_delete'),
-    path('dispatch-templates/<int:pk>/download/', DispatchTemplateDownloadView.as_view(), name='dispatch_template_download'),
+    # Document Template URLs
+    path('document-templates/', DocumentTemplateListView.as_view(), name='document_template_list'),
+    path('document-templates/create/', DocumentTemplateCreateView.as_view(), name='document_template_create'),
+    path('document-templates/<int:pk>/', DocumentTemplateDetailView.as_view(), name='document_template_detail'),
+    path('document-templates/<int:pk>/edit/', DocumentTemplateUpdateView.as_view(), name='document_template_update'),
+    path('document-templates/<int:pk>/delete/', DocumentTemplateDeleteView.as_view(), name='document_template_delete'),
+    path('document-templates/<int:pk>/download/', DocumentTemplateDownloadView.as_view(), name='document_template_download'),
 ]

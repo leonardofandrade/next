@@ -16,7 +16,7 @@ from apps.core.models import (
     ExtractionAgency, ExtractionUnit, ExtractorUser,
     GeneralSettings, EmailSettings, ReportsSettings,
     ExtractionUnitStorageMedia, ExtractionUnitEvidenceLocation,
-    DispatchTemplate
+    DocumentTemplate
 )
 
 
@@ -107,7 +107,8 @@ class Command(BaseCommand):
             '10_extraction_agency_and_settings.json',
             '11_storage_media.json',
             '12_evidence_storage_locations.json',
-            '13_document_category.json',
+                    '13_document_category.json',
+                    '14_document_templates.json',
         ]
 
         for file_name in files:
@@ -151,8 +152,8 @@ class Command(BaseCommand):
             self.load_evidence_storage_locations(data)
         elif file_name == '13_document_category.json':
             self.load_document_categories(data)
-        elif file_name == '14_dispatch_templates.json':
-            self.load_dispatch_templates(data)
+        elif file_name == '14_document_templates.json':
+            self.load_document_templates(data)
 
     def load_employee_positions(self, data):
         """Carrega cargos de funcionários"""
@@ -769,8 +770,8 @@ class Command(BaseCommand):
                 count += 1
         self.stdout.write(self.style.SUCCESS(f'  {count} categorias de documento criadas'))
 
-    def load_dispatch_templates(self, data):
-        """Carrega templates de ofícios"""
+    def load_document_templates(self, data):
+        """Carrega templates de documentos"""
         count = 0
         for item in data:
             # Busca a unidade de extração
@@ -790,23 +791,42 @@ class Command(BaseCommand):
                 'extraction_unit': extraction_unit,
                 'name': item['name'],
                 'description': item.get('description', ''),
-                'template_filename': item.get('template_filename', ''),
-                'is_active': item.get('is_active', True),
+                'header_text': item.get('header_text', ''),
+                'subject_text': item.get('subject_text', ''),
+                'body_text': item.get('body_text', ''),
+                'signature_text': item.get('signature_text', ''),
+                'footer_text': item.get('footer_text', ''),
+                'watermark_text': item.get('watermark_text', ''),
                 'is_default': item.get('is_default', False),
             }
 
-            # Carrega arquivo template se existir
-            if item.get('template_file_base64'):
-                try:
-                    template_bytes = base64.b64decode(item['template_file_base64'])
-                    template_data['template_file'] = template_bytes
-                except Exception as e:
-                    self.stdout.write(self.style.WARNING(
-                        f'  Erro ao decodificar template {item["name"]}: {str(e)}'
-                    ))
+            # Carrega logos se existirem
+            logo_fields = [
+                'header_left_logo_base64', 'header_right_logo_base64',
+                'footer_left_logo_base64', 'footer_right_logo_base64',
+                'watermark_logo_base64'
+            ]
+            
+            logo_mapping = {
+                'header_left_logo_base64': 'header_left_logo',
+                'header_right_logo_base64': 'header_right_logo',
+                'footer_left_logo_base64': 'footer_left_logo',
+                'footer_right_logo_base64': 'footer_right_logo',
+                'watermark_logo_base64': 'watermark_logo',
+            }
+            
+            for base64_field, model_field in logo_mapping.items():
+                if item.get(base64_field):
+                    try:
+                        logo_bytes = base64.b64decode(item[base64_field])
+                        template_data[model_field] = logo_bytes
+                    except Exception as e:
+                        self.stdout.write(self.style.WARNING(
+                            f'  Erro ao decodificar {base64_field} do template {item["name"]}: {str(e)}'
+                        ))
 
             # Cria ou atualiza o template
-            template, created = DispatchTemplate.objects.get_or_create(
+            template, created = DocumentTemplate.objects.get_or_create(
                 extraction_unit=extraction_unit,
                 name=item['name'],
                 defaults=template_data
@@ -817,20 +837,25 @@ class Command(BaseCommand):
             else:
                 # Atualiza campos se já existia
                 template.description = item.get('description', '')
-                template.template_filename = item.get('template_filename', '')
-                template.is_active = item.get('is_active', True)
+                template.header_text = item.get('header_text', '')
+                template.subject_text = item.get('subject_text', '')
+                template.body_text = item.get('body_text', '')
+                template.signature_text = item.get('signature_text', '')
+                template.footer_text = item.get('footer_text', '')
+                template.watermark_text = item.get('watermark_text', '')
                 template.is_default = item.get('is_default', False)
                 
-                # Atualiza arquivo se fornecido
-                if item.get('template_file_base64'):
-                    try:
-                        template_bytes = base64.b64decode(item['template_file_base64'])
-                        template.template_file = template_bytes
-                    except Exception as e:
-                        self.stdout.write(self.style.WARNING(
-                            f'  Erro ao decodificar template {item["name"]}: {str(e)}'
-                        ))
+                # Atualiza logos se fornecidos
+                for base64_field, model_field in logo_mapping.items():
+                    if item.get(base64_field):
+                        try:
+                            logo_bytes = base64.b64decode(item[base64_field])
+                            setattr(template, model_field, logo_bytes)
+                        except Exception as e:
+                            self.stdout.write(self.style.WARNING(
+                                f'  Erro ao decodificar {base64_field} do template {item["name"]}: {str(e)}'
+                            ))
                 
                 template.save()
 
-        self.stdout.write(self.style.SUCCESS(f'  {count} templates de ofício criados'))
+        self.stdout.write(self.style.SUCCESS(f'  {count} templates de documento criados'))

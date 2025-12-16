@@ -1,0 +1,19 @@
+[
+  {
+    "extraction_unit_acronym": "CEINS/NEXT",
+    "name": "Template Padrão NEXT",
+    "description": "Template padrão para ofícios de resposta da unidade CEINS/NEXT",
+    "header_text": "S.S.P.D.S. CEARÁ\nSECRETARIA DA SEGURANÇA PÚBLICA E DEFESA SOCIAL\nCOORDENADORIA DE INTELIGÊNCIA\nCélula de Inteligência de Sinais - Núcleo de Extrações",
+    "subject_text": "Ofício Nº {{dispatch_number_formatted}} - {{extraction_unit_acronym}}",
+    "body_text": "Fortaleza, {{date}}\n\nAo(à) {{requester_unit}}\n\nEncaminhamos material e dados extraídos conforme solicitação.\n\nProcesso: {{case_number}}",
+    "signature_text": "{{incharge_name}}\n{{incharge_position}}",
+    "footer_text": "",
+    "watermark_text": "",
+    "header_left_logo_base64": "",
+    "header_right_logo_base64": "",
+    "footer_left_logo_base64": "",
+    "footer_right_logo_base64": "",
+    "watermark_logo_base64": "",
+    "is_default": true
+  }
+]

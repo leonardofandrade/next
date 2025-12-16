@@ -141,7 +141,8 @@ Preencha os dados para criar um novo processo
 <script>
 $(document).ready(function() {
     // Inicializa Select2 para requester_agency_unit com busca e tema Bootstrap 5
-    $('#{{ form.requester_agency_unit.id_for_label }}').select2({
+    const requesterAgencyUnitSelect = $('#{{ form.requester_agency_unit.id_for_label }}');
+    requesterAgencyUnitSelect.select2({
         theme: 'bootstrap-5',
         language: {
             noResults: function() {
@@ -157,6 +158,20 @@ $(document).ready(function() {
         minimumInputLength: 0,
         closeOnSelect: true
     });
+    
+    // Adiciona asterisco ao label se o campo for obrigatório
+    // Verifica tanto o atributo HTML quanto a propriedade do campo Django
+    const isRequired = requesterAgencyUnitSelect.prop('required') || 
+                       requesterAgencyUnitSelect.attr('required') ||
+                       {% if form.requester_agency_unit.field.required %}true{% else %}false{% endif %};
+    
+    if (isRequired) {
+        requesterAgencyUnitSelect.attr('required', 'required');
+        const label = $('label[for="{{ form.requester_agency_unit.id_for_label }}"]');
+        if (label.length && !label.find('.text-danger').length && !label.text().includes('*')) {
+            label.append(' <span class="text-danger">*</span>');
+        }
+    }
     
     // Também inicializa para extraction_unit se necessário
     $('#{{ form.extraction_unit.id_for_label }}').select2({

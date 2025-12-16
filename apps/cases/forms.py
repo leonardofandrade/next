@@ -34,6 +34,7 @@ class CaseCreateForm(forms.ModelForm):
             'requester_agency_unit': forms.Select(attrs={
                 'class': 'form-select select2',
                 'data-placeholder': 'Digite para pesquisar...',
+                'required': True,
             }),
             'request_procedures': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -46,7 +47,8 @@ class CaseCreateForm(forms.ModelForm):
             'requested_device_amount': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': '1',
-                'value': '1'
+                'value': '1',
+                'required': True,
             }),
             'requester_reply_email': forms.EmailInput(attrs={
                 'class': 'form-control',
@@ -61,11 +63,13 @@ class CaseCreateForm(forms.ModelForm):
             }),
             'extraction_unit': forms.Select(attrs={
                 'class': 'form-select',
+                'required': True,
             }),
             'priority': forms.Select(attrs={
                 'class': 'form-select',
+                'required': True,
             }),
-
+ 
             'additional_info': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 1,
@@ -118,6 +122,7 @@ class CaseCreateForm(forms.ModelForm):
         self.fields['extraction_unit'].empty_label = 'Selecione uma unidade de extração...'
         self.fields['priority'].empty_label = 'Selecione uma prioridade...'
         self.fields['requester_agency_unit'].empty_label = 'Selecione uma unidade solicitante...'
+        self.fields['requester_authority_position'].empty_label = None
         
 
     def clean_requested_device_amount(self):
@@ -163,7 +168,8 @@ class CaseUpdateForm(forms.ModelForm):
             'requested_device_amount': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': '1',
-                'value': '1'
+                'value': '1',
+                'required': True,
             }),
             'requester_reply_email': forms.EmailInput(attrs={
                 'class': 'form-control',

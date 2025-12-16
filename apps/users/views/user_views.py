@@ -24,6 +24,7 @@ from apps.cases.forms import CaseSearchForm
 from apps.cases.services import CaseService
 from apps.requisitions.models import ExtractionRequest
 from apps.cases.models import Case, Extraction
+from apps.core.models import ExtractorUser
 from django.db.models import Count, Q
 
 
@@ -31,14 +32,25 @@ from django.db.models import Count, Q
 def home_view(request):
     """
     View da página inicial do usuário autenticado (Dashboard).
+    Redireciona extratores para sua home específica.
     """
-    # KPIs
+    # Verifica se o usuário é um extrator e redireciona
+    try:
+        ExtractorUser.objects.get(
+            user=request.user,
+            deleted_at__isnull=True
+        )
+        # Se for extrator, redireciona para a home de extratores
+        return redirect('users:extractor_home')
+    except ExtractorUser.DoesNotExist:
+        pass
+    
+    # Para usuários não-extratores: comportamento original
     total_cases = Case.objects.filter(deleted_at__isnull=True).count()
     active_cases = Case.objects.filter(status=Case.CASE_STATUS_IN_PROGRESS, deleted_at__isnull=True).count()
     pending_requests = ExtractionRequest.objects.filter(status=ExtractionRequest.REQUEST_STATUS_PENDING, deleted_at__isnull=True).count()
     active_extractions = Extraction.objects.filter(status=Extraction.STATUS_IN_PROGRESS, deleted_at__isnull=True).count()
     
-    # Recent Activity (Last 5 updated cases)
     recent_cases = Case.objects.filter(deleted_at__isnull=True).order_by('-updated_at')[:5]
 
     context = {
@@ -53,6 +65,7 @@ def home_view(request):
         },
         'recent_cases': recent_cases,
     }
+    
     return render(request, 'users/home.html', context)
 
 

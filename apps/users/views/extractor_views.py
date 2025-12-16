@@ -1,7 +1,8 @@
 """
 Views relacionadas a extratores
 """
-from django.shortcuts import redirect
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView
 from django.contrib import messages
@@ -10,13 +11,79 @@ from django.db.models import QuerySet
 from typing import Dict, Any
 
 from apps.core.mixins.views import ServiceMixin
-from apps.cases.models import Extraction
+from apps.cases.models import Extraction, Case
 from apps.extractions.forms import ExtractionSearchForm
 from apps.extractions.services import ExtractionService
 from apps.core.models import ExtractorUser
-from apps.cases.models import Case
 from apps.cases.forms import CaseSearchForm
 from apps.cases.services import CaseService
+
+
+@login_required
+def extractor_home_view(request):
+    """
+    View da página inicial para usuários extratores.
+    Focada em cases e extractions associados ao extrator.
+    """
+    # Verifica se o usuário é um extrator
+    try:
+        extractor_user = ExtractorUser.objects.get(
+            user=request.user,
+            deleted_at__isnull=True
+        )
+    except ExtractorUser.DoesNotExist:
+        messages.error(
+            request,
+            'Você não é um usuário extrator. Apenas extratores podem acessar esta página.'
+        )
+        return redirect('users:home')
+    
+    # Para extratores: focar nos seus cases e extractions
+    case_service = CaseService(user=request.user)
+    extraction_service = ExtractionService(user=request.user)
+    
+    # Cases do usuário
+    my_cases = case_service.get_my_cases()
+    my_extractions = extraction_service.get_my_extractions()
+    
+    # Estatísticas dos cases do usuário
+    total_my_cases = my_cases.count()
+    active_my_cases = my_cases.filter(status=Case.CASE_STATUS_IN_PROGRESS).count()
+    
+    # Estatísticas das extractions do usuário
+    total_my_extractions = my_extractions.count()
+    pending_extractions = my_extractions.filter(status=Extraction.STATUS_PENDING).count()
+    assigned_extractions = my_extractions.filter(status=Extraction.STATUS_ASSIGNED).count()
+    in_progress_extractions = my_extractions.filter(status=Extraction.STATUS_IN_PROGRESS).count()
+    paused_extractions = my_extractions.filter(status=Extraction.STATUS_PAUSED).count()
+    completed_extractions = my_extractions.filter(status=Extraction.STATUS_COMPLETED).count()
+    
+    # Cases recentes do usuário (últimos 5 atualizados)
+    recent_my_cases = my_cases.order_by('-updated_at')[:5]
+    
+    # Extractions recentes do usuário (últimas 5 atualizadas)
+    # O get_queryset já inclui os select_related necessários
+    recent_my_extractions = my_extractions.order_by('-updated_at')[:5]
+    
+    context = {
+        'page_title': 'Dashboard',
+        'page_description': 'Visão geral dos seus processos e extrações',
+        'page_icon': 'fa-chart-line',
+        'stats': {
+            'total_cases': total_my_cases,
+            'active_cases': active_my_cases,
+            'total_extractions': total_my_extractions,
+            'pending_extractions': pending_extractions,
+            'assigned_extractions': assigned_extractions,
+            'in_progress_extractions': in_progress_extractions,
+            'paused_extractions': paused_extractions,
+            'completed_extractions': completed_extractions,
+        },
+        'recent_cases': recent_my_cases,
+        'recent_extractions': recent_my_extractions,
+    }
+    
+    return render(request, 'users/extractors/home.html', context)
 
 
 class MyExtractionsView(LoginRequiredMixin, ServiceMixin, ListView):

@@ -307,6 +307,129 @@ class ExtractionUnitSettings(AuditedModel):
         """Retorna uma representação legível da configuração da unidade de extração."""
         return f"{self.extraction_unit.acronym} - {self.name}"
 
+
+class DispatchSequenceNumber(AuditedModel):
+    """
+    Modelo para controlar a numeração sequencial de ofícios de resposta por extraction unit e ano.
+    """
+    extraction_unit = models.ForeignKey(
+        ExtractionUnit,
+        on_delete=models.PROTECT,
+        related_name='dispatch_sequence_numbers',
+        verbose_name=_('Unidade de Extração'),
+        help_text=_('Unidade de extração'),
+    )
+    year = models.IntegerField(
+        null=False,
+        blank=False,
+        verbose_name=_('Ano'),
+        help_text=_('Ano para controle da numeração sequencial'),
+    )
+    last_number = models.IntegerField(
+        default=0,
+        verbose_name=_('Último Número'),
+        help_text=_('Último número de ofício gerado para esta unidade e ano'),
+    )
+
+    class Meta:
+        db_table = 'dispatch_sequence_number'
+        verbose_name = _('Numeração Sequencial de Ofício')
+        verbose_name_plural = _('Numerações Sequenciais de Ofícios')
+        unique_together = [['extraction_unit', 'year']]
+        ordering = ['-year', '-last_number']
+        indexes = [
+            models.Index(fields=['extraction_unit', 'year']),
+        ]
+
+    def __str__(self):
+        """Retorna uma representação legível da numeração sequencial."""
+        return f"{self.extraction_unit.acronym} - {self.year} - Último: {self.last_number}"
+
+    @classmethod
+    def get_next_number(cls, extraction_unit, year):
+        """Obtém o próximo número sequencial para uma extraction unit e ano."""
+        sequence, created = cls.objects.get_or_create(
+            extraction_unit=extraction_unit,
+            year=year,
+            defaults={'last_number': 0}
+        )
+        sequence.last_number += 1
+        sequence.save()
+        return sequence.last_number
+
+
+class DispatchTemplate(AuditedModel):
+    """
+    Modelo para armazenar templates de ofícios de resposta por extraction unit.
+    """
+    extraction_unit = models.ForeignKey(
+        ExtractionUnit,
+        on_delete=models.PROTECT,
+        related_name='dispatch_templates',
+        verbose_name=_('Unidade de Extração'),
+        help_text=_('Unidade de extração'),
+    )
+    name = models.CharField(
+        max_length=255,
+        null=False,
+        blank=False,
+        verbose_name=_('Nome do Template'),
+        help_text=_('Nome identificador do template'),
+    )
+    description = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_('Descrição'),
+        help_text=_('Descrição do template'),
+    )
+    template_file = models.BinaryField(
+        null=True,
+        blank=True,
+        verbose_name=_('Arquivo Template'),
+        help_text=_('Arquivo ODT do template'),
+    )
+    template_filename = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=_('Nome do Arquivo'),
+        help_text=_('Nome original do arquivo template'),
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name=_('Ativo'),
+        help_text=_('Indica se o template está ativo e pode ser usado'),
+    )
+    is_default = models.BooleanField(
+        default=False,
+        verbose_name=_('Padrão'),
+        help_text=_('Indica se este é o template padrão para a unidade'),
+    )
+
+    class Meta:
+        db_table = 'dispatch_template'
+        verbose_name = _('Template de Ofício')
+        verbose_name_plural = _('Templates de Ofícios')
+        ordering = ['-is_default', '-is_active', 'name']
+        indexes = [
+            models.Index(fields=['extraction_unit', 'is_active']),
+            models.Index(fields=['extraction_unit', 'is_default']),
+        ]
+
+    def __str__(self):
+        """Retorna uma representação legível do template."""
+        return f"{self.extraction_unit.acronym} - {self.name}"
+
+    def save(self, *args, **kwargs):
+        """Garante que apenas um template padrão existe por extraction unit."""
+        if self.is_default:
+            # Desativa outros templates padrão da mesma unidade
+            DispatchTemplate.objects.filter(
+                extraction_unit=self.extraction_unit,
+                is_default=True
+            ).exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)
+
 class ExtractorUser(AuditedModel):
     """
     Modelo para usuários extratores de dados.

@@ -1,26 +1,24 @@
+"""
+Forms para o app core
+"""
 from django import forms
-from django.utils.translation import gettext_lazy as _
-from apps.core.models import (
-    ExtractionAgency, 
-    ExtractionUnit,
-    ExtractorUser,
-    ExtractionUnitExtractor,
-    ExtractionUnitStorageMedia,
-    ExtractionUnitEvidenceLocation,
-    GeneralSettings,
-    EmailSettings,
-    ReportsSettings,
-    ExtractionUnitSettings
+from .models import (
+    ExtractionAgency, ExtractionUnit, DispatchTemplate,
+    ExtractorUser, ExtractionUnitExtractor,
+    ExtractionUnitStorageMedia, ExtractionUnitEvidenceLocation,
+    GeneralSettings, EmailSettings, ReportsSettings
 )
 
 
 class ExtractionAgencyForm(forms.ModelForm):
     """Form para Agência de Extração"""
     
-    main_logo_file = forms.ImageField(
+    # Campo customizado para upload de logo
+    main_logo_upload = forms.ImageField(
         required=False,
-        label=_('Logo Principal'),
-        help_text=_('Formatos aceitos: PNG, JPEG, GIF, WebP')
+        label='Logo Principal',
+        help_text='Faça upload de uma imagem (PNG, JPG, GIF, WebP)',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
     )
     
     class Meta:
@@ -33,20 +31,18 @@ class ExtractionAgencyForm(forms.ModelForm):
             'incharge_position': forms.TextInput(attrs={'class': 'form-control'}),
         }
     
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['main_logo_file'].widget.attrs.update({'class': 'form-control'})
-    
     def save(self, commit=True):
+        """Salva a agência convertendo o logo para binário"""
         instance = super().save(commit=False)
         
-        # Processar upload do logo
-        if 'main_logo_file' in self.files:
-            logo_file = self.files['main_logo_file']
-            instance.main_logo = logo_file.read()
+        # Se há um logo novo, converte para binário
+        uploaded_file = self.cleaned_data.get('main_logo_upload')
+        if uploaded_file:
+            instance.main_logo = uploaded_file.read()
         
         if commit:
             instance.save()
+        
         return instance
 
 
@@ -83,8 +79,73 @@ class ExtractionUnitForm(forms.ModelForm):
             'incharge_name': forms.TextInput(attrs={'class': 'form-control'}),
             'incharge_position': forms.TextInput(attrs={'class': 'form-control'}),
             'reply_email_template': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
-            'reply_email_subject': forms.TextInput(attrs={'class': 'form-control'}),
+            'reply_email_subject': forms.TextInput(attrs={'class': 'form-control'})
         }
+
+
+class DispatchTemplateForm(forms.ModelForm):
+    """Form para Template de Ofício"""
+    
+    # Campo customizado para upload de arquivo (não é um campo do modelo)
+    template_file_upload = forms.FileField(
+        required=False,
+        label='Arquivo Template',
+        help_text='Faça upload de um arquivo ODT',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.odt'})
+    )
+    
+    class Meta:
+        model = DispatchTemplate
+        fields = [
+            'extraction_unit', 'name', 'description',
+            'template_filename',
+            'is_active', 'is_default'
+        ]
+        widgets = {
+            'extraction_unit': forms.Select(attrs={'class': 'form-select'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'template_filename': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_default': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['extraction_unit'].queryset = ExtractionUnit.objects.filter(deleted_at__isnull=True)
+        
+        # Se estiver editando, mostra o nome do arquivo atual
+        if self.instance and self.instance.pk and self.instance.template_filename:
+            self.fields['template_filename'].initial = self.instance.template_filename
+            self.fields['template_filename'].widget.attrs['readonly'] = True
+            self.fields['template_file_upload'].help_text = f'Arquivo atual: {self.instance.template_filename}. Faça upload de um novo arquivo para substituir.'
+    
+    def clean_template_file_upload(self):
+        """Valida o arquivo template"""
+        file = self.cleaned_data.get('template_file_upload')
+        
+        if file:
+            # Verifica se é um arquivo ODT pela extensão
+            if hasattr(file, 'name'):
+                if not file.name.lower().endswith('.odt'):
+                    raise forms.ValidationError('Apenas arquivos ODT são permitidos.')
+        
+        return file
+    
+    def save(self, commit=True):
+        """Salva o template convertendo o arquivo para binário"""
+        instance = super().save(commit=False)
+        
+        # Se há um arquivo novo, converte para binário
+        uploaded_file = self.cleaned_data.get('template_file_upload')
+        if uploaded_file:
+            instance.template_file = uploaded_file.read()
+            instance.template_filename = uploaded_file.name
+        
+        if commit:
+            instance.save()
+        
+        return instance
 
 
 class ExtractorUserForm(forms.ModelForm):
@@ -97,76 +158,29 @@ class ExtractorUserForm(forms.ModelForm):
             'user': forms.Select(attrs={'class': 'form-select'}),
             'extraction_agency': forms.Select(attrs={'class': 'form-select'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from django.contrib.auth.models import User
+        self.fields['user'].queryset = User.objects.filter(is_active=True).order_by('first_name', 'username')
+        self.fields['extraction_agency'].queryset = ExtractionAgency.objects.filter(deleted_at__isnull=True)
 
 
 class ExtractionUnitExtractorForm(forms.ModelForm):
-    """Form para Extrator de Unidade"""
+    """Form para Extrator de Unidade de Extração"""
     
     class Meta:
         model = ExtractionUnitExtractor
         fields = ['extraction_unit', 'extractor']
         widgets = {
-            'extraction_unit': forms.Select(attrs={'class': 'form-select', 'id': 'id_extraction_unit'}),
-            'extractor': forms.Select(attrs={'class': 'form-select', 'id': 'id_extractor'}),
+            'extraction_unit': forms.Select(attrs={'class': 'form-select'}),
+            'extractor': forms.Select(attrs={'class': 'form-select'}),
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
-        # Ordena unidades de extração
-        self.fields['extraction_unit'].queryset = ExtractionUnit.objects.filter(
-            deleted_at__isnull=True
-        ).select_related('agency').order_by('agency__acronym', 'acronym')
-        
-        # Filtra extratores baseado na unidade selecionada
-        if 'extraction_unit' in self.data:
-            try:
-                extraction_unit_id = int(self.data.get('extraction_unit'))
-                extraction_unit = ExtractionUnit.objects.get(pk=extraction_unit_id)
-                # Filtra extratores da mesma agência da unidade
-                self.fields['extractor'].queryset = ExtractorUser.objects.filter(
-                    deleted_at__isnull=True,
-                    extraction_agency=extraction_unit.agency
-                ).select_related('user', 'extraction_agency').order_by('user__first_name', 'user__last_name', 'user__username')
-            except (ValueError, ExtractionUnit.DoesNotExist):
-                self.fields['extractor'].queryset = ExtractorUser.objects.none()
-        elif self.instance.pk:
-            # Se estiver editando, mostra apenas extratores da agência da unidade atual
-            self.fields['extractor'].queryset = ExtractorUser.objects.filter(
-                deleted_at__isnull=True,
-                extraction_agency=self.instance.extraction_unit.agency
-            ).select_related('user', 'extraction_agency').order_by('user__first_name', 'user__last_name', 'user__username')
-        else:
-            # Estado inicial: mostra todos os extratores
-            self.fields['extractor'].queryset = ExtractorUser.objects.filter(
-                deleted_at__isnull=True
-            ).select_related('user', 'extraction_agency').order_by('user__first_name', 'user__last_name', 'user__username')
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        extraction_unit = cleaned_data.get('extraction_unit')
-        extractor = cleaned_data.get('extractor')
-        
-        if extraction_unit and extractor:
-            # Verifica se o extrator pertence à mesma agência da unidade
-            if extractor.extraction_agency != extraction_unit.agency:
-                raise forms.ValidationError({
-                    'extractor': _('O extrator deve pertencer à mesma agência da unidade de extração selecionada.')
-                })
-            
-            # Verifica se já existe uma associação ativa
-            existing = ExtractionUnitExtractor.objects.filter(
-                extraction_unit=extraction_unit,
-                extractor=extractor,
-                deleted_at__isnull=True
-            ).exclude(pk=self.instance.pk if self.instance.pk else None)
-            
-            if existing.exists():
-                raise forms.ValidationError(
-                    _('Esta associação já existe.')
-                )
-        
-        return cleaned_data
+        self.fields['extraction_unit'].queryset = ExtractionUnit.objects.filter(deleted_at__isnull=True)
+        self.fields['extractor'].queryset = ExtractorUser.objects.filter(deleted_at__isnull=True)
 
 
 class ExtractionUnitStorageMediaForm(forms.ModelForm):
@@ -181,22 +195,28 @@ class ExtractionUnitStorageMediaForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['extraction_unit'].queryset = ExtractionUnit.objects.filter(deleted_at__isnull=True)
 
 
 class ExtractionUnitEvidenceLocationForm(forms.ModelForm):
-    """Form para Local de Armazenamento de Evidências"""
+    """Form para Localização de Evidências"""
     
     class Meta:
         model = ExtractionUnitEvidenceLocation
-        fields = ['extraction_unit', 'type', 'name', 'description', 'shelf_name', 'slot_name']
+        fields = ['extraction_unit', 'type', 'name', 'description']
         widgets = {
             'extraction_unit': forms.Select(attrs={'class': 'form-select'}),
             'type': forms.Select(attrs={'class': 'form-select'}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'shelf_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'slot_name': forms.TextInput(attrs={'class': 'form-control'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['extraction_unit'].queryset = ExtractionUnit.objects.filter(deleted_at__isnull=True)
 
 
 class GeneralSettingsForm(forms.ModelForm):
@@ -222,6 +242,10 @@ class GeneralSettingsForm(forms.ModelForm):
             'backup_enabled': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'backup_frequency': forms.Select(attrs={'class': 'form-select'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['extraction_agency'].queryset = ExtractionAgency.objects.filter(deleted_at__isnull=True)
 
 
 class EmailSettingsForm(forms.ModelForm):
@@ -242,24 +266,28 @@ class EmailSettingsForm(forms.ModelForm):
             'email_use_tls': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'email_use_ssl': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'email_host_user': forms.EmailInput(attrs={'class': 'form-control'}),
-            'email_host_password': forms.PasswordInput(attrs={'class': 'form-control'}),
+            'email_host_password': forms.PasswordInput(attrs={'class': 'form-control', 'render_value': True}),
             'email_from_name': forms.TextInput(attrs={'class': 'form-control'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['extraction_agency'].queryset = ExtractionAgency.objects.filter(deleted_at__isnull=True)
 
 
 class ReportsSettingsForm(forms.ModelForm):
     """Form para Configurações de Relatórios"""
     
-    default_logo_file = forms.ImageField(
+    # Campos customizados para upload de logos
+    default_report_header_logo_upload = forms.ImageField(
         required=False,
-        label=_('Logo Principal do Relatório'),
-        help_text=_('Formatos aceitos: PNG, JPEG, GIF, WebP')
+        label='Logo do Relatório',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
     )
-    
-    secondary_logo_file = forms.ImageField(
+    secondary_report_header_logo_upload = forms.ImageField(
         required=False,
-        label=_('Logo Secundário do Relatório'),
-        help_text=_('Formatos aceitos: PNG, JPEG, GIF, WebP')
+        label='Logo Secundária do Relatório',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
     )
     
     class Meta:
@@ -283,21 +311,22 @@ class ReportsSettingsForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['default_logo_file'].widget.attrs.update({'class': 'form-control'})
-        self.fields['secondary_logo_file'].widget.attrs.update({'class': 'form-control'})
+        self.fields['extraction_agency'].queryset = ExtractionAgency.objects.filter(deleted_at__isnull=True)
     
     def save(self, commit=True):
+        """Salva as configurações convertendo os logos para binário"""
         instance = super().save(commit=False)
         
-        # Processar upload dos logos
-        if 'default_logo_file' in self.files:
-            logo_file = self.files['default_logo_file']
-            instance.default_report_header_logo = logo_file.read()
+        # Se há logos novos, converte para binário
+        default_logo = self.cleaned_data.get('default_report_header_logo_upload')
+        if default_logo:
+            instance.default_report_header_logo = default_logo.read()
         
-        if 'secondary_logo_file' in self.files:
-            logo_file = self.files['secondary_logo_file']
-            instance.secondary_report_header_logo = logo_file.read()
+        secondary_logo = self.cleaned_data.get('secondary_report_header_logo_upload')
+        if secondary_logo:
+            instance.secondary_report_header_logo = secondary_logo.read()
         
         if commit:
             instance.save()
+        
         return instance

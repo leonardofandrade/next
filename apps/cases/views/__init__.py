@@ -22,6 +22,7 @@ from apps.cases.views.case_views import (
     CaseUnassignFromMeView,
     CaseCoverPDFView,
 )
+from apps.cases.views.case_cover_odt_view import CaseCoverODTView
 
 # Importa views relacionadas ao modelo CaseDevice
 from apps.cases.views.case_device_views import (
@@ -64,6 +65,7 @@ __all__ = [
     'CaseAssignToMeView',
     'CaseUnassignFromMeView',
     'CaseCoverPDFView',
+    'CaseCoverODTView',
     # CaseDevice views
     'CaseDeviceCreateView',
     'CaseDeviceUpdateView',

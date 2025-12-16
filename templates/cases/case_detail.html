@@ -238,7 +238,15 @@
                                style="width: 120px; height: 120px; padding: 0.5rem;"
                                target="_blank">
                                 <i class="fas fa-file-pdf fa-2x mb-2"></i>
-                                <span class="small">Gerar Capa</span>
+                                <span class="small">Gerar Capa PDF</span>
+                            </a>
+                            
+                            <a href="{% url 'cases:cover_odt' case.pk %}" 
+                               class="btn btn-outline-success d-flex flex-column align-items-center justify-content-center" 
+                               style="width: 120px; height: 120px; padding: 0.5rem;"
+                               target="_blank">
+                                <i class="fas fa-file-word fa-2x mb-2"></i>
+                                <span class="small">Gerar Capa ODT</span>
                             </a>
                             
                             <!-- Solicitação -->

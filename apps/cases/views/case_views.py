@@ -18,6 +18,11 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from io import BytesIO
 from typing import Dict, Any
 from django.db.models import QuerySet
+from odf.opendocument import OpenDocumentText
+from odf.style import Style, TextProperties, ParagraphProperties, TableColumnProperties, TableCellProperties, TableProperties
+from odf.text import P, H, Span
+from odf.table import Table, TableRow, TableCell, TableColumn
+from odf import teletype
 
 from apps.core.mixins.views import (
     BaseDetailView, BaseCreateView, BaseUpdateView, 

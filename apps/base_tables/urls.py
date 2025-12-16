@@ -47,6 +47,12 @@ urlpatterns = [
     path('crime-categories/<int:pk>/edit/', views.CrimeCategoryUpdateView.as_view(), name='crime_category_edit'),
     path('crime-categories/<int:pk>/delete/', views.CrimeCategoryDeleteView.as_view(), name='crime_category_delete'),
     
+    # DocumentCategory URLs
+    path('document-categories/', views.DocumentCategoryListView.as_view(), name='document_category_list'),
+    path('document-categories/create/', views.DocumentCategoryCreateView.as_view(), name='document_category_create'),
+    path('document-categories/<int:pk>/edit/', views.DocumentCategoryUpdateView.as_view(), name='document_category_edit'),
+    path('document-categories/<int:pk>/delete/', views.DocumentCategoryDeleteView.as_view(), name='document_category_delete'),
+    
     # DeviceCategory URLs
     path('device-categories/', views.DeviceCategoryListView.as_view(), name='device_category_list'),
     path('device-categories/create/', views.DeviceCategoryCreateView.as_view(), name='device_category_create'),

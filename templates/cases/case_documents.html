@@ -1,0 +1,380 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+{% load form_tags %}
+
+{% block page_title %}
+<i class="fas {{ page_icon }} text-primary me-2"></i>
+{{ page_title }}
+{% endblock page_title %}
+
+{% block page_description %}
+Gerenciar os documentos do processo
+{% endblock page_description %}
+
+{% block page_actions %}
+<a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'cases:list' %}{% endif %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left me-2"></i>
+    Voltar
+</a>
+{% endblock page_actions %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    {% include 'cases/includes/case_detail_include.html' with case=case %}
+
+    <!-- Formulário de Documento -->
+    <div class="row mt-4">
+        <div class="col-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        {% if editing_document_id %}
+                            <i class="fas fa-edit me-2"></i>
+                            Editar Documento
+                        {% else %}
+                            <i class="fas fa-plus me-2"></i>
+                            Adicionar Documento
+                        {% endif %}
+                    </h5>
+                </div>
+                <form method="post" action="{% if editing_document_id %}{% url 'cases:document_update' case_pk=case.pk pk=editing_document_id %}?from=documents{% else %}{% url 'cases:document_create' case_pk=case.pk %}?from=documents{% endif %}" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+                    <div class="card-body">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                {{ document_form.document_category|form_label_class }}
+                                {{ document_form.document_category }}
+                                {{ document_form.document_category.errors }}
+                                {% if document_form.document_category.help_text %}
+                                <small class="form-text text-muted">{{ document_form.document_category.help_text }}</small>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                {{ document_form.number|form_label_class }}
+                                {{ document_form.number }}
+                                {{ document_form.number.errors }}
+                                {% if document_form.number.help_text %}
+                                <small class="form-text text-muted">{{ document_form.number.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-12">
+                                {{ document_form.document_file|form_label_class }}
+                                {{ document_form.document_file }}
+                                {{ document_form.document_file.errors }}
+                                {% if document_form.document_file.help_text %}
+                                <small class="form-text text-muted">{{ document_form.document_file.help_text }}</small>
+                                {% endif %}
+                                {% if editing_document_id and document_form.instance.original_filename %}
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-file me-1"></i>
+                                        Arquivo atual: {{ document_form.instance.original_filename }}
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <button type="submit" class="btn btn-primary">
+                                {% if editing_document_id %}
+                                <i class="fas fa-check-circle me-2"></i>
+                                Atualizar Documento
+                                {% else %}
+                                <i class="fas fa-plus-circle me-2"></i>
+                                Adicionar Documento
+                                {% endif %}
+                            </button>
+                            {% if editing_document_id %}
+                            <div>
+                                <a href="{% url 'cases:documents' pk=case.pk %}" class="btn btn-success me-2">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Novo
+                                </a>
+                                <a href="{% url 'cases:documents' pk=case.pk %}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-2"></i>
+                                    Cancelar
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-alt me-2"></i>
+                        Documentos do Processo: {{ documents.count }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if documents %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Categoria</th>
+                                    <th>Número</th>
+                                    <th class="text-end">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for document in documents %}
+                                <tr>
+                                    <td>                                        
+                                        <strong>{{ document.document_category.acronym }}</strong>
+                                    </td>
+                                    <td>
+                                        {{ document.number|default:"-" }}
+                                    </td>
+     
+                        
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'cases:documents' pk=case.pk %}?edit={{ document.pk }}" 
+                                               class="btn btn-outline-primary" 
+                                               title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" 
+                                                    class="btn btn-outline-danger delete-document-btn" 
+                                                    title="Excluir"
+                                                    data-document-id="{{ document.pk }}"
+                                                    data-document-category="{% if document.document_category %}{{ document.document_category.name }}{% else %}-{% endif %}"
+                                                    data-document-number="{{ document.number|default:'-' }}"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#deleteDocumentModal">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {% if document.document_file %}
+                                            <a href="#" 
+                                               class="btn btn-outline-secondary" 
+                                               title="Download"
+                                               onclick="alert('Funcionalidade de download em desenvolvimento'); return false;">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">Nenhum documento cadastrado.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal de Exclusão de Documento -->
+<div class="modal fade" id="deleteDocumentModal" tabindex="-1" aria-labelledby="deleteDocumentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteDocumentModalLabel">
+                    <i class="fas fa-trash me-2"></i>
+                    Excluir Documento
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Atenção!</strong> Esta ação não pode ser desfeita.
+                </div>
+
+                <p class="mb-3">Você tem certeza que deseja excluir o documento:</p>
+
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <dl class="row mb-0" id="deleteDocumentInfo">
+                            <dt class="col-sm-4">Categoria:</dt>
+                            <dd class="col-sm-8" id="deleteDocumentCategory">-</dd>
+
+                            <dt class="col-sm-4">Número:</dt>
+                            <dd class="col-sm-8" id="deleteDocumentNumber">-</dd>
+
+                            <dt class="col-sm-4">Processo:</dt>
+                            <dd class="col-sm-8">
+                                <strong>{{ case.number|default:"Rascunho" }}</strong>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>
+                    Cancelar
+                </button>
+                <form id="deleteDocumentForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>
+                        Confirmar Exclusão
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializa Select2 no formulário
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+        // Inicializa Select2 preservando o valor selecionado/inicial
+        $('form select').each(function() {
+            const $select = $(this);
+            // Pega o valor inicial (pode ser do atributo value ou do initial do Django)
+            const selectedValue = $select.val() || $select.data('initial-value');
+            
+            $select.select2({
+                theme: 'bootstrap-5',
+                language: {
+                    noResults: function() {
+                        return "Nenhum resultado encontrado";
+                    },
+                    searching: function() {
+                        return "Buscando...";
+                    }
+                },
+                width: '100%'
+            });
+            
+            // Garante que o valor selecionado seja mantido após inicialização
+            if (selectedValue) {
+                $select.val(selectedValue).trigger('change');
+            }
+        });
+    }
+    
+    // ===== EXCLUSÃO DE DOCUMENTOS =====
+    const deleteDocumentModal = document.getElementById('deleteDocumentModal');
+    const deleteDocumentForm = document.getElementById('deleteDocumentForm');
+    const deleteButtons = document.querySelectorAll('.delete-document-btn');
+    
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const documentId = this.getAttribute('data-document-id');
+            const category = this.getAttribute('data-document-category');
+            const number = this.getAttribute('data-document-number');
+            
+            // Preenche as informações no modal
+            document.getElementById('deleteDocumentCategory').textContent = category;
+            document.getElementById('deleteDocumentNumber').textContent = number;
+            
+            // Atualiza a action do form
+            deleteDocumentForm.action = '{% url "cases:document_delete" case_pk=case.pk pk=0 %}?from=documents'.replace('0', documentId);
+        });
+    });
+    
+    // Submete o formulário de exclusão via AJAX
+    deleteDocumentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const formData = new FormData(form);
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        
+        // Desabilita o botão e mostra loading
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Excluindo...';
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            const contentType = response.headers.get('content-type') || '';
+            
+            if (contentType.includes('application/json')) {
+                return response.json();
+            }
+            
+            if (response.status === 200 || response.status === 302 || response.ok) {
+                return response.text().then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        return { success: true, message: 'Documento excluído com sucesso!' };
+                    }
+                });
+            }
+            
+            if (response.status >= 400) {
+                return response.text().then(text => {
+                    try {
+                        const jsonData = JSON.parse(text);
+                        return jsonData;
+                    } catch (e) {
+                        if (text.includes('alert-danger') || text.includes('Erro')) {
+                            throw new Error('Erro ao excluir documento');
+                        }
+                        return { success: true, message: 'Documento excluído com sucesso!' };
+                    }
+                });
+            }
+            
+            return { success: true, message: 'Documento excluído com sucesso!' };
+        })
+        .then(data => {
+            if (data && data.success === false) {
+                throw new Error(data.error || 'Erro ao excluir documento');
+            }
+            
+            if (data && data.success === true) {
+                if (typeof window.ToastSystem !== 'undefined' && window.ToastSystem.success) {
+                    window.ToastSystem.success(data.message || 'Documento excluído com sucesso!');
+                } else if (typeof showToast !== 'undefined') {
+                    showToast(data.message || 'Documento excluído com sucesso!', 'success');
+                }
+                
+                const modal = bootstrap.Modal.getInstance(deleteDocumentModal);
+                if (modal) {
+                    modal.hide();
+                }
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+                return;
+            }
+            
+            const modal = bootstrap.Modal.getInstance(deleteDocumentModal);
+            if (modal) {
+                modal.hide();
+            }
+            window.location.reload();
+        })
+        .catch(error => {
+            console.error('Erro ao excluir documento:', error);
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
+            alert('Erro ao excluir documento: ' + (error.message || 'Tente novamente.'));
+        });
+    });
+});
+</script>
+{% endblock %}

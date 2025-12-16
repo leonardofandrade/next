@@ -18,6 +18,7 @@ from apps.base_tables.models import (
     EmployeePosition,
     ProcedureCategory,
     CrimeCategory,
+    DocumentCategory,
     DeviceCategory,
     DeviceBrand,
     DeviceModel
@@ -31,6 +32,7 @@ from apps.base_tables.forms import (
     EmployeePositionForm,
     ProcedureCategoryForm,
     CrimeCategoryForm,
+    DocumentCategoryForm,
     DeviceCategoryForm,
     DeviceBrandForm,
     DeviceModelForm
@@ -43,6 +45,7 @@ from apps.base_tables.services import (
     EmployeePositionService,
     ProcedureCategoryService,
     CrimeCategoryService,
+    DocumentCategoryService,
     DeviceCategoryService,
     DeviceBrandService,
     DeviceModelService
@@ -619,6 +622,79 @@ class CrimeCategoryDeleteView(BaseDeleteView):
     
     def get_success_url(self):
         return reverse('base_tables:crime_category_list')
+
+
+# ==================== DocumentCategory Views ====================
+
+class DocumentCategoryListView(BaseListView):
+    """Lista de categorias de documento"""
+    model = DocumentCategory
+    service_class = DocumentCategoryService
+    template_name = 'base_tables/document_category_list.html'
+    context_object_name = 'categories'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = context.get('object_list', [])
+        return context
+
+
+class DocumentCategoryCreateView(BaseCreateView):
+    """Criar nova categoria de documento"""
+    model = DocumentCategory
+    form_class = DocumentCategoryForm
+    service_class = DocumentCategoryService
+    template_name = 'base_tables/document_category_form.html'
+    success_url = None
+    
+    def get_success_url(self):
+        return reverse('base_tables:document_category_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Nova Categoria de Documento')
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Categoria de documento criada com sucesso!'))
+        return super(BaseCreateView, self).form_valid(form)
+
+
+class DocumentCategoryUpdateView(BaseUpdateView):
+    """Editar categoria de documento"""
+    model = DocumentCategory
+    form_class = DocumentCategoryForm
+    service_class = DocumentCategoryService
+    template_name = 'base_tables/document_category_form.html'
+    success_url = None
+    
+    def get_success_url(self):
+        return reverse('base_tables:document_category_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Editar Categoria de Documento')
+        context['category'] = self.object
+        return context
+    
+    def form_valid(self, form):
+        self.object = form.save()
+        from django.contrib import messages
+        messages.success(self.request, _('Categoria de documento atualizada com sucesso!'))
+        return super(BaseUpdateView, self).form_valid(form)
+
+
+class DocumentCategoryDeleteView(BaseDeleteView):
+    """Deletar categoria de documento (soft delete)"""
+    model = DocumentCategory
+    service_class = DocumentCategoryService
+    template_name = 'base_tables/document_category_confirm_delete.html'
+    success_url = None
+    
+    def get_success_url(self):
+        return reverse('base_tables:document_category_list')
 
 
 # ==================== DeviceCategory Views ====================

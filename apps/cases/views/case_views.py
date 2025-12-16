@@ -23,10 +23,10 @@ from apps.core.mixins.views import (
     BaseDetailView, BaseCreateView, BaseUpdateView, 
     BaseDeleteView, ServiceMixin, ExtractionUnitFilterMixin
 )
-from apps.cases.models import Case, CaseDevice, Extraction, CaseProcedure
+from apps.cases.models import Case, CaseDevice, Extraction, CaseProcedure, CaseDocument
 from apps.cases.forms import (
     CaseCreateForm, CaseUpdateForm, CaseSearchForm, 
-    CaseDeviceForm, CaseCompleteRegistrationForm, CaseProcedureForm
+    CaseDeviceForm, CaseCompleteRegistrationForm, CaseProcedureForm, CaseDocumentForm
 )
 from apps.core.models import ReportsSettings
 from apps.cases.services import CaseService
@@ -94,9 +94,10 @@ class CaseDetailView(ExtractionUnitFilterMixin, BaseDetailView):
         context['page_title'] = f'Processo {case_number}{acronym}'
         context['page_icon'] = 'fa-briefcase'
         
-        # Add device and procedure counts for complete registration button
+        # Add device, procedure and document counts for complete registration button
         context['devices_count'] = case.case_devices.filter(deleted_at__isnull=True).count()
         context['procedures_count'] = case.procedures.filter(deleted_at__isnull=True).count()
+        context['documents_count'] = case.documents.filter(deleted_at__isnull=True).count()
         
         # Add extractions count
         context['extractions_count'] = Extraction.objects.filter(
@@ -573,6 +574,57 @@ class CaseProceduresView(LoginRequiredMixin, DetailView):
         context['page_title'] = f'Processo {case.number if case.number else f"#{case.pk}"} - Procedimentos'
         context['page_icon'] = 'fa-gavel'
         context['procedures'] = procedures
+        context['procedure_form'] = form
+        return context
+
+
+class CaseDocumentsView(LoginRequiredMixin, DetailView):
+    """
+    Exibe os documentos de um processo de extração
+    """
+    model = Case
+    template_name = 'cases/case_documents.html'
+    context_object_name = 'case'
+    
+    def get_queryset(self):
+        """
+        Filtra apenas casos não deletados
+        """
+        return Case.objects.filter(deleted_at__isnull=True)
+    
+    def get_context_data(self, **kwargs):
+        """
+        Adiciona os documentos do caso ao contexto
+        """
+        context = super().get_context_data(**kwargs)
+        case = self.get_object()
+        
+        # Filtra apenas documentos não deletados
+        documents = case.documents.filter(deleted_at__isnull=True).select_related('document_category')
+        
+        # Verifica se está editando um documento
+        edit_document_id = self.request.GET.get('edit')
+        editing_document = None
+        
+        if edit_document_id:
+            try:
+                editing_document = documents.get(pk=edit_document_id)
+                # Cria formulário com instância do documento
+                form = CaseDocumentForm(instance=editing_document, case=case)
+                context['editing_document_id'] = editing_document.pk
+            except CaseDocument.DoesNotExist:
+                form = CaseDocumentForm(case=case)
+                context['editing_document_id'] = None
+        else:
+            # Cria formulário vazio para criar novo documento
+            form = CaseDocumentForm(case=case)
+            context['editing_document_id'] = None
+        
+        context['page_title'] = f'Processo {case.number if case.number else f"#{case.pk}"} - Documentos'
+        context['page_icon'] = 'fa-file-alt'
+        context['documents'] = documents
+        context['document_form'] = form
+        return context
         context['devices'] = devices
         context['procedure_form'] = form
         context['action'] = 'create' if not editing_procedure else 'update'
@@ -1036,12 +1088,13 @@ class CaseCoverPDFView(LoginRequiredMixin, View):
         elements.append(Spacer(1, 0.5*cm))
         
         # Número do documento
-        doc_year = case.year if case.year else timezone.now().year
-        doc_number = f"{case.number or case.pk}/{doc_year} - NEXT"
+        extraction_unit_acronym = case.extraction_unit.acronym if case.extraction_unit and case.extraction_unit.acronym else 'NEXT'
+        doc_number = f"{case.number or case.pk} - {extraction_unit_acronym}"
         doc_number_style = ParagraphStyle(
             'DocNumber',
             parent=styles['Normal'],
-            fontSize=12,
+            fontSize=16,
+            fontName='Helvetica-Bold',
             textColor=colors.black,
             alignment=TA_CENTER,
             backColor=colors.lightgrey,
@@ -1051,10 +1104,41 @@ class CaseCoverPDFView(LoginRequiredMixin, View):
         elements.append(Paragraph(doc_number, doc_number_style))
         elements.append(Spacer(1, 0.5*cm))
         
-        # Informações do processo
-        if case.request_procedures:
-            elements.append(Paragraph(f"<b>INQUÉRITO POLICIAL N°:</b> {case.request_procedures}", normal_style))
+        # Quadro de Procedimentos
+        if procedures:
+            procedures_data = []
+            procedures_data.append([Paragraph("<b>Procedimentos</b>", bold_style)])
+            for procedure in procedures:
+                if procedure.procedure_category:
+                    procedure_text = procedure.procedure_category.name
+                    if procedure.number:
+                        procedure_text += f" - {procedure.number}"
+                    procedures_data.append([Paragraph(procedure_text, normal_style)])
+            
+            if len(procedures_data) > 1:  # Se há pelo menos um procedimento além do título
+                # Largura da página A4 menos margens (21cm - 3cm = 18cm)
+                procedures_table = Table(procedures_data, colWidths=[18*cm])
+                procedures_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 11),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                    ('FONTSIZE', (0, 1), (-1, -1), 10),
+                    ('BOX', (0, 0), (-1, -1), 1, colors.grey),
+                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                    ('LEFTPADDING', (0, 0), (-1, -1), 10),
+                    ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+                    ('TOPPADDING', (0, 1), (-1, -1), 5),
+                    ('BOTTOMPADDING', (0, 1), (-1, -1), 5),
+                ]))
+                elements.append(procedures_table)
+                elements.append(Spacer(1, 0.5*cm))
         
+        # Informações do processo
         if case.extraction_request and case.extraction_request.request_procedures:
             elements.append(Paragraph(f"<b>PROCESSO JUDICIAL Nº:</b> {case.extraction_request.request_procedures}", normal_style))
         

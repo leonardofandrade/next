@@ -10,7 +10,8 @@ from apps.base_tables.models import (
     CrimeCategory,
     DeviceCategory,
     DeviceBrand,
-    DeviceModel
+    DeviceModel,
+    DocumentCategory
 )
 
 
@@ -120,6 +121,18 @@ class ProcedureCategoryForm(forms.ModelForm):
 class CrimeCategoryForm(forms.ModelForm):
     class Meta:
         model = CrimeCategory
+        fields = ['name', 'acronym', 'description', 'default_selection']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome da categoria'}),
+            'acronym': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Sigla'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descrição'}),
+            'default_selection': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class DocumentCategoryForm(forms.ModelForm):
+    class Meta:
+        model = DocumentCategory
         fields = ['name', 'acronym', 'description', 'default_selection']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome da categoria'}),

@@ -376,8 +376,20 @@ class DocumentCategory(BaseTable):
     It can have a name and an acronym.
     It can have a description.
     """
+    default_selection = models.BooleanField(
+        default=False,
+        verbose_name='Seleção Padrão',
+        help_text='Se selecionado, esta categoria de documento será exibida primeiro na lista de categorias de documentos'
+    )
+
     class Meta:
         db_table = 'document_category'
+        unique_together = ['name', 'acronym']
         verbose_name = 'Categoria de Documento'
-        verbose_name_plural = 'Categorias de Documento'
-        ordering = ['name']
+        verbose_name_plural = 'Categorias de Documentos'
+        # Note: MySQL performs case-insensitive string comparisons by default
+        ordering = ['-default_selection', 'name']
+
+    def __str__(self):
+        return f"{self.acronym} - {self.name}" \
+            if self.acronym else self.name

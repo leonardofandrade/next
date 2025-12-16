@@ -13,6 +13,7 @@ from apps.base_tables.models import (
     EmployeePosition,
     ProcedureCategory,
     CrimeCategory,
+    DocumentCategory,
     DeviceCategory,
     DeviceBrand,
     DeviceModel
@@ -123,6 +124,15 @@ class CrimeCategoryService(BaseTableService):
     
     def get_queryset(self) -> QuerySet:
         """Get crime categories ordered by default_selection and name"""
+        return super().get_queryset().order_by('-default_selection', 'name')
+
+
+class DocumentCategoryService(BaseTableService):
+    """Service for DocumentCategory"""
+    model_class = DocumentCategory
+    
+    def get_queryset(self) -> QuerySet:
+        """Get document categories ordered by default_selection and name"""
         return super().get_queryset().order_by('-default_selection', 'name')
 
 

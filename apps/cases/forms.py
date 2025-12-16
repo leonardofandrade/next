@@ -4,8 +4,10 @@ Formulários para o app cases
 from django import forms
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from apps.cases.models import Case, CaseDevice, CaseProcedure
-from apps.base_tables.models import AgencyUnit, EmployeePosition, CrimeCategory, DeviceCategory, DeviceModel, ProcedureCategory
+from apps.cases.models import Case, CaseDevice, CaseProcedure, CaseDocument
+from apps.base_tables.models import (
+    AgencyUnit, EmployeePosition, CrimeCategory, DeviceCategory, DeviceModel, ProcedureCategory, DocumentCategory
+)
 from apps.core.models import ExtractionUnit
 from apps.requisitions.models import ExtractionRequest
 from django.contrib.auth.models import User
@@ -679,6 +681,116 @@ class CaseProcedureForm(forms.ModelForm):
         if commit:
             procedure.save()
         return procedure
+
+
+class CaseDocumentForm(forms.ModelForm):
+    """
+    Formulário para criar e editar documentos de um processo
+    """
+    
+    # Campo customizado para upload de arquivo (não é um campo do modelo)
+    document_file = forms.FileField(
+        required=False,
+        label='Arquivo do Documento',
+        help_text='Arquivo do documento relacionado (opcional)',
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': '.pdf,.doc,.docx,.jpg,.jpeg,.png',
+        })
+    )
+    
+    class Meta:
+        model = CaseDocument
+        fields = [
+            'document_category',
+            'number',
+        ]
+        widgets = {
+            'document_category': forms.Select(attrs={
+                'class': 'form-select',
+            }),
+            'number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ex: 123/2024',
+            }),
+        }
+        labels = {
+            'document_category': 'Categoria',
+            'number': 'Número',
+        }
+        help_texts = {
+            'document_category': 'Categoria do documento',
+            'number': 'Número do documento',
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.case = kwargs.pop('case', None)
+        super().__init__(*args, **kwargs)
+        
+        # Ordena os querysets
+        from apps.base_tables.models import DocumentCategory
+        self.fields['document_category'].queryset = DocumentCategory.objects.filter(
+            deleted_at__isnull=True
+        ).order_by('-default_selection', 'name')
+        
+        # Torna campos opcionais
+        self.fields['document_category'].required = False
+        self.fields['number'].required = False
+        
+        # Se não estiver editando (criando novo), pré-seleciona a categoria padrão
+        if not self.instance or not self.instance.pk:
+            default_category = DocumentCategory.objects.filter(
+                deleted_at__isnull=True,
+                default_selection=True
+            ).first()
+            if default_category:
+                self.fields['document_category'].initial = default_category.pk
+
+    def clean(self):
+        cleaned_data = super().clean()
+        document_category = cleaned_data.get('document_category')
+        number = cleaned_data.get('number')
+        
+        # Validação: se tem categoria, deve ter número
+        if document_category and not number:
+            raise forms.ValidationError({
+                'number': 'É necessário informar o número quando uma categoria é selecionada.'
+            })
+        
+        # Validação de unicidade
+        if self.case and document_category and number:
+            queryset = CaseDocument.objects.filter(
+                case=self.case,
+                document_category=document_category,
+                number=number,
+                deleted_at__isnull=True
+            )
+            if self.instance and self.instance.pk:
+                queryset = queryset.exclude(pk=self.instance.pk)
+            
+            if queryset.exists():
+                raise forms.ValidationError({
+                    'number': f'Já existe um documento com categoria {document_category.acronym} e número {number} para este processo.'
+                })
+        
+        return cleaned_data
+    
+    def save(self, commit=True):
+        document = super().save(commit=False)
+        if self.case:
+            document.case = self.case
+        
+        # Processar arquivo se fornecido
+        if 'document_file' in self.cleaned_data and self.cleaned_data['document_file']:
+            file = self.cleaned_data['document_file']
+            document.original_filename = file.name
+            document.content_type = file.content_type
+            document.document_file = file.read()
+        # Se não foi fornecido um novo arquivo, mantém o existente (não altera)
+        
+        if commit:
+            document.save()
+        return document
 
 
 class CaseCompleteRegistrationForm(forms.Form):

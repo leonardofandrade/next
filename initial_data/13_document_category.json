@@ -1,0 +1,13 @@
+[
+    {"acronym": "DJ",
+     "name": "Decisão Judicial",
+     "description": "Decisão judicial contendo o compartilhamento com a COIN e DIP"},
+    {"acronym": "TA",
+     "name": "Termo de Autorização",
+     "description": "Autorização consciente do investigado, vítima ou familiar da vítima falecida"},
+    {"acronym": "AAA",
+      "name": "Auto de Apresentação e Apreensão",
+     "description": "Auto de Apresentação e Apreensão"}
+  
+
+]

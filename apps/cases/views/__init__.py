@@ -16,6 +16,7 @@ from apps.cases.views.case_views import (
     CaseCompleteRegistrationView,
     CaseDevicesView,
     CaseProceduresView,
+    CaseDocumentsView,
     CreateExtractionsView,
     CaseAssignToMeView,
     CaseUnassignFromMeView,
@@ -39,6 +40,14 @@ from apps.cases.views.case_procedure_views import (
     CaseProcedureDeleteView,
 )
 
+# Importa views relacionadas ao modelo CaseDocument
+from apps.cases.views.case_document_views import (
+    CaseDocumentCreateView,
+    CaseDocumentDetailView,
+    CaseDocumentUpdateView,
+    CaseDocumentDeleteView,
+)
+
 # Exporta todas as views para manter compatibilidade
 __all__ = [
     # Case views
@@ -50,6 +59,7 @@ __all__ = [
     'CaseCompleteRegistrationView',
     'CaseDevicesView',
     'CaseProceduresView',
+    'CaseDocumentsView',
     'CreateExtractionsView',
     'CaseAssignToMeView',
     'CaseUnassignFromMeView',
@@ -65,5 +75,10 @@ __all__ = [
     'CaseProcedureDetailView',
     'CaseProcedureUpdateView',
     'CaseProcedureDeleteView',
+    # CaseDocument views
+    'CaseDocumentCreateView',
+    'CaseDocumentDetailView',
+    'CaseDocumentUpdateView',
+    'CaseDocumentDeleteView',
 ]
 

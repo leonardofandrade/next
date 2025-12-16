@@ -7,6 +7,7 @@ from apps.base_tables.models import (
     EmployeePosition,
     ProcedureCategory,
     CrimeCategory,
+    DocumentCategory,
     DeviceCategory,
     DeviceBrand,
     DeviceModel
@@ -63,6 +64,14 @@ class ProcedureCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(CrimeCategory)
 class CrimeCategoryAdmin(admin.ModelAdmin):
+    list_display = ['name', 'acronym', 'default_selection', 'created_at']
+    search_fields = ['name', 'acronym']
+    list_filter = ['default_selection', 'created_at']
+    ordering = ['-default_selection', 'name']
+
+
+@admin.register(DocumentCategory)
+class DocumentCategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'acronym', 'default_selection', 'created_at']
     search_fields = ['name', 'acronym']
     list_filter = ['default_selection', 'created_at']

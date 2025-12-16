@@ -1,0 +1,84 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas {{ page_icon }} me-2"></i>
+                        {{ page_title }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Atenção!</strong> Esta ação não pode ser desfeita.
+                    </div>
+
+                    <p class="mb-3">Você tem certeza que deseja excluir o documento:</p>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">Categoria:</dt>
+                                <dd class="col-sm-8">
+                                    {% if document.document_category %}
+                                        <span class="badge bg-primary">
+                                            {{ document.document_category.acronym }}
+                                        </span>
+                                        <small class="text-muted d-block">
+                                            {{ document.document_category.name }}
+                                        </small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-sm-4">Número:</dt>
+                                <dd class="col-sm-8">
+                                    <strong>{{ document.number|default:"-" }}</strong>
+                                </dd>
+
+                                <dt class="col-sm-4">Arquivo:</dt>
+                                <dd class="col-sm-8">
+                                    {% if document.original_filename %}
+                                        <i class="fas fa-file me-1"></i>
+                                        {{ document.original_filename }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-sm-4">Processo:</dt>
+                                <dd class="col-sm-8">
+                                    <strong>{{ case.number|default:"Rascunho" }}</strong>
+                                </dd>
+
+                                <dt class="col-sm-4">Criado em:</dt>
+                                <dd class="col-sm-8">{{ document.created_at|date:"d/m/Y H:i" }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'cases:update' case.pk %}{% endif %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>
+                                Confirmar Exclusão
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

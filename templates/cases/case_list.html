@@ -158,6 +158,11 @@ Gerencie todos os processos de extração
                                            title="Gerenciar procedimentos">
                                             <i class="fas fa-gavel"></i>
                                         </a>
+                                        <a href="{% url 'cases:documents' case.pk %}?next={% url 'cases:list' %}" 
+                                           class="btn btn-outline-primary" 
+                                           title="Gerenciar documentos">
+                                            <i class="fas fa-file-alt"></i>
+                                        </a>
                                         <a href="{% url 'extractions:case_extractions' case.pk %}?next={% url 'cases:list' %}" 
                                            class="btn btn-outline-success" 
                                            title="Gerenciar extrações">

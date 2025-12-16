@@ -163,6 +163,17 @@
                                 {% endif %}
                             </a>
                             
+                            <!-- Documentos -->
+                            <a href="{% url 'cases:documents' case.pk %}?next={% url 'cases:detail' case.pk %}" 
+                               class="btn btn-outline-primary d-flex flex-column align-items-center justify-content-center" 
+                               style="width: 120px; height: 120px; padding: 0.5rem;">
+                                <i class="fas fa-file-alt fa-2x mb-2"></i>
+                                <span class="small">Documentos</span>
+                                {% if documents_count %}
+                                <span class="badge bg-primary mt-1">{{ documents_count }}</span>
+                                {% endif %}
+                            </a>
+                            
                             <!-- Finalizar Cadastro (se não finalizado) -->
                             {% if not case.registration_completed_at %}
                                 {% if devices_count > 0 and procedures_count > 0 %}

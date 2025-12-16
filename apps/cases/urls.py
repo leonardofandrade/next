@@ -15,6 +15,7 @@ urlpatterns = [
     path('<int:pk>/unassign-from-me/', views.CaseUnassignFromMeView.as_view(), name='unassign_from_me'),
     path('<int:pk>/devices/', views.CaseDevicesView.as_view(), name='devices'),
     path('<int:pk>/procedures/', views.CaseProceduresView.as_view(), name='procedures'),
+    path('<int:pk>/documents/', views.CaseDocumentsView.as_view(), name='documents'),
     path('<int:pk>/devices/create-extractions/', views.CreateExtractionsView.as_view(), name='create_extractions'),
     path('<int:case_pk>/devices/create/', views.CaseDeviceCreateView.as_view(), name='device_create'),
     path('<int:case_pk>/devices/<int:pk>/', views.CaseDeviceDetailView.as_view(), name='device_detail'),
@@ -25,4 +26,8 @@ urlpatterns = [
     path('<int:case_pk>/procedures/<int:pk>/', views.CaseProcedureDetailView.as_view(), name='procedure_detail'),
     path('<int:case_pk>/procedures/<int:pk>/update/', views.CaseProcedureUpdateView.as_view(), name='procedure_update'),
     path('<int:case_pk>/procedures/<int:pk>/delete/', views.CaseProcedureDeleteView.as_view(), name='procedure_delete'),
+    path('<int:case_pk>/documents/create/', views.CaseDocumentCreateView.as_view(), name='document_create'),
+    path('<int:case_pk>/documents/<int:pk>/', views.CaseDocumentDetailView.as_view(), name='document_detail'),
+    path('<int:case_pk>/documents/<int:pk>/update/', views.CaseDocumentUpdateView.as_view(), name='document_update'),
+    path('<int:case_pk>/documents/<int:pk>/delete/', views.CaseDocumentDeleteView.as_view(), name='document_delete'),
 ]

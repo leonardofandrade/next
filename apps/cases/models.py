@@ -226,6 +226,63 @@ class Case(AbstractCaseModel):
         """Returns complete Bootstrap badge class for status"""
         return f"bg-{self.get_status_color()}"
     
+    def get_progress_percentage(self):
+        """
+        Calcula a porcentagem de progresso baseado no status do case
+        Fluxo: draft -> waiting_extractor -> waiting_start -> in_progress -> completed
+        Pausado e waiting_collect são considerados estados intermediários
+        """
+        progress_map = {
+            self.CASE_STATUS_DRAFT: 0,
+            self.CASE_STATUS_WAITING_EXTRACTOR: 20,
+            self.CASE_STATUS_WAITING_START: 40,
+            self.CASE_STATUS_WAITING_COLLECT: 50,
+            self.CASE_STATUS_IN_PROGRESS: 70,
+            self.CASE_STATUS_PAUSED: 60,  # Pausa mantém o progresso anterior
+            self.CASE_STATUS_COMPLETED: 100,
+        }
+        return progress_map.get(self.status, 0)
+    
+    def get_progress_color(self):
+        """Retorna a cor da barra de progresso baseado no status"""
+        if self.status == self.CASE_STATUS_COMPLETED:
+            return 'success'
+        elif self.status == self.CASE_STATUS_PAUSED:
+            return 'warning'
+        elif self.status == self.CASE_STATUS_IN_PROGRESS:
+            return 'primary'
+        elif self.status in [self.CASE_STATUS_WAITING_START, self.CASE_STATUS_WAITING_COLLECT]:
+            return 'info'
+        elif self.status == self.CASE_STATUS_WAITING_EXTRACTOR:
+            return 'secondary'
+        else:
+            return 'danger'
+    
+    def get_workflow_steps(self):
+        """
+        Retorna o status de cada etapa do fluxo de trabalho
+        Etapas: cadastro → atribuição → extrações → finalização
+        """
+        steps = {
+            'registration': {
+                'completed': self.registration_completed_at is not None,
+                'active': self.status == self.CASE_STATUS_DRAFT
+            },
+            'assignment': {
+                'completed': self.assigned_to is not None and self.status not in [self.CASE_STATUS_DRAFT, self.CASE_STATUS_WAITING_EXTRACTOR],
+                'active': self.status in [self.CASE_STATUS_WAITING_EXTRACTOR, self.CASE_STATUS_WAITING_START]
+            },
+            'extractions': {
+                'completed': self.status == self.CASE_STATUS_COMPLETED,
+                'active': self.status in [self.CASE_STATUS_IN_PROGRESS, self.CASE_STATUS_PAUSED, self.CASE_STATUS_WAITING_COLLECT]
+            },
+            'finalization': {
+                'completed': self.status == self.CASE_STATUS_COMPLETED,
+                'active': False
+            }
+        }
+        return steps
+    
     def generate_case_number(self):
         """
         Gera o número do processo no formato: AAAA.UUU.NNNN

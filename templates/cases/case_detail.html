@@ -141,9 +141,14 @@
         </div>
         {% endif %}
 
-        <!-- Barra de Ações -->
-        <div class="col-12 mb-4">
+        <!-- Barra de Ações - Processo -->
+        <div class="col-12 mb-3">
             <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 py-2">
+                    <h6 class="card-title mb-0 text-muted">
+                        <i class="fas fa-cog me-2"></i>Ações do Processo
+                    </h6>
+                </div>
                 <div class="card-body">
                     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
                         <div class="d-flex flex-wrap gap-2 align-items-center">
@@ -155,17 +160,6 @@
                                 <span class="small">Procedimentos</span>
                                 {% if procedures_count %}
                                 <span class="badge bg-warning mt-1">{{ procedures_count }}</span>
-                                {% endif %}
-                            </a>
-                            
-                            <!-- Dispositivos -->
-                            <a href="{% url 'cases:devices' case.pk %}?next={% url 'cases:detail' case.pk %}" 
-                               class="btn btn-outline-info d-flex flex-column align-items-center justify-content-center" 
-                               style="width: 120px; height: 120px; padding: 0.5rem;">
-                                <i class="fas fa-mobile-alt fa-2x mb-2"></i>
-                                <span class="small">Dispositivos</span>
-                                {% if devices_count %}
-                                <span class="badge bg-info mt-1">{{ devices_count }}</span>
                                 {% endif %}
                             </a>
                             
@@ -203,31 +197,31 @@
                                 {% endif %}
                             {% endif %}
                             
-                            <!-- Extrações (se finalizado) -->
+                            <!-- Atribuir-me / Desatribuir-me -->
                             {% if case.registration_completed_at %}
-                            <a href="{% url 'extractions:case_extractions' case.pk %}?next={% url 'cases:detail' case.pk %}" 
-                               class="btn btn-outline-success d-flex flex-column align-items-center justify-content-center" 
-                               style="width: 120px; height: 120px; padding: 0.5rem;">
-                                <i class="fas fa-database fa-2x mb-2"></i>
-                                <span class="small">Extrações</span>
-                                {% if extractions_count %}
-                                <span class="badge bg-success mt-1">{{ extractions_count }}</span>
+                                {% if case.assigned_to == request.user %}
+                                <button type="button" 
+                                        class="btn btn-outline-warning d-flex flex-column align-items-center justify-content-center" 
+                                        style="width: 120px; height: 120px; padding: 0.5rem;"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#unassignModal">
+                                    <i class="fas fa-user-times fa-2x mb-2"></i>
+                                    <span class="small">Desatribuir</span>
+                                </button>
+                                {% elif not case.assigned_to %}
+                                <button type="button" 
+                                        class="btn btn-outline-success d-flex flex-column align-items-center justify-content-center" 
+                                        style="width: 120px; height: 120px; padding: 0.5rem;"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#assignModal">
+                                    <i class="fas fa-user-check fa-2x mb-2"></i>
+                                    <span class="small">Atribuir-me</span>
+                                </button>
                                 {% endif %}
-                            </a>
-                            
-                            <!-- Atribuir-me -->
-                            {% if not case.assigned_to %}
-                            <button type="button" 
-                                    class="btn btn-outline-success d-flex flex-column align-items-center justify-content-center" 
-                                    style="width: 120px; height: 120px; padding: 0.5rem;"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#assignModal">
-                                <i class="fas fa-user-check fa-2x mb-2"></i>
-                                <span class="small">Atribuir-me</span>
-                            </button>
                             {% endif %}
                             
                             <!-- Gerar Capa PDF -->
+                            {% if case.registration_completed_at %}
                             <a href="{% url 'cases:cover_pdf' case.pk %}" 
                                class="btn btn-outline-info d-flex flex-column align-items-center justify-content-center" 
                                style="width: 120px; height: 120px; padding: 0.5rem;"
@@ -259,18 +253,6 @@
                         
                         <!-- Botões à direita -->
                         <div class="d-flex flex-wrap gap-2 align-items-center">
-                            <!-- Desatribuir-me (se finalizado e atribuído) -->
-                            {% if case.registration_completed_at and case.assigned_to == request.user %}
-                            <button type="button" 
-                                    class="btn btn-outline-warning d-flex flex-column align-items-center justify-content-center" 
-                                    style="width: 120px; height: 120px; padding: 0.5rem;"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#unassignModal">
-                                <i class="fas fa-user-times fa-2x mb-2"></i>
-                                <span class="small">Desatribuir</span>
-                            </button>
-                            {% endif %}
-                            
                             <!-- Excluir Processo -->
                             {% if not case.assigned_to or case.assigned_to == request.user %}
                             <button type="button" 
@@ -283,6 +265,44 @@
                             </button>
                             {% endif %}
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Barra de Ações - Dispositivos e Extrações -->
+        <div class="col-12 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 py-2">
+                    <h6 class="card-title mb-0 text-muted">
+                        <i class="fas fa-microchip me-2"></i>Dispositivos e Extrações
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <!-- Dispositivos -->
+                        <a href="{% url 'cases:devices' case.pk %}?next={% url 'cases:detail' case.pk %}" 
+                           class="btn btn-outline-info d-flex flex-column align-items-center justify-content-center" 
+                           style="width: 120px; height: 120px; padding: 0.5rem;">
+                            <i class="fas fa-mobile-alt fa-2x mb-2"></i>
+                            <span class="small">Dispositivos</span>
+                            {% if devices_count %}
+                            <span class="badge bg-info mt-1">{{ devices_count }}</span>
+                            {% endif %}
+                        </a>
+                        
+                        <!-- Extrações (se finalizado) -->
+                        {% if case.registration_completed_at %}
+                        <a href="{% url 'extractions:case_extractions' case.pk %}?next={% url 'cases:detail' case.pk %}" 
+                           class="btn btn-outline-success d-flex flex-column align-items-center justify-content-center" 
+                           style="width: 120px; height: 120px; padding: 0.5rem;">
+                            <i class="fas fa-database fa-2x mb-2"></i>
+                            <span class="small">Extrações</span>
+                            {% if extractions_count %}
+                            <span class="badge bg-success mt-1">{{ extractions_count }}</span>
+                            {% endif %}
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>

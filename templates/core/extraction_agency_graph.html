@@ -65,7 +65,7 @@
                 .graph-node .title { font-weight: 700; }
                 .graph-node .subtitle { color: #6c757d; font-size: .85rem; }
                 .graph-node.agency { border-left: 6px solid var(--bs-primary); }
-                .graph-node.unit { border-left: 6px solid var(--bs-info); text-decoration: none; color: inherit; }
+                .graph-node.unit { border-left: 6px solid var(--bs-info); }
                 .graph-node.unit:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(0,0,0,.08); }
                 .graph-layout { display: flex; gap: 24px; align-items: flex-start; }
                 .graph-left { flex: 0 0 360px; position: sticky; left: 0; z-index: 2; }
@@ -74,6 +74,10 @@
                 .graph-units { display: flex; flex-direction: column; gap: 12px; }
                 .agency-logo { max-height: 44px; max-width: 140px; object-fit: contain; }
                 .legend { font-size: .85rem; color: #6c757d; }
+                .node-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; }
+                .graph-node { position: relative; }
+                .node-link { text-decoration: none; color: inherit; display: block; }
+                .node-link:hover { text-decoration: none; color: inherit; }
             </style>
 
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -89,6 +93,13 @@
                 <div class="graph-layout">
                     <div class="graph-left">
                         <div id="agencyNode" class="graph-node agency text-center">
+                            <div class="node-actions">
+                                <a class="btn btn-sm btn-outline-primary"
+                                   href="{% url 'core:extraction_agency_edit' agency.pk %}?next={{ request.get_full_path|urlencode }}"
+                                   title="Editar agência">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
                             {% if agency.has_main_logo %}
                                 <img class="agency-logo mb-2"
                                      src="data:{{ agency.get_main_logo_mime_type }};base64,{{ agency.get_main_logo_base64 }}"
@@ -104,16 +115,25 @@
                     <div class="graph-right">
                         <div id="unitsWrap" class="graph-units">
                             {% for unit in units %}
-                                <a id="unitNode-{{ unit.pk }}" class="graph-node unit" href="{% url 'core:extraction_unit_detail' unit.pk %}">
-                                    <div class="title">{{ unit.acronym }}</div>
-                                    <div class="subtitle">{{ unit.name }}</div>
-                                    {% if unit.city_name or unit.state_name %}
-                                        <div class="subtitle">
-                                            <i class="fas fa-map-marker-alt me-1"></i>
-                                            {{ unit.city_name|default:"" }}{% if unit.city_name and unit.state_name %} / {% endif %}{{ unit.state_name|default:"" }}
-                                        </div>
-                                    {% endif %}
-                                </a>
+                                <div id="unitNode-{{ unit.pk }}" class="graph-node unit">
+                                    <div class="node-actions">
+                                        <a class="btn btn-sm btn-outline-info"
+                                           href="{% url 'core:extraction_unit_edit' unit.pk %}?next={{ request.get_full_path|urlencode }}"
+                                           title="Editar unidade">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                    <a class="node-link" href="{% url 'core:extraction_unit_detail' unit.pk %}?next={{ request.get_full_path|urlencode }}">
+                                        <div class="title">{{ unit.acronym }}</div>
+                                        <div class="subtitle">{{ unit.name }}</div>
+                                        {% if unit.city_name or unit.state_name %}
+                                            <div class="subtitle">
+                                                <i class="fas fa-map-marker-alt me-1"></i>
+                                                {{ unit.city_name|default:"" }}{% if unit.city_name and unit.state_name %} / {% endif %}{{ unit.state_name|default:"" }}
+                                            </div>
+                                        {% endif %}
+                                    </a>
+                                </div>
                             {% empty %}
                                 <div class="text-center text-muted py-5 w-100">
                                     <i class="fas fa-sitemap fa-3x mb-3 opacity-25"></i>

@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from apps.core.models import (
     ExtractionAgency,
@@ -38,6 +39,24 @@ def is_staff_user(user):
     return user.is_staff or user.is_superuser
 
 
+def _get_safe_next_url(request):
+    """
+    Retorna uma URL segura (mesmo host) para redirecionamento via ?next/POST next.
+    """
+    next_url = (request.POST.get('next') or request.GET.get('next') or '').strip()
+    if not next_url:
+        return None
+
+    if url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return next_url
+
+    return None
+
+
 # ==================== Extraction Agency Views ====================
 
 @login_required
@@ -52,16 +71,19 @@ def extraction_agency_list(request):
 @user_passes_test(is_staff_user)
 def extraction_agency_create(request):
     """Criar nova agência de extração"""
+    next_url = _get_safe_next_url(request)
     if request.method == 'POST':
         form = ExtractionAgencyForm(request.POST, request.FILES)
         if form.is_valid():
             agency = form.save()
             messages.success(request, _('Agência de extração criada com sucesso!'))
+            if next_url:
+                return redirect(next_url)
             return redirect('core:extraction_agency_detail', pk=agency.pk)
     else:
         form = ExtractionAgencyForm()
     
-    return render(request, 'core/extraction_agency_form.html', {'form': form, 'title': _('Nova Agência')})
+    return render(request, 'core/extraction_agency_form.html', {'form': form, 'title': _('Nova Agência'), 'next_url': next_url})
 
 
 @login_required
@@ -69,7 +91,7 @@ def extraction_agency_create(request):
 def extraction_agency_detail(request, pk):
     """Detalhes da agência de extração"""
     agency = get_object_or_404(ExtractionAgency, pk=pk, deleted_at__isnull=True)
-    return render(request, 'core/extraction_agency_detail.html', {'agency': agency})
+    return render(request, 'core/extraction_agency_detail.html', {'agency': agency, 'next_url': _get_safe_next_url(request)})
 
 
 @login_required
@@ -77,12 +99,15 @@ def extraction_agency_detail(request, pk):
 def extraction_agency_edit(request, pk):
     """Editar agência de extração"""
     agency = get_object_or_404(ExtractionAgency, pk=pk, deleted_at__isnull=True)
+    next_url = _get_safe_next_url(request)
     
     if request.method == 'POST':
         form = ExtractionAgencyForm(request.POST, request.FILES, instance=agency)
         if form.is_valid():
             form.save()
             messages.success(request, _('Agência de extração atualizada com sucesso!'))
+            if next_url:
+                return redirect(next_url)
             return redirect('core:extraction_agency_detail', pk=agency.pk)
     else:
         form = ExtractionAgencyForm(instance=agency)
@@ -90,7 +115,8 @@ def extraction_agency_edit(request, pk):
     return render(request, 'core/extraction_agency_form.html', {
         'form': form, 
         'agency': agency, 
-        'title': _('Editar Agência')
+        'title': _('Editar Agência'),
+        'next_url': next_url,
     })
 
 
@@ -99,15 +125,18 @@ def extraction_agency_edit(request, pk):
 def extraction_agency_delete(request, pk):
     """Deletar agência de extração (soft delete)"""
     agency = get_object_or_404(ExtractionAgency, pk=pk, deleted_at__isnull=True)
+    next_url = _get_safe_next_url(request)
     
     if request.method == 'POST':
         from django.utils import timezone
         agency.deleted_at = timezone.now()
         agency.save()
         messages.success(request, _('Agência de extração removida com sucesso!'))
+        if next_url:
+            return redirect(next_url)
         return redirect('core:extraction_agency_list')
     
-    return render(request, 'core/extraction_agency_confirm_delete.html', {'agency': agency})
+    return render(request, 'core/extraction_agency_confirm_delete.html', {'agency': agency, 'next_url': next_url})
 
 
 @login_required
@@ -161,16 +190,19 @@ def extraction_unit_list(request):
 @user_passes_test(is_staff_user)
 def extraction_unit_create(request):
     """Criar nova unidade de extração"""
+    next_url = _get_safe_next_url(request)
     if request.method == 'POST':
         form = ExtractionUnitForm(request.POST)
         if form.is_valid():
             unit = form.save()
             messages.success(request, _('Unidade de extração criada com sucesso!'))
+            if next_url:
+                return redirect(next_url)
             return redirect('core:extraction_unit_detail', pk=unit.pk)
     else:
         form = ExtractionUnitForm()
     
-    return render(request, 'core/extraction_unit_form.html', {'form': form, 'title': _('Nova Unidade')})
+    return render(request, 'core/extraction_unit_form.html', {'form': form, 'title': _('Nova Unidade'), 'next_url': next_url})
 
 
 @login_required
@@ -178,7 +210,7 @@ def extraction_unit_create(request):
 def extraction_unit_detail(request, pk):
     """Detalhes da unidade de extração"""
     unit = get_object_or_404(ExtractionUnit, pk=pk, deleted_at__isnull=True)
-    return render(request, 'core/extraction_unit_detail.html', {'unit': unit})
+    return render(request, 'core/extraction_unit_detail.html', {'unit': unit, 'next_url': _get_safe_next_url(request)})
 
 
 @login_required
@@ -186,12 +218,15 @@ def extraction_unit_detail(request, pk):
 def extraction_unit_edit(request, pk):
     """Editar unidade de extração"""
     unit = get_object_or_404(ExtractionUnit, pk=pk, deleted_at__isnull=True)
+    next_url = _get_safe_next_url(request)
     
     if request.method == 'POST':
         form = ExtractionUnitForm(request.POST, instance=unit)
         if form.is_valid():
             form.save()
             messages.success(request, _('Unidade de extração atualizada com sucesso!'))
+            if next_url:
+                return redirect(next_url)
             return redirect('core:extraction_unit_detail', pk=unit.pk)
     else:
         form = ExtractionUnitForm(instance=unit)
@@ -199,7 +234,8 @@ def extraction_unit_edit(request, pk):
     return render(request, 'core/extraction_unit_form.html', {
         'form': form, 
         'unit': unit, 
-        'title': _('Editar Unidade')
+        'title': _('Editar Unidade'),
+        'next_url': next_url,
     })
 
 
@@ -208,15 +244,18 @@ def extraction_unit_edit(request, pk):
 def extraction_unit_delete(request, pk):
     """Deletar unidade de extração (soft delete)"""
     unit = get_object_or_404(ExtractionUnit, pk=pk, deleted_at__isnull=True)
+    next_url = _get_safe_next_url(request)
     
     if request.method == 'POST':
         from django.utils import timezone
         unit.deleted_at = timezone.now()
         unit.save()
         messages.success(request, _('Unidade de extração removida com sucesso!'))
+        if next_url:
+            return redirect(next_url)
         return redirect('core:extraction_unit_list')
     
-    return render(request, 'core/extraction_unit_confirm_delete.html', {'unit': unit})
+    return render(request, 'core/extraction_unit_confirm_delete.html', {'unit': unit, 'next_url': next_url})
 
 
 # ==================== Extractor User Views ====================

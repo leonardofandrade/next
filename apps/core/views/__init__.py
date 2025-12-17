@@ -1,7 +1,7 @@
 from apps.core.views.extraction_agency_views import (
-    ExtractionAgencyHirearchyView,
+    ExtractionAgencyHubView,
 )
 
 __all__ = [
-    'ExtractionAgencyHirearchyView',
+    'ExtractionAgencyHubView',
 ]

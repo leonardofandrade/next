@@ -6,6 +6,7 @@ from apps.core.views.extraction_unit_views import (
     ExtractionUnitHubView,
     ExtractionUnitUpdateView,
     ExtractionUnitReplyEmailUpdateView,
+    ExtractionUnitReportSettingsUpdateView,
 )
 from apps.core.views.document_template_views import (
     DocumentTemplateHubView,
@@ -24,6 +25,7 @@ __all__ = [
     'ExtractionUnitHubView',
     'ExtractionUnitUpdateView',
     'ExtractionUnitReplyEmailUpdateView',
+    'ExtractionUnitReportSettingsUpdateView',
     'DocumentTemplateHubView',
     'DocumentTemplateCreateView',
     'DocumentTemplateUpdateView',

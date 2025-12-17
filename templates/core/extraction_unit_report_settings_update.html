@@ -1,0 +1,170 @@
+{% extends '_global/layout/base.html' %}
+
+{% block page_title %}
+<i class="fas fa-chart-bar text-primary me-2"></i>
+Configurações de Relatórios (Unidade)
+{% endblock page_title %}
+
+{% block page_description %}
+Configure os relatórios para esta unidade de extração.
+{% endblock page_description %}
+
+{% block page_actions %}
+<a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'core:extraction_unit_hub' unit.pk %}{% endif %}" class="btn btn-outline-secondary me-2">
+  <i class="fas fa-arrow-left me-2"></i>Voltar
+</a>
+{% endblock page_actions %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-pen me-2"></i>{{ unit.acronym|default:"-" }} — {{ unit.name|default:"(sem nome)" }}
+          </h5>
+        </div>
+
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+              </div>
+            {% endif %}
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-toggle-on me-2"></i>Configurações Gerais
+                </h6>
+              </div>
+              <div class="col-12">
+                <div class="form-check form-switch mb-3">
+                  {{ form.reports_enabled }}
+                  <label class="form-check-label" for="{{ form.reports_enabled.id_for_label }}">
+                    {{ form.reports_enabled.label }}
+                  </label>
+                  {% if form.reports_enabled.help_text %}
+                    <div class="form-text">{{ form.reports_enabled.help_text }}</div>
+                  {% endif %}
+                  {% if form.reports_enabled.errors %}<div class="text-danger">{{ form.reports_enabled.errors }}</div>{% endif %}
+                </div>
+              </div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-image me-2"></i>Logos dos Relatórios
+                </h6>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.default_report_header_logo_upload.id_for_label }}" class="form-label">
+                  {{ form.default_report_header_logo_upload.label }}
+                </label>
+                {{ form.default_report_header_logo_upload }}
+                {% if form.default_report_header_logo_upload.errors %}<div class="text-danger">{{ form.default_report_header_logo_upload.errors }}</div>{% endif %}
+                {% if form.default_report_header_logo_upload.help_text %}
+                  <div class="form-text">{{ form.default_report_header_logo_upload.help_text }}</div>
+                {% endif %}
+                {% if report_settings.get_default_logo_base64 %}
+                  <div class="mt-2">
+                    <small class="text-muted">Logo atual:</small><br>
+                    <img src="data:image/png;base64,{{ report_settings.get_default_logo_base64 }}" alt="Logo atual" style="max-height: 100px; max-width: 200px;" class="img-thumbnail">
+                  </div>
+                {% endif %}
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.secondary_report_header_logo_upload.id_for_label }}" class="form-label">
+                  {{ form.secondary_report_header_logo_upload.label }}
+                </label>
+                {{ form.secondary_report_header_logo_upload }}
+                {% if form.secondary_report_header_logo_upload.errors %}<div class="text-danger">{{ form.secondary_report_header_logo_upload.errors }}</div>{% endif %}
+                {% if form.secondary_report_header_logo_upload.help_text %}
+                  <div class="form-text">{{ form.secondary_report_header_logo_upload.help_text }}</div>
+                {% endif %}
+                {% if report_settings.get_secondary_logo_base64 %}
+                  <div class="mt-2">
+                    <small class="text-muted">Logo atual:</small><br>
+                    <img src="data:image/png;base64,{{ report_settings.get_secondary_logo_base64 }}" alt="Logo atual" style="max-height: 100px; max-width: 200px;" class="img-thumbnail">
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-heading me-2"></i>Cabeçalho do Relatório
+                </h6>
+              </div>
+              <div class="col-12 mb-3">
+                <label for="{{ form.report_cover_header_line_1.id_for_label }}" class="form-label">{{ form.report_cover_header_line_1.label }}</label>
+                {{ form.report_cover_header_line_1 }}
+                {% if form.report_cover_header_line_1.errors %}<div class="text-danger">{{ form.report_cover_header_line_1.errors }}</div>{% endif %}
+              </div>
+              <div class="col-12 mb-3">
+                <label for="{{ form.report_cover_header_line_2.id_for_label }}" class="form-label">{{ form.report_cover_header_line_2.label }}</label>
+                {{ form.report_cover_header_line_2 }}
+                {% if form.report_cover_header_line_2.errors %}<div class="text-danger">{{ form.report_cover_header_line_2.errors }}</div>{% endif %}
+              </div>
+              <div class="col-12 mb-3">
+                <label for="{{ form.report_cover_header_line_3.id_for_label }}" class="form-label">{{ form.report_cover_header_line_3.label }}</label>
+                {{ form.report_cover_header_line_3 }}
+                {% if form.report_cover_header_line_3.errors %}<div class="text-danger">{{ form.report_cover_header_line_3.errors }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-align-center me-2"></i>Rodapé do Relatório
+                </h6>
+              </div>
+              <div class="col-12 mb-3">
+                <label for="{{ form.report_cover_footer_line_1.id_for_label }}" class="form-label">{{ form.report_cover_footer_line_1.label }}</label>
+                {{ form.report_cover_footer_line_1 }}
+                {% if form.report_cover_footer_line_1.errors %}<div class="text-danger">{{ form.report_cover_footer_line_1.errors }}</div>{% endif %}
+              </div>
+              <div class="col-12 mb-3">
+                <label for="{{ form.report_cover_footer_line_2.id_for_label }}" class="form-label">{{ form.report_cover_footer_line_2.label }}</label>
+                {{ form.report_cover_footer_line_2 }}
+                {% if form.report_cover_footer_line_2.errors %}<div class="text-danger">{{ form.report_cover_footer_line_2.errors }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-sticky-note me-2"></i>Notas
+                </h6>
+              </div>
+              <div class="col-12">
+                <label for="{{ form.distribution_report_notes.id_for_label }}" class="form-label">{{ form.distribution_report_notes.label }}</label>
+                {{ form.distribution_report_notes }}
+                {% if form.distribution_report_notes.errors %}<div class="text-danger">{{ form.distribution_report_notes.errors }}</div>{% endif %}
+                {% if form.distribution_report_notes.help_text %}
+                  <div class="form-text">{{ form.distribution_report_notes.help_text }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'core:extraction_unit_hub' unit.pk %}{% endif %}" class="btn btn-secondary">
+                <i class="fas fa-times me-2"></i>Cancelar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Salvar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

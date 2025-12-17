@@ -47,6 +47,9 @@ Visualização da unidade de extração.
             <a href="{% url 'core:document_template_hub' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-info">
               <i class="fas fa-file-alt me-2"></i>Ofícios
             </a>
+            <a href="{% url 'core:extraction_unit_report_settings_update' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-success">
+              <i class="fas fa-chart-bar me-2"></i>Relatórios
+            </a>
           </div>
         </div>
 

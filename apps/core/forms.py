@@ -7,7 +7,8 @@ from .models import (
     ExtractionAgency, ExtractionUnit, DocumentTemplate,
     ExtractorUser, ExtractionUnitExtractor,
     ExtractionUnitStorageMedia, ExtractionUnitEvidenceLocation,
-    GeneralSettings, EmailSettings, ReportsSettings
+    GeneralSettings, EmailSettings, ReportsSettings,
+    ExtractionUnitReportSettings
 )
 
 
@@ -203,4 +204,57 @@ class ExtractorUserAccessForm(forms.Form):
                 deleted_at__isnull=True,
             )
             self.fields['extraction_units'].initial = list(linked_units.values_list('pk', flat=True))
+
+
+class ExtractionUnitReportSettingsForm(forms.ModelForm):
+    """Form para Configurações de Relatórios da Unidade de Extração"""
+
+    default_report_header_logo_upload = forms.ImageField(
+        required=False,
+        label='Logo do Relatório',
+        help_text='Faça upload de uma imagem (PNG, JPG, GIF, WebP)',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
+    secondary_report_header_logo_upload = forms.ImageField(
+        required=False,
+        label='Logo Secundária do Relatório',
+        help_text='Faça upload de uma imagem (PNG, JPG, GIF, WebP)',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
+
+    class Meta:
+        model = ExtractionUnitReportSettings
+        fields = [
+            'reports_enabled',
+            'distribution_report_notes',
+            'report_cover_header_line_1', 'report_cover_header_line_2', 'report_cover_header_line_3',
+            'report_cover_footer_line_1', 'report_cover_footer_line_2',
+        ]
+        widgets = {
+            'reports_enabled': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'distribution_report_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'report_cover_header_line_1': forms.TextInput(attrs={'class': 'form-control'}),
+            'report_cover_header_line_2': forms.TextInput(attrs={'class': 'form-control'}),
+            'report_cover_header_line_3': forms.TextInput(attrs={'class': 'form-control'}),
+            'report_cover_footer_line_1': forms.TextInput(attrs={'class': 'form-control'}),
+            'report_cover_footer_line_2': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+    def save(self, commit=True):
+        """Salva as configurações convertendo os logos para binário"""
+        instance = super().save(commit=False)
+
+        # Se há logos novos, converte para binário
+        default_logo = self.cleaned_data.get('default_report_header_logo_upload')
+        if default_logo:
+            instance.default_report_header_logo = default_logo.read()
+
+        secondary_logo = self.cleaned_data.get('secondary_report_header_logo_upload')
+        if secondary_logo:
+            instance.secondary_report_header_logo = secondary_logo.read()
+
+        if commit:
+            instance.save()
+
+        return instance
 

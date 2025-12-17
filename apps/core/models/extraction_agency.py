@@ -305,7 +305,107 @@ class ExtractionUnitSettings(AuditedModel):
 
     def __str__(self):
         """Retorna uma representação legível da configuração da unidade de extração."""
-        return f"{self.extraction_unit.acronym} - {self.name}"
+        return f"{self.extraction_unit.acronym} - Configurações"
+
+
+class ExtractionUnitReportSettings(AuditedModel):
+    """
+    Modelo para configurações de relatórios de uma unidade de extração.
+    """
+    extraction_unit = models.OneToOneField(
+        ExtractionUnit,
+        on_delete=models.PROTECT,
+        related_name='report_settings',
+        verbose_name=_('Unidade de Extração'),
+    )
+
+    # Configurações de Relatórios
+    reports_enabled = models.BooleanField(
+        verbose_name=_('Relatórios Ativados'),
+        help_text=_('Ativar relatórios para esta unidade'),
+        default=True
+    )
+
+    default_report_header_logo = models.BinaryField(
+        verbose_name=_('Logo do Relatório'),
+        help_text=_('Logo do relatório (formato binário)'),
+        blank=True,
+        null=True
+    )
+    secondary_report_header_logo = models.BinaryField(
+        verbose_name=_('Logo Secundária do Relatório'),
+        help_text=_('Logo secundária do relatório (formato binário)'),
+        blank=True,
+        null=True
+    )
+
+    distribution_report_notes = models.TextField(
+        verbose_name=_('Nota do Relatório de Distribuição'),
+        help_text=_('Nota do relatório de distribuição'),
+        blank=True,
+        null=True
+    )
+
+    report_cover_header_line_1 = models.CharField(
+        max_length=100,
+        verbose_name=_('Linha 1 do Cabeçalho do Relatório'),
+        help_text=_('Linha 1 do cabeçalho do relatório'),
+        blank=True,
+        null=True
+    )
+    report_cover_header_line_2 = models.CharField(
+        max_length=100,
+        verbose_name=_('Linha 2 do Cabeçalho do Relatório'),
+        help_text=_('Linha 2 do cabeçalho do relatório'),
+        blank=True,
+        null=True
+    )
+    report_cover_header_line_3 = models.CharField(
+        max_length=100,
+        verbose_name=_('Linha 3 do Cabeçalho do Relatório'),
+        help_text=_('Linha 3 do cabeçalho do relatório'),
+        blank=True,
+        null=True
+    )
+    report_cover_footer_line_1 = models.CharField(
+        max_length=100,
+        verbose_name=_('Linha 1 do Rodapé do Relatório'),
+        help_text=_('Linha 1 do rodapé do relatório'),
+        blank=True,
+        null=True
+    )
+    report_cover_footer_line_2 = models.CharField(
+        max_length=100,
+        verbose_name=_('Linha 2 do Rodapé do Relatório'),
+        help_text=_('Linha 2 do rodapé do relatório'),
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        db_table = 'extr_unit_report_settings'
+        verbose_name = _('Configuração de Relatórios da Unidade')
+        verbose_name_plural = _('Configurações de Relatórios das Unidades')
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['-created_at']),
+        ]
+
+    def __str__(self):
+        """Retorna uma representação legível da configuração."""
+        return f"{self.extraction_unit.acronym} - Configurações de Relatórios"
+
+    def get_default_logo_base64(self):
+        """Retorna o logo padrão em formato base64 para exibição em templates."""
+        if self.default_report_header_logo:
+            return base64.b64encode(self.default_report_header_logo).decode('utf-8')
+        return None
+
+    def get_secondary_logo_base64(self):
+        """Retorna o logo secundário em formato base64 para exibição em templates."""
+        if self.secondary_report_header_logo:
+            return base64.b64encode(self.secondary_report_header_logo).decode('utf-8')
+        return None
 
 
 class DispatchSequenceNumber(AuditedModel):

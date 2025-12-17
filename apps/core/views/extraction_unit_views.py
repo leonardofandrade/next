@@ -10,8 +10,8 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import TemplateView, UpdateView
 
-from apps.core.models import ExtractionUnit
-from apps.core.forms import ExtractionUnitForm, ExtractionUnitReplyEmailForm
+from apps.core.models import ExtractionUnit, ExtractionUnitReportSettings
+from apps.core.forms import ExtractionUnitForm, ExtractionUnitReplyEmailForm, ExtractionUnitReportSettingsForm
 
 
 class ExtractionUnitHubView(LoginRequiredMixin, TemplateView):
@@ -84,3 +84,47 @@ class ExtractionUnitReplyEmailUpdateView(LoginRequiredMixin, UpdateView):
         response = super().form_valid(form)
         messages.success(self.request, _('Template de e-mail atualizado com sucesso!'))
         return response
+
+
+class ExtractionUnitReportSettingsUpdateView(LoginRequiredMixin, UpdateView):
+    """
+    Atualiza as configurações de relatórios da unidade.
+    Cria o registro se não existir.
+    """
+
+    model = ExtractionUnitReportSettings
+    form_class = ExtractionUnitReportSettingsForm
+    template_name = 'core/extraction_unit_report_settings_update.html'
+    context_object_name = 'report_settings'
+
+    def get_object(self, queryset=None):
+        """Obtém ou cria o objeto de configurações de relatórios"""
+        unit = ExtractionUnit.objects.get(pk=self.kwargs['pk'])
+        report_settings, created = ExtractionUnitReportSettings.objects.get_or_create(
+            extraction_unit=unit,
+            defaults={'reports_enabled': True}
+        )
+        return report_settings
+
+    def get_success_url(self):
+        next_url = self.request.GET.get('next')
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
+            return next_url
+        return reverse('core:extraction_unit_hub', kwargs={'pk': self.object.extraction_unit.pk})
+
+    def form_valid(self, form):
+        # Garante que o extraction_unit está definido
+        if not form.instance.extraction_unit_id:
+            form.instance.extraction_unit_id = self.kwargs['pk']
+        response = super().form_valid(form)
+        messages.success(self.request, _('Configurações de relatórios atualizadas com sucesso!'))
+        return response
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['unit'] = self.object.extraction_unit
+        return context

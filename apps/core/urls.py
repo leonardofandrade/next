@@ -12,6 +12,7 @@ urlpatterns = [
     path('settings/extraction-units/<int:pk>/', views.ExtractionUnitHubView.as_view(), name='extraction_unit_hub'),
     path('settings/extraction-units/<int:pk>/edit/', views.ExtractionUnitUpdateView.as_view(), name='extraction_unit_update'),
     path('settings/extraction-units/<int:pk>/email-template/', views.ExtractionUnitReplyEmailUpdateView.as_view(), name='extraction_unit_reply_email_update'),
+    path('settings/extraction-units/<int:pk>/report-settings/', views.ExtractionUnitReportSettingsUpdateView.as_view(), name='extraction_unit_report_settings_update'),
 
     # DocumentTemplate (por ExtractionUnit)
     path('settings/extraction-units/<int:unit_pk>/document-templates/', views.DocumentTemplateHubView.as_view(), name='document_template_hub'),

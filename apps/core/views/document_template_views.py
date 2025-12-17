@@ -12,16 +12,22 @@ from django.utils import timezone
 
 from apps.core.models import ExtractionUnit, DocumentTemplate
 from apps.core.forms import DocumentTemplateForm
+from apps.core.mixins.views import StaffRequiredMixin
 
 
-class DocumentTemplateListView(LoginRequiredMixin, ListView):
+class DocumentTemplateListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
     """Lista templates de documentos"""
     model = DocumentTemplate
     template_name = 'core/document_template_list.html'
-    context_object_name = 'templates'
+    context_object_name = 'document_templates'
+    paginate_by = 25
     
     def get_queryset(self):
         queryset = DocumentTemplate.objects.filter(deleted_at__isnull=True)
+
+        q = (self.request.GET.get('q') or '').strip()
+        if q:
+            queryset = queryset.filter(name__icontains=q)
         
         # Filtro por extraction_unit se fornecido
         extraction_unit_id = self.request.GET.get('extraction_unit')
@@ -33,15 +39,22 @@ class DocumentTemplateListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['extraction_units'] = ExtractionUnit.objects.filter(deleted_at__isnull=True)
+        context['selected_extraction_unit'] = (self.request.GET.get('extraction_unit') or '').strip()
+        context['q'] = (self.request.GET.get('q') or '').strip()
         return context
 
 
-class DocumentTemplateCreateView(LoginRequiredMixin, CreateView):
+class DocumentTemplateCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
     """Cria novo template de ofício"""
     model = DocumentTemplate
     form_class = DocumentTemplateForm
     template_name = 'core/document_template_form.html'
     success_url = reverse_lazy('core:document_template_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Novo Template'
+        return context
     
     def form_valid(self, form):
         form.instance.created_by = self.request.user
@@ -49,12 +62,17 @@ class DocumentTemplateCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class DocumentTemplateUpdateView(LoginRequiredMixin, UpdateView):
+class DocumentTemplateUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
     """Atualiza template de documento"""
     model = DocumentTemplate
     form_class = DocumentTemplateForm
     template_name = 'core/document_template_form.html'
     success_url = reverse_lazy('core:document_template_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Editar Template'
+        return context
     
     def get_queryset(self):
         return DocumentTemplate.objects.filter(deleted_at__isnull=True)
@@ -65,7 +83,7 @@ class DocumentTemplateUpdateView(LoginRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class DocumentTemplateDeleteView(LoginRequiredMixin, DeleteView):
+class DocumentTemplateDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
     """Remove template de ofício (soft delete)"""
     model = DocumentTemplate
     template_name = 'core/document_template_confirm_delete.html'
@@ -83,7 +101,7 @@ class DocumentTemplateDeleteView(LoginRequiredMixin, DeleteView):
         return redirect(self.success_url)
 
 
-class DocumentTemplateDetailView(LoginRequiredMixin, DetailView):
+class DocumentTemplateDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
     """Visualiza detalhes do template"""
     model = DocumentTemplate
     template_name = 'core/document_template_detail.html'
@@ -93,7 +111,7 @@ class DocumentTemplateDetailView(LoginRequiredMixin, DetailView):
         return DocumentTemplate.objects.filter(deleted_at__isnull=True)
 
 
-class DocumentTemplateDownloadView(LoginRequiredMixin, DetailView):
+class DocumentTemplateDownloadView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
     """Download do documento gerado a partir do template"""
     model = DocumentTemplate
     

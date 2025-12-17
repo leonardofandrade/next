@@ -1,0 +1,121 @@
+{% extends '_global/layout/base.html' %}
+
+{% block title %}Templates de Documentos - {{ block.super }}{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-file-signature me-2"></i>Templates de Documentos
+{% endblock page_title %}
+
+{% block page_description %}
+Gerencie templates de documentos/ofícios por unidade de extração.
+{% endblock page_description %}
+
+{% block page_actions %}
+<a href="{% url 'core:document_template_create' %}" class="btn btn-primary">
+    <i class="fas fa-plus me-2"></i>Novo Template
+</a>
+{% endblock page_actions %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0"><i class="fas fa-filter me-2"></i>Filtros</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label" for="q">Pesquisar</label>
+                    <input id="q" name="q" value="{{ q }}" class="form-control" placeholder="Nome do template...">
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label" for="extraction_unit">Unidade de Extração</label>
+                    <select id="extraction_unit" name="extraction_unit" class="form-select">
+                        <option value="">Todas</option>
+                        {% for unit in extraction_units %}
+                            <option value="{{ unit.pk }}" {% if selected_extraction_unit == unit.pk|stringformat:"s" %}selected{% endif %}>
+                                {{ unit.acronym }} - {{ unit.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end gap-2">
+                    <button class="btn btn-primary w-100" type="submit">
+                        <i class="fas fa-search me-2"></i>Filtrar
+                    </button>
+                    <a class="btn btn-secondary w-100" href="{% url 'core:document_template_list' %}">
+                        <i class="fas fa-times me-2"></i>Limpar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if document_templates %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Unidade</th>
+                                <th>Nome</th>
+                                <th>Padrão</th>
+                                <th>Criado em</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in document_templates %}
+                            <tr>
+                                <td>
+                                    <span class="fw-bold">{{ t.extraction_unit.acronym }}</span>
+                                    <div class="text-muted small">{{ t.extraction_unit.name }}</div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">{{ t.name }}</div>
+                                    {% if t.description %}
+                                        <div class="text-muted small">{{ t.description|truncatechars:120 }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if t.is_default %}
+                                        <span class="badge bg-success">Sim</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Não</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-muted small">
+                                    {{ t.created_at|date:"d/m/Y H:i" }}
+                                </td>
+                                <td class="text-end">
+                                    <a href="{% url 'core:document_template_detail' t.pk %}" class="btn btn-sm btn-info" title="Ver detalhes">
+                                        <i class="fas fa-folder-open"></i>
+                                    </a>
+                                    <a href="{% url 'core:document_template_update' t.pk %}" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'core:document_template_delete' t.pk %}" class="btn btn-sm btn-danger" title="Excluir">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% include '_global/layout/includes/pagination.html' %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-file-signature fa-4x text-muted mb-3"></i>
+                    <p class="text-muted">Nenhum template cadastrado.</p>
+                    <a href="{% url 'core:document_template_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Criar primeiro template
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

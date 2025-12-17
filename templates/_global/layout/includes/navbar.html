@@ -365,6 +365,21 @@
                                 Configurações de Relatórios
                             </a>
                         </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <h6 class="dropdown-header">
+                                <i class="fas fa-file-alt me-2"></i>
+                                Documentos
+                            </h6>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'core:document_template_list' %}">
+                                <i class="fas fa-file-signature me-2"></i>
+                                Templates de Documentos
+                            </a>
+                        </li>
                     </ul>
                 </li>
                 {% endif %}

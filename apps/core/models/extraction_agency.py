@@ -489,6 +489,98 @@ class DocumentTemplate(AuditedModel):
             ).exclude(pk=self.pk).update(is_default=False)
         super().save(*args, **kwargs)
 
+    # Helpers para exibir logos (base64) nos templates
+    @staticmethod
+    def _image_to_base64(image_bytes: bytes):
+        if not image_bytes:
+            return None
+        try:
+            return base64.b64encode(image_bytes).decode('utf-8')
+        except Exception:
+            return None
+
+    @staticmethod
+    def _detect_image_mime_type(image_bytes: bytes) -> str:
+        if not image_bytes:
+            return 'image/png'
+        try:
+            header = image_bytes[:12] if len(image_bytes) >= 12 else image_bytes
+            # PNG
+            if header[:8] == b'\x89PNG\r\n\x1a\n':
+                return 'image/png'
+            # JPEG
+            if header[:3] == b'\xff\xd8\xff':
+                return 'image/jpeg'
+            # GIF
+            if header[:4] == b'GIF8':
+                return 'image/gif'
+            # WebP: RIFF....WEBP
+            if header[:4] == b'RIFF' and len(image_bytes) > 12 and image_bytes[8:12] == b'WEBP':
+                return 'image/webp'
+        except Exception:
+            pass
+        return 'image/png'
+
+    @property
+    def has_header_left_logo(self):
+        return self.header_left_logo is not None and bool(self.header_left_logo)
+
+    @property
+    def get_header_left_logo_base64(self):
+        return self._image_to_base64(self.header_left_logo)
+
+    @property
+    def get_header_left_logo_mime_type(self):
+        return self._detect_image_mime_type(self.header_left_logo)
+
+    @property
+    def has_header_right_logo(self):
+        return self.header_right_logo is not None and bool(self.header_right_logo)
+
+    @property
+    def get_header_right_logo_base64(self):
+        return self._image_to_base64(self.header_right_logo)
+
+    @property
+    def get_header_right_logo_mime_type(self):
+        return self._detect_image_mime_type(self.header_right_logo)
+
+    @property
+    def has_footer_left_logo(self):
+        return self.footer_left_logo is not None and bool(self.footer_left_logo)
+
+    @property
+    def get_footer_left_logo_base64(self):
+        return self._image_to_base64(self.footer_left_logo)
+
+    @property
+    def get_footer_left_logo_mime_type(self):
+        return self._detect_image_mime_type(self.footer_left_logo)
+
+    @property
+    def has_footer_right_logo(self):
+        return self.footer_right_logo is not None and bool(self.footer_right_logo)
+
+    @property
+    def get_footer_right_logo_base64(self):
+        return self._image_to_base64(self.footer_right_logo)
+
+    @property
+    def get_footer_right_logo_mime_type(self):
+        return self._detect_image_mime_type(self.footer_right_logo)
+
+    @property
+    def has_watermark_logo(self):
+        return self.watermark_logo is not None and bool(self.watermark_logo)
+
+    @property
+    def get_watermark_logo_base64(self):
+        return self._image_to_base64(self.watermark_logo)
+
+    @property
+    def get_watermark_logo_mime_type(self):
+        return self._detect_image_mime_type(self.watermark_logo)
+
 class ExtractorUser(AuditedModel):
     """
     Modelo para usuários extratores de dados.

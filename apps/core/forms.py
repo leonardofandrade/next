@@ -83,3 +83,14 @@ class ExtractionUnitForm(forms.ModelForm):
         }
 
 
+class ExtractionUnitReplyEmailForm(forms.ModelForm):
+    """Form (parcial) para editar template de email de resposta da unidade"""
+
+    class Meta:
+        model = ExtractionUnit
+        fields = ['reply_email_subject', 'reply_email_template']
+        widgets = {
+            'reply_email_subject': forms.TextInput(attrs={'class': 'form-control'}),
+            'reply_email_template': forms.Textarea(attrs={'class': 'form-control', 'rows': 12}),
+        }
+

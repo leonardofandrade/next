@@ -1,0 +1,80 @@
+{% extends '_global/layout/base.html' %}
+
+{% block page_title %}
+<i class="fas fa-envelope-open-text text-primary me-2"></i>
+Template de E-mail (Unidade)
+{% endblock page_title %}
+
+{% block page_description %}
+Edite o assunto e o template de resposta ao solicitante.
+{% endblock page_description %}
+
+{% block page_actions %}
+<a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'core:extraction_unit_hub' unit.pk %}{% endif %}" class="btn btn-outline-secondary me-2">
+  <i class="fas fa-arrow-left me-2"></i>Voltar
+</a>
+{% endblock page_actions %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-pen me-2"></i>{{ unit.acronym|default:"-" }} — {{ unit.name|default:"(sem nome)" }}
+          </h5>
+        </div>
+
+        <div class="card-body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+              </div>
+            {% endif %}
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-heading me-2"></i>Assunto
+                </h6>
+              </div>
+              <div class="col-12">
+                <label for="{{ form.reply_email_subject.id_for_label }}" class="form-label">{{ form.reply_email_subject.label }}</label>
+                {{ form.reply_email_subject }}
+                {% if form.reply_email_subject.errors %}<div class="text-danger">{{ form.reply_email_subject.errors }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-file-alt me-2"></i>Template
+                </h6>
+              </div>
+              <div class="col-12">
+                <label for="{{ form.reply_email_template.id_for_label }}" class="form-label">{{ form.reply_email_template.label }}</label>
+                {{ form.reply_email_template }}
+                {% if form.reply_email_template.errors %}<div class="text-danger">{{ form.reply_email_template.errors }}</div>{% endif %}
+                <div class="form-text">Dica: você pode usar o mesmo conteúdo padrão já adotado pela unidade.</div>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'core:extraction_unit_hub' unit.pk %}{% endif %}" class="btn btn-secondary">
+                <i class="fas fa-times me-2"></i>Cancelar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Salvar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

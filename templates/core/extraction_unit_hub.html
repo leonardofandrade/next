@@ -41,6 +41,9 @@ Visualização da unidade de extração.
             <a href="{% url 'core:extraction_unit_update' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-primary">
               <i class="fas fa-pen me-2"></i>Editar
             </a>
+            <a href="{% url 'core:extraction_unit_reply_email_update' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-warning">
+              <i class="fas fa-envelope-open-text me-2"></i>E-mail
+            </a>
           </div>
         </div>
 

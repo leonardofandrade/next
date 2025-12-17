@@ -11,7 +11,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import TemplateView, UpdateView
 
 from apps.core.models import ExtractionUnit
-from apps.core.forms import ExtractionUnitForm
+from apps.core.forms import ExtractionUnitForm, ExtractionUnitReplyEmailForm
 
 
 class ExtractionUnitHubView(LoginRequiredMixin, TemplateView):
@@ -57,4 +57,30 @@ class ExtractionUnitUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, _('Unidade de extração atualizada com sucesso!'))
+        return response
+
+
+class ExtractionUnitReplyEmailUpdateView(LoginRequiredMixin, UpdateView):
+    """
+    Atualiza apenas os campos de template de e-mail de resposta da unidade.
+    """
+
+    model = ExtractionUnit
+    form_class = ExtractionUnitReplyEmailForm
+    template_name = 'core/extraction_unit_reply_email_update.html'
+    context_object_name = 'unit'
+
+    def get_success_url(self):
+        next_url = self.request.GET.get('next')
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
+            return next_url
+        return reverse('core:extraction_unit_hub', kwargs={'pk': self.object.pk})
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, _('Template de e-mail atualizado com sucesso!'))
         return response

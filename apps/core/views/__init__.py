@@ -5,6 +5,7 @@ from apps.core.views.extraction_agency_views import (
 from apps.core.views.extraction_unit_views import (
     ExtractionUnitHubView,
     ExtractionUnitUpdateView,
+    ExtractionUnitReplyEmailUpdateView,
 )
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     'ExtractionAgencyUpdateView',
     'ExtractionUnitHubView',
     'ExtractionUnitUpdateView',
+    'ExtractionUnitReplyEmailUpdateView',
 ]

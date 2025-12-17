@@ -1,0 +1,149 @@
+{% extends '_global/layout/base.html' %}
+
+{% block page_title %}
+<i class="fas fa-boxes text-primary me-2"></i>
+Locais de Armazenamento de Evidências
+{% endblock page_title %}
+
+{% block page_description %}
+Gerencie os locais de armazenamento de evidências da unidade <strong>{{ unit.acronym|default:unit.name }}</strong>.
+{% endblock page_description %}
+
+{% block page_actions %}
+  {% if request.GET.next %}
+    <a href="{{ request.GET.next }}" class="btn btn-outline-secondary me-2">
+      <i class="fas fa-arrow-left me-2"></i>Voltar
+    </a>
+  {% endif %}
+  {% url 'core:evidence_location_hub' unit.pk as hub_path %}
+  {% if request.GET.next %}
+    {% with hub_return_url=hub_path|add:'?next='|add:request.GET.next %}
+      <a href="{% url 'core:evidence_location_create' unit.pk %}?next={{ hub_return_url|urlencode }}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Novo Local
+      </a>
+    {% endwith %}
+  {% else %}
+    <a href="{% url 'core:evidence_location_create' unit.pk %}?next={{ hub_path|urlencode }}" class="btn btn-primary">
+      <i class="fas fa-plus me-2"></i>Novo Local
+    </a>
+  {% endif %}
+{% endblock page_actions %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          {% url 'core:evidence_location_hub' unit.pk as hub_path %}
+          {% if locations %}
+            {% if request.GET.next %}
+              {% with hub_return_url=hub_path|add:'?next='|add:request.GET.next %}
+                <div class="table-responsive">
+                  <table class="table align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>Nome</th>
+                        <th style="width: 140px;">Tipo</th>
+                        <th>Prateleira</th>
+                        <th>Slot</th>
+                        <th>Descrição</th>
+                        <th style="width: 120px;" class="text-end">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for location in locations %}
+                        <tr>
+                          <td class="fw-semibold">{{ location.name }}</td>
+                          <td>
+                            {% if location.type == 'to_do' %}
+                              <span class="badge bg-secondary">Para fazer</span>
+                            {% elif location.type == 'in_progress' %}
+                              <span class="badge bg-warning">Em progresso</span>
+                            {% elif location.type == 'done' %}
+                              <span class="badge bg-success">Finalizado</span>
+                            {% else %}
+                              <span class="text-muted">—</span>
+                            {% endif %}
+                          </td>
+                          <td>{{ location.shelf_name|default:"—" }}</td>
+                          <td>{{ location.slot_name|default:"—" }}</td>
+                          <td class="text-muted">{{ location.description|default:""|truncatewords:10 }}</td>
+                          <td class="text-end">
+                            <a href="{% url 'core:evidence_location_update' unit.pk location.pk %}?next={{ hub_return_url|urlencode }}" class="btn btn-sm btn-outline-primary" title="Editar" aria-label="Editar">
+                              <i class="fas fa-pen"></i>
+                            </a>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% endwith %}
+            {% else %}
+              <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th style="width: 140px;">Tipo</th>
+                      <th>Prateleira</th>
+                      <th>Slot</th>
+                      <th>Descrição</th>
+                      <th style="width: 120px;" class="text-end">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for location in locations %}
+                      <tr>
+                        <td class="fw-semibold">{{ location.name }}</td>
+                        <td>
+                          {% if location.type == 'to_do' %}
+                            <span class="badge bg-secondary">Para fazer</span>
+                          {% elif location.type == 'in_progress' %}
+                            <span class="badge bg-warning">Em progresso</span>
+                          {% elif location.type == 'done' %}
+                            <span class="badge bg-success">Finalizado</span>
+                          {% else %}
+                            <span class="text-muted">—</span>
+                          {% endif %}
+                        </td>
+                        <td>{{ location.shelf_name|default:"—" }}</td>
+                        <td>{{ location.slot_name|default:"—" }}</td>
+                        <td class="text-muted">{{ location.description|default:""|truncatewords:10 }}</td>
+                        <td class="text-end">
+                          <a href="{% url 'core:evidence_location_update' unit.pk location.pk %}?next={{ hub_path|urlencode }}" class="btn btn-sm btn-outline-primary" title="Editar" aria-label="Editar">
+                            <i class="fas fa-pen"></i>
+                          </a>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% endif %}
+          {% else %}
+            <div class="text-center py-4">
+              <div class="fw-semibold">Nenhum local cadastrado</div>
+              <div class="text-muted small mt-1">Crie um local de armazenamento de evidências.</div>
+              <div class="mt-3">
+                {% if request.GET.next %}
+                  {% with hub_return_url=hub_path|add:'?next='|add:request.GET.next %}
+                    <a href="{% url 'core:evidence_location_create' unit.pk %}?next={{ hub_return_url|urlencode }}" class="btn btn-primary">
+                      <i class="fas fa-plus me-2"></i>Novo Local
+                    </a>
+                  {% endwith %}
+                {% else %}
+                  <a href="{% url 'core:evidence_location_create' unit.pk %}?next={{ hub_path|urlencode }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Novo Local
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

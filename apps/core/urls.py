@@ -19,6 +19,11 @@ urlpatterns = [
     path('settings/extraction-units/<int:unit_pk>/document-templates/new/', views.DocumentTemplateCreateView.as_view(), name='document_template_create'),
     path('settings/extraction-units/<int:unit_pk>/document-templates/<int:pk>/edit/', views.DocumentTemplateUpdateView.as_view(), name='document_template_update'),
 
+    # ExtractionUnitEvidenceLocation (por ExtractionUnit)
+    path('settings/extraction-units/<int:unit_pk>/evidence-locations/', views.EvidenceLocationHubView.as_view(), name='evidence_location_hub'),
+    path('settings/extraction-units/<int:unit_pk>/evidence-locations/new/', views.EvidenceLocationCreateView.as_view(), name='evidence_location_create'),
+    path('settings/extraction-units/<int:unit_pk>/evidence-locations/<int:pk>/edit/', views.EvidenceLocationUpdateView.as_view(), name='evidence_location_update'),
+
     # ExtractorUser (gerenciamento no hub da agência)
     path('settings/extraction-agency/extractors/new/', views.ExtractorUserCreateView.as_view(), name='extractor_user_create'),
     path('settings/extraction-agency/extractors/<int:pk>/edit/', views.ExtractorUserUpdateView.as_view(), name='extractor_user_update'),

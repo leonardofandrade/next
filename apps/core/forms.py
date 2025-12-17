@@ -258,3 +258,18 @@ class ExtractionUnitReportSettingsForm(forms.ModelForm):
 
         return instance
 
+
+class ExtractionUnitEvidenceLocationForm(forms.ModelForm):
+    """Form para Local de Armazenamento de Evidências"""
+
+    class Meta:
+        model = ExtractionUnitEvidenceLocation
+        fields = ['type', 'name', 'description', 'shelf_name', 'slot_name']
+        widgets = {
+            'type': forms.Select(attrs={'class': 'form-select'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'shelf_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'slot_name': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+

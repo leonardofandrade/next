@@ -18,6 +18,11 @@ from apps.core.views.extractor_user_views import (
     ExtractorUserUpdateView,
     ExtractorUserUnitsAjaxView,
 )
+from apps.core.views.evidence_location_views import (
+    EvidenceLocationHubView,
+    EvidenceLocationCreateView,
+    EvidenceLocationUpdateView,
+)
 
 __all__ = [
     'ExtractionAgencyHubView',
@@ -32,4 +37,7 @@ __all__ = [
     'ExtractorUserCreateView',
     'ExtractorUserUpdateView',
     'ExtractorUserUnitsAjaxView',
+    'EvidenceLocationHubView',
+    'EvidenceLocationCreateView',
+    'EvidenceLocationUpdateView',
 ]

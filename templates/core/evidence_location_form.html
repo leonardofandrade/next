@@ -1,0 +1,121 @@
+{% extends '_global/layout/base.html' %}
+
+{% block page_title %}
+<i class="fas fa-boxes text-primary me-2"></i>
+{{ page_title|default:"Local de Armazenamento" }}
+{% endblock page_title %}
+
+{% block page_description %}
+{% if location %}
+Edite o local de armazenamento de evidências.
+{% else %}
+Crie um novo local de armazenamento de evidências para a unidade <strong>{{ unit.acronym|default:unit.name }}</strong>.
+{% endif %}
+{% endblock page_description %}
+
+{% block page_actions %}
+<a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'core:evidence_location_hub' unit.pk %}{% endif %}" class="btn btn-outline-secondary me-2">
+  <i class="fas fa-arrow-left me-2"></i>Voltar
+</a>
+{% endblock page_actions %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-pen me-2"></i>{{ unit.acronym|default:"-" }} — {{ unit.name|default:"(sem nome)" }}
+          </h5>
+        </div>
+
+        <div class="card-body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+              </div>
+            {% endif %}
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-info-circle me-2"></i>Informações Básicas
+                </h6>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+                {{ form.name }}
+                {% if form.name.errors %}<div class="text-danger">{{ form.name.errors }}</div>{% endif %}
+                {% if form.name.help_text %}
+                  <div class="form-text">{{ form.name.help_text }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.type.id_for_label }}" class="form-label">{{ form.type.label }}</label>
+                {{ form.type }}
+                {% if form.type.errors %}<div class="text-danger">{{ form.type.errors }}</div>{% endif %}
+                {% if form.type.help_text %}
+                  <div class="form-text">{{ form.type.help_text }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-map-marker-alt me-2"></i>Localização
+                </h6>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.shelf_name.id_for_label }}" class="form-label">{{ form.shelf_name.label }}</label>
+                {{ form.shelf_name }}
+                {% if form.shelf_name.errors %}<div class="text-danger">{{ form.shelf_name.errors }}</div>{% endif %}
+                {% if form.shelf_name.help_text %}
+                  <div class="form-text">{{ form.shelf_name.help_text }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.slot_name.id_for_label }}" class="form-label">{{ form.slot_name.label }}</label>
+                {{ form.slot_name }}
+                {% if form.slot_name.errors %}<div class="text-danger">{{ form.slot_name.errors }}</div>{% endif %}
+                {% if form.slot_name.help_text %}
+                  <div class="form-text">{{ form.slot_name.help_text }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-align-left me-2"></i>Descrição
+                </h6>
+              </div>
+              <div class="col-12">
+                <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                {{ form.description }}
+                {% if form.description.errors %}<div class="text-danger">{{ form.description.errors }}</div>{% endif %}
+                {% if form.description.help_text %}
+                  <div class="form-text">{{ form.description.help_text }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'core:evidence_location_hub' unit.pk %}{% endif %}" class="btn btn-secondary">
+                <i class="fas fa-times me-2"></i>Cancelar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Salvar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

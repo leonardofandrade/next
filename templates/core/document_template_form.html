@@ -66,16 +66,28 @@ Edite o conteúdo do ofício para a unidade <strong>{{ unit.acronym|default:unit
               <div id="dispatchTemplateHelpCollapse" class="accordion-collapse collapse" aria-labelledby="dispatchTemplateHelpHeading" data-bs-parent="#dispatchTemplateHelp">
                 <div class="accordion-body">
                   <div class="text-muted small mb-3">
-                    Use placeholders no formato <code>{{"{{variavel}}"}}</code> (ou <code>{{"{{ variavel }}"}}</code> com espaços). O sistema substitui automaticamente na geração do ofício.
+                    Use placeholders no formato
+                    <code>{% templatetag openvariable %}variavel{% templatetag closevariable %}</code>
+                    (ou
+                    <code>{% templatetag openvariable %} variavel {% templatetag closevariable %}</code>
+                    com espaços). O sistema substitui automaticamente na geração do ofício.
                   </div>
 
                   <div class="border rounded p-3 bg-light mb-3">
                     <div class="fw-semibold mb-2">Exemplo rápido</div>
                     <div class="small">
-                      <code>Ofício {{"{{dispatch_number_formatted}}"}} {{"{{extraction_unit_acronym}}"}}</code><br>
-                      <code>Processo: {{"{{case_number}}"}}</code><br>
-                      <code>Destinatário: {{"{{requester_unit}}"}}</code><br>
-                      <code>Responsável: {{"{{incharge_name}}"}} ({{"{{incharge_position}}"}})</code>
+                      <code>
+                        Ofício
+                        {% templatetag openvariable %}dispatch_number_formatted{% templatetag closevariable %}
+                        {% templatetag openvariable %}extraction_unit_acronym{% templatetag closevariable %}
+                      </code><br>
+                      <code>Processo: {% templatetag openvariable %}case_number{% templatetag closevariable %}</code><br>
+                      <code>Destinatário: {% templatetag openvariable %}requester_unit{% templatetag closevariable %}</code><br>
+                      <code>
+                        Responsável:
+                        {% templatetag openvariable %}incharge_name{% templatetag closevariable %}
+                        ({% templatetag openvariable %}incharge_position{% templatetag closevariable %})
+                      </code>
                     </div>
                   </div>
 
@@ -88,18 +100,18 @@ Edite o conteúdo do ofício para a unidade <strong>{{ unit.acronym|default:unit
                         </tr>
                       </thead>
                       <tbody>
-                        <tr><td><code>{{"{{dispatch_number}}"}}</code></td><td>Número do ofício (ex: 001).</td></tr>
-                        <tr><td><code>{{"{{dispatch_number_formatted}}"}}</code></td><td>Número formatado (ex: 001_2025).</td></tr>
-                        <tr><td><code>{{"{{dispatch_full_number}}"}}</code></td><td>Número completo (ex: Ofício 001_2025 NEXT).</td></tr>
-                        <tr><td><code>{{"{{year}}"}}</code></td><td>Ano atual.</td></tr>
-                        <tr><td><code>{{"{{date}}"}}</code></td><td>Data atual (dd/mm/yyyy).</td></tr>
-                        <tr><td><code>{{"{{case_number}}"}}</code></td><td>Número do processo.</td></tr>
-                        <tr><td><code>{{"{{requester_unit}}"}}</code></td><td>Nome da unidade solicitante.</td></tr>
-                        <tr><td><code>{{"{{requester_unit_acronym}}"}}</code></td><td>Sigla da unidade solicitante.</td></tr>
-                        <tr><td><code>{{"{{extraction_unit}}"}}</code></td><td>Nome da unidade de extração.</td></tr>
-                        <tr><td><code>{{"{{extraction_unit_acronym}}"}}</code></td><td>Sigla da unidade de extração.</td></tr>
-                        <tr><td><code>{{"{{incharge_name}}"}}</code></td><td>Nome do responsável.</td></tr>
-                        <tr><td><code>{{"{{incharge_position}}"}}</code></td><td>Cargo do responsável.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %}dispatch_number{% templatetag closevariable %}</code></td><td>Número do ofício (ex: 001).</td></tr>
+                        <tr><td><code>{% templatetag openvariable %}dispatch_number_formatted{% templatetag closevariable %}</code></td><td>Número formatado (ex: 001_2025).</td></tr>
+                        <tr><td><code>{% templatetag openvariable %}dispatch_full_number{% templatetag closevariable %}</code></td><td>Número completo (ex: Ofício 001_2025 NEXT).</td></tr>
+                        <tr><td><code>{% templatetag openvariable %}year{% templatetag closevariable %}</code></td><td>Ano atual.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %}date{% templatetag closevariable %}</code></td><td>Data atual (dd/mm/yyyy).</td></tr>
+                        <tr><td><code>{% templatetag openvariable %}case_number{% templatetag closevariable %}</code></td><td>Número do processo.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %}requester_unit{% templatetag closevariable %}</code></td><td>Nome da unidade solicitante.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %}requester_unit_acronym{% templatetag closevariable %}</code></td><td>Sigla da unidade solicitante.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %}extraction_unit{% templatetag closevariable %}</code></td><td>Nome da unidade de extração.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %}extraction_unit_acronym{% templatetag closevariable %}</code></td><td>Sigla da unidade de extração.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %}incharge_name{% templatetag closevariable %}</code></td><td>Nome do responsável.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %}incharge_position{% templatetag closevariable %}</code></td><td>Cargo do responsável.</td></tr>
                       </tbody>
                     </table>
                   </div>

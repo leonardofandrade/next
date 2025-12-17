@@ -24,6 +24,11 @@ urlpatterns = [
     path('settings/extraction-units/<int:unit_pk>/evidence-locations/new/', views.EvidenceLocationCreateView.as_view(), name='evidence_location_create'),
     path('settings/extraction-units/<int:unit_pk>/evidence-locations/<int:pk>/edit/', views.EvidenceLocationUpdateView.as_view(), name='evidence_location_update'),
 
+    # ExtractionUnitStorageMedia (por ExtractionUnit)
+    path('settings/extraction-units/<int:unit_pk>/storage-medias/', views.StorageMediaHubView.as_view(), name='storage_media_hub'),
+    path('settings/extraction-units/<int:unit_pk>/storage-medias/new/', views.StorageMediaCreateView.as_view(), name='storage_media_create'),
+    path('settings/extraction-units/<int:unit_pk>/storage-medias/<int:pk>/edit/', views.StorageMediaUpdateView.as_view(), name='storage_media_update'),
+
     # ExtractorUser (gerenciamento no hub da agência)
     path('settings/extraction-agency/extractors/new/', views.ExtractorUserCreateView.as_view(), name='extractor_user_create'),
     path('settings/extraction-agency/extractors/<int:pk>/edit/', views.ExtractorUserUpdateView.as_view(), name='extractor_user_update'),

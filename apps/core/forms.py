@@ -273,3 +273,16 @@ class ExtractionUnitEvidenceLocationForm(forms.ModelForm):
             'slot_name': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
+
+class ExtractionUnitStorageMediaForm(forms.ModelForm):
+    """Form para Meio de Armazenamento"""
+
+    class Meta:
+        model = ExtractionUnitStorageMedia
+        fields = ['acronym', 'name', 'description']
+        widgets = {
+            'acronym': forms.TextInput(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+        }
+

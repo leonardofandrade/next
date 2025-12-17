@@ -23,6 +23,11 @@ from apps.core.views.evidence_location_views import (
     EvidenceLocationCreateView,
     EvidenceLocationUpdateView,
 )
+from apps.core.views.storage_media_views import (
+    StorageMediaHubView,
+    StorageMediaCreateView,
+    StorageMediaUpdateView,
+)
 
 __all__ = [
     'ExtractionAgencyHubView',
@@ -40,4 +45,7 @@ __all__ = [
     'EvidenceLocationHubView',
     'EvidenceLocationCreateView',
     'EvidenceLocationUpdateView',
+    'StorageMediaHubView',
+    'StorageMediaCreateView',
+    'StorageMediaUpdateView',
 ]

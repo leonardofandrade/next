@@ -53,6 +53,9 @@ Visualização da unidade de extração.
             <a href="{% url 'core:evidence_location_hub' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-dark">
               <i class="fas fa-boxes me-2"></i>Evidências
             </a>
+            <a href="{% url 'core:storage_media_hub' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-secondary">
+              <i class="fas fa-hdd me-2"></i>Armazenamento
+            </a>
           </div>
         </div>
 

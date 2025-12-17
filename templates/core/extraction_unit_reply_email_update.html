@@ -16,6 +16,37 @@ Edite o assunto e o template de resposta ao solicitante.
 {% endblock page_actions %}
 
 {% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css">
+<style>
+  /* Keep editor visually consistent with Bootstrap inputs */
+  #reply-email-editor {
+    width: 100%;
+    max-width: 100%;
+  }
+  #reply-email-editor .ql-toolbar.ql-snow,
+  #reply-email-editor .ql-container.ql-snow {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .ql-toolbar.ql-snow {
+    border-top-left-radius: .375rem;
+    border-top-right-radius: .375rem;
+    border-color: var(--bs-border-color);
+    background: var(--bs-body-bg);
+    overflow-x: auto;
+  }
+  .ql-container.ql-snow {
+    border-bottom-left-radius: .375rem;
+    border-bottom-right-radius: .375rem;
+    border-color: var(--bs-border-color);
+    background: var(--bs-body-bg);
+  }
+  .ql-editor {
+    min-height: 260px;
+  }
+</style>
+
 <div class="container-fluid">
   <div class="row justify-content-center">
     <div class="col-lg-10">
@@ -27,6 +58,70 @@ Edite o assunto e o template de resposta ao solicitante.
         </div>
 
         <div class="card-body">
+          <div class="accordion mb-4" id="replyEmailTemplateHelp">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="replyEmailTemplateHelpHeading">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#replyEmailTemplateHelpCollapse" aria-expanded="false" aria-controls="replyEmailTemplateHelpCollapse">
+                  <i class="fas fa-circle-question me-2"></i>
+                  Variáveis disponíveis e como usar
+                </button>
+              </h2>
+              <div id="replyEmailTemplateHelpCollapse" class="accordion-collapse collapse" aria-labelledby="replyEmailTemplateHelpHeading" data-bs-parent="#replyEmailTemplateHelp">
+                <div class="accordion-body">
+                  <div class="text-muted small mb-3">
+                    Use placeholders no formato <code>{variavel}</code>. As mesmas variáveis funcionam no <strong>assunto</strong> e no <strong>corpo</strong>.
+                  </div>
+
+                  <div class="border rounded p-3 bg-light mb-3">
+                    <div class="fw-semibold mb-2">Exemplo rápido</div>
+                    <div class="small">
+                      <code>Prezado(a) {requester_authority_name},</code><br>
+                      <code>Sua solicitação para {requested_device_amount} dispositivo(s) foi recebida.</code><br>
+                      <code>Unidade: {extraction_unit_acronym} - {extraction_unit_name}</code><br>
+                      <code>Procedimentos: {procedures}</code>
+                    </div>
+                  </div>
+
+                  <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                      <thead>
+                        <tr>
+                          <th style="width: 320px;">Variável</th>
+                          <th>Descrição</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr><td><code>{procedures}</code></td><td>Procedimentos solicitados (ou <code>N/A</code>).</td></tr>
+                        <tr><td><code>{requested_device_amount}</code></td><td>Quantidade de dispositivos solicitados (ou <code>N/A</code>).</td></tr>
+                        <tr><td><code>{requester_authority_name}</code></td><td>Nome da autoridade solicitante.</td></tr>
+                        <tr><td><code>{requester_authority_position}</code></td><td>Cargo da autoridade solicitante.</td></tr>
+                        <tr><td><code>{requester_agency_unit}</code></td><td>Unidade solicitante (nome).</td></tr>
+
+                        <tr class="table-light"><td colspan="2" class="fw-semibold">Dados da Unidade de Extração</td></tr>
+                        <tr><td><code>{extraction_unit_name}</code></td><td>Nome da unidade de extração.</td></tr>
+                        <tr><td><code>{extraction_unit_acronym}</code></td><td>Sigla da unidade de extração.</td></tr>
+                        <tr><td><code>{extraction_unit_city}</code></td><td>Cidade da unidade.</td></tr>
+                        <tr><td><code>{extraction_unit_state}</code></td><td>Estado da unidade.</td></tr>
+                        <tr><td><code>{extraction_unit_postal_code}</code></td><td>CEP da unidade.</td></tr>
+                        <tr><td><code>{extraction_unit_address}</code></td><td>Endereço (linha 1).</td></tr>
+                        <tr><td><code>{extraction_unit_phone}</code></td><td>Telefone principal.</td></tr>
+                        <tr><td><code>{extraction_unit_secondary_phone}</code></td><td>Telefone secundário.</td></tr>
+                        <tr><td><code>{extraction_unit_email}</code></td><td>E-mail principal.</td></tr>
+
+                        <tr class="table-light"><td colspan="2" class="fw-semibold">Compatibilidade</td></tr>
+                        <tr><td><code>{requested_authority_position}</code></td><td>Compatibilidade com templates antigos (mesmo valor de <code>{requested_device_amount}</code>).</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div class="text-muted small mt-3">
+                    Observação: o conteúdo salvo é HTML (rich text). Os placeholders são substituídos no texto final exatamente onde aparecerem.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <form method="post" novalidate>
             {% csrf_token %}
 
@@ -58,6 +153,7 @@ Edite o assunto e o template de resposta ao solicitante.
               <div class="col-12">
                 <label for="{{ form.reply_email_template.id_for_label }}" class="form-label">{{ form.reply_email_template.label }}</label>
                 {{ form.reply_email_template }}
+                <div id="reply-email-editor" class="mt-2"></div>
                 {% if form.reply_email_template.errors %}<div class="text-danger">{{ form.reply_email_template.errors }}</div>{% endif %}
                 <div class="form-text">Dica: você pode usar o mesmo conteúdo padrão já adotado pela unidade.</div>
               </div>
@@ -78,3 +174,43 @@ Edite o assunto e o template de resposta ao solicitante.
   </div>
 </div>
 {% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+<script>
+(function() {
+  const textareaId = '{{ form.reply_email_template.id_for_label }}';
+  const textarea = document.getElementById(textareaId);
+  const editorEl = document.getElementById('reply-email-editor');
+  if (!textarea || !editorEl || typeof Quill === 'undefined') return;
+
+  // Hide original textarea (we'll submit HTML into it)
+  textarea.style.display = 'none';
+
+  const quill = new Quill(editorEl, {
+    theme: 'snow',
+    modules: {
+      toolbar: [
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+        ['link'],
+        ['clean']
+      ]
+    }
+  });
+
+  // Load existing HTML from textarea into editor
+  const initial = textarea.value || '';
+  quill.root.innerHTML = initial;
+
+  // Sync back to textarea on submit
+  const form = textarea.closest('form');
+  if (form) {
+    form.addEventListener('submit', function() {
+      textarea.value = quill.root.innerHTML;
+    });
+  }
+})();
+</script>
+{% endblock extra_js %}

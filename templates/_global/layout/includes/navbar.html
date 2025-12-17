@@ -37,8 +37,8 @@
                     <ul class="dropdown-menu shadow border-0 mt-2" aria-labelledby="requisitionsDropdown">
                         <li>
                             <a class="dropdown-item" href="{% url 'requisitions:list' %}">
-                                <i class="fas fa-list me-2"></i>
-                                Todas as Solicitações
+                                <i class="fas fa-search me-2"></i>
+                                Pesquisar Solicitações
                             </a>
                         </li>
                         <li>
@@ -56,12 +56,14 @@
                                 Relatórios e Análises
                             </h6>
                         </li>
+                        {% if user.is_superuser %}
                         <li>
                             <a class="dropdown-item" href="{% url 'requisitions:distribution_list' %}">
                                 <i class="fas fa-chart-pie me-2"></i>
                                 Distribuição por Unidade
                             </a>
                         </li>
+                        {% endif %}
                         <li>
                             <a class="dropdown-item" href="{% url 'requisitions:distribution_report' %}">
                                 <i class="fas fa-chart-line me-2"></i>

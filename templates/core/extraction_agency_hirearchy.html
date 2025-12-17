@@ -1,0 +1,54 @@
+{% extends '_global/layout/base.html' %}
+
+{% block page_title %}Agência de Extração{% endblock %}
+
+{% block page_description %}
+Configuração da agência central de extração (deve existir apenas 1 registro).
+{% endblock %}
+
+{% block content %}
+{% if agency %}
+<div class="row g-3">
+  <div class="col-12 col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title mb-3">{{ agency.name|default:"(sem nome)" }}</h5>
+
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Sigla</dt>
+          <dd class="col-sm-8">{{ agency.acronym|default:"-" }}</dd>
+
+          <dt class="col-sm-4">Responsável</dt>
+          <dd class="col-sm-8">{{ agency.incharge_name|default:"-" }}</dd>
+
+          <dt class="col-sm-4">Cargo</dt>
+          <dd class="col-sm-8">{{ agency.incharge_position|default:"-" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="card-title">Logo</h6>
+        {% if agency.has_main_logo %}
+          <img
+            class="img-fluid"
+            style="max-height: 180px; object-fit: contain;"
+            src="data:{{ agency.get_main_logo_mime_type }};base64,{{ agency.get_main_logo_base64 }}"
+            alt="Logo {{ agency.acronym }}"
+          >
+        {% else %}
+          <div class="text-muted small">Sem logo cadastrado.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-warning mb-0">
+  Nenhuma agência de extração cadastrada.
+</div>
+{% endif %}
+{% endblock %}

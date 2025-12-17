@@ -277,7 +277,14 @@
                         <i class="fas fa-cog me-1"></i>
                         Configurações
                     </a>
-                  
+                    <ul class="dropdown-menu shadow border-0 mt-2" aria-labelledby="settingsDropdown">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'core:extraction_agency_hirearchy' %}">
+                                <i class="fas fa-building me-2"></i>
+                                Agência Central
+                            </a>
+                        </li>
+                    </ul>
                 </li>
                 {% endif %}
                 {% endif %}

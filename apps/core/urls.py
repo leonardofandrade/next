@@ -15,6 +15,7 @@ urlpatterns = [
     # Extraction Agency URLs
     path('agencies/', views.extraction_agency_list, name='extraction_agency_list'),
     path('agencies/create/', views.extraction_agency_create, name='extraction_agency_create'),
+    path('agencies/graph/', views.extraction_agency_graph, name='extraction_agency_graph'),
     path('agencies/<int:pk>/', views.extraction_agency_detail, name='extraction_agency_detail'),
     path('agencies/<int:pk>/edit/', views.extraction_agency_edit, name='extraction_agency_edit'),
     path('agencies/<int:pk>/delete/', views.extraction_agency_delete, name='extraction_agency_delete'),

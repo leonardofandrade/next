@@ -110,6 +110,43 @@ def extraction_agency_delete(request, pk):
     return render(request, 'core/extraction_agency_confirm_delete.html', {'agency': agency})
 
 
+@login_required
+@user_passes_test(is_staff_user)
+def extraction_agency_graph(request):
+    """
+    Exibe a agência central e suas unidades de extração em formato de grafo (Agência -> Unidades).
+    Se existir mais de uma agência, permite selecionar via querystring (?agency=<id>).
+    """
+    agencies = ExtractionAgency.objects.filter(deleted_at__isnull=True).order_by('acronym', 'name')
+
+    agency_id = (request.GET.get('agency') or '').strip()
+    if agency_id:
+        agency = get_object_or_404(ExtractionAgency, pk=agency_id, deleted_at__isnull=True)
+    else:
+        agency = agencies.first()
+
+    if not agency:
+        messages.warning(request, _('Nenhuma agência cadastrada.'))
+        return redirect('core:extraction_agency_list')
+
+    units = ExtractionUnit.objects.filter(
+        deleted_at__isnull=True,
+        agency=agency
+    ).order_by('acronym', 'name')
+
+    context = {
+        'agency': agency,
+        'agencies': agencies,
+        'units': units,
+        'page_title': _('Grafo da Agência'),
+        'page_icon': 'fa-project-diagram',
+        'page_description': _('Visualização hierárquica (Agência → Unidades de Extração)'),
+        'selected_agency_id': str(agency.pk),
+        'total_units': units.count(),
+    }
+    return render(request, 'core/extraction_agency_graph.html', context)
+
+
 # ==================== Extraction Unit Views ====================
 
 @login_required

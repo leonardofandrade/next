@@ -86,7 +86,9 @@ Solicitações pendentes ou aguardando material (não recebidas)
                                 <th width="15%"><i class="fas fa-list-check me-2"></i>Procedimentos</th>
                                 <th width="10%"><i class="fas fa-calendar-alt me-2"></i>Solicitada em</th>
                                 <th width="10%"><i class="fas fa-mobile-alt me-2"></i>Dispositivos</th>
+                                {% if user.is_superuser %}
                                 <th width="10%"><i class="fas fa-bars-progress me-2"></i>Status</th>
+                                {% endif %}
                                 <th width="10%"><i class="fas fa-microscope me-2"></i>Distribuída para</th>
                                 <th width="10%" class="text-center"><i class="fas fa-ellipsis-v me-2"></i>Ações</th>
                             </tr>
@@ -103,38 +105,29 @@ Solicitações pendentes ou aguardando material (não recebidas)
                                 </td>
                                 <td>
                                     {{ request.request_procedures|default:"N/A" }}
-                                </td>
-                                
+                                </td>                                
                                 <td>
                                     <small>{{ request.requested_at|date:"d/m/Y H:i"|default:"N/A" }}</small>
                                 </td>
                                 <td>
                                     <span class="badge bg-info">{{ request.requested_device_amount }}</span>
                                 </td>
+                                {% if user.is_superuser %}
                                 <td>
                                     <span class="badge bg-{{ request.get_status_color }}">
                                         {{ request.get_status_display }}
                                     </span>
                                 </td>
+                                {% endif %}
                                 <td>
                                     <small>{{ request.extraction_unit.acronym|default:"N/A" }}</small>
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <a href="{% url 'requisitions:detail' request.pk %}?next={% url 'requisitions:not_received' %}" 
-                                           class="btn btn-outline-primary" 
-                                           title="Ver Detalhes">
-                                            <i class="fas fa-folder-open"></i>
-                                        </a>
-                                        <a href="{% url 'requisitions:update' request.pk %}?next={% url 'requisitions:not_received' %}" 
-                                           class="btn btn-outline-warning" 
-                                           title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
                                         {% if not request.case or request.case.deleted_at %}
                                         <button type="button" 
                                                 class="btn btn-outline-success" 
-                                                title="Criar Processo"
+                                                title="Criar um processo a partir dos dados da solicitação"
                                                 data-bs-toggle="modal" 
                                                 data-bs-target="#createCaseModal{{ request.pk }}">
                                             <i class="fas fa-folder-plus"></i>
@@ -145,7 +138,18 @@ Solicitações pendentes ou aguardando material (não recebidas)
                                            title="Ver Processo Criado">
                                             <i class="fas fa-folder-open"></i>
                                         </a>
-                                        {% endif %}
+                                        {% endif %}                                        
+                                        <a href="{% url 'requisitions:detail' request.pk %}?next={% url 'requisitions:not_received' %}" 
+                                           class="btn btn-outline-primary" 
+                                           title="Ver Detalhes">
+                                            <i class="fas fa-folder-open"></i>
+                                        </a>
+                                        <a href="{% url 'requisitions:update' request.pk %}?next={% url 'requisitions:not_received' %}" 
+                                           class="btn btn-outline-warning" 
+                                           title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        
                                         <a href="{% url 'requisitions:delete' request.pk %}?next={% url 'requisitions:not_received' %}" 
                                            class="btn btn-outline-danger" 
                                            title="Excluir">

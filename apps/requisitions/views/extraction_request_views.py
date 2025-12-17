@@ -40,7 +40,13 @@ class ExtractionRequestListView(ExtractionUnitFilterMixin, BaseListView):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Solicitações de Extração'
         context['page_icon'] = 'fa-envelope-open-text'
-        context['form'] = context.get('search_form') or self.search_form_class(self.request.GET or None)
+        if context.get('search_form'):
+            context['form'] = context['search_form']
+        else:
+            try:
+                context['form'] = self.search_form_class(self.request.GET or None, user=self.request.user)
+            except TypeError:
+                context['form'] = self.search_form_class(self.request.GET or None)
         context['total_count'] = self.get_queryset().count()
         return context
 
@@ -257,7 +263,10 @@ class ExtractionRequestNotReceivedView(ExtractionUnitFilterMixin, LoginRequiredM
         filters = {}
         
         if self.search_form_class:
-            form = self.search_form_class(self.request.GET or None)
+            try:
+                form = self.search_form_class(self.request.GET or None, user=self.request.user)
+            except TypeError:
+                form = self.search_form_class(self.request.GET or None)
             if form.is_valid():
                 filters = form.cleaned_data
                 
@@ -267,7 +276,10 @@ class ExtractionRequestNotReceivedView(ExtractionUnitFilterMixin, LoginRequiredM
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Solicitações Não Recebidas'
         context['page_icon'] = 'fa-inbox'
-        context['form'] = self.search_form_class(self.request.GET or None)
+        try:
+            context['form'] = self.search_form_class(self.request.GET or None, user=self.request.user)
+        except TypeError:
+            context['form'] = self.search_form_class(self.request.GET or None)
         context['total_count'] = self.get_queryset().count()
         return context
 
@@ -432,7 +444,10 @@ class ExtractionRequestDistributionListView(ExtractionUnitFilterMixin, LoginRequ
         filters = {}
         
         if self.search_form_class:
-            form = self.search_form_class(self.request.GET or None)
+            try:
+                form = self.search_form_class(self.request.GET or None, user=self.request.user)
+            except TypeError:
+                form = self.search_form_class(self.request.GET or None)
             if form.is_valid():
                 filters = form.cleaned_data
                 
@@ -512,7 +527,10 @@ class ExtractionRequestDistributionListView(ExtractionUnitFilterMixin, LoginRequ
         context['summary_data'] = summary_data
         context['page_title'] = 'Distribuição por Unidade de Extração'
         context['page_icon'] = 'fa-chart-bar'
-        context['form'] = self.search_form_class(self.request.GET or None)
+        try:
+            context['form'] = self.search_form_class(self.request.GET or None, user=self.request.user)
+        except TypeError:
+            context['form'] = self.search_form_class(self.request.GET or None)
         context['total_count'] = queryset.count()
         
         return context

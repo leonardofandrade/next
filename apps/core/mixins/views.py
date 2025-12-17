@@ -79,6 +79,17 @@ class BaseListView(LoginRequiredMixin, StaffOrExtractorRequiredMixin, ServiceMix
     
     paginate_by = 25
     search_form_class = None
+
+    def _build_search_form(self):
+        """Build search form passing user when supported."""
+        if not self.search_form_class:
+            return None
+
+        try:
+            return self.search_form_class(self.request.GET or None, user=self.request.user)
+        except TypeError:
+            # Backwards compatibility for forms that don't accept `user`
+            return self.search_form_class(self.request.GET or None)
     
     def get_queryset(self) -> QuerySet:
         """Get filtered queryset using service"""
@@ -96,7 +107,7 @@ class BaseListView(LoginRequiredMixin, StaffOrExtractorRequiredMixin, ServiceMix
         filters = {}
         
         if self.search_form_class:
-            form = self.search_form_class(self.request.GET or None)
+            form = self._build_search_form()
             if form.is_valid():
                 filters = form.cleaned_data
                 
@@ -106,7 +117,7 @@ class BaseListView(LoginRequiredMixin, StaffOrExtractorRequiredMixin, ServiceMix
         context = super().get_context_data(**kwargs)
         
         if self.search_form_class:
-            context['search_form'] = self.search_form_class(self.request.GET or None)
+            context['search_form'] = self._build_search_form()
             
         return context
 

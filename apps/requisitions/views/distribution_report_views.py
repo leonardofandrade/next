@@ -180,7 +180,7 @@ class DistributionReportView(LoginRequiredMixin, TemplateView):
 
         return {
             'years': years,
-            'extraction_units': list_extraction_units(),
+            'extraction_units': list_extraction_units(user=self.request.user),
             'agency_units': list_agency_units(),
             'status_choices': [
                 ('pending', 'Pendente'),

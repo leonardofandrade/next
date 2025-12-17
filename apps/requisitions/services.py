@@ -98,9 +98,14 @@ class ExtractionRequestService(BaseService):
         
         extraction_unit = filters.get('extraction_unit')
         if extraction_unit:
-            # extraction_unit pode ser uma lista
-            if isinstance(extraction_unit, list):
+            # extraction_unit pode ser:
+            # - model instance
+            # - lista/tupla de instances/ids
+            # - QuerySet (ModelMultipleChoiceField)
+            if isinstance(extraction_unit, (list, tuple, set)):
                 queryset = queryset.filter(extraction_unit__in=extraction_unit)
+            elif hasattr(extraction_unit, 'values_list'):
+                queryset = queryset.filter(extraction_unit__in=extraction_unit.values_list('pk', flat=True))
             else:
                 queryset = queryset.filter(extraction_unit=extraction_unit)
         
@@ -169,9 +174,24 @@ def apply_filters_to_queryset(queryset, filters):
     return service.apply_filters(queryset, filters)
 
 
-def list_extraction_units():
-    """List all active extraction units"""
-    return ExtractionUnit.objects.filter(deleted_at__isnull=True).order_by('acronym', 'name')
+def list_extraction_units(user=None):
+    """
+    List extraction units for selects/filters.
+
+    - Superuser e não-extratores: todas as unidades ativas
+    - Extratores: apenas unidades associadas (pode ser vazio)
+    """
+    queryset = ExtractionUnit.objects.filter(deleted_at__isnull=True).order_by('acronym', 'name')
+
+    if not user or getattr(user, 'is_superuser', False):
+        return queryset
+
+    service = BaseService(user=user)
+    if service.is_extractor_user():
+        extraction_unit_ids = service.get_user_extraction_units()
+        return queryset.filter(id__in=extraction_unit_ids)
+
+    return queryset
 
 
 def list_agency_units():

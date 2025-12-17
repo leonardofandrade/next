@@ -6,6 +6,30 @@ from django.utils import timezone
 from apps.requisitions.models import ExtractionRequest
 from apps.base_tables.models import AgencyUnit, EmployeePosition, CrimeCategory
 from apps.core.models import ExtractionUnit
+from apps.core.services.base import BaseService
+
+
+def _get_extraction_unit_queryset_for_user(user):
+    """
+    Retorna queryset de ExtractionUnit visível para o usuário.
+
+    - Superuser/staff e não-extratores: todas as units ativas
+    - Extrator: apenas units associadas (pode ser vazio)
+    """
+    queryset = ExtractionUnit.objects.filter(deleted_at__isnull=True).order_by('acronym')
+
+    if not user:
+        return queryset
+
+    if getattr(user, 'is_superuser', False):
+        return queryset
+
+    service = BaseService(user=user)
+    if service.is_extractor_user():
+        extraction_unit_ids = service.get_user_extraction_units()
+        return queryset.filter(id__in=extraction_unit_ids)
+
+    return queryset
 
 
 class ExtractionRequestForm(forms.ModelForm):
@@ -92,7 +116,7 @@ class ExtractionRequestForm(forms.ModelForm):
         
         # Ordena os querysets
         self.fields['requester_agency_unit'].queryset = AgencyUnit.objects.all().order_by('acronym')
-        self.fields['extraction_unit'].queryset = ExtractionUnit.objects.all().order_by('acronym')
+        self.fields['extraction_unit'].queryset = _get_extraction_unit_queryset_for_user(self.user)
         self.fields['requester_authority_position'].queryset = EmployeePosition.objects.all().order_by('-default_selection', 'name')
         self.fields['crime_category'].queryset = CrimeCategory.objects.all().order_by('-default_selection', 'name')
         
@@ -169,7 +193,7 @@ class ExtractionRequestSearchForm(forms.Form):
     extraction_unit = forms.ModelMultipleChoiceField(
         required=False,
         label='Unidade de Extração',
-        queryset=ExtractionUnit.objects.all().order_by('acronym'),
+        queryset=ExtractionUnit.objects.filter(deleted_at__isnull=True).order_by('acronym'),
         widget=forms.SelectMultiple(attrs={
             'class': 'form-select select2-multiple',
             'data-placeholder': 'Selecione uma ou mais unidades...'
@@ -202,3 +226,10 @@ class ExtractionRequestSearchForm(forms.Form):
             'type': 'date'
         })
     )
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        # Filtra extraction_units para usuários extratores
+        self.fields['extraction_unit'].queryset = _get_extraction_unit_queryset_for_user(self.user)

@@ -114,15 +114,10 @@ class ExtractorUserCreateView(LoginRequiredMixin, FormView):
                 link.save()
 
     def get_success_url(self):
-        # Após criar, redireciona para a página de edição
-        next_url = self.request.GET.get('next')
-        if next_url and url_has_allowed_host_and_scheme(
-            next_url,
-            allowed_hosts={self.request.get_host()},
-            require_https=self.request.is_secure(),
-        ):
-            return next_url
-        # Redireciona para a página de edição do extrator criado
+        # Após criar, sempre redireciona para a página de edição do extrator criado
+        if not hasattr(self, 'extractor_user') or self.extractor_user is None:
+            # Fallback caso algo dê errado
+            return reverse('core:extraction_agency_hub')
         return reverse('core:extractor_user_update', kwargs={'pk': self.extractor_user.pk})
 
 

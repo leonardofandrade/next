@@ -19,5 +19,9 @@ class ExtractionAgencyHirearchyView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['agency'] = ExtractionAgency.objects.first()
+        agency = ExtractionAgency.objects.prefetch_related('extraction_units').first()
+        context['agency'] = agency
+        context['extraction_units'] = (
+            agency.extraction_units.all().order_by('acronym', 'name') if agency else []
+        )
         return context

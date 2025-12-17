@@ -37,6 +37,51 @@ Topo da hierarquia (Agência) e, futuramente, as Unidades de Extração vinculad
     background: rgba(255, 255, 255, 0.65);
     border-radius: 0.75rem;
   }
+
+  /* Org chart (agency -> extraction units) */
+  .org-children {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    overflow-x: hidden;
+    padding: 18px 0 6px 0; /* top space for the horizontal connector */
+  }
+  .org-children::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--bs-border-color);
+  }
+  .org-child {
+    position: relative;
+    flex: 1 1 200px;
+    min-width: 160px;
+    max-width: 260px;
+    padding-top: 18px; /* space for vertical connector */
+  }
+  .org-child::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 2px;
+    height: 18px;
+    background: var(--bs-border-color);
+    transform: translateX(-50%);
+  }
+  .org-unit-card {
+    border-radius: 0.75rem;
+  }
+  .org-unit-acronym {
+    font-weight: 700;
+    letter-spacing: .3px;
+  }
 </style>
 
 {% if agency %}
@@ -89,12 +134,30 @@ Topo da hierarquia (Agência) e, futuramente, as Unidades de Extração vinculad
         Unidades de Extração vinculadas
       </div>
 
-      <div class="hierarchy-children-placeholder p-4 text-center">
-        <div class="fw-semibold">Nenhuma unidade cadastrada</div>
-        <div class="text-muted small mt-1">
-          Em breve esta área exibirá as <code>extraction_units</code> pertencentes à Agência.
+      {% if extraction_units %}
+        <div class="org-children">
+          {% for unit in extraction_units %}
+            <div class="org-child">
+              <div class="card shadow-sm org-unit-card">
+                <div class="card-body py-3">
+                  <div class="text-center">
+                    <div class="org-unit-acronym fs-5">
+                      {{ unit.acronym|default:"-" }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
         </div>
-      </div>
+      {% else %}
+        <div class="hierarchy-children-placeholder p-4 text-center">
+          <div class="fw-semibold">Nenhuma unidade cadastrada</div>
+          <div class="text-muted small mt-1">
+            Em breve esta área exibirá as <code>extraction_units</code> pertencentes à Agência.
+          </div>
+        </div>
+      {% endif %}
     </div>
   </div>
 </div>

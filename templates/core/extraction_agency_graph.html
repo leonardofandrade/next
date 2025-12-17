@@ -117,13 +117,18 @@
                             {% for unit in units %}
                                 <div id="unitNode-{{ unit.pk }}" class="graph-node unit">
                                     <div class="node-actions">
+                                        <a class="btn btn-sm btn-outline-primary"
+                                           href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=unit&next={{ request.get_full_path|urlencode }}"
+                                           title="Central da unidade">
+                                            <i class="fas fa-sliders-h"></i>
+                                        </a>
                                         <a class="btn btn-sm btn-outline-info"
-                                           href="{% url 'core:extraction_unit_edit' unit.pk %}?next={{ request.get_full_path|urlencode }}"
-                                           title="Editar unidade">
-                                            <i class="fas fa-edit"></i>
+                                           href="{% url 'core:extraction_unit_detail' unit.pk %}?next={{ request.get_full_path|urlencode }}"
+                                           title="Ver detalhes">
+                                            <i class="fas fa-folder-open"></i>
                                         </a>
                                     </div>
-                                    <a class="node-link" href="{% url 'core:extraction_unit_detail' unit.pk %}?next={{ request.get_full_path|urlencode }}">
+                                    <a class="node-link" href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=unit&next={{ request.get_full_path|urlencode }}">
                                         <div class="title">{{ unit.acronym }}</div>
                                         <div class="subtitle">{{ unit.name }}</div>
                                         {% if unit.city_name or unit.state_name %}

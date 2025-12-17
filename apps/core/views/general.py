@@ -10,6 +10,8 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.utils.http import url_has_allowed_host_and_scheme
 
+from urllib.parse import quote
+
 from apps.core.models import (
     ExtractionAgency,
     ExtractionUnit,
@@ -206,6 +208,8 @@ def extraction_unit_hub(request):
         messages.warning(request, _('Nenhuma unidade cadastrada.'))
         return redirect('core:extraction_unit_list')
 
+    next_url = _get_safe_next_url(request)
+
     tab = (request.GET.get('tab') or request.POST.get('tab') or 'unit').strip()
     allowed_tabs = {'unit', 'templates', 'storage', 'evidence', 'dispatch'}
     if tab not in allowed_tabs:
@@ -213,6 +217,8 @@ def extraction_unit_hub(request):
 
     # URL de retorno para ser usada em links externos
     hub_url = f"{reverse('core:extraction_unit_hub')}?unit={unit.pk}&tab={tab}"
+    if next_url:
+        hub_url += f"&next={quote(next_url, safe='')}"
 
     unit_form = ExtractionUnitForm(instance=unit)
     if request.method == 'POST':
@@ -255,6 +261,7 @@ def extraction_unit_hub(request):
         'unit': unit,
         'tab': tab,
         'hub_url': hub_url,
+        'next_url': next_url,
         'unit_form': unit_form,
         'document_templates': document_templates,
         'default_template': default_template,

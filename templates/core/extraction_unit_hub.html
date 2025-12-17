@@ -11,6 +11,11 @@
 {% endblock page_description %}
 
 {% block page_actions %}
+{% if next_url %}
+<a href="{{ next_url }}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left me-2"></i>Voltar
+</a>
+{% endif %}
 <a href="{% url 'core:extraction_unit_list' %}" class="btn btn-secondary">
     <i class="fas fa-list me-2"></i>Lista de Unidades
 </a>
@@ -128,6 +133,9 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="get" class="row g-3 align-items-end">
+                {% if next_url %}
+                    <input type="hidden" name="next" value="{{ next_url }}">
+                {% endif %}
                 <div class="col-md-8">
                     <label class="form-label" for="unit">Unidade</label>
                     <select class="form-select" id="unit" name="unit">
@@ -159,19 +167,19 @@
 
     <ul class="nav nav-tabs mb-3">
         <li class="nav-item">
-            <a class="nav-link {% if tab == 'unit' %}active{% endif %}" href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=unit">Dados</a>
+            <a class="nav-link {% if tab == 'unit' %}active{% endif %}" href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=unit{% if next_url %}&next={{ next_url|urlencode }}{% endif %}">Dados</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if tab == 'templates' %}active{% endif %}" href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=templates">Templates</a>
+            <a class="nav-link {% if tab == 'templates' %}active{% endif %}" href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=templates{% if next_url %}&next={{ next_url|urlencode }}{% endif %}">Templates</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if tab == 'storage' %}active{% endif %}" href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=storage">Armazenamento</a>
+            <a class="nav-link {% if tab == 'storage' %}active{% endif %}" href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=storage{% if next_url %}&next={{ next_url|urlencode }}{% endif %}">Armazenamento</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if tab == 'evidence' %}active{% endif %}" href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=evidence">Locais de Evidência</a>
+            <a class="nav-link {% if tab == 'evidence' %}active{% endif %}" href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=evidence{% if next_url %}&next={{ next_url|urlencode }}{% endif %}">Locais de Evidência</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if tab == 'dispatch' %}active{% endif %}" href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=dispatch">Numeração</a>
+            <a class="nav-link {% if tab == 'dispatch' %}active{% endif %}" href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=dispatch{% if next_url %}&next={{ next_url|urlencode }}{% endif %}">Numeração</a>
         </li>
     </ul>
 

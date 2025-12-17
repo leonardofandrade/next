@@ -10,9 +10,10 @@ O método `update_status_based_on_extractions()` foi adicionado ao modelo `Case`
 
 O status do Case é determinado pela análise dos status de todas as extrações não deletadas associadas ao case:
 
-### 1. **COMPLETED** (Concluído)
+### 1. **EXTRACTIONS_COMPLETED** (Extrações concluídas)
 - **Quando**: Todas as extrações estão com status `completed`
 - **Exemplo**: Case com 3 extrações, todas finalizadas
+- **Observação**: Este status **não** significa que o processo foi finalizado; apenas indica que está disponível para finalização.
 
 ### 2. **IN_PROGRESS** (Em Progresso)
 - **Quando**: Pelo menos uma extração está com status `in_progress`
@@ -73,7 +74,7 @@ PAUSED (todas paused)
   ↓ (retomar)
 IN_PROGRESS
   ↓ (finalizar todas)
-COMPLETED
+EXTRACTIONS_COMPLETED
 ```
 
 ## Exemplos Práticos
@@ -112,7 +113,7 @@ COMPLETED
 - Extração 1: `completed`
 - Extração 2: `completed`
 - Extração 3: `completed`
-- **Status do Case**: `COMPLETED`
+- **Status do Case**: `EXTRACTIONS_COMPLETED`
 
 ## Considerações Técnicas
 

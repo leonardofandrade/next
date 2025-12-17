@@ -122,15 +122,15 @@
                 </div>
                 
                 <!-- Connector -->
-                <div class="connector-h {% if case.status in 'in_progress,paused,waiting_collect,completed' %}completed{% endif %}">
+                <div class="connector-h {% if case.status in 'in_progress,paused,waiting_collect,extractions_completed,completed' %}completed{% endif %}">
                     <div class="line-h"></div>
                     <i class="fas fa-chevron-right arrow-h"></i>
                 </div>
                 
                 <!-- Step 4: Extrações Iniciadas -->
-                <div class="workflow-step-h {% if case.status == 'completed' %}completed{% elif case.status in 'in_progress,paused,waiting_collect' %}active{% endif %}">
+                <div class="workflow-step-h {% if case.status == 'completed' or case.status == 'extractions_completed' %}completed{% elif case.status in 'in_progress,paused,waiting_collect' %}active{% endif %}">
                     <div class="step-rectangle-h">
-                        {% if case.status == 'completed' %}
+                        {% if case.status == 'completed' or case.status == 'extractions_completed' %}
                         <div class="step-check-icon">
                             <i class="fas fa-check-circle"></i>
                         </div>
@@ -142,6 +142,8 @@
                                 <i class="fas fa-pause"></i>
                             {% elif case.status == 'waiting_collect' %}
                                 <i class="fas fa-hourglass-half"></i>
+                            {% elif case.status == 'extractions_completed' %}
+                                <i class="fas fa-check"></i>
                             {% else %}
                                 <i class="fas fa-database"></i>
                             {% endif %}
@@ -150,6 +152,7 @@
                             <div class="step-label-h">
                                 {% if case.status == 'paused' %}Pausado
                                 {% elif case.status == 'waiting_collect' %}Aguardando Coleta
+                                {% elif case.status == 'extractions_completed' %}Extrações concluídas
                                 {% elif case.status == 'completed' %}Concluído
                                 {% else %}Extrações{% endif %}
                             </div>
@@ -159,6 +162,8 @@
                                 <div class="step-badge-h"><span class="badge bg-secondary">Pausado</span></div>
                             {% elif case.status == 'waiting_collect' %}
                                 <div class="step-badge-h"><span class="badge bg-info">Aguardando</span></div>
+                            {% elif case.status == 'extractions_completed' %}
+                                <div class="step-badge-h"><span class="badge bg-success">Concluídas</span></div>
                             {% elif case.status == 'completed' %}
                                 <div class="step-badge-h"><span class="badge bg-success">Concluído</span></div>
                             {% endif %}

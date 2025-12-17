@@ -281,7 +281,7 @@ class Command(BaseCommand):
         }
 
     def _check_and_finalize_case(self, case, user):
-        """Verifica se o caso deve ser finalizado após finalizar todas as extrações"""
+        """Verifica se o caso deve mudar para 'extrações concluídas' após finalizar todas as extrações"""
         try:
             from apps.cases.services.case_service import CaseService
             
@@ -295,21 +295,19 @@ class Command(BaseCommand):
                 status=Extraction.STATUS_COMPLETED
             ).count()
             
-            # Se todas as extrações foram finalizadas, finalizar o caso
+            # Se todas as extrações foram finalizadas, marcar o caso como "extrações concluídas"
             if total_extractions > 0 and completed_extractions == total_extractions:
                 if case.status in [Case.CASE_STATUS_IN_PROGRESS, Case.CASE_STATUS_PAUSED]:
                     case_service = CaseService(user=user)
                     case_service.update(
                         pk=case.id,
                         data={
-                            'status': Case.CASE_STATUS_COMPLETED,
-                            'finished_at': timezone.now(),
-                            'finalization_notes': f"Caso finalizado automaticamente após conclusão de todas as {total_extractions} extrações."
+                            'status': Case.CASE_STATUS_EXTRACTIONS_COMPLETED,
                         }
                     )
                     
                     self.stdout.write(
-                        f"[INFO] Caso {case.number} finalizado automaticamente (todas as extrações concluídas)"
+                        f"[INFO] Caso {case.number} marcado como 'extrações concluídas' (todas as extrações concluídas)"
                     )
         except Exception as e:
             self.stdout.write(

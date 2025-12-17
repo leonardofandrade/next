@@ -119,7 +119,7 @@ Painel de controle dos processos sob sua responsabilidade - Visualização em Fl
     </div>
 
     <!-- Processos Ativos (Não Finalizados) - Visualização em Fluxo -->
-    {% if cases_by_status.draft or cases_by_status.waiting_extractor or cases_by_status.waiting_start or cases_by_status.waiting_collect or cases_by_status.in_progress or cases_by_status.paused %}
+    {% if cases_by_status.draft or cases_by_status.waiting_extractor or cases_by_status.waiting_start or cases_by_status.waiting_collect or cases_by_status.in_progress or cases_by_status.paused or cases_by_status.extractions_completed %}
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
@@ -147,6 +147,9 @@ Painel de controle dos processos sob sua responsabilidade - Visualização em Fl
                             {% include 'users/extractors/includes/case_workflow_card.html' with case=case %}
                         {% endfor %}
                         {% for case in cases_by_status.paused %}
+                            {% include 'users/extractors/includes/case_workflow_card.html' with case=case %}
+                        {% endfor %}
+                        {% for case in cases_by_status.extractions_completed %}
                             {% include 'users/extractors/includes/case_workflow_card.html' with case=case %}
                         {% endfor %}
                     </div>

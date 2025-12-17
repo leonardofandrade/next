@@ -20,6 +20,7 @@ class Case(AbstractCaseModel):
     CASE_STATUS_WAITING_START = 'waiting_start'
     CASE_STATUS_IN_PROGRESS = 'in_progress'
     CASE_STATUS_PAUSED = 'paused'
+    CASE_STATUS_EXTRACTIONS_COMPLETED = 'extractions_completed'
     CASE_STATUS_COMPLETED = 'completed'
     CASE_STATUS_WAITING_COLLECT = "waiting_collect"
 
@@ -29,6 +30,7 @@ class Case(AbstractCaseModel):
         (CASE_STATUS_WAITING_START, _('Aguardando início')),
         (CASE_STATUS_IN_PROGRESS, _('Em progresso')),
         (CASE_STATUS_PAUSED, _('Pausado')),
+        (CASE_STATUS_EXTRACTIONS_COMPLETED, _('Extrações concluídas')),
         (CASE_STATUS_COMPLETED, _('Concluído')),
         (CASE_STATUS_WAITING_COLLECT, _('Aguardando coleta')),
     ]
@@ -216,6 +218,7 @@ class Case(AbstractCaseModel):
             self.CASE_STATUS_WAITING_START: 'success',
             self.CASE_STATUS_IN_PROGRESS: 'primary',
             self.CASE_STATUS_PAUSED: 'warning',
+            self.CASE_STATUS_EXTRACTIONS_COMPLETED: 'success',
             self.CASE_STATUS_COMPLETED: 'success',
             self.CASE_STATUS_WAITING_COLLECT: 'info',
         }
@@ -239,13 +242,14 @@ class Case(AbstractCaseModel):
             self.CASE_STATUS_WAITING_COLLECT: 50,
             self.CASE_STATUS_IN_PROGRESS: 70,
             self.CASE_STATUS_PAUSED: 60,  # Pausa mantém o progresso anterior
+            self.CASE_STATUS_EXTRACTIONS_COMPLETED: 90,
             self.CASE_STATUS_COMPLETED: 100,
         }
         return progress_map.get(self.status, 0)
     
     def get_progress_color(self):
         """Retorna a cor da barra de progresso baseado no status"""
-        if self.status == self.CASE_STATUS_COMPLETED:
+        if self.status in [self.CASE_STATUS_EXTRACTIONS_COMPLETED, self.CASE_STATUS_COMPLETED]:
             return 'success'
         elif self.status == self.CASE_STATUS_PAUSED:
             return 'warning'
@@ -273,12 +277,17 @@ class Case(AbstractCaseModel):
                 'active': self.status in [self.CASE_STATUS_WAITING_EXTRACTOR, self.CASE_STATUS_WAITING_START]
             },
             'extractions': {
-                'completed': self.status == self.CASE_STATUS_COMPLETED,
-                'active': self.status in [self.CASE_STATUS_IN_PROGRESS, self.CASE_STATUS_PAUSED, self.CASE_STATUS_WAITING_COLLECT]
+                'completed': self.status in [self.CASE_STATUS_EXTRACTIONS_COMPLETED, self.CASE_STATUS_COMPLETED],
+                'active': self.status in [
+                    self.CASE_STATUS_IN_PROGRESS,
+                    self.CASE_STATUS_PAUSED,
+                    self.CASE_STATUS_WAITING_COLLECT,
+                    self.CASE_STATUS_EXTRACTIONS_COMPLETED,
+                ]
             },
             'finalization': {
                 'completed': self.status == self.CASE_STATUS_COMPLETED,
-                'active': False
+                'active': self.status == self.CASE_STATUS_EXTRACTIONS_COMPLETED
             }
         }
         return steps
@@ -345,9 +354,13 @@ class Case(AbstractCaseModel):
         - Se pelo menos uma estiver 'assigned': WAITING_START
         - Se pelo menos uma estiver 'in_progress': IN_PROGRESS
         - Se todas estiverem 'paused': PAUSED
-        - Se todas estiverem 'completed': COMPLETED
+        - Se todas estiverem 'completed': EXTRACTIONS_COMPLETED
         - Mix de estados: IN_PROGRESS (estado predominante quando há atividade)
         """
+        # Se o caso já foi finalizado (status COMPLETED), não altera automaticamente
+        if self.status == self.CASE_STATUS_COMPLETED:
+            return
+
         # Busca todas as extrações não deletadas do case
         extractions = self.case_devices.filter(
             deleted_at__isnull=True
@@ -380,7 +393,7 @@ class Case(AbstractCaseModel):
         
         # Se todas estiverem completas
         if completed_count == total:
-            new_status = self.CASE_STATUS_COMPLETED
+            new_status = self.CASE_STATUS_EXTRACTIONS_COMPLETED
         
         # Se alguma estiver em progresso (prioridade alta)
         elif in_progress_count > 0:

@@ -48,7 +48,8 @@ def extractor_home_view(request):
     
     # Estatísticas dos cases do usuário
     total_my_cases = my_cases.count()
-    active_my_cases = my_cases.filter(status=Case.CASE_STATUS_IN_PROGRESS).count()
+    # Considera "ativo" tudo que não está finalizado (COMPLETED)
+    active_my_cases = my_cases.exclude(status=Case.CASE_STATUS_COMPLETED).count()
     
     # Estatísticas das extractions do usuário
     total_my_extractions = my_extractions.count()
@@ -250,6 +251,7 @@ class MyCasesView(LoginRequiredMixin, ServiceMixin, ListView):
             'waiting_collect': all_cases_queryset.filter(status=Case.CASE_STATUS_WAITING_COLLECT).count(),
             'in_progress': all_cases_queryset.filter(status=Case.CASE_STATUS_IN_PROGRESS).count(),
             'paused': all_cases_queryset.filter(status=Case.CASE_STATUS_PAUSED).count(),
+            'extractions_completed': all_cases_queryset.filter(status=Case.CASE_STATUS_EXTRACTIONS_COMPLETED).count(),
             'completed': all_cases_queryset.filter(status=Case.CASE_STATUS_COMPLETED).count(),
         }
         
@@ -261,6 +263,7 @@ class MyCasesView(LoginRequiredMixin, ServiceMixin, ListView):
             'waiting_collect': list(all_cases_queryset.filter(status=Case.CASE_STATUS_WAITING_COLLECT)[:10]),
             'in_progress': list(all_cases_queryset.filter(status=Case.CASE_STATUS_IN_PROGRESS)[:10]),
             'paused': list(all_cases_queryset.filter(status=Case.CASE_STATUS_PAUSED)[:10]),
+            'extractions_completed': list(all_cases_queryset.filter(status=Case.CASE_STATUS_EXTRACTIONS_COMPLETED)[:10]),
             'completed': list(all_cases_queryset.filter(status=Case.CASE_STATUS_COMPLETED)[:10]),
         }
         context['cases_by_status'] = cases_by_status

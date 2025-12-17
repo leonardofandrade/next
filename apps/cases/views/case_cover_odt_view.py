@@ -9,11 +9,30 @@ from django.http import HttpResponse
 from io import BytesIO
 
 from apps.cases.models import Case
-from odf.opendocument import OpenDocumentText
-from odf.style import Style, TextProperties, ParagraphProperties, TableCellProperties, TableProperties, TableColumnProperties
-from odf.text import P, H, Span
-from odf.table import Table, TableRow, TableCell, TableColumn
-from odf import style
+
+# ODT (odfpy) é opcional. Se não estiver instalado, só a geração de capa ODT ficará indisponível.
+try:
+    from odf.opendocument import OpenDocumentText
+    from odf.style import (
+        Style,
+        TextProperties,
+        ParagraphProperties,
+        TableCellProperties,
+        TableProperties,
+        TableColumnProperties,
+    )
+    from odf.text import P, H, Span
+    from odf.table import Table, TableRow, TableCell, TableColumn
+    from odf import style
+
+    _ODFPY_AVAILABLE = True
+except ModuleNotFoundError:
+    OpenDocumentText = None
+    Style = TextProperties = ParagraphProperties = TableCellProperties = TableProperties = TableColumnProperties = None
+    P = H = Span = None
+    Table = TableRow = TableCell = TableColumn = None
+    style = None
+    _ODFPY_AVAILABLE = False
 
 
 class CaseCoverODTView(LoginRequiredMixin, View):
@@ -25,6 +44,13 @@ class CaseCoverODTView(LoginRequiredMixin, View):
         """
         Gera o ODT da capa do processo
         """
+        if not _ODFPY_AVAILABLE:
+            messages.error(
+                request,
+                'Geração de capa em ODT indisponível: instale a dependência "odfpy" para habilitar.'
+            )
+            return redirect('cases:detail', pk=pk)
+
         case = get_object_or_404(
             Case.objects.filter(deleted_at__isnull=True),
             pk=pk

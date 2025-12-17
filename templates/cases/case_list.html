@@ -7,7 +7,7 @@
 {% endblock page_title %}
 
 {% block page_description %}
-Gerencie todos os processos de extração
+{{ page_description|default:"Gerencie todos os processos de extração" }}
 {% endblock page_description %}
 
 {% block page_actions %}
@@ -70,7 +70,7 @@ Gerencie todos os processos de extração
                         <i class="fas fa-search me-2"></i>
                         Filtrar
                     </button>
-                    <a href="{% url 'cases:list' %}" class="btn btn-secondary">
+                    <a href="{{ clear_url|default:list_url|default:"" }}" class="btn btn-secondary">
                         <i class="fas fa-times me-2"></i>
                         Limpar
                     </a>
@@ -143,33 +143,33 @@ Gerencie todos os processos de extração
                                 </td>
                                 <td class="text-end">
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <a href="{% url 'cases:detail' case.pk %}?next={% url 'cases:list' %}" 
+                                        <a href="{% url 'cases:detail' case.pk %}?next={{ list_url }}" 
                                            class="btn btn-outline-primary" 
                                            title="Ver detalhes">
                                             <i class="fas fa-folder-open"></i>
                                         </a>
-                                        <a href="{% url 'cases:devices' case.pk %}?next={% url 'cases:list' %}" 
+                                        <a href="{% url 'cases:devices' case.pk %}?next={{ list_url }}" 
                                            class="btn btn-outline-info" 
                                            title="Gerenciar dispositivos">
                                             <i class="fas fa-mobile-alt"></i>
                                         </a>
-                                        <a href="{% url 'cases:procedures' case.pk %}?next={% url 'cases:list' %}" 
+                                        <a href="{% url 'cases:procedures' case.pk %}?next={{ list_url }}" 
                                            class="btn btn-outline-warning" 
                                            title="Gerenciar procedimentos">
                                             <i class="fas fa-gavel"></i>
                                         </a>
-                                        <a href="{% url 'cases:documents' case.pk %}?next={% url 'cases:list' %}" 
+                                        <a href="{% url 'cases:documents' case.pk %}?next={{ list_url }}" 
                                            class="btn btn-outline-primary" 
                                            title="Gerenciar documentos">
                                             <i class="fas fa-file-alt"></i>
                                         </a>
-                                        <a href="{% url 'extractions:case_extractions' case.pk %}?next={% url 'cases:list' %}" 
+                                        <a href="{% url 'extractions:case_extractions' case.pk %}?next={{ list_url }}" 
                                            class="btn btn-outline-success" 
                                            title="Gerenciar extrações">
                                             <i class="fas fa-database"></i>
                                         </a>
                                         {% if not case.assigned_to or case.assigned_to == request.user %}
-                                        <a href="{% url 'cases:update' case.pk %}?next={% url 'cases:list' %}" 
+                                        <a href="{% url 'cases:update' case.pk %}?next={{ list_url }}" 
                                            class="btn btn-outline-secondary" 
                                            title="Editar">
                                             <i class="fas fa-edit"></i>
@@ -204,7 +204,7 @@ Gerencie todos os processos de extração
                                         {% endif %}
                                         {% comment %}
                                         {% if not case.assigned_to or case.assigned_to == request.user %}
-                                        <a href="{% url 'cases:delete' case.pk %}?next={% url 'cases:list' %}" 
+                                        <a href="{% url 'cases:delete' case.pk %}?next={{ list_url }}" 
                                            class="btn btn-outline-danger" 
                                            title="Excluir">
                                             <i class="fas fa-trash"></i>
@@ -288,6 +288,7 @@ Gerencie todos os processos de extração
                     </button>
                     <form method="post" action="{% url 'cases:assign_to_me' case.pk %}" style="display: inline;">
                         {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ list_url }}">
                         <button type="submit" class="btn btn-success">
                             <i class="fas fa-user-check me-2"></i>
                             Confirmar Atribuição
@@ -343,6 +344,7 @@ Gerencie todos os processos de extração
                     </button>
                     <form method="post" action="{% url 'cases:unassign_from_me' case.pk %}" style="display: inline;">
                         {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ list_url }}">
                         <button type="submit" class="btn btn-warning">
                             <i class="fas fa-user-times me-2"></i>
                             Confirmar Desatribuição

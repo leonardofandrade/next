@@ -9,6 +9,7 @@ Este pacote contém todas as views organizadas por funcionalidade:
 # Importa views relacionadas ao modelo Case
 from apps.cases.views.case_views import (
     CaseListView,
+    CaseWaitingExtractorListView,
     CaseDetailView,
     CaseCreateView,
     CaseUpdateView,
@@ -57,6 +58,7 @@ from apps.cases.views.case_document_views import (
 __all__ = [
     # Case views
     'CaseListView',
+    'CaseWaitingExtractorListView',
     'CaseDetailView',
     'CaseCreateView',
     'CaseUpdateView',

@@ -34,7 +34,6 @@ class Case(AbstractCaseModel):
         (CASE_STATUS_COMPLETED, _('Concluído')),
         (CASE_STATUS_WAITING_COLLECT, _('Aguardando coleta')),
     ]
-
     
     number = models.CharField(
         null=True,

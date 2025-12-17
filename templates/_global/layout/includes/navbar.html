@@ -102,6 +102,12 @@
                                 Todos os Processos
                             </a>
                         </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'cases:waiting_extractor_list' %}">
+                                <i class="fas fa-user-clock me-2"></i>
+                                Aguardando Extrator
+                            </a>
+                        </li>
                         {% if user.is_superuser%}
                         <li>
                             <hr class="dropdown-divider">

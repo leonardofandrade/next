@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from django.conf import settings
+from django.utils.http import url_has_allowed_host_and_scheme
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
@@ -18,11 +19,6 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from io import BytesIO
 from typing import Dict, Any
 from django.db.models import QuerySet
-from odf.opendocument import OpenDocumentText
-from odf.style import Style, TextProperties, ParagraphProperties, TableColumnProperties, TableCellProperties, TableProperties
-from odf.text import P, H, Span
-from odf.table import Table, TableRow, TableCell, TableColumn
-from odf import teletype
 
 from apps.core.mixins.views import (
     BaseDetailView, BaseCreateView, BaseUpdateView, 
@@ -76,8 +72,40 @@ class CaseListView(ExtractionUnitFilterMixin, LoginRequiredMixin, ServiceMixin, 
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Processos de Extração'
         context['page_icon'] = 'fa-folder-open'
+        context['page_description'] = 'Gerencie todos os processos de extração'
         context['form'] = self.search_form_class(self.request.GET or None)
         context['total_count'] = self.get_queryset().count()
+        context['list_url'] = reverse('cases:list')
+        context['clear_url'] = context['list_url']
+        return context
+
+
+class CaseWaitingExtractorListView(CaseListView):
+    """
+    Lista processos aguardando extrator (status travado em waiting_extractor),
+    mantendo os demais filtros disponíveis.
+    """
+
+    def get_filters(self) -> Dict[str, Any]:
+        filters = super().get_filters()
+        filters['status'] = Case.CASE_STATUS_WAITING_EXTRACTOR
+        return filters
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Processos - Aguardando Extrator'
+        context['page_icon'] = 'fa-user-clock'
+        context['page_description'] = 'Processos aguardando atribuição de extrator'
+        context['list_url'] = reverse('cases:waiting_extractor_list')
+        context['clear_url'] = context['list_url']
+
+        # Exibe o status no filtro, mas trava (o backend força de qualquer forma)
+        form = context.get('form')
+        if form is not None and hasattr(form, 'fields') and 'status' in form.fields:
+            form.fields['status'].initial = Case.CASE_STATUS_WAITING_EXTRACTOR
+            form.fields['status'].disabled = True
+        context['form'] = form
+
         return context
 
 
@@ -809,10 +837,22 @@ class CaseAssignToMeView(LoginRequiredMixin, ServiceMixin, View):
             self.handle_service_exception(e)
             return redirect('cases:detail', pk=pk)
         
-        # Redireciona de acordo com o referer ou para detalhes
+        # Redireciona priorizando ?next / next (POST), depois referer, senão detalhes
+        next_url = request.POST.get('next') or request.GET.get('next')
+        if next_url and url_has_allowed_host_and_scheme(
+            url=next_url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            return redirect(next_url)
+
         referer = request.META.get('HTTP_REFERER')
-        if referer and 'cases/list' in referer:
-            return redirect('cases:list')
+        if referer and url_has_allowed_host_and_scheme(
+            url=referer,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            return redirect(referer)
         return redirect('cases:detail', pk=pk)
 
 
@@ -838,10 +878,22 @@ class CaseUnassignFromMeView(LoginRequiredMixin, ServiceMixin, View):
             self.handle_service_exception(e)
             return redirect('cases:detail', pk=pk)
         
-        # Redireciona de acordo com o referer ou para detalhes
+        # Redireciona priorizando ?next / next (POST), depois referer, senão detalhes
+        next_url = request.POST.get('next') or request.GET.get('next')
+        if next_url and url_has_allowed_host_and_scheme(
+            url=next_url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            return redirect(next_url)
+
         referer = request.META.get('HTTP_REFERER')
-        if referer and 'cases/list' in referer:
-            return redirect('cases:list')
+        if referer and url_has_allowed_host_and_scheme(
+            url=referer,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            return redirect(referer)
         return redirect('cases:detail', pk=pk)
 
 

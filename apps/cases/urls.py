@@ -5,6 +5,7 @@ app_name = 'cases'
 
 urlpatterns = [
     path('', views.CaseListView.as_view(), name='list'),
+    path('waiting-extractor/', views.CaseWaitingExtractorListView.as_view(), name='waiting_extractor_list'),
     path('<int:pk>/', views.CaseDetailView.as_view(), name='detail'),
     path('create/', views.CaseCreateView.as_view(), name='create'),
     path('<int:pk>/update/', views.CaseUpdateView.as_view(), name='update'),

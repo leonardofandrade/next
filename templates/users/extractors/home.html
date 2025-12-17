@@ -110,6 +110,10 @@
                         <i class="fas fa-inbox fa-2x mb-2"></i>
                         <span class="small">Solicitações Não Recebidas</span>
                     </a>
+                    <a href="{% url 'cases:waiting_extractor_list' %}?next={{ request.path }}" class="btn btn-outline-secondary d-flex flex-column align-items-center justify-content-center" style="width: 120px; height: 120px; padding: 0.5rem;">
+                        <i class="fas fa-user-clock fa-2x mb-2"></i>
+                        <span class="small">Aguardando Extrator</span>
+                    </a>
                 </div>
             </div>
         </div>

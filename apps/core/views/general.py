@@ -13,13 +13,15 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from apps.core.models import (
     ExtractionAgency,
     ExtractionUnit,
+    DocumentTemplate,
     ExtractorUser,
     ExtractionUnitExtractor,
     ExtractionUnitStorageMedia,
     ExtractionUnitEvidenceLocation,
     GeneralSettings,
     EmailSettings,
-    ReportsSettings
+    ReportsSettings,
+    DispatchSequenceNumber,
 )
 from apps.core.forms import (
     ExtractionAgencyForm,
@@ -184,6 +186,84 @@ def extraction_unit_list(request):
     """Lista de unidades de extração"""
     units = ExtractionUnit.objects.filter(deleted_at__isnull=True).select_related('agency').order_by('-created_at')
     return render(request, 'core/extraction_unit_list.html', {'units': units})
+
+
+@login_required
+@user_passes_test(is_staff_user)
+def extraction_unit_hub(request):
+    """
+    Centraliza edição/configurações de uma unidade de extração (UI com abas).
+    """
+    units = ExtractionUnit.objects.filter(deleted_at__isnull=True).select_related('agency').order_by('agency__acronym', 'acronym', 'name')
+
+    unit_id = (request.GET.get('unit') or '').strip()
+    if unit_id:
+        unit = get_object_or_404(ExtractionUnit, pk=unit_id, deleted_at__isnull=True)
+    else:
+        unit = units.first()
+
+    if not unit:
+        messages.warning(request, _('Nenhuma unidade cadastrada.'))
+        return redirect('core:extraction_unit_list')
+
+    tab = (request.GET.get('tab') or request.POST.get('tab') or 'unit').strip()
+    allowed_tabs = {'unit', 'templates', 'storage', 'evidence', 'dispatch'}
+    if tab not in allowed_tabs:
+        tab = 'unit'
+
+    # URL de retorno para ser usada em links externos
+    hub_url = f"{reverse('core:extraction_unit_hub')}?unit={unit.pk}&tab={tab}"
+
+    unit_form = ExtractionUnitForm(instance=unit)
+    if request.method == 'POST':
+        action = (request.POST.get('action') or '').strip()
+        if action == 'save_unit':
+            unit_form = ExtractionUnitForm(request.POST, instance=unit)
+            if unit_form.is_valid():
+                unit_form.save()
+                messages.success(request, _('Unidade atualizada com sucesso!'))
+                return redirect(hub_url)
+
+    # Dados relacionados para as abas
+    document_templates = DocumentTemplate.objects.filter(
+        deleted_at__isnull=True,
+        extraction_unit=unit
+    ).order_by('-is_default', 'name')
+    default_template = document_templates.filter(is_default=True).first()
+
+    storage_media = ExtractionUnitStorageMedia.objects.filter(
+        deleted_at__isnull=True,
+        extraction_unit=unit
+    ).order_by('acronym', 'name')
+
+    evidence_locations = ExtractionUnitEvidenceLocation.objects.filter(
+        deleted_at__isnull=True,
+        extraction_unit=unit
+    ).order_by('type', 'name')
+
+    dispatch_sequences = DispatchSequenceNumber.objects.filter(
+        deleted_at__isnull=True,
+        extraction_unit=unit
+    ).order_by('-year')
+    latest_dispatch_sequence = dispatch_sequences.first()
+
+    context = {
+        'page_title': _('Central da Unidade'),
+        'page_icon': 'fa-sliders-h',
+        'page_description': _('Editar e configurar unidades de extração em um só lugar'),
+        'units': units,
+        'unit': unit,
+        'tab': tab,
+        'hub_url': hub_url,
+        'unit_form': unit_form,
+        'document_templates': document_templates,
+        'default_template': default_template,
+        'storage_media': storage_media,
+        'evidence_locations': evidence_locations,
+        'dispatch_sequences': dispatch_sequences,
+        'latest_dispatch_sequence': latest_dispatch_sequence,
+    }
+    return render(request, 'core/extraction_unit_hub.html', context)
 
 
 @login_required
@@ -365,16 +445,27 @@ def storage_media_list(request):
 @user_passes_test(is_staff_user)
 def storage_media_create(request):
     """Criar novo meio de armazenamento"""
+    next_url = _get_safe_next_url(request)
+    unit_id = (request.GET.get('extraction_unit') or '').strip()
+    initial = {}
+    if unit_id:
+        try:
+            initial['extraction_unit'] = ExtractionUnit.objects.get(pk=unit_id, deleted_at__isnull=True)
+        except ExtractionUnit.DoesNotExist:
+            initial = {}
+
     if request.method == 'POST':
         form = ExtractionUnitStorageMediaForm(request.POST)
         if form.is_valid():
             media = form.save()
             messages.success(request, _('Meio de armazenamento criado com sucesso!'))
+            if next_url:
+                return redirect(next_url)
             return redirect('core:storage_media_list')
     else:
-        form = ExtractionUnitStorageMediaForm()
+        form = ExtractionUnitStorageMediaForm(initial=initial)
     
-    return render(request, 'core/storage_media_form.html', {'form': form, 'title': _('Novo Meio de Armazenamento')})
+    return render(request, 'core/storage_media_form.html', {'form': form, 'title': _('Novo Meio de Armazenamento'), 'next_url': next_url})
 
 
 @login_required
@@ -382,12 +473,15 @@ def storage_media_create(request):
 def storage_media_edit(request, pk):
     """Editar meio de armazenamento"""
     media = get_object_or_404(ExtractionUnitStorageMedia, pk=pk, deleted_at__isnull=True)
+    next_url = _get_safe_next_url(request)
     
     if request.method == 'POST':
         form = ExtractionUnitStorageMediaForm(request.POST, instance=media)
         if form.is_valid():
             form.save()
             messages.success(request, _('Meio de armazenamento atualizado com sucesso!'))
+            if next_url:
+                return redirect(next_url)
             return redirect('core:storage_media_list')
     else:
         form = ExtractionUnitStorageMediaForm(instance=media)
@@ -395,7 +489,8 @@ def storage_media_edit(request, pk):
     return render(request, 'core/storage_media_form.html', {
         'form': form, 
         'media': media, 
-        'title': _('Editar Meio de Armazenamento')
+        'title': _('Editar Meio de Armazenamento'),
+        'next_url': next_url,
     })
 
 
@@ -404,15 +499,18 @@ def storage_media_edit(request, pk):
 def storage_media_delete(request, pk):
     """Deletar meio de armazenamento (soft delete)"""
     media = get_object_or_404(ExtractionUnitStorageMedia, pk=pk, deleted_at__isnull=True)
+    next_url = _get_safe_next_url(request)
     
     if request.method == 'POST':
         from django.utils import timezone
         media.deleted_at = timezone.now()
         media.save()
         messages.success(request, _('Meio de armazenamento removido com sucesso!'))
+        if next_url:
+            return redirect(next_url)
         return redirect('core:storage_media_list')
     
-    return render(request, 'core/storage_media_confirm_delete.html', {'media': media})
+    return render(request, 'core/storage_media_confirm_delete.html', {'media': media, 'next_url': next_url})
 
 
 # ==================== Evidence Location Views ====================
@@ -429,16 +527,27 @@ def evidence_location_list(request):
 @user_passes_test(is_staff_user)
 def evidence_location_create(request):
     """Criar novo local de evidência"""
+    next_url = _get_safe_next_url(request)
+    unit_id = (request.GET.get('extraction_unit') or '').strip()
+    initial = {}
+    if unit_id:
+        try:
+            initial['extraction_unit'] = ExtractionUnit.objects.get(pk=unit_id, deleted_at__isnull=True)
+        except ExtractionUnit.DoesNotExist:
+            initial = {}
+
     if request.method == 'POST':
         form = ExtractionUnitEvidenceLocationForm(request.POST)
         if form.is_valid():
             location = form.save()
             messages.success(request, _('Local de evidência criado com sucesso!'))
+            if next_url:
+                return redirect(next_url)
             return redirect('core:evidence_location_list')
     else:
-        form = ExtractionUnitEvidenceLocationForm()
+        form = ExtractionUnitEvidenceLocationForm(initial=initial)
     
-    return render(request, 'core/evidence_location_form.html', {'form': form, 'title': _('Novo Local de Evidência')})
+    return render(request, 'core/evidence_location_form.html', {'form': form, 'title': _('Novo Local de Evidência'), 'next_url': next_url})
 
 
 @login_required
@@ -446,12 +555,15 @@ def evidence_location_create(request):
 def evidence_location_edit(request, pk):
     """Editar local de evidência"""
     location = get_object_or_404(ExtractionUnitEvidenceLocation, pk=pk, deleted_at__isnull=True)
+    next_url = _get_safe_next_url(request)
     
     if request.method == 'POST':
         form = ExtractionUnitEvidenceLocationForm(request.POST, instance=location)
         if form.is_valid():
             form.save()
             messages.success(request, _('Local de evidência atualizado com sucesso!'))
+            if next_url:
+                return redirect(next_url)
             return redirect('core:evidence_location_list')
     else:
         form = ExtractionUnitEvidenceLocationForm(instance=location)
@@ -459,7 +571,8 @@ def evidence_location_edit(request, pk):
     return render(request, 'core/evidence_location_form.html', {
         'form': form, 
         'location': location, 
-        'title': _('Editar Local de Evidência')
+        'title': _('Editar Local de Evidência'),
+        'next_url': next_url,
     })
 
 
@@ -468,15 +581,18 @@ def evidence_location_edit(request, pk):
 def evidence_location_delete(request, pk):
     """Deletar local de evidência (soft delete)"""
     location = get_object_or_404(ExtractionUnitEvidenceLocation, pk=pk, deleted_at__isnull=True)
+    next_url = _get_safe_next_url(request)
     
     if request.method == 'POST':
         from django.utils import timezone
         location.deleted_at = timezone.now()
         location.save()
         messages.success(request, _('Local de evidência removido com sucesso!'))
+        if next_url:
+            return redirect(next_url)
         return redirect('core:evidence_location_list')
     
-    return render(request, 'core/evidence_location_confirm_delete.html', {'location': location})
+    return render(request, 'core/evidence_location_confirm_delete.html', {'location': location, 'next_url': next_url})
 
 
 # ==================== Settings Views ====================

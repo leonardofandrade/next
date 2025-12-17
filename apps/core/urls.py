@@ -22,6 +22,7 @@ urlpatterns = [
     
     # Extraction Unit URLs
     path('units/', views.extraction_unit_list, name='extraction_unit_list'),
+    path('units/hub/', views.extraction_unit_hub, name='extraction_unit_hub'),
     path('units/create/', views.extraction_unit_create, name='extraction_unit_create'),
     path('units/<int:pk>/', views.extraction_unit_detail, name='extraction_unit_detail'),
     path('units/<int:pk>/edit/', views.extraction_unit_edit, name='extraction_unit_edit'),

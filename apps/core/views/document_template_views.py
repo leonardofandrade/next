@@ -9,6 +9,7 @@ from django.urls import reverse_lazy
 from django.http import HttpResponse
 from django.db import transaction
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from apps.core.models import ExtractionUnit, DocumentTemplate
 from apps.core.forms import DocumentTemplateForm
@@ -51,15 +52,40 @@ class DocumentTemplateCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateV
     template_name = 'core/document_template_form.html'
     success_url = reverse_lazy('core:document_template_list')
 
+    def _get_safe_next_url(self):
+        next_url = (self.request.POST.get('next') or self.request.GET.get('next') or '').strip()
+        if not next_url:
+            return None
+        if url_has_allowed_host_and_scheme(
+            url=next_url,
+            allowed_hosts={self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
+            return next_url
+        return None
+
+    def get_initial(self):
+        initial = super().get_initial()
+        unit_id = (self.request.GET.get('extraction_unit') or '').strip()
+        if unit_id:
+            try:
+                initial['extraction_unit'] = ExtractionUnit.objects.get(pk=unit_id, deleted_at__isnull=True)
+            except ExtractionUnit.DoesNotExist:
+                pass
+        return initial
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Novo Template'
+        context['next_url'] = self._get_safe_next_url()
         return context
     
     def form_valid(self, form):
         form.instance.created_by = self.request.user
         messages.success(self.request, 'Template criado com sucesso!')
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        next_url = self._get_safe_next_url()
+        return redirect(next_url) if next_url else response
 
 
 class DocumentTemplateUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
@@ -69,9 +95,22 @@ class DocumentTemplateUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateV
     template_name = 'core/document_template_form.html'
     success_url = reverse_lazy('core:document_template_list')
 
+    def _get_safe_next_url(self):
+        next_url = (self.request.POST.get('next') or self.request.GET.get('next') or '').strip()
+        if not next_url:
+            return None
+        if url_has_allowed_host_and_scheme(
+            url=next_url,
+            allowed_hosts={self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
+            return next_url
+        return None
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Editar Template'
+        context['next_url'] = self._get_safe_next_url()
         return context
     
     def get_queryset(self):
@@ -80,7 +119,9 @@ class DocumentTemplateUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateV
     def form_valid(self, form):
         form.instance.updated_by = self.request.user
         messages.success(self.request, 'Template atualizado com sucesso!')
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        next_url = self._get_safe_next_url()
+        return redirect(next_url) if next_url else response
 
 
 class DocumentTemplateDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
@@ -88,6 +129,23 @@ class DocumentTemplateDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteV
     model = DocumentTemplate
     template_name = 'core/document_template_confirm_delete.html'
     success_url = reverse_lazy('core:document_template_list')
+
+    def _get_safe_next_url(self):
+        next_url = (self.request.POST.get('next') or self.request.GET.get('next') or '').strip()
+        if not next_url:
+            return None
+        if url_has_allowed_host_and_scheme(
+            url=next_url,
+            allowed_hosts={self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
+            return next_url
+        return None
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['next_url'] = self._get_safe_next_url()
+        return context
     
     def get_queryset(self):
         return DocumentTemplate.objects.filter(deleted_at__isnull=True)
@@ -98,7 +156,8 @@ class DocumentTemplateDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteV
         self.object.updated_by = request.user
         self.object.save()
         messages.success(request, 'Template removido com sucesso!')
-        return redirect(self.success_url)
+        next_url = self._get_safe_next_url()
+        return redirect(next_url) if next_url else redirect(self.success_url)
 
 
 class DocumentTemplateDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
@@ -106,6 +165,23 @@ class DocumentTemplateDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailV
     model = DocumentTemplate
     template_name = 'core/document_template_detail.html'
     context_object_name = 'template'
+
+    def _get_safe_next_url(self):
+        next_url = (self.request.GET.get('next') or '').strip()
+        if not next_url:
+            return None
+        if url_has_allowed_host_and_scheme(
+            url=next_url,
+            allowed_hosts={self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
+            return next_url
+        return None
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['next_url'] = self._get_safe_next_url()
+        return context
     
     def get_queryset(self):
         return DocumentTemplate.objects.filter(deleted_at__isnull=True)

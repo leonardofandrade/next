@@ -14,6 +14,9 @@
                 <div class="card-body">
                     <form method="post">
                         {% csrf_token %}
+                        {% if next_url %}
+                            <input type="hidden" name="next" value="{{ next_url }}">
+                        {% endif %}
                         
                         {% for field in form %}
                             <div class="mb-3">
@@ -29,9 +32,15 @@
                         {% endfor %}
 
                         <div class="d-flex justify-content-between">
-                            <a href="{% url 'core:evidence_location_list' %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left me-2"></i>Voltar
-                            </a>
+                            {% if next_url %}
+                                <a href="{{ next_url }}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                                </a>
+                            {% else %}
+                                <a href="{% url 'core:evidence_location_list' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                                </a>
+                            {% endif %}
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>Salvar
                             </button>

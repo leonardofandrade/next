@@ -30,10 +30,19 @@
 
                     <form method="post">
                         {% csrf_token %}
+                        {% if next_url %}
+                            <input type="hidden" name="next" value="{{ next_url }}">
+                        {% endif %}
                         <div class="d-flex justify-content-between">
-                            <a href="{% url 'core:document_template_list' %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left me-2"></i>Cancelar
-                            </a>
+                            {% if next_url %}
+                                <a href="{{ next_url }}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Cancelar
+                                </a>
+                            {% else %}
+                                <a href="{% url 'core:document_template_list' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Cancelar
+                                </a>
+                            {% endif %}
                             <button type="submit" class="btn btn-danger">
                                 <i class="fas fa-trash me-2"></i>Confirmar Exclusão
                             </button>

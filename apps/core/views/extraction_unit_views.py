@@ -2,9 +2,10 @@
 Views para ExtractionUnit (app core)
 """
 
+import json
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from django.db.models import Count, Sum, Q
+from django.db.models import Count, Sum, Q, Case, When, IntegerField
 from django.http import Http404
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -63,10 +64,66 @@ class ExtractionUnitHubView(LoginRequiredMixin, TemplateView):
             count=Count('id')
         ).order_by('type')
 
-        # Estatísticas de storage (pode ser expandido com dados de uso real)
+        # Buscar dados de solicitações (ExtractionRequest)
+        try:
+            from apps.requisitions.models import ExtractionRequest
+            requests_in_progress = ExtractionRequest.objects.filter(
+                extraction_unit=unit,
+                deleted_at__isnull=True,
+                status__in=[
+                    ExtractionRequest.REQUEST_STATUS_IN_PROGRESS,
+                    ExtractionRequest.REQUEST_STATUS_WAITING_START,
+                ]
+            ).count()
+            
+            requests_total = ExtractionRequest.objects.filter(
+                extraction_unit=unit,
+                deleted_at__isnull=True
+            ).count()
+        except ImportError:
+            requests_in_progress = 0
+            requests_total = 0
+
+        # Buscar dados de extrações (Extraction) e aparelhos em andamento
+        try:
+            from apps.cases.models import Extraction
+            extractions_in_progress = Extraction.objects.filter(
+                case_device__case__extraction_unit=unit,
+                deleted_at__isnull=True,
+                status__in=[
+                    Extraction.STATUS_IN_PROGRESS,
+                    Extraction.STATUS_ASSIGNED,
+                ]
+            ).count()
+            
+            # Calcular uso de armazenamento por storage_media
+            storage_usage = Extraction.objects.filter(
+                storage_media__extraction_unit=unit,
+                deleted_at__isnull=True,
+                storage_media__deleted_at__isnull=True
+            ).exclude(
+                storage_media__isnull=True
+            ).values('storage_media__acronym', 'storage_media__name').annotate(
+                total_gb=Sum('extraction_size', default=0),
+                count=Count('id')
+            ).order_by('storage_media__acronym')
+            
+            # Preparar dados para o gráfico (JSON serializable)
+            storage_chart_data = {
+                'labels': [item['storage_media__acronym'] or item['storage_media__name'] for item in storage_usage],
+                'data': [float(item['total_gb'] or 0) for item in storage_usage],
+                'counts': [int(item['count']) for item in storage_usage],
+            }
+        except ImportError:
+            extractions_in_progress = 0
+            storage_usage = []
+            storage_chart_data = {'labels': [], 'data': [], 'counts': []}
+
+        # Estatísticas de storage
         storage_stats = {
             'total': storage_medias.count(),
             'medias': storage_medias[:5],  # Primeiros 5 para exibição
+            'usage': storage_usage,
         }
 
         context['unit'] = unit
@@ -74,11 +131,16 @@ class ExtractionUnitHubView(LoginRequiredMixin, TemplateView):
         context['extractors_count'] = extractors.count()
         context['storage_medias'] = storage_medias
         context['storage_stats'] = storage_stats
+        context['storage_chart_data'] = storage_chart_data
         context['evidence_locations'] = evidence_locations
         context['evidence_stats'] = evidence_stats
         context['document_templates'] = document_templates
         context['document_templates_count'] = document_templates.count()
         context['evidence_locations_count'] = evidence_locations.count()
+        context['requests_in_progress'] = requests_in_progress
+        context['requests_total'] = requests_total
+        context['extractions_in_progress'] = extractions_in_progress
+        context['storage_chart_data_json'] = json.dumps(storage_chart_data)
         
         return context
 

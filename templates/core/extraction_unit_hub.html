@@ -24,7 +24,7 @@ Visão geral e estatísticas da unidade de extração.
 <div class="container-fluid">
   <!-- Cards de Estatísticas -->
   <div class="row g-3 mb-4">
-    <div class="col-md-3">
+    <div class="col-md-2">
       <div class="card border-primary">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
@@ -45,7 +45,44 @@ Visão geral e estatísticas da unidade de extração.
       </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-2">
+      <div class="card border-warning">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="text-muted small mb-1">Solicitações</div>
+              <div class="h4 mb-0">{{ requests_in_progress }}</div>
+              <div class="text-muted small">em andamento</div>
+            </div>
+            <div class="text-warning">
+              <i class="fas fa-clipboard-list fa-2x"></i>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent">
+          <div class="text-muted small">Total: {{ requests_total }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-2">
+      <div class="card border-danger">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="text-muted small mb-1">Aparelhos</div>
+              <div class="h4 mb-0">{{ extractions_in_progress }}</div>
+              <div class="text-muted small">em andamento</div>
+            </div>
+            <div class="text-danger">
+              <i class="fas fa-mobile-alt fa-2x"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-2">
       <div class="card border-info">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
@@ -66,7 +103,7 @@ Visão geral e estatísticas da unidade de extração.
       </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-2">
       <div class="card border-success">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
@@ -87,7 +124,7 @@ Visão geral e estatísticas da unidade de extração.
       </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-2">
       <div class="card border-dark">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
@@ -325,8 +362,53 @@ Visão geral e estatísticas da unidade de extração.
       </div>
     </div>
 
-    <!-- Configurações Rápidas -->
+    <!-- Gráfico de Armazenamento -->
     <div class="col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">
+            <i class="fas fa-chart-pie me-2"></i>Disponibilidade de Armazenamento
+          </h6>
+        </div>
+        <div class="card-body">
+          {% if storage_chart_data.labels %}
+            <canvas id="storageChart" height="250"></canvas>
+            <div class="mt-3">
+              <div class="table-responsive">
+                <table class="table table-sm table-borderless mb-0">
+                  <tbody>
+                    {% for item in storage_stats.usage %}
+                      <tr>
+                        <td class="fw-semibold">{{ item.storage_media__acronym|default:item.storage_media__name }}</td>
+                        <td class="text-end">
+                          <span class="badge bg-secondary">{{ item.total_gb|default:0 }} GB</span>
+                          <span class="text-muted small ms-2">({{ item.count }} extração{{ item.count|pluralize:"ões" }})</span>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          {% else %}
+            <div class="text-center py-4 text-muted">
+              <i class="fas fa-chart-pie fa-3x mb-3"></i>
+              <div>Nenhum dado de armazenamento disponível</div>
+            </div>
+          {% endif %}
+        </div>
+        <div class="card-footer bg-transparent">
+          <a href="{% url 'core:storage_media_hub' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-success w-100">
+            <i class="fas fa-cog me-2"></i>Gerenciar Armazenamento
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mt-3">
+    <!-- Configurações Rápidas -->
+    <div class="col-lg-12">
       <div class="card shadow-sm">
         <div class="card-header bg-light">
           <h6 class="mb-0">
@@ -334,16 +416,22 @@ Visão geral e estatísticas da unidade de extração.
           </h6>
         </div>
         <div class="card-body">
-          <div class="d-grid gap-2">
-            <a href="{% url 'core:extraction_unit_reply_email_update' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-warning">
-              <i class="fas fa-envelope-open-text me-2"></i>Template de E-mail
-            </a>
-            <a href="{% url 'core:document_template_hub' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-info">
-              <i class="fas fa-file-alt me-2"></i>Templates de Ofício
-            </a>
-            <a href="{% url 'core:extraction_unit_report_settings_update' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-success">
-              <i class="fas fa-chart-bar me-2"></i>Configurações de Relatórios
-            </a>
+          <div class="row g-2">
+            <div class="col-md-4">
+              <a href="{% url 'core:extraction_unit_reply_email_update' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-warning w-100">
+                <i class="fas fa-envelope-open-text me-2"></i>Template de E-mail
+              </a>
+            </div>
+            <div class="col-md-4">
+              <a href="{% url 'core:document_template_hub' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-info w-100">
+                <i class="fas fa-file-alt me-2"></i>Templates de Ofício
+              </a>
+            </div>
+            <div class="col-md-4">
+              <a href="{% url 'core:extraction_unit_report_settings_update' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-success w-100">
+                <i class="fas fa-chart-bar me-2"></i>Configurações de Relatórios
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -351,3 +439,73 @@ Visão geral e estatísticas da unidade de extração.
   </div>
 </div>
 {% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+  const storageData = {{ storage_chart_data_json|safe }};
+  
+  if (storageData.labels && storageData.labels.length > 0) {
+    const ctx = document.getElementById('storageChart');
+    if (!ctx) return;
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: storageData.labels,
+        datasets: [{
+          label: 'Armazenamento Usado (GB)',
+          data: storageData.data,
+          backgroundColor: [
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(255, 99, 132, 0.6)',
+            'rgba(255, 206, 86, 0.6)',
+            'rgba(75, 192, 192, 0.6)',
+            'rgba(153, 102, 255, 0.6)',
+            'rgba(255, 159, 64, 0.6)',
+          ],
+          borderColor: [
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 99, 132, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 159, 64, 1)',
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              afterLabel: function(context) {
+                const index = context.dataIndex;
+                const count = storageData.counts[index];
+                return count + ' extração' + (count !== 1 ? 'ões' : '');
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return value + ' GB';
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+})();
+</script>
+{% endblock extra_js %}

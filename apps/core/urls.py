@@ -21,4 +21,5 @@ urlpatterns = [
     # ExtractorUser (gerenciamento no hub da agência)
     path('settings/extraction-agency/extractors/new/', views.ExtractorUserCreateView.as_view(), name='extractor_user_create'),
     path('settings/extraction-agency/extractors/<int:pk>/edit/', views.ExtractorUserUpdateView.as_view(), name='extractor_user_update'),
+    path('settings/extraction-agency/extractors/ajax/units/', views.ExtractorUserUnitsAjaxView.as_view(), name='extractor_user_units_ajax'),
 ]

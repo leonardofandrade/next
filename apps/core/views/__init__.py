@@ -15,6 +15,7 @@ from apps.core.views.document_template_views import (
 from apps.core.views.extractor_user_views import (
     ExtractorUserCreateView,
     ExtractorUserUpdateView,
+    ExtractorUserUnitsAjaxView,
 )
 
 __all__ = [
@@ -28,4 +29,5 @@ __all__ = [
     'DocumentTemplateUpdateView',
     'ExtractorUserCreateView',
     'ExtractorUserUpdateView',
+    'ExtractorUserUnitsAjaxView',
 ]

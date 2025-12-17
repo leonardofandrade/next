@@ -5,13 +5,15 @@ Escopo: ExtractionAgency (singleton).
 """
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db import transaction
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views import View
 from django.views.generic import FormView
 
 from apps.core.forms import ExtractorUserAccessForm
@@ -65,6 +67,8 @@ class ExtractorUserCreateView(LoginRequiredMixin, FormView):
                 )
 
             self._sync_extractor_units(extractor_user, selected_units)
+            # Armazena para usar no get_success_url
+            self.extractor_user = extractor_user
 
         messages.success(self.request, _('Usuário extrator configurado com sucesso!'))
         return super().form_valid(form)
@@ -110,6 +114,7 @@ class ExtractorUserCreateView(LoginRequiredMixin, FormView):
                 link.save()
 
     def get_success_url(self):
+        # Após criar, redireciona para a página de edição
         next_url = self.request.GET.get('next')
         if next_url and url_has_allowed_host_and_scheme(
             next_url,
@@ -117,7 +122,8 @@ class ExtractorUserCreateView(LoginRequiredMixin, FormView):
             require_https=self.request.is_secure(),
         ):
             return next_url
-        return reverse('core:extraction_agency_hub')
+        # Redireciona para a página de edição do extrator criado
+        return reverse('core:extractor_user_update', kwargs={'pk': self.extractor_user.pk})
 
 
 class ExtractorUserUpdateView(LoginRequiredMixin, FormView):
@@ -172,6 +178,7 @@ class ExtractorUserUpdateView(LoginRequiredMixin, FormView):
         return super().form_valid(form)
 
     def get_success_url(self):
+        # Mantém na mesma página após salvar
         next_url = self.request.GET.get('next')
         if next_url and url_has_allowed_host_and_scheme(
             next_url,
@@ -179,5 +186,48 @@ class ExtractorUserUpdateView(LoginRequiredMixin, FormView):
             require_https=self.request.is_secure(),
         ):
             return next_url
-        return reverse('core:extraction_agency_hub')
+        # Redireciona para a própria página de edição
+        return reverse('core:extractor_user_update', kwargs={'pk': self.extractor_user.pk})
+
+
+class ExtractorUserUnitsAjaxView(LoginRequiredMixin, View):
+    """
+    Endpoint AJAX que retorna as unidades associadas a um usuário para a agência atual.
+    """
+
+    def get(self, request):
+        user_id = request.GET.get('user_id')
+        if not user_id:
+            return JsonResponse({'error': 'user_id é obrigatório'}, status=400)
+
+        try:
+            user = User.objects.get(pk=user_id, is_active=True)
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'Usuário não encontrado'}, status=404)
+
+        agency = ExtractionAgency.objects.first()
+        if not agency:
+            return JsonResponse({'unit_ids': []})
+
+        # Busca o ExtractorUser do usuário para esta agência
+        extractor_user = ExtractorUser.objects.filter(
+            user=user,
+            extraction_agency=agency,
+            deleted_at__isnull=True,
+        ).first()
+
+        if not extractor_user:
+            return JsonResponse({'unit_ids': []})
+
+        # Retorna os IDs das unidades ativas associadas
+        unit_ids = list(
+            ExtractionUnitExtractor.objects.filter(
+                extractor=extractor_user,
+                extraction_unit__agency=agency,
+                deleted_at__isnull=True,
+                extraction_unit__deleted_at__isnull=True,
+            ).values_list('extraction_unit_id', flat=True)
+        )
+
+        return JsonResponse({'unit_ids': unit_ids})
 

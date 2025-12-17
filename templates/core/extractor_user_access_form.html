@@ -95,3 +95,52 @@
   </div>
 </div>
 {% endblock content %}
+
+{% block extra_js %}
+{% if not form.user.field.disabled %}
+<script>
+(function() {
+  const userSelect = document.getElementById('{{ form.user.id_for_label }}');
+  if (!userSelect) return;
+
+  const checkboxes = document.querySelectorAll('input[name="{{ form.extraction_units.name }}"]');
+  if (!checkboxes.length) return;
+
+  userSelect.addEventListener('change', function() {
+    const userId = this.value;
+    if (!userId) {
+      // Desmarca todos se não houver usuário selecionado
+      checkboxes.forEach(cb => cb.checked = false);
+      return;
+    }
+
+    // Faz requisição AJAX para buscar unidades associadas
+    fetch('{% url "core:extractor_user_units_ajax" %}?user_id=' + encodeURIComponent(userId), {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        console.error('Erro:', data.error);
+        return;
+      }
+
+      const unitIds = new Set(data.unit_ids || []);
+
+      // Marca/desmarca checkboxes baseado na resposta
+      checkboxes.forEach(cb => {
+        const unitId = parseInt(cb.value, 10);
+        cb.checked = unitIds.has(unitId);
+      });
+    })
+    .catch(error => {
+      console.error('Erro ao carregar unidades:', error);
+    });
+  });
+})();
+</script>
+{% endif %}
+{% endblock extra_js %}

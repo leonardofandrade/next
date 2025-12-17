@@ -203,9 +203,12 @@ class MyCasesView(LoginRequiredMixin, ServiceMixin, ListView):
     paginate_by = settings.PAGINATE_BY
     
     def get_queryset(self) -> QuerySet:
-        """Retorna apenas os casos atribuídos ao usuário logado"""
+        """Retorna apenas os casos atribuídos ao usuário logado e não finalizados"""
         service = self.get_service()
         queryset = service.get_my_cases()
+        
+        # Exclui casos concluídos
+        queryset = queryset.exclude(status=Case.CASE_STATUS_COMPLETED)
         
         # Aplica filtros do formulário (removendo assigned_to para garantir segurança)
         filters = self.get_filters()
@@ -229,6 +232,39 @@ class MyCasesView(LoginRequiredMixin, ServiceMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Obtém o queryset completo antes da paginação para estatísticas (sem excluir concluídos)
+        service = self.get_service()
+        all_cases_queryset = service.get_my_cases()
+        
+        # Aplica filtros do formulário (removendo assigned_to para garantir segurança)
+        filters = self.get_filters()
+        filters.pop('assigned_to', None)
+        if filters:
+            all_cases_queryset = service.apply_filters(all_cases_queryset, filters)
+        
+        # Estatísticas por status (incluindo concluídos)
+        context['stats'] = {
+            'draft': all_cases_queryset.filter(status=Case.CASE_STATUS_DRAFT).count(),
+            'waiting_extractor': all_cases_queryset.filter(status=Case.CASE_STATUS_WAITING_EXTRACTOR).count(),
+            'waiting_start': all_cases_queryset.filter(status=Case.CASE_STATUS_WAITING_START).count(),
+            'waiting_collect': all_cases_queryset.filter(status=Case.CASE_STATUS_WAITING_COLLECT).count(),
+            'in_progress': all_cases_queryset.filter(status=Case.CASE_STATUS_IN_PROGRESS).count(),
+            'paused': all_cases_queryset.filter(status=Case.CASE_STATUS_PAUSED).count(),
+            'completed': all_cases_queryset.filter(status=Case.CASE_STATUS_COMPLETED).count(),
+        }
+        
+        # Casos agrupados por status para exibição em seções (máximo 10 por status)
+        cases_by_status = {
+            'draft': list(all_cases_queryset.filter(status=Case.CASE_STATUS_DRAFT)[:10]),
+            'waiting_extractor': list(all_cases_queryset.filter(status=Case.CASE_STATUS_WAITING_EXTRACTOR)[:10]),
+            'waiting_start': list(all_cases_queryset.filter(status=Case.CASE_STATUS_WAITING_START)[:10]),
+            'waiting_collect': list(all_cases_queryset.filter(status=Case.CASE_STATUS_WAITING_COLLECT)[:10]),
+            'in_progress': list(all_cases_queryset.filter(status=Case.CASE_STATUS_IN_PROGRESS)[:10]),
+            'paused': list(all_cases_queryset.filter(status=Case.CASE_STATUS_PAUSED)[:10]),
+            'completed': list(all_cases_queryset.filter(status=Case.CASE_STATUS_COMPLETED)[:10]),
+        }
+        context['cases_by_status'] = cases_by_status
+        
         context['page_title'] = 'Meus Processos'
         context['page_icon'] = 'fa-folder-open'
         # Remove o campo assigned_to do formulário para evitar confusão
@@ -236,6 +272,8 @@ class MyCasesView(LoginRequiredMixin, ServiceMixin, ListView):
         if 'assigned_to' in form.fields:
             del form.fields['assigned_to']
         context['form'] = form
-        context['total_count'] = self.get_queryset().count()
+        # Total count excluindo concluídos (para o header)
+        context['total_count'] = all_cases_queryset.exclude(status=Case.CASE_STATUS_COMPLETED).count()
+        
         return context
 

@@ -1,0 +1,110 @@
+{% extends '_global/layout/base.html' %}
+
+{% block page_title %}
+<i class="fas fa-building text-primary me-2"></i>
+Unidade de Extração
+{% endblock page_title %}
+
+{% block page_description %}
+Visualização da unidade de extração.
+{% endblock page_description %}
+
+{% block page_actions %}
+  {% if request.GET.next %}
+    <a href="{{ request.GET.next }}" class="btn btn-outline-secondary me-2">
+      <i class="fas fa-arrow-left me-2"></i>Voltar
+    </a>
+  {% endif %}
+{% endblock page_actions %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="mb-0">
+              <i class="fas fa-sitemap me-2"></i>
+              {{ unit.name|default:"(sem nome)" }}
+            </h5>
+            <div class="text-muted small mt-1">
+              {{ unit.acronym|default:"-" }}
+              {% if unit.agency %}
+                <span class="text-muted">—</span>
+                {{ unit.agency.acronym|default:unit.agency.name }}
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <a href="{% url 'core:extraction_unit_update' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-primary">
+              <i class="fas fa-pen me-2"></i>Editar
+            </a>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="border rounded p-3 h-100">
+                <div class="fw-semibold mb-2"><i class="fas fa-info-circle me-2"></i>Dados</div>
+                <div class="small">
+                  <div><span class="text-muted">Sigla:</span> {{ unit.acronym|default:"-" }}</div>
+                  <div><span class="text-muted">Nome:</span> {{ unit.name|default:"-" }}</div>
+                  <div><span class="text-muted">Agência:</span> {% if unit.agency %}{{ unit.agency.name }}{% else %}-{% endif %}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="border rounded p-3 h-100">
+                <div class="fw-semibold mb-2"><i class="fas fa-phone me-2"></i>Contato</div>
+                <div class="small">
+                  <div><span class="text-muted">Telefone:</span> {{ unit.primary_phone|default:"-" }}</div>
+                  <div><span class="text-muted">Telefone (sec.):</span> {{ unit.secondary_phone|default:"-" }}</div>
+                  <div><span class="text-muted">Email:</span> {{ unit.primary_email|default:"-" }}</div>
+                  <div><span class="text-muted">Email (sec.):</span> {{ unit.secondary_email|default:"-" }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="border rounded p-3">
+                <div class="fw-semibold mb-2"><i class="fas fa-map-marker-alt me-2"></i>Endereço</div>
+                <div class="small">
+                  <div>
+                    {{ unit.address_line1|default:"" }}
+                    {% if unit.address_number %}, {{ unit.address_number }}{% endif %}
+                    {% if unit.address_line2 %} - {{ unit.address_line2 }}{% endif %}
+                  </div>
+                  <div>
+                    {% if unit.neighborhood %}{{ unit.neighborhood }}{% endif %}
+                    {% if unit.city_name %}{% if unit.neighborhood %} - {% endif %}{{ unit.city_name }}{% endif %}
+                    {% if unit.state_name %} / {{ unit.state_name }}{% endif %}
+                    {% if unit.postal_code %} - {{ unit.postal_code }}{% endif %}
+                  </div>
+                  <div>
+                    {% if unit.country_name %}{{ unit.country_name }}{% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="border rounded p-3">
+                <div class="fw-semibold mb-2"><i class="fas fa-user-tie me-2"></i>Responsável</div>
+                <div class="small">
+                  <div><span class="text-muted">Nome:</span> {{ unit.incharge_name|default:"-" }}</div>
+                  <div><span class="text-muted">Cargo:</span> {{ unit.incharge_position|default:"-" }}</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

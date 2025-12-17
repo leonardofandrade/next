@@ -1,0 +1,207 @@
+{% extends '_global/layout/base.html' %}
+
+{% block page_title %}
+<i class="fas fa-sitemap text-primary me-2"></i>
+Editar Unidade de Extração
+{% endblock page_title %}
+
+{% block page_description %}
+Atualize os dados da unidade de extração.
+{% endblock page_description %}
+
+{% block page_actions %}
+<a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'core:extraction_unit_hub' unit.pk %}{% endif %}" class="btn btn-outline-secondary me-2">
+  <i class="fas fa-arrow-left me-2"></i>Voltar
+</a>
+{% endblock page_actions %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-pen me-2"></i>Dados da Unidade
+          </h5>
+        </div>
+
+        <div class="card-body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+              </div>
+            {% endif %}
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-info-circle me-2"></i>Informações Básicas
+                </h6>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.agency.id_for_label }}" class="form-label">{{ form.agency.label }}</label>
+                {{ form.agency }}
+                {% if form.agency.errors %}<div class="text-danger">{{ form.agency.errors }}</div>{% endif %}
+              </div>
+
+              <div class="col-md-3 mb-3">
+                <label for="{{ form.acronym.id_for_label }}" class="form-label">{{ form.acronym.label }}</label>
+                {{ form.acronym }}
+                {% if form.acronym.errors %}<div class="text-danger">{{ form.acronym.errors }}</div>{% endif %}
+              </div>
+
+              <div class="col-md-3 mb-3">
+                <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+                {{ form.name }}
+                {% if form.name.errors %}<div class="text-danger">{{ form.name.errors }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-phone me-2"></i>Contato
+                </h6>
+              </div>
+
+              <div class="col-md-3 mb-3">
+                <label for="{{ form.primary_phone.id_for_label }}" class="form-label">{{ form.primary_phone.label }}</label>
+                {{ form.primary_phone }}
+                {% if form.primary_phone.errors %}<div class="text-danger">{{ form.primary_phone.errors }}</div>{% endif %}
+              </div>
+
+              <div class="col-md-3 mb-3">
+                <label for="{{ form.secondary_phone.id_for_label }}" class="form-label">{{ form.secondary_phone.label }}</label>
+                {{ form.secondary_phone }}
+                {% if form.secondary_phone.errors %}<div class="text-danger">{{ form.secondary_phone.errors }}</div>{% endif %}
+              </div>
+
+              <div class="col-md-3 mb-3">
+                <label for="{{ form.primary_email.id_for_label }}" class="form-label">{{ form.primary_email.label }}</label>
+                {{ form.primary_email }}
+                {% if form.primary_email.errors %}<div class="text-danger">{{ form.primary_email.errors }}</div>{% endif %}
+              </div>
+
+              <div class="col-md-3 mb-3">
+                <label for="{{ form.secondary_email.id_for_label }}" class="form-label">{{ form.secondary_email.label }}</label>
+                {{ form.secondary_email }}
+                {% if form.secondary_email.errors %}<div class="text-danger">{{ form.secondary_email.errors }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-map-marker-alt me-2"></i>Endereço
+                </h6>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.address_line1.id_for_label }}" class="form-label">{{ form.address_line1.label }}</label>
+                {{ form.address_line1 }}
+                {% if form.address_line1.errors %}<div class="text-danger">{{ form.address_line1.errors }}</div>{% endif %}
+              </div>
+
+              <div class="col-md-2 mb-3">
+                <label for="{{ form.address_number.id_for_label }}" class="form-label">{{ form.address_number.label }}</label>
+                {{ form.address_number }}
+                {% if form.address_number.errors %}<div class="text-danger">{{ form.address_number.errors }}</div>{% endif %}
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.address_line2.id_for_label }}" class="form-label">{{ form.address_line2.label }}</label>
+                {{ form.address_line2 }}
+                {% if form.address_line2.errors %}<div class="text-danger">{{ form.address_line2.errors }}</div>{% endif %}
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.neighborhood.id_for_label }}" class="form-label">{{ form.neighborhood.label }}</label>
+                {{ form.neighborhood }}
+                {% if form.neighborhood.errors %}<div class="text-danger">{{ form.neighborhood.errors }}</div>{% endif %}
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.city_name.id_for_label }}" class="form-label">{{ form.city_name.label }}</label>
+                {{ form.city_name }}
+                {% if form.city_name.errors %}<div class="text-danger">{{ form.city_name.errors }}</div>{% endif %}
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.postal_code.id_for_label }}" class="form-label">{{ form.postal_code.label }}</label>
+                {{ form.postal_code }}
+                {% if form.postal_code.errors %}<div class="text-danger">{{ form.postal_code.errors }}</div>{% endif %}
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.state_name.id_for_label }}" class="form-label">{{ form.state_name.label }}</label>
+                {{ form.state_name }}
+                {% if form.state_name.errors %}<div class="text-danger">{{ form.state_name.errors }}</div>{% endif %}
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.country_name.id_for_label }}" class="form-label">{{ form.country_name.label }}</label>
+                {{ form.country_name }}
+                {% if form.country_name.errors %}<div class="text-danger">{{ form.country_name.errors }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-user-tie me-2"></i>Responsável
+                </h6>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.incharge_name.id_for_label }}" class="form-label">{{ form.incharge_name.label }}</label>
+                {{ form.incharge_name }}
+                {% if form.incharge_name.errors %}<div class="text-danger">{{ form.incharge_name.errors }}</div>{% endif %}
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.incharge_position.id_for_label }}" class="form-label">{{ form.incharge_position.label }}</label>
+                {{ form.incharge_position }}
+                {% if form.incharge_position.errors %}<div class="text-danger">{{ form.incharge_position.errors }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-envelope-open-text me-2"></i>Email de Resposta
+                </h6>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.reply_email_subject.id_for_label }}" class="form-label">{{ form.reply_email_subject.label }}</label>
+                {{ form.reply_email_subject }}
+                {% if form.reply_email_subject.errors %}<div class="text-danger">{{ form.reply_email_subject.errors }}</div>{% endif %}
+              </div>
+
+              <div class="col-md-8 mb-3">
+                <label for="{{ form.reply_email_template.id_for_label }}" class="form-label">{{ form.reply_email_template.label }}</label>
+                {{ form.reply_email_template }}
+                {% if form.reply_email_template.errors %}<div class="text-danger">{{ form.reply_email_template.errors }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'core:extraction_unit_hub' unit.pk %}{% endif %}" class="btn btn-secondary">
+                <i class="fas fa-times me-2"></i>Cancelar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Salvar Alterações
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

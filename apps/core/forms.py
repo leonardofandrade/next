@@ -2,6 +2,7 @@
 Forms para o app core
 """
 from django import forms
+from django.contrib.auth.models import User
 from .models import (
     ExtractionAgency, ExtractionUnit, DocumentTemplate,
     ExtractorUser, ExtractionUnitExtractor,
@@ -161,4 +162,45 @@ class DocumentTemplateForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+class ExtractorUserAccessForm(forms.Form):
+    """
+    Form para vincular um usuário existente como extrator e definir quais
+    extraction_units ele pode acessar.
+    """
+
+    user = forms.ModelChoiceField(
+        queryset=User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username'),
+        label='Usuário',
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+
+    extraction_units = forms.ModelMultipleChoiceField(
+        queryset=ExtractionUnit.objects.none(),
+        required=False,
+        label='Unidades de Extração permitidas',
+        widget=forms.CheckboxSelectMultiple(),
+        help_text='Marque as unidades que este extrator poderá acessar.',
+    )
+
+    def __init__(self, *args, extraction_agency=None, extractor_user: ExtractorUser | None = None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        units_qs = ExtractionUnit.objects.filter(deleted_at__isnull=True)
+        if extraction_agency is not None:
+            units_qs = units_qs.filter(agency=extraction_agency)
+        self.fields['extraction_units'].queryset = units_qs.order_by('acronym', 'name')
+
+        if extractor_user is not None:
+            # trava usuário na edição
+            self.fields['user'].initial = extractor_user.user_id
+            self.fields['user'].disabled = True
+
+            linked_units = ExtractionUnit.objects.filter(
+                extraction_unit_extractors__extractor=extractor_user,
+                extraction_unit_extractors__deleted_at__isnull=True,
+                deleted_at__isnull=True,
+            )
+            self.fields['extraction_units'].initial = list(linked_units.values_list('pk', flat=True))
 

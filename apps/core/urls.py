@@ -17,4 +17,8 @@ urlpatterns = [
     path('settings/extraction-units/<int:unit_pk>/document-templates/', views.DocumentTemplateHubView.as_view(), name='document_template_hub'),
     path('settings/extraction-units/<int:unit_pk>/document-templates/new/', views.DocumentTemplateCreateView.as_view(), name='document_template_create'),
     path('settings/extraction-units/<int:unit_pk>/document-templates/<int:pk>/edit/', views.DocumentTemplateUpdateView.as_view(), name='document_template_update'),
+
+    # ExtractorUser (gerenciamento no hub da agência)
+    path('settings/extraction-agency/extractors/new/', views.ExtractorUserCreateView.as_view(), name='extractor_user_create'),
+    path('settings/extraction-agency/extractors/<int:pk>/edit/', views.ExtractorUserUpdateView.as_view(), name='extractor_user_update'),
 ]

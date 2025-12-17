@@ -9,7 +9,9 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import TemplateView, UpdateView
 
-from apps.core.models import ExtractionAgency
+from django.db.models import Prefetch
+
+from apps.core.models import ExtractionAgency, ExtractorUser, ExtractionUnitExtractor
 from apps.core.forms import ExtractionAgencyForm
 
 
@@ -29,6 +31,25 @@ class ExtractionAgencyHubView(LoginRequiredMixin, TemplateView):
         context['extraction_units'] = (
             agency.extraction_units.all().order_by('acronym', 'name') if agency else []
         )
+
+        if agency:
+            extractor_users = ExtractorUser.objects.filter(
+                extraction_agency=agency,
+                deleted_at__isnull=True,
+            ).select_related('user').prefetch_related(
+                Prefetch(
+                    'extraction_unit_extractors',
+                    queryset=ExtractionUnitExtractor.objects.filter(
+                        deleted_at__isnull=True,
+                        extraction_unit__deleted_at__isnull=True,
+                    ).select_related('extraction_unit').order_by('extraction_unit__acronym', 'extraction_unit__name'),
+                    to_attr='active_unit_links',
+                )
+            ).order_by('user__first_name', 'user__last_name', 'user__username')
+        else:
+            extractor_users = []
+
+        context['extractor_users'] = extractor_users
         return context
 
 

@@ -196,9 +196,12 @@ Configuração da Agência de Central de Extração.
             </div>
           {% endif %}
 
-          <div class="mt-3">
+          <div class="mt-3 d-flex gap-2">
             <a href="{% url 'core:extraction_agency_update' %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-primary">
               <i class="fas fa-pen me-2"></i>Editar Agência
+            </a>
+            <a href="{% url 'core:extractor_user_create' %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-info">
+              <i class="fas fa-user-shield me-2"></i>Extratores
             </a>
           </div>
         </div>
@@ -248,6 +251,70 @@ Configuração da Agência de Central de Extração.
           </div>
         </div>
       {% endif %}
+    </div>
+
+    <!-- Extractor users management -->
+    <div class="w-100 mt-4">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div class="fw-semibold">
+            <i class="fas fa-user-shield me-2"></i>Usuários Extratores
+          </div>
+          <a href="{% url 'core:extractor_user_create' %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-primary">
+            <i class="fas fa-plus me-2"></i>Adicionar
+          </a>
+        </div>
+        <div class="card-body">
+          {% if extractor_users %}
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Usuário</th>
+                    <th>Unidades permitidas</th>
+                    <th class="text-end" style="width: 90px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for ex in extractor_users %}
+                    <tr>
+                      <td>
+                        <div class="fw-semibold">
+                          {{ ex.user.get_full_name|default:ex.user.username }}
+                        </div>
+                        <div class="text-muted small">{{ ex.user.username }}</div>
+                      </td>
+                      <td>
+                        {% if ex.active_unit_links %}
+                          <div class="d-flex flex-wrap gap-1">
+                            {% for link in ex.active_unit_links %}
+                              <span class="badge bg-light text-dark border">
+                                {{ link.extraction_unit.acronym|default:link.extraction_unit.name }}
+                              </span>
+                            {% endfor %}
+                          </div>
+                        {% else %}
+                          <span class="text-muted small">Sem unidades vinculadas</span>
+                        {% endif %}
+                      </td>
+                      <td class="text-end">
+                        <a href="{% url 'core:extractor_user_update' ex.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-primary" title="Editar" aria-label="Editar">
+                          <i class="fas fa-pen"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center py-3">
+              <div class="fw-semibold">Nenhum usuário extrator cadastrado</div>
+              <div class="text-muted small mt-1">Adicione um usuário e defina as unidades que ele pode acessar.</div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
     </div>
   </div>
   </div>

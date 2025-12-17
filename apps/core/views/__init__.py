@@ -12,6 +12,10 @@ from apps.core.views.document_template_views import (
     DocumentTemplateCreateView,
     DocumentTemplateUpdateView,
 )
+from apps.core.views.extractor_user_views import (
+    ExtractorUserCreateView,
+    ExtractorUserUpdateView,
+)
 
 __all__ = [
     'ExtractionAgencyHubView',
@@ -22,4 +26,6 @@ __all__ = [
     'DocumentTemplateHubView',
     'DocumentTemplateCreateView',
     'DocumentTemplateUpdateView',
+    'ExtractorUserCreateView',
+    'ExtractorUserUpdateView',
 ]

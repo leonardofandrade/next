@@ -46,13 +46,7 @@
     <div class="card">
         <div class="card-body">
             <style>
-                .graph-wrap {
-                    position: relative;
-                    min-height: 520px;
-                    max-height: 70vh;
-                    overflow: auto;
-                    padding: 8px;
-                }
+                .graph-wrap { position: relative; min-height: 520px; padding: 8px; }
                 .graph-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
                 .graph-node {
                     border: 1px solid rgba(0,0,0,.1);
@@ -65,19 +59,23 @@
                 .graph-node .title { font-weight: 700; }
                 .graph-node .subtitle { color: #6c757d; font-size: .85rem; }
                 .graph-node.agency { border-left: 6px solid var(--bs-primary); }
-                .graph-node.unit { border-left: 6px solid var(--bs-info); }
+                .graph-node.unit { border-left: 6px solid var(--bs-info); min-width: 220px; text-align: center; }
                 .graph-node.unit:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(0,0,0,.08); }
-                .graph-layout { display: flex; gap: 24px; align-items: flex-start; }
-                .graph-left { flex: 0 0 360px; position: sticky; left: 0; z-index: 2; }
-                .graph-left .graph-node { margin-top: 6px; }
-                .graph-right { flex: 1 1 auto; min-width: 420px; padding-right: 12px; }
-                .graph-units { display: flex; flex-direction: column; gap: 12px; }
+                .graph-top { display: flex; justify-content: center; }
+                .graph-bottom { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 34px; }
                 .agency-logo { max-height: 44px; max-width: 140px; object-fit: contain; }
                 .legend { font-size: .85rem; color: #6c757d; }
-                .node-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; }
                 .graph-node { position: relative; }
                 .node-link { text-decoration: none; color: inherit; display: block; }
                 .node-link:hover { text-decoration: none; color: inherit; }
+                .node-actions {
+                    display: flex;
+                    justify-content: center;
+                    gap: 8px;
+                    margin-top: 10px;
+                    padding-top: 10px;
+                    border-top: 1px solid rgba(0,0,0,.07);
+                }
             </style>
 
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -90,63 +88,58 @@
             <div id="graphContainer" class="graph-wrap">
                 <svg id="graphSvg" class="graph-svg" xmlns="http://www.w3.org/2000/svg"></svg>
 
-                <div class="graph-layout">
-                    <div class="graph-left">
-                        <div id="agencyNode" class="graph-node agency text-center">
+                <div class="graph-top">
+                    <div id="agencyNode" class="graph-node agency text-center">
+                        {% if agency.has_main_logo %}
+                            <img class="agency-logo mb-2"
+                                 src="data:{{ agency.get_main_logo_mime_type }};base64,{{ agency.get_main_logo_base64 }}"
+                                 alt="Logo {{ agency.acronym }}">
+                        {% else %}
+                            <div class="mb-2"><i class="fas fa-shield-alt fa-2x text-primary"></i></div>
+                        {% endif %}
+                        <div class="title">{{ agency.acronym }}</div>
+                        <div class="subtitle">{{ agency.name }}</div>
+                        <div class="node-actions">
+                            <a class="btn btn-sm btn-outline-primary"
+                               href="{% url 'core:extraction_agency_edit' agency.pk %}?next={{ request.get_full_path|urlencode }}"
+                               title="Editar agência">
+                                <i class="fas fa-edit me-1"></i>Editar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="unitsWrap" class="graph-bottom">
+                    {% for unit in units %}
+                        <div id="unitNode-{{ unit.pk }}" class="graph-node unit">
+                            <a class="node-link" href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=unit&next={{ request.get_full_path|urlencode }}">
+                                <div class="title">{{ unit.acronym }}</div>
+                                {% if unit.city_name or unit.state_name %}
+                                    <div class="subtitle">
+                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                        {{ unit.city_name|default:"" }}{% if unit.city_name and unit.state_name %} / {% endif %}{{ unit.state_name|default:"" }}
+                                    </div>
+                                {% endif %}
+                            </a>
                             <div class="node-actions">
                                 <a class="btn btn-sm btn-outline-primary"
-                                   href="{% url 'core:extraction_agency_edit' agency.pk %}?next={{ request.get_full_path|urlencode }}"
-                                   title="Editar agência">
-                                    <i class="fas fa-edit"></i>
+                                   href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=unit&next={{ request.get_full_path|urlencode }}"
+                                   title="Central da unidade">
+                                    <i class="fas fa-sliders-h me-1"></i>Central
+                                </a>
+                                <a class="btn btn-sm btn-outline-info"
+                                   href="{% url 'core:extraction_unit_detail' unit.pk %}?next={{ request.get_full_path|urlencode }}"
+                                   title="Ver detalhes">
+                                    <i class="fas fa-folder-open me-1"></i>Detalhes
                                 </a>
                             </div>
-                            {% if agency.has_main_logo %}
-                                <img class="agency-logo mb-2"
-                                     src="data:{{ agency.get_main_logo_mime_type }};base64,{{ agency.get_main_logo_base64 }}"
-                                     alt="Logo {{ agency.acronym }}">
-                            {% else %}
-                                <div class="mb-2"><i class="fas fa-shield-alt fa-2x text-primary"></i></div>
-                            {% endif %}
-                            <div class="title">{{ agency.acronym }}</div>
-                            <div class="subtitle">{{ agency.name }}</div>
                         </div>
-                    </div>
-
-                    <div class="graph-right">
-                        <div id="unitsWrap" class="graph-units">
-                            {% for unit in units %}
-                                <div id="unitNode-{{ unit.pk }}" class="graph-node unit">
-                                    <div class="node-actions">
-                                        <a class="btn btn-sm btn-outline-primary"
-                                           href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=unit&next={{ request.get_full_path|urlencode }}"
-                                           title="Central da unidade">
-                                            <i class="fas fa-sliders-h"></i>
-                                        </a>
-                                        <a class="btn btn-sm btn-outline-info"
-                                           href="{% url 'core:extraction_unit_detail' unit.pk %}?next={{ request.get_full_path|urlencode }}"
-                                           title="Ver detalhes">
-                                            <i class="fas fa-folder-open"></i>
-                                        </a>
-                                    </div>
-                                    <a class="node-link" href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=unit&next={{ request.get_full_path|urlencode }}">
-                                        <div class="title">{{ unit.acronym }}</div>
-                                        <div class="subtitle">{{ unit.name }}</div>
-                                        {% if unit.city_name or unit.state_name %}
-                                            <div class="subtitle">
-                                                <i class="fas fa-map-marker-alt me-1"></i>
-                                                {{ unit.city_name|default:"" }}{% if unit.city_name and unit.state_name %} / {% endif %}{{ unit.state_name|default:"" }}
-                                            </div>
-                                        {% endif %}
-                                    </a>
-                                </div>
-                            {% empty %}
-                                <div class="text-center text-muted py-5 w-100">
-                                    <i class="fas fa-sitemap fa-3x mb-3 opacity-25"></i>
-                                    <div>Nenhuma unidade cadastrada para esta agência.</div>
-                                </div>
-                            {% endfor %}
+                    {% empty %}
+                        <div class="text-center text-muted py-5 w-100">
+                            <i class="fas fa-sitemap fa-3x mb-3 opacity-25"></i>
+                            <div>Nenhuma unidade cadastrada para esta agência.</div>
                         </div>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
 
@@ -168,10 +161,10 @@
                         };
                     }
 
-                    function drawCurveHorizontal(x1, y1, x2, y2) {
+                    function drawCurveVertical(x1, y1, x2, y2) {
                         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                        const midX = (x1 + x2) / 2;
-                        const d = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+                        const midY = (y1 + y2) / 2;
+                        const d = `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
                         path.setAttribute('d', d);
                         path.setAttribute('fill', 'none');
                         path.setAttribute('stroke', 'rgba(13,110,253,.35)'); // bs-primary-ish
@@ -185,21 +178,19 @@
 
                         const containerRect = container.getBoundingClientRect();
                         const aRect = agencyNode.getBoundingClientRect();
-                        const aFrom = relPoint(aRect, containerRect, aRect.right, aRect.top + aRect.height / 2);
+                        const aFrom = relPoint(aRect, containerRect, aRect.left + aRect.width / 2, aRect.bottom);
 
                         const unitNodes = unitsWrap.querySelectorAll('[id^="unitNode-"]');
                         unitNodes.forEach((node) => {
                             const r = node.getBoundingClientRect();
-                            const to = relPoint(r, containerRect, r.left, r.top + r.height / 2);
-                            drawCurveHorizontal(aFrom.x, aFrom.y, to.x, to.y);
+                            const to = relPoint(r, containerRect, r.left + r.width / 2, r.top);
+                            drawCurveVertical(aFrom.x, aFrom.y, to.x, to.y);
                         });
                     }
 
                     // Re-render when layout changes (wrap, resize, etc.)
                     const ro = new ResizeObserver(() => render());
                     ro.observe(container);
-                    if (unitsWrap) ro.observe(unitsWrap);
-                    if (agencyNode) ro.observe(agencyNode);
                     window.addEventListener('resize', render);
                     window.addEventListener('load', render);
                     setTimeout(render, 50);

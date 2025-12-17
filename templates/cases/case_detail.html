@@ -7,10 +7,6 @@
 {% endblock page_title %}
 
 {% block page_actions %}
-<a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'cases:list' %}{% endif %}" class="btn btn-secondary">
-    <i class="fas fa-arrow-left me-2"></i>
-    Voltar
-</a>
 <a href="{% url 'cases:list' %}" class="btn btn-secondary">
     <i class="fas fa-search me-2"></i>
     Pesquisar Processos
@@ -152,6 +148,15 @@
                 <div class="card-body">
                     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
                         <div class="d-flex flex-wrap gap-2 align-items-center">
+                            
+                            <!-- Editar Processo -->
+                            <a href="{% url 'cases:update' case.pk %}?next={% url 'cases:detail' case.pk %}" 
+                               class="btn btn-outline-primary d-flex flex-column align-items-center justify-content-center" 
+                               style="width: 120px; height: 120px; padding: 0.5rem;">
+                                <i class="fas fa-edit fa-2x mb-2"></i>
+                                <span class="small">Editar Processo</span>
+                            </a>
+
                             <!-- Procedimentos -->
                             <a href="{% url 'cases:procedures' case.pk %}?next={% url 'cases:detail' case.pk %}" 
                                class="btn btn-outline-warning d-flex flex-column align-items-center justify-content-center" 
@@ -173,7 +178,16 @@
                                 <span class="badge bg-primary mt-1">{{ documents_count }}</span>
                                 {% endif %}
                             </a>
-                            
+                            <!-- Dispositivos -->
+                            <a href="{% url 'cases:devices' case.pk %}?next={% url 'cases:detail' case.pk %}" 
+                                class="btn btn-outline-info d-flex flex-column align-items-center justify-content-center" 
+                                style="width: 120px; height: 120px; padding: 0.5rem;">
+                                <i class="fas fa-mobile-alt fa-2x mb-2"></i>
+                                <span class="small">Dispositivos</span>
+                                {% if devices_count %}
+                                <span class="badge bg-info mt-1">{{ devices_count }}</span>
+                                {% endif %}
+                            </a>
                             <!-- Finalizar Cadastro (se não finalizado) -->
                             {% if not case.registration_completed_at %}
                                 {% if devices_count > 0 and procedures_count > 0 %}
@@ -288,13 +302,6 @@
                             {% endif %}
                             {% endif %}
                             
-                            <!-- Editar Processo -->
-                            <a href="{% url 'cases:update' case.pk %}?next={% url 'cases:detail' case.pk %}" 
-                               class="btn btn-outline-secondary d-flex flex-column align-items-center justify-content-center" 
-                               style="width: 120px; height: 120px; padding: 0.5rem;">
-                                <i class="fas fa-edit fa-2x mb-2"></i>
-                                <span class="small">Editar</span>
-                            </a>
                         </div>
                         
                         <!-- Botões à direita -->
@@ -326,16 +333,7 @@
                 </div>
                 <div class="card-body">
                     <div class="d-flex flex-wrap gap-2 align-items-center">
-                        <!-- Dispositivos -->
-                        <a href="{% url 'cases:devices' case.pk %}?next={% url 'cases:detail' case.pk %}" 
-                           class="btn btn-outline-info d-flex flex-column align-items-center justify-content-center" 
-                           style="width: 120px; height: 120px; padding: 0.5rem;">
-                            <i class="fas fa-mobile-alt fa-2x mb-2"></i>
-                            <span class="small">Dispositivos</span>
-                            {% if devices_count %}
-                            <span class="badge bg-info mt-1">{{ devices_count }}</span>
-                            {% endif %}
-                        </a>
+                        
                         
                         <!-- Extrações (se finalizado) -->
                         {% if case.registration_completed_at %}

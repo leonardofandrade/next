@@ -97,33 +97,69 @@ class ExtractionUnitHubView(LoginRequiredMixin, TemplateView):
             ).count()
             
             # Calcular uso de armazenamento por storage_media
-            storage_usage = Extraction.objects.filter(
+            # Busca todas as extrações que usam storages desta unidade (para contagem)
+            storage_usage_extractions = Extraction.objects.filter(
                 storage_media__extraction_unit=unit,
                 deleted_at__isnull=True,
                 storage_media__deleted_at__isnull=True
             ).exclude(
                 storage_media__isnull=True
-            ).values('storage_media__acronym', 'storage_media__name').annotate(
-                total_gb=Sum('extraction_size', default=0),
+            ).values('storage_media__id').annotate(
                 count=Count('id')
-            ).order_by('storage_media__acronym')
+            )
             
-            # Preparar dados para o gráfico (JSON serializable)
+            # Criar dicionário de contagem de extrações
+            extraction_counts = {item['storage_media__id']: item['count'] for item in storage_usage_extractions}
+            
+            # Preparar dados para o gráfico usando os campos do modelo
+            labels = []
+            used_data = []
+            total_data = []
+            percentages = []
+            counts = []
+            
+            for media in storage_medias:
+                labels.append(media.acronym or media.name)
+                
+                # Usar used_storage_space do modelo (em GB, assumindo que está em bytes)
+                used_gb = float(media.used_storage_space or 0) / (1024**3) if media.used_storage_space else 0.0
+                total_gb = float(media.total_storage_space or 0) / (1024**3) if media.total_storage_space else 0.0
+                
+                used_data.append(used_gb)
+                total_data.append(total_gb)
+                
+                # Calcular porcentagem
+                if total_gb > 0:
+                    percentage = (used_gb / total_gb) * 100
+                else:
+                    percentage = 0.0
+                percentages.append(percentage)
+                
+                counts.append(extraction_counts.get(media.id, 0))
+            
             storage_chart_data = {
-                'labels': [item['storage_media__acronym'] or item['storage_media__name'] for item in storage_usage],
-                'data': [float(item['total_gb'] or 0) for item in storage_usage],
-                'counts': [int(item['count']) for item in storage_usage],
+                'labels': labels,
+                'used_data': used_data,
+                'total_data': total_data,
+                'percentages': percentages,
+                'counts': counts,
             }
+            extraction_counts = extraction_counts  # Garantir que está definido
         except ImportError:
             extractions_in_progress = 0
-            storage_usage = []
-            storage_chart_data = {'labels': [], 'data': [], 'counts': []}
+            extraction_counts = {}
+            storage_chart_data = {
+                'labels': [],
+                'used_data': [],
+                'total_data': [],
+                'percentages': [],
+                'counts': []
+            }
 
         # Estatísticas de storage
         storage_stats = {
             'total': storage_medias.count(),
             'medias': storage_medias[:5],  # Primeiros 5 para exibição
-            'usage': storage_usage,
         }
 
         context['unit'] = unit

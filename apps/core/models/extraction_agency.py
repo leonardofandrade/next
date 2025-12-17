@@ -780,6 +780,23 @@ class ExtractionUnitStorageMedia(AuditedModel):
         verbose_name=_('Descrição'),
         help_text=_('Descrição do meio de armazenamento'),
     )
+    is_default = models.BooleanField(
+        default=False,
+        verbose_name=_('Padrão'),
+        help_text=_('Indica se este é o meio de armazenamento padrão para a unidade'),
+    )
+    total_storage_space = models.BigIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_('Espaço Total de Armazenamento'),
+        help_text=_('Espaço total de armazenamento do meio de armazenamento'),
+    )
+    used_storage_space = models.BigIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_('Espaço Utilizado de Armazenamento'),
+        help_text=_('Espaço utilizado de armazenamento do meio de armazenamento'),
+    )
 
 
     class Meta:

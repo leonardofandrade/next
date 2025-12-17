@@ -279,10 +279,13 @@ class ExtractionUnitStorageMediaForm(forms.ModelForm):
 
     class Meta:
         model = ExtractionUnitStorageMedia
-        fields = ['acronym', 'name', 'description']
+        fields = ['acronym', 'name', 'description', 'is_default', 'total_storage_space', 'used_storage_space']
         widgets = {
             'acronym': forms.TextInput(attrs={'class': 'form-control'}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'is_default': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'total_storage_space': forms.NumberInput(attrs={'class': 'form-control', 'step': '1', 'min': '0'}),
+            'used_storage_space': forms.NumberInput(attrs={'class': 'form-control', 'step': '1', 'min': '0'}),
         }
 

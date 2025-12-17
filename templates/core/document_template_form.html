@@ -1,0 +1,322 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+
+{% block page_title %}
+<i class="fas fa-file-alt text-primary me-2"></i>
+{{ page_title|default:"Template de Ofício" }}
+{% endblock page_title %}
+
+{% block page_description %}
+Edite o conteúdo do ofício para a unidade <strong>{{ unit.acronym|default:unit.name }}</strong>.
+{% endblock page_description %}
+
+{% block page_actions %}
+<a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'core:document_template_hub' unit.pk %}{% endif %}" class="btn btn-outline-secondary me-2">
+  <i class="fas fa-arrow-left me-2"></i>Voltar
+</a>
+{% endblock page_actions %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css">
+<style>
+  .ql-toolbar.ql-snow,
+  .ql-container.ql-snow {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    border-color: var(--bs-border-color);
+  }
+  .ql-toolbar.ql-snow {
+    border-top-left-radius: .375rem;
+    border-top-right-radius: .375rem;
+    background: var(--bs-body-bg);
+    overflow-x: auto;
+  }
+  .ql-container.ql-snow {
+    border-bottom-left-radius: .375rem;
+    border-bottom-right-radius: .375rem;
+    background: var(--bs-body-bg);
+  }
+  .ql-editor { min-height: 180px; }
+  .rt-wrap { width: 100%; max-width: 100%; }
+</style>
+
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-pen me-2"></i>{{ page_title|default:"Template de Ofício" }}
+          </h5>
+          {% if template %}
+            <div class="text-muted small mt-1">{{ template.name }}</div>
+          {% endif %}
+        </div>
+
+        <div class="card-body">
+          <div class="accordion mb-4" id="dispatchTemplateHelp">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="dispatchTemplateHelpHeading">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#dispatchTemplateHelpCollapse" aria-expanded="false" aria-controls="dispatchTemplateHelpCollapse">
+                  <i class="fas fa-circle-question me-2"></i>
+                  Variáveis disponíveis e como usar
+                </button>
+              </h2>
+              <div id="dispatchTemplateHelpCollapse" class="accordion-collapse collapse" aria-labelledby="dispatchTemplateHelpHeading" data-bs-parent="#dispatchTemplateHelp">
+                <div class="accordion-body">
+                  <div class="text-muted small mb-3">
+                    Use placeholders no formato <code>{{"{{variavel}}"}}</code> (ou <code>{{"{{ variavel }}"}}</code> com espaços). O sistema substitui automaticamente na geração do ofício.
+                  </div>
+
+                  <div class="border rounded p-3 bg-light mb-3">
+                    <div class="fw-semibold mb-2">Exemplo rápido</div>
+                    <div class="small">
+                      <code>Ofício {{"{{dispatch_number_formatted}}"}} {{"{{extraction_unit_acronym}}"}}</code><br>
+                      <code>Processo: {{"{{case_number}}"}}</code><br>
+                      <code>Destinatário: {{"{{requester_unit}}"}}</code><br>
+                      <code>Responsável: {{"{{incharge_name}}"}} ({{"{{incharge_position}}"}})</code>
+                    </div>
+                  </div>
+
+                  <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                      <thead>
+                        <tr>
+                          <th style="width: 320px;">Variável</th>
+                          <th>Descrição</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr><td><code>{{"{{dispatch_number}}"}}</code></td><td>Número do ofício (ex: 001).</td></tr>
+                        <tr><td><code>{{"{{dispatch_number_formatted}}"}}</code></td><td>Número formatado (ex: 001_2025).</td></tr>
+                        <tr><td><code>{{"{{dispatch_full_number}}"}}</code></td><td>Número completo (ex: Ofício 001_2025 NEXT).</td></tr>
+                        <tr><td><code>{{"{{year}}"}}</code></td><td>Ano atual.</td></tr>
+                        <tr><td><code>{{"{{date}}"}}</code></td><td>Data atual (dd/mm/yyyy).</td></tr>
+                        <tr><td><code>{{"{{case_number}}"}}</code></td><td>Número do processo.</td></tr>
+                        <tr><td><code>{{"{{requester_unit}}"}}</code></td><td>Nome da unidade solicitante.</td></tr>
+                        <tr><td><code>{{"{{requester_unit_acronym}}"}}</code></td><td>Sigla da unidade solicitante.</td></tr>
+                        <tr><td><code>{{"{{extraction_unit}}"}}</code></td><td>Nome da unidade de extração.</td></tr>
+                        <tr><td><code>{{"{{extraction_unit_acronym}}"}}</code></td><td>Sigla da unidade de extração.</td></tr>
+                        <tr><td><code>{{"{{incharge_name}}"}}</code></td><td>Nome do responsável.</td></tr>
+                        <tr><td><code>{{"{{incharge_position}}"}}</code></td><td>Cargo do responsável.</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div class="text-muted small mt-3">
+                    Observação: hoje o ofício é montado como texto simples (linhas separadas por quebras de linha). Este editor ajuda na digitação, mas a formatação (negrito/itálico) não é aplicada no ODT.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+                {{ form.name }}
+                {% if form.name.errors %}<div class="text-danger">{{ form.name.errors }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                {{ form.description }}
+                {% if form.description.errors %}<div class="text-danger">{{ form.description.errors }}</div>{% endif %}
+              </div>
+              <div class="col-12">
+                <div class="form-check">
+                  {{ form.is_default }}
+                  <label for="{{ form.is_default.id_for_label }}" class="form-check-label">Marcar como padrão</label>
+                </div>
+                {% if form.is_default.errors %}<div class="text-danger">{{ form.is_default.errors }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-12"><h6 class="border-bottom pb-2 mb-0"><i class="fas fa-image me-2"></i>Logos</h6></div>
+
+              <div class="col-md-4">
+                <label for="{{ form.header_left_logo_upload.id_for_label }}" class="form-label">{{ form.header_left_logo_upload.label }}</label>
+                {{ form.header_left_logo_upload }}
+              </div>
+              <div class="col-md-4">
+                <label for="{{ form.header_right_logo_upload.id_for_label }}" class="form-label">{{ form.header_right_logo_upload.label }}</label>
+                {{ form.header_right_logo_upload }}
+              </div>
+              <div class="col-md-4">
+                <label for="{{ form.watermark_logo_upload.id_for_label }}" class="form-label">{{ form.watermark_logo_upload.label }}</label>
+                {{ form.watermark_logo_upload }}
+              </div>
+              <div class="col-md-6">
+                <label for="{{ form.footer_left_logo_upload.id_for_label }}" class="form-label">{{ form.footer_left_logo_upload.label }}</label>
+                {{ form.footer_left_logo_upload }}
+              </div>
+              <div class="col-md-6">
+                <label for="{{ form.footer_right_logo_upload.id_for_label }}" class="form-label">{{ form.footer_right_logo_upload.label }}</label>
+                {{ form.footer_right_logo_upload }}
+              </div>
+
+              {% if template %}
+                <div class="col-12">
+                  <div class="text-muted small">Pré-visualização (logos salvos)</div>
+                  <div class="d-flex flex-wrap gap-3 mt-2">
+                    {% if template.has_header_left_logo %}
+                      <img src="data:{{ template.get_header_left_logo_mime_type }};base64,{{ template.get_header_left_logo_base64 }}" alt="Header left" style="height: 48px;">
+                    {% endif %}
+                    {% if template.has_header_right_logo %}
+                      <img src="data:{{ template.get_header_right_logo_mime_type }};base64,{{ template.get_header_right_logo_base64 }}" alt="Header right" style="height: 48px;">
+                    {% endif %}
+                    {% if template.has_footer_left_logo %}
+                      <img src="data:{{ template.get_footer_left_logo_mime_type }};base64,{{ template.get_footer_left_logo_base64 }}" alt="Footer left" style="height: 48px;">
+                    {% endif %}
+                    {% if template.has_footer_right_logo %}
+                      <img src="data:{{ template.get_footer_right_logo_mime_type }};base64,{{ template.get_footer_right_logo_base64 }}" alt="Footer right" style="height: 48px;">
+                    {% endif %}
+                    {% if template.has_watermark_logo %}
+                      <img src="data:{{ template.get_watermark_logo_mime_type }};base64,{{ template.get_watermark_logo_base64 }}" alt="Watermark" style="height: 48px;">
+                    {% endif %}
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-12"><h6 class="border-bottom pb-2 mb-0"><i class="fas fa-heading me-2"></i>Cabeçalho</h6></div>
+              <div class="col-12">
+                <label for="{{ form.header_text.id_for_label }}" class="form-label">{{ form.header_text.label }}</label>
+                {{ form.header_text }}
+                <div id="rt_header_text" class="rt-wrap mt-2"></div>
+                {% if form.header_text.errors %}<div class="text-danger">{{ form.header_text.errors }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-12"><h6 class="border-bottom pb-2 mb-0"><i class="fas fa-tag me-2"></i>Assunto</h6></div>
+              <div class="col-12">
+                <label for="{{ form.subject_text.id_for_label }}" class="form-label">{{ form.subject_text.label }}</label>
+                {{ form.subject_text }}
+                <div id="rt_subject_text" class="rt-wrap mt-2"></div>
+                {% if form.subject_text.errors %}<div class="text-danger">{{ form.subject_text.errors }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-12"><h6 class="border-bottom pb-2 mb-0"><i class="fas fa-file-lines me-2"></i>Corpo</h6></div>
+              <div class="col-12">
+                <label for="{{ form.body_text.id_for_label }}" class="form-label">{{ form.body_text.label }}</label>
+                {{ form.body_text }}
+                <div id="rt_body_text" class="rt-wrap mt-2"></div>
+                {% if form.body_text.errors %}<div class="text-danger">{{ form.body_text.errors }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-12"><h6 class="border-bottom pb-2 mb-0"><i class="fas fa-signature me-2"></i>Assinatura</h6></div>
+              <div class="col-12">
+                <label for="{{ form.signature_text.id_for_label }}" class="form-label">{{ form.signature_text.label }}</label>
+                {{ form.signature_text }}
+                <div id="rt_signature_text" class="rt-wrap mt-2"></div>
+                {% if form.signature_text.errors %}<div class="text-danger">{{ form.signature_text.errors }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-12"><h6 class="border-bottom pb-2 mb-0"><i class="fas fa-window-minimize me-2"></i>Rodapé</h6></div>
+              <div class="col-12">
+                <label for="{{ form.footer_text.id_for_label }}" class="form-label">{{ form.footer_text.label }}</label>
+                {{ form.footer_text }}
+                <div id="rt_footer_text" class="rt-wrap mt-2"></div>
+                {% if form.footer_text.errors %}<div class="text-danger">{{ form.footer_text.errors }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-12"><h6 class="border-bottom pb-2 mb-0"><i class="fas fa-water me-2"></i>Água-Marinha</h6></div>
+              <div class="col-12">
+                <label for="{{ form.watermark_text.id_for_label }}" class="form-label">{{ form.watermark_text.label }}</label>
+                {{ form.watermark_text }}
+                <div id="rt_watermark_text" class="rt-wrap mt-2"></div>
+                {% if form.watermark_text.errors %}<div class="text-danger">{{ form.watermark_text.errors }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'core:document_template_hub' unit.pk %}{% endif %}" class="btn btn-secondary">
+                <i class="fas fa-times me-2"></i>Cancelar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Salvar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+<script>
+(function() {
+  if (typeof Quill === 'undefined') return;
+
+  const mapping = [
+    ['{{ form.header_text.id_for_label }}', 'rt_header_text'],
+    ['{{ form.subject_text.id_for_label }}', 'rt_subject_text'],
+    ['{{ form.body_text.id_for_label }}', 'rt_body_text'],
+    ['{{ form.signature_text.id_for_label }}', 'rt_signature_text'],
+    ['{{ form.footer_text.id_for_label }}', 'rt_footer_text'],
+    ['{{ form.watermark_text.id_for_label }}', 'rt_watermark_text'],
+  ];
+
+  const quills = [];
+
+  for (const [textareaId, editorId] of mapping) {
+    const textarea = document.getElementById(textareaId);
+    const editorEl = document.getElementById(editorId);
+    if (!textarea || !editorEl) continue;
+
+    textarea.style.display = 'none';
+
+    const q = new Quill(editorEl, {
+      theme: 'snow',
+      modules: {
+        toolbar: [
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline'],
+          [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+          ['clean']
+        ]
+      }
+    });
+
+    // Carrega texto puro do textarea
+    q.setText(textarea.value || '');
+
+    quills.push({ textarea, q });
+  }
+
+  // Sincroniza todos no submit (texto puro)
+  const anyTextarea = document.getElementById('{{ form.body_text.id_for_label }}') || document.getElementById('{{ form.header_text.id_for_label }}');
+  const form = anyTextarea ? anyTextarea.closest('form') : null;
+  if (form) {
+    form.addEventListener('submit', function() {
+      for (const item of quills) {
+        let txt = item.q.getText() || '';
+        if (txt.endsWith('\n')) txt = txt.slice(0, -1);
+        item.textarea.value = txt;
+      }
+    });
+  }
+})();
+</script>
+{% endblock extra_js %}

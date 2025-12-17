@@ -94,3 +94,71 @@ class ExtractionUnitReplyEmailForm(forms.ModelForm):
             'reply_email_template': forms.Textarea(attrs={'class': 'form-control', 'rows': 12}),
         }
 
+
+class DocumentTemplateForm(forms.ModelForm):
+    """Form para Template de Documento (ofício)"""
+
+    header_left_logo_upload = forms.ImageField(
+        required=False,
+        label='Logo do Cabeçalho Esquerdo',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
+    header_right_logo_upload = forms.ImageField(
+        required=False,
+        label='Logo do Cabeçalho Direito',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
+    footer_left_logo_upload = forms.ImageField(
+        required=False,
+        label='Logo do Rodapé Esquerdo',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
+    footer_right_logo_upload = forms.ImageField(
+        required=False,
+        label='Logo do Rodapé Direito',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
+    watermark_logo_upload = forms.ImageField(
+        required=False,
+        label='Logo da Água-Marinha',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
+
+    class Meta:
+        model = DocumentTemplate
+        fields = [
+            'name', 'description', 'is_default',
+            'header_text', 'subject_text', 'body_text', 'signature_text',
+            'footer_text', 'watermark_text',
+        ]
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'is_default': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'header_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 6}),
+            'subject_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'body_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 12}),
+            'signature_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 6}),
+            'footer_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'watermark_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        mapping = {
+            'header_left_logo_upload': 'header_left_logo',
+            'header_right_logo_upload': 'header_right_logo',
+            'footer_left_logo_upload': 'footer_left_logo',
+            'footer_right_logo_upload': 'footer_right_logo',
+            'watermark_logo_upload': 'watermark_logo',
+        }
+        for upload_field, model_field in mapping.items():
+            uploaded = self.cleaned_data.get(upload_field)
+            if uploaded:
+                setattr(instance, model_field, uploaded.read())
+
+        if commit:
+            instance.save()
+        return instance
+

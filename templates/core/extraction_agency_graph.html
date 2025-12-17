@@ -55,6 +55,8 @@
                     box-shadow: 0 6px 18px rgba(0,0,0,.06);
                     padding: 12px 14px;
                     max-width: 340px;
+                    display: flex;
+                    flex-direction: column;
                 }
                 .graph-node .title { font-weight: 700; }
                 .graph-node .subtitle { color: #6c757d; font-size: .85rem; }
@@ -65,16 +67,26 @@
                 .graph-bottom { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 34px; }
                 .agency-logo { max-height: 44px; max-width: 140px; object-fit: contain; }
                 .legend { font-size: .85rem; color: #6c757d; }
-                .graph-node { position: relative; }
-                .node-link { text-decoration: none; color: inherit; display: block; }
+                .node-link { text-decoration: none; color: inherit; display: block; flex: 1 1 auto; }
                 .node-link:hover { text-decoration: none; color: inherit; }
                 .node-actions {
                     display: flex;
                     justify-content: center;
                     gap: 8px;
-                    margin-top: 10px;
+                    flex-wrap: wrap;
+                    row-gap: 8px;
+                    margin-top: auto;
+                    margin-bottom: 2px;
                     padding-top: 10px;
                     border-top: 1px solid rgba(0,0,0,.07);
+                }
+                .node-actions .btn {
+                    width: 34px;
+                    height: 34px;
+                    padding: 0;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
                 }
             </style>
 
@@ -103,7 +115,7 @@
                             <a class="btn btn-sm btn-outline-primary"
                                href="{% url 'core:extraction_agency_edit' agency.pk %}?next={{ request.get_full_path|urlencode }}"
                                title="Editar agência">
-                                <i class="fas fa-edit me-1"></i>Editar
+                                <i class="fas fa-edit" aria-hidden="true"></i>
                             </a>
                         </div>
                     </div>
@@ -125,12 +137,27 @@
                                 <a class="btn btn-sm btn-outline-primary"
                                    href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=unit&next={{ request.get_full_path|urlencode }}"
                                    title="Central da unidade">
-                                    <i class="fas fa-sliders-h me-1"></i>Central
+                                    <i class="fas fa-sliders-h" aria-hidden="true"></i>
+                                </a>
+                                <a class="btn btn-sm btn-outline-info"
+                                   href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=templates&next={{ request.get_full_path|urlencode }}"
+                                   title="Templates da unidade">
+                                    <i class="fas fa-file-signature" aria-hidden="true"></i>
+                                </a>
+                                <a class="btn btn-sm btn-outline-success"
+                                   href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=storage&next={{ request.get_full_path|urlencode }}"
+                                   title="Meios de armazenamento da unidade">
+                                    <i class="fas fa-hdd" aria-hidden="true"></i>
+                                </a>
+                                <a class="btn btn-sm btn-outline-secondary"
+                                   href="{% url 'core:extraction_unit_hub' %}?unit={{ unit.pk }}&tab=evidence&next={{ request.get_full_path|urlencode }}"
+                                   title="Locais de evidência da unidade">
+                                    <i class="fas fa-archive" aria-hidden="true"></i>
                                 </a>
                                 <a class="btn btn-sm btn-outline-info"
                                    href="{% url 'core:extraction_unit_detail' unit.pk %}?next={{ request.get_full_path|urlencode }}"
                                    title="Ver detalhes">
-                                    <i class="fas fa-folder-open me-1"></i>Detalhes
+                                    <i class="fas fa-folder-open" aria-hidden="true"></i>
                                 </a>
                             </div>
                         </div>

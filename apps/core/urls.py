@@ -1,7 +1,6 @@
 from django.urls import path
 from . import views
 from .views.document_template_views import (
-    DocumentTemplateListView,
     DocumentTemplateCreateView,
     DocumentTemplateDetailView,
     DocumentTemplateUpdateView,
@@ -39,13 +38,11 @@ urlpatterns = [
     path('extraction-unit-extractors/<int:pk>/delete/', views.extraction_unit_extractor_delete, name='extraction_unit_extractor_delete'),
     
     # Storage Media URLs
-    path('storage-media/', views.storage_media_list, name='storage_media_list'),
     path('storage-media/create/', views.storage_media_create, name='storage_media_create'),
     path('storage-media/<int:pk>/edit/', views.storage_media_edit, name='storage_media_edit'),
     path('storage-media/<int:pk>/delete/', views.storage_media_delete, name='storage_media_delete'),
     
     # Evidence Location URLs
-    path('evidence-locations/', views.evidence_location_list, name='evidence_location_list'),
     path('evidence-locations/create/', views.evidence_location_create, name='evidence_location_create'),
     path('evidence-locations/<int:pk>/edit/', views.evidence_location_edit, name='evidence_location_edit'),
     path('evidence-locations/<int:pk>/delete/', views.evidence_location_delete, name='evidence_location_delete'),
@@ -63,7 +60,6 @@ urlpatterns = [
     path('user-extractor-management/user/<int:user_id>/info/', views.get_user_extractor_info, name='get_user_extractor_info'),
     
     # Document Template URLs
-    path('document-templates/', DocumentTemplateListView.as_view(), name='document_template_list'),
     path('document-templates/create/', DocumentTemplateCreateView.as_view(), name='document_template_create'),
     path('document-templates/<int:pk>/', DocumentTemplateDetailView.as_view(), name='document_template_detail'),
     path('document-templates/<int:pk>/edit/', DocumentTemplateUpdateView.as_view(), name='document_template_update'),

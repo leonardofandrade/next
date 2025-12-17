@@ -12,7 +12,7 @@
         {% if next_url %}
             <li class="breadcrumb-item"><a href="{{ next_url }}">Voltar</a></li>
         {% else %}
-            <li class="breadcrumb-item"><a href="{% url 'core:document_template_list' %}">Templates</a></li>
+            <li class="breadcrumb-item"><a href="{{ fallback_url }}">Templates</a></li>
         {% endif %}
         <li class="breadcrumb-item active">{{ template.name }}</li>
     </ol>

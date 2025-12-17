@@ -235,9 +235,6 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0"><i class="fas fa-file-signature me-2"></i>Templates ({{ document_templates|length }})</h5>
                     <div class="d-flex gap-2">
-                        <a class="btn btn-outline-secondary" href="{% url 'core:document_template_list' %}?extraction_unit={{ unit.pk }}">
-                            <i class="fas fa-list me-2"></i>Ver lista completa
-                        </a>
                         <a class="btn btn-primary" href="{% url 'core:document_template_create' %}?extraction_unit={{ unit.pk }}&next={{ hub_url|urlencode }}">
                             <i class="fas fa-plus me-2"></i>Novo Template
                         </a>
@@ -298,9 +295,6 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0"><i class="fas fa-hdd me-2"></i>Meios de Armazenamento ({{ storage_media|length }})</h5>
                     <div class="d-flex gap-2">
-                        <a class="btn btn-outline-secondary" href="{% url 'core:storage_media_list' %}">
-                            <i class="fas fa-list me-2"></i>Lista completa
-                        </a>
                         <a class="btn btn-primary" href="{% url 'core:storage_media_create' %}?extraction_unit={{ unit.pk }}&next={{ hub_url|urlencode }}">
                             <i class="fas fa-plus me-2"></i>Novo
                         </a>
@@ -349,9 +343,6 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0"><i class="fas fa-archive me-2"></i>Locais de Evidência ({{ evidence_locations|length }})</h5>
                     <div class="d-flex gap-2">
-                        <a class="btn btn-outline-secondary" href="{% url 'core:evidence_location_list' %}">
-                            <i class="fas fa-list me-2"></i>Lista completa
-                        </a>
                         <a class="btn btn-primary" href="{% url 'core:evidence_location_create' %}?extraction_unit={{ unit.pk }}&next={{ hub_url|urlencode }}">
                             <i class="fas fa-plus me-2"></i>Novo
                         </a>

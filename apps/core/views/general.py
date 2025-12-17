@@ -443,9 +443,8 @@ def extraction_unit_extractor_delete(request, pk):
 @login_required
 @user_passes_test(is_staff_user)
 def storage_media_list(request):
-    """Lista de meios de armazenamento"""
-    media = ExtractionUnitStorageMedia.objects.filter(deleted_at__isnull=True).select_related('extraction_unit').order_by('-created_at')
-    return render(request, 'core/storage_media_list.html', {'media_list': media})
+    """(Deprecated) Lista de meios de armazenamento."""
+    return redirect('core:extraction_unit_hub')
 
 
 @login_required
@@ -468,7 +467,7 @@ def storage_media_create(request):
             messages.success(request, _('Meio de armazenamento criado com sucesso!'))
             if next_url:
                 return redirect(next_url)
-            return redirect('core:storage_media_list')
+            return redirect(f"{reverse('core:extraction_unit_hub')}?unit={media.extraction_unit_id}&tab=storage")
     else:
         form = ExtractionUnitStorageMediaForm(initial=initial)
     
@@ -489,7 +488,7 @@ def storage_media_edit(request, pk):
             messages.success(request, _('Meio de armazenamento atualizado com sucesso!'))
             if next_url:
                 return redirect(next_url)
-            return redirect('core:storage_media_list')
+            return redirect(f"{reverse('core:extraction_unit_hub')}?unit={media.extraction_unit_id}&tab=storage")
     else:
         form = ExtractionUnitStorageMediaForm(instance=media)
     
@@ -515,7 +514,7 @@ def storage_media_delete(request, pk):
         messages.success(request, _('Meio de armazenamento removido com sucesso!'))
         if next_url:
             return redirect(next_url)
-        return redirect('core:storage_media_list')
+        return redirect(f"{reverse('core:extraction_unit_hub')}?unit={media.extraction_unit_id}&tab=storage")
     
     return render(request, 'core/storage_media_confirm_delete.html', {'media': media, 'next_url': next_url})
 
@@ -525,9 +524,8 @@ def storage_media_delete(request, pk):
 @login_required
 @user_passes_test(is_staff_user)
 def evidence_location_list(request):
-    """Lista de locais de evidências"""
-    locations = ExtractionUnitEvidenceLocation.objects.filter(deleted_at__isnull=True).select_related('extraction_unit').order_by('-created_at')
-    return render(request, 'core/evidence_location_list.html', {'locations': locations})
+    """(Deprecated) Lista de locais de evidências."""
+    return redirect('core:extraction_unit_hub')
 
 
 @login_required
@@ -550,7 +548,7 @@ def evidence_location_create(request):
             messages.success(request, _('Local de evidência criado com sucesso!'))
             if next_url:
                 return redirect(next_url)
-            return redirect('core:evidence_location_list')
+            return redirect(f"{reverse('core:extraction_unit_hub')}?unit={location.extraction_unit_id}&tab=evidence")
     else:
         form = ExtractionUnitEvidenceLocationForm(initial=initial)
     
@@ -571,7 +569,7 @@ def evidence_location_edit(request, pk):
             messages.success(request, _('Local de evidência atualizado com sucesso!'))
             if next_url:
                 return redirect(next_url)
-            return redirect('core:evidence_location_list')
+            return redirect(f"{reverse('core:extraction_unit_hub')}?unit={location.extraction_unit_id}&tab=evidence")
     else:
         form = ExtractionUnitEvidenceLocationForm(instance=location)
     
@@ -597,7 +595,7 @@ def evidence_location_delete(request, pk):
         messages.success(request, _('Local de evidência removido com sucesso!'))
         if next_url:
             return redirect(next_url)
-        return redirect('core:evidence_location_list')
+        return redirect(f"{reverse('core:extraction_unit_hub')}?unit={location.extraction_unit_id}&tab=evidence")
     
     return render(request, 'core/evidence_location_confirm_delete.html', {'location': location, 'next_url': next_url})
 

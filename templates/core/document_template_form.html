@@ -9,7 +9,7 @@
 {% block page_description %}
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a href="{% url 'core:document_template_list' %}">Templates</a></li>
+        <li class="breadcrumb-item"><a href="{{ next_url|default:fallback_url }}">Voltar</a></li>
         <li class="breadcrumb-item active">{{ title|default:"Formulário" }}</li>
     </ol>
 </nav>
@@ -174,7 +174,7 @@
                                     <i class="fas fa-arrow-left me-2"></i>Voltar
                                 </a>
                             {% else %}
-                                <a href="{% url 'core:document_template_list' %}" class="btn btn-secondary">
+                                <a href="{{ fallback_url }}" class="btn btn-secondary">
                                     <i class="fas fa-arrow-left me-2"></i>Voltar
                                 </a>
                             {% endif %}

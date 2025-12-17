@@ -4,8 +4,8 @@ Views para gerenciar templates de ofícios
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
-from django.urls import reverse_lazy
+from django.views.generic import CreateView, UpdateView, DeleteView, DetailView
+from django.urls import reverse
 from django.http import HttpResponse
 from django.db import transaction
 from django.utils import timezone
@@ -16,41 +16,11 @@ from apps.core.forms import DocumentTemplateForm
 from apps.core.mixins.views import StaffRequiredMixin
 
 
-class DocumentTemplateListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
-    """Lista templates de documentos"""
-    model = DocumentTemplate
-    template_name = 'core/document_template_list.html'
-    context_object_name = 'document_templates'
-    paginate_by = 25
-    
-    def get_queryset(self):
-        queryset = DocumentTemplate.objects.filter(deleted_at__isnull=True)
-
-        q = (self.request.GET.get('q') or '').strip()
-        if q:
-            queryset = queryset.filter(name__icontains=q)
-        
-        # Filtro por extraction_unit se fornecido
-        extraction_unit_id = self.request.GET.get('extraction_unit')
-        if extraction_unit_id:
-            queryset = queryset.filter(extraction_unit_id=extraction_unit_id)
-        
-        return queryset.select_related('extraction_unit')
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['extraction_units'] = ExtractionUnit.objects.filter(deleted_at__isnull=True)
-        context['selected_extraction_unit'] = (self.request.GET.get('extraction_unit') or '').strip()
-        context['q'] = (self.request.GET.get('q') or '').strip()
-        return context
-
-
 class DocumentTemplateCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
     """Cria novo template de ofício"""
     model = DocumentTemplate
     form_class = DocumentTemplateForm
     template_name = 'core/document_template_form.html'
-    success_url = reverse_lazy('core:document_template_list')
 
     def _get_safe_next_url(self):
         next_url = (self.request.POST.get('next') or self.request.GET.get('next') or '').strip()
@@ -74,10 +44,18 @@ class DocumentTemplateCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateV
                 pass
         return initial
 
+    def get_success_url(self):
+        # Fallback: volta para o hub (aba templates) da unidade do template criado
+        unit_id = getattr(self.object, 'extraction_unit_id', None)
+        if unit_id:
+            return f"{reverse('core:extraction_unit_hub')}?unit={unit_id}&tab=templates"
+        return reverse('core:extraction_unit_hub')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Novo Template'
         context['next_url'] = self._get_safe_next_url()
+        context['fallback_url'] = self.get_success_url()
         return context
     
     def form_valid(self, form):
@@ -93,7 +71,6 @@ class DocumentTemplateUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateV
     model = DocumentTemplate
     form_class = DocumentTemplateForm
     template_name = 'core/document_template_form.html'
-    success_url = reverse_lazy('core:document_template_list')
 
     def _get_safe_next_url(self):
         next_url = (self.request.POST.get('next') or self.request.GET.get('next') or '').strip()
@@ -107,10 +84,17 @@ class DocumentTemplateUpdateView(LoginRequiredMixin, StaffRequiredMixin, UpdateV
             return next_url
         return None
 
+    def get_success_url(self):
+        unit_id = getattr(self.object, 'extraction_unit_id', None)
+        if unit_id:
+            return f"{reverse('core:extraction_unit_hub')}?unit={unit_id}&tab=templates"
+        return reverse('core:extraction_unit_hub')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Editar Template'
         context['next_url'] = self._get_safe_next_url()
+        context['fallback_url'] = self.get_success_url()
         return context
     
     def get_queryset(self):
@@ -128,7 +112,6 @@ class DocumentTemplateDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteV
     """Remove template de ofício (soft delete)"""
     model = DocumentTemplate
     template_name = 'core/document_template_confirm_delete.html'
-    success_url = reverse_lazy('core:document_template_list')
 
     def _get_safe_next_url(self):
         next_url = (self.request.POST.get('next') or self.request.GET.get('next') or '').strip()
@@ -142,9 +125,16 @@ class DocumentTemplateDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteV
             return next_url
         return None
 
+    def get_success_url(self):
+        unit_id = getattr(self.object, 'extraction_unit_id', None)
+        if unit_id:
+            return f"{reverse('core:extraction_unit_hub')}?unit={unit_id}&tab=templates"
+        return reverse('core:extraction_unit_hub')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['next_url'] = self._get_safe_next_url()
+        context['fallback_url'] = self.get_success_url()
         return context
     
     def get_queryset(self):
@@ -157,7 +147,7 @@ class DocumentTemplateDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteV
         self.object.save()
         messages.success(request, 'Template removido com sucesso!')
         next_url = self._get_safe_next_url()
-        return redirect(next_url) if next_url else redirect(self.success_url)
+        return redirect(next_url) if next_url else redirect(self.get_success_url())
 
 
 class DocumentTemplateDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
@@ -181,6 +171,8 @@ class DocumentTemplateDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailV
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['next_url'] = self._get_safe_next_url()
+        unit_id = getattr(self.object, 'extraction_unit_id', None)
+        context['fallback_url'] = f"{reverse('core:extraction_unit_hub')}?unit={unit_id}&tab=templates" if unit_id else reverse('core:extraction_unit_hub')
         return context
     
     def get_queryset(self):

@@ -2,11 +2,11 @@
 
 {% block page_title %}
 <i class="fas fa-building text-primary me-2"></i>
-Unidade de Extração
+Dashboard — {{ unit.acronym|default:unit.name }}
 {% endblock page_title %}
 
 {% block page_description %}
-Visualização da unidade de extração.
+Visão geral e estatísticas da unidade de extração.
 {% endblock page_description %}
 
 {% block page_actions %}
@@ -15,107 +15,335 @@ Visualização da unidade de extração.
       <i class="fas fa-arrow-left me-2"></i>Voltar
     </a>
   {% endif %}
+  <a href="{% url 'core:extraction_unit_update' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-primary">
+    <i class="fas fa-pen me-2"></i>Editar
+  </a>
 {% endblock page_actions %}
 
 {% block content %}
 <div class="container-fluid">
-  <div class="row justify-content-center">
-    <div class="col-lg-10">
-      <div class="card shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <div>
-            <h5 class="mb-0">
-              <i class="fas fa-sitemap me-2"></i>
-              {{ unit.name|default:"(sem nome)" }}
-            </h5>
-            <div class="text-muted small mt-1">
-              {{ unit.acronym|default:"-" }}
-              {% if unit.agency %}
-                <span class="text-muted">—</span>
-                {{ unit.agency.acronym|default:unit.agency.name }}
-              {% endif %}
+  <!-- Cards de Estatísticas -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card border-primary">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="text-muted small mb-1">Extratores</div>
+              <div class="h4 mb-0">{{ extractors_count }}</div>
             </div>
-          </div>
-
-          <div class="d-flex gap-2">
-            <a href="{% url 'core:extraction_unit_update' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-primary">
-              <i class="fas fa-pen me-2"></i>Editar
-            </a>
-            <a href="{% url 'core:extraction_unit_reply_email_update' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-warning">
-              <i class="fas fa-envelope-open-text me-2"></i>E-mail
-            </a>
-            <a href="{% url 'core:document_template_hub' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-info">
-              <i class="fas fa-file-alt me-2"></i>Ofícios
-            </a>
-            <a href="{% url 'core:extraction_unit_report_settings_update' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-success">
-              <i class="fas fa-chart-bar me-2"></i>Relatórios
-            </a>
-            <a href="{% url 'core:evidence_location_hub' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-dark">
-              <i class="fas fa-boxes me-2"></i>Evidências
-            </a>
-            <a href="{% url 'core:storage_media_hub' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-secondary">
-              <i class="fas fa-hdd me-2"></i>Armazenamento
-            </a>
+            <div class="text-primary">
+              <i class="fas fa-user-shield fa-2x"></i>
+            </div>
           </div>
         </div>
+        <div class="card-footer bg-transparent">
+          <a href="{% url 'core:extraction_agency_hub' %}" class="text-decoration-none small">
+            Ver extratores <i class="fas fa-arrow-right ms-1"></i>
+          </a>
+        </div>
+      </div>
+    </div>
 
+    <div class="col-md-3">
+      <div class="card border-info">
         <div class="card-body">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <div class="border rounded p-3 h-100">
-                <div class="fw-semibold mb-2"><i class="fas fa-info-circle me-2"></i>Dados</div>
-                <div class="small">
-                  <div><span class="text-muted">Sigla:</span> {{ unit.acronym|default:"-" }}</div>
-                  <div><span class="text-muted">Nome:</span> {{ unit.name|default:"-" }}</div>
-                  <div><span class="text-muted">Agência:</span> {% if unit.agency %}{{ unit.agency.name }}{% else %}-{% endif %}</div>
-                </div>
-              </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="text-muted small mb-1">Templates de Ofício</div>
+              <div class="h4 mb-0">{{ document_templates_count }}</div>
             </div>
-
-            <div class="col-md-6">
-              <div class="border rounded p-3 h-100">
-                <div class="fw-semibold mb-2"><i class="fas fa-phone me-2"></i>Contato</div>
-                <div class="small">
-                  <div><span class="text-muted">Telefone:</span> {{ unit.primary_phone|default:"-" }}</div>
-                  <div><span class="text-muted">Telefone (sec.):</span> {{ unit.secondary_phone|default:"-" }}</div>
-                  <div><span class="text-muted">Email:</span> {{ unit.primary_email|default:"-" }}</div>
-                  <div><span class="text-muted">Email (sec.):</span> {{ unit.secondary_email|default:"-" }}</div>
-                </div>
-              </div>
+            <div class="text-info">
+              <i class="fas fa-file-alt fa-2x"></i>
             </div>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent">
+          <a href="{% url 'core:document_template_hub' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="text-decoration-none small">
+            Gerenciar <i class="fas fa-arrow-right ms-1"></i>
+          </a>
+        </div>
+      </div>
+    </div>
 
-            <div class="col-12">
-              <div class="border rounded p-3">
-                <div class="fw-semibold mb-2"><i class="fas fa-map-marker-alt me-2"></i>Endereço</div>
-                <div class="small">
-                  <div>
-                    {{ unit.address_line1|default:"" }}
-                    {% if unit.address_number %}, {{ unit.address_number }}{% endif %}
-                    {% if unit.address_line2 %} - {{ unit.address_line2 }}{% endif %}
+    <div class="col-md-3">
+      <div class="card border-success">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="text-muted small mb-1">Meios de Armazenamento</div>
+              <div class="h4 mb-0">{{ storage_stats.total }}</div>
+            </div>
+            <div class="text-success">
+              <i class="fas fa-hdd fa-2x"></i>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent">
+          <a href="{% url 'core:storage_media_hub' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="text-decoration-none small">
+            Gerenciar <i class="fas fa-arrow-right ms-1"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card border-dark">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="text-muted small mb-1">Locais de Evidência</div>
+              <div class="h4 mb-0">{{ evidence_locations_count }}</div>
+            </div>
+            <div class="text-dark">
+              <i class="fas fa-boxes fa-2x"></i>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent">
+          <a href="{% url 'core:evidence_location_hub' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="text-decoration-none small">
+            Gerenciar <i class="fas fa-arrow-right ms-1"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- Informações da Unidade -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">
+            <i class="fas fa-info-circle me-2"></i>Informações da Unidade
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <div class="text-muted small">Sigla</div>
+            <div class="fw-semibold">{{ unit.acronym|default:"-" }}</div>
+          </div>
+          <div class="mb-3">
+            <div class="text-muted small">Nome</div>
+            <div class="fw-semibold">{{ unit.name|default:"-" }}</div>
+          </div>
+          {% if unit.agency %}
+          <div class="mb-3">
+            <div class="text-muted small">Agência</div>
+            <div>{{ unit.agency.acronym|default:unit.agency.name }}</div>
+          </div>
+          {% endif %}
+          {% if unit.incharge_name %}
+          <div class="mb-3">
+            <div class="text-muted small">Responsável</div>
+            <div>{{ unit.incharge_name }}{% if unit.incharge_position %} — {{ unit.incharge_position }}{% endif %}</div>
+          </div>
+          {% endif %}
+          {% if unit.primary_phone or unit.primary_email %}
+          <div class="mb-3">
+            <div class="text-muted small">Contato</div>
+            {% if unit.primary_phone %}
+              <div><i class="fas fa-phone me-1"></i>{{ unit.primary_phone }}</div>
+            {% endif %}
+            {% if unit.primary_email %}
+              <div><i class="fas fa-envelope me-1"></i>{{ unit.primary_email }}</div>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+        <div class="card-footer bg-transparent">
+          <a href="{% url 'core:extraction_unit_update' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-primary w-100">
+            <i class="fas fa-pen me-2"></i>Editar Dados
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Extratores -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">
+            <i class="fas fa-user-shield me-2"></i>Extratores
+          </h6>
+          <span class="badge bg-primary">{{ extractors_count }}</span>
+        </div>
+        <div class="card-body">
+          {% if extractors %}
+            <div class="list-group list-group-flush">
+              {% for extractor_link in extractors|slice:":5" %}
+                <div class="list-group-item px-0 py-2 border-0 border-bottom">
+                  <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                      <div class="fw-semibold">{{ extractor_link.extractor.user.get_full_name|default:extractor_link.extractor.user.username }}</div>
+                      <div class="text-muted small">{{ extractor_link.extractor.user.email|default:"" }}</div>
+                    </div>
                   </div>
-                  <div>
-                    {% if unit.neighborhood %}{{ unit.neighborhood }}{% endif %}
-                    {% if unit.city_name %}{% if unit.neighborhood %} - {% endif %}{{ unit.city_name }}{% endif %}
-                    {% if unit.state_name %} / {{ unit.state_name }}{% endif %}
-                    {% if unit.postal_code %} - {{ unit.postal_code }}{% endif %}
-                  </div>
-                  <div>
-                    {% if unit.country_name %}{{ unit.country_name }}{% endif %}
+                </div>
+              {% endfor %}
+              {% if extractors_count > 5 %}
+                <div class="text-center mt-2">
+                  <small class="text-muted">e mais {{ extractors_count|add:"-5" }} extrator{{ extractors_count|add:"-5"|pluralize:"es" }}</small>
+                </div>
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="text-center py-3 text-muted">
+              <i class="fas fa-user-slash fa-2x mb-2"></i>
+              <div>Nenhum extrator associado</div>
+            </div>
+          {% endif %}
+        </div>
+        <div class="card-footer bg-transparent">
+          <a href="{% url 'core:extraction_agency_hub' %}" class="btn btn-sm btn-outline-primary w-100">
+            <i class="fas fa-cog me-2"></i>Gerenciar Extratores
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Meios de Armazenamento -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">
+            <i class="fas fa-hdd me-2"></i>Meios de Armazenamento
+          </h6>
+          <span class="badge bg-success">{{ storage_stats.total }}</span>
+        </div>
+        <div class="card-body">
+          {% if storage_stats.medias %}
+            <div class="list-group list-group-flush">
+              {% for media in storage_stats.medias %}
+                <div class="list-group-item px-0 py-2 border-0 border-bottom">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <div class="fw-semibold">{{ media.acronym }}</div>
+                      <div class="text-muted small">{{ media.name }}</div>
+                    </div>
+                    <i class="fas fa-hdd text-muted"></i>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <div class="col-12">
-              <div class="border rounded p-3">
-                <div class="fw-semibold mb-2"><i class="fas fa-user-tie me-2"></i>Responsável</div>
-                <div class="small">
-                  <div><span class="text-muted">Nome:</span> {{ unit.incharge_name|default:"-" }}</div>
-                  <div><span class="text-muted">Cargo:</span> {{ unit.incharge_position|default:"-" }}</div>
+              {% endfor %}
+              {% if storage_stats.total > 5 %}
+                <div class="text-center mt-2">
+                  <small class="text-muted">e mais {{ storage_stats.total|add:"-5" }} meio{{ storage_stats.total|add:"-5"|pluralize:"s" }}</small>
                 </div>
-              </div>
+              {% endif %}
             </div>
+          {% else %}
+            <div class="text-center py-3 text-muted">
+              <i class="fas fa-hdd fa-2x mb-2"></i>
+              <div>Nenhum meio cadastrado</div>
+            </div>
+          {% endif %}
+        </div>
+        <div class="card-footer bg-transparent">
+          <a href="{% url 'core:storage_media_hub' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-success w-100">
+            <i class="fas fa-cog me-2"></i>Gerenciar
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
 
+  <div class="row g-3 mt-3">
+    <!-- Locais de Evidência por Tipo -->
+    <div class="col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">
+            <i class="fas fa-boxes me-2"></i>Locais de Evidência
+          </h6>
+          <span class="badge bg-dark">{{ evidence_locations_count }}</span>
+        </div>
+        <div class="card-body">
+          {% if evidence_stats %}
+            <div class="row g-2 mb-3">
+              {% for stat in evidence_stats %}
+                <div class="col-4">
+                  <div class="text-center p-2 border rounded">
+                    <div class="h5 mb-0">
+                      {% if stat.type == 'to_do' %}
+                        <span class="badge bg-secondary">{{ stat.count }}</span>
+                      {% elif stat.type == 'in_progress' %}
+                        <span class="badge bg-warning">{{ stat.count }}</span>
+                      {% elif stat.type == 'done' %}
+                        <span class="badge bg-success">{{ stat.count }}</span>
+                      {% else %}
+                        {{ stat.count }}
+                      {% endif %}
+                    </div>
+                    <div class="text-muted small mt-1">
+                      {% if stat.type == 'to_do' %}Para fazer
+                      {% elif stat.type == 'in_progress' %}Em progresso
+                      {% elif stat.type == 'done' %}Finalizado
+                      {% else %}{{ stat.type }}{% endif %}
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+            {% if evidence_locations %}
+              <div class="list-group list-group-flush">
+                {% for location in evidence_locations|slice:":3" %}
+                  <div class="list-group-item px-0 py-2 border-0 border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <div class="fw-semibold">{{ location.name }}</div>
+                        {% if location.shelf_name or location.slot_name %}
+                          <div class="text-muted small">
+                            {% if location.shelf_name %}Prateleira: {{ location.shelf_name }}{% endif %}
+                            {% if location.slot_name %}{% if location.shelf_name %} • {% endif %}Slot: {{ location.slot_name }}{% endif %}
+                          </div>
+                        {% endif %}
+                      </div>
+                      {% if location.type == 'to_do' %}
+                        <span class="badge bg-secondary">Para fazer</span>
+                      {% elif location.type == 'in_progress' %}
+                        <span class="badge bg-warning">Em progresso</span>
+                      {% elif location.type == 'done' %}
+                        <span class="badge bg-success">Finalizado</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          {% else %}
+            <div class="text-center py-3 text-muted">
+              <i class="fas fa-boxes fa-2x mb-2"></i>
+              <div>Nenhum local cadastrado</div>
+            </div>
+          {% endif %}
+        </div>
+        <div class="card-footer bg-transparent">
+          <a href="{% url 'core:evidence_location_hub' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-dark w-100">
+            <i class="fas fa-cog me-2"></i>Gerenciar
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configurações Rápidas -->
+    <div class="col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">
+            <i class="fas fa-cog me-2"></i>Configurações Rápidas
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <a href="{% url 'core:extraction_unit_reply_email_update' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-warning">
+              <i class="fas fa-envelope-open-text me-2"></i>Template de E-mail
+            </a>
+            <a href="{% url 'core:document_template_hub' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-info">
+              <i class="fas fa-file-alt me-2"></i>Templates de Ofício
+            </a>
+            <a href="{% url 'core:extraction_unit_report_settings_update' unit.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-success">
+              <i class="fas fa-chart-bar me-2"></i>Configurações de Relatórios
+            </a>
           </div>
         </div>
       </div>

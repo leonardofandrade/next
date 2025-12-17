@@ -4,21 +4,24 @@ Views para ExtractionUnit (app core)
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from django.db.models import Count, Sum, Q
 from django.http import Http404
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import TemplateView, UpdateView
 
-from apps.core.models import ExtractionUnit, ExtractionUnitReportSettings
+from apps.core.models import (
+    ExtractionUnit, ExtractionUnitReportSettings,
+    ExtractionUnitExtractor, ExtractionUnitStorageMedia,
+    ExtractionUnitEvidenceLocation, DocumentTemplate
+)
 from apps.core.forms import ExtractionUnitForm, ExtractionUnitReplyEmailForm, ExtractionUnitReportSettingsForm
 
 
 class ExtractionUnitHubView(LoginRequiredMixin, TemplateView):
     """
-    Página hub (detail) da Unidade de Extração.
-
-    Por enquanto, exibe os dados e permite navegar para edição.
+    Dashboard da Unidade de Extração com resumos e estatísticas.
     """
 
     template_name = 'core/extraction_unit_hub.html'
@@ -30,7 +33,53 @@ class ExtractionUnitHubView(LoginRequiredMixin, TemplateView):
         except ExtractionUnit.DoesNotExist as exc:
             raise Http404('Unidade de extração não encontrada.') from exc
 
+        # Extratores associados
+        extractors = ExtractionUnitExtractor.objects.filter(
+            extraction_unit=unit,
+            deleted_at__isnull=True,
+            extractor__deleted_at__isnull=True
+        ).select_related('extractor__user').order_by('extractor__user__first_name', 'extractor__user__last_name')
+
+        # Meios de armazenamento
+        storage_medias = ExtractionUnitStorageMedia.objects.filter(
+            extraction_unit=unit,
+            deleted_at__isnull=True
+        ).order_by('acronym', 'name')
+
+        # Locais de evidência
+        evidence_locations = ExtractionUnitEvidenceLocation.objects.filter(
+            extraction_unit=unit,
+            deleted_at__isnull=True
+        ).order_by('type', 'name')
+
+        # Templates de documento
+        document_templates = DocumentTemplate.objects.filter(
+            extraction_unit=unit,
+            deleted_at__isnull=True
+        ).order_by('-is_default', 'name')
+
+        # Estatísticas de locais de evidência por tipo
+        evidence_stats = evidence_locations.values('type').annotate(
+            count=Count('id')
+        ).order_by('type')
+
+        # Estatísticas de storage (pode ser expandido com dados de uso real)
+        storage_stats = {
+            'total': storage_medias.count(),
+            'medias': storage_medias[:5],  # Primeiros 5 para exibição
+        }
+
         context['unit'] = unit
+        context['extractors'] = extractors
+        context['extractors_count'] = extractors.count()
+        context['storage_medias'] = storage_medias
+        context['storage_stats'] = storage_stats
+        context['evidence_locations'] = evidence_locations
+        context['evidence_stats'] = evidence_stats
+        context['document_templates'] = document_templates
+        context['document_templates_count'] = document_templates.count()
+        context['evidence_locations_count'] = evidence_locations.count()
+        
         return context
 
 

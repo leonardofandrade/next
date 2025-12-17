@@ -195,6 +195,12 @@ Configuração da Agência de Central de Extração.
               {% endif %}
             </div>
           {% endif %}
+
+          <div class="mt-3">
+            <a href="{% url 'core:extraction_agency_update' %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-primary">
+              <i class="fas fa-pen me-2"></i>Editar Agência
+            </a>
+          </div>
         </div>
       </div>
     </div>

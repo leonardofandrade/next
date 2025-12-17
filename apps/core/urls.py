@@ -6,5 +6,6 @@ app_name = 'core'
 urlpatterns = [
     # ExtractionAgency (singleton)
     path('settings/extraction-agency/', views.ExtractionAgencyHubView.as_view(), name='extraction_agency_hub'),
+    path('settings/extraction-agency/edit/', views.ExtractionAgencyUpdateView.as_view(), name='extraction_agency_update'),
 
 ]

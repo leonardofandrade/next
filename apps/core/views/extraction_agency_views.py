@@ -3,9 +3,14 @@ Views para o app core
 """
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import TemplateView
+from django.contrib import messages
+from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.generic import TemplateView, UpdateView
 
 from apps.core.models import ExtractionAgency
+from apps.core.forms import ExtractionAgencyForm
 
 
 class ExtractionAgencyHubView(LoginRequiredMixin, TemplateView):
@@ -25,3 +30,38 @@ class ExtractionAgencyHubView(LoginRequiredMixin, TemplateView):
             agency.extraction_units.all().order_by('acronym', 'name') if agency else []
         )
         return context
+
+
+class ExtractionAgencyUpdateView(LoginRequiredMixin, UpdateView):
+    """
+    Tela de atualização (singleton) da Agência de Extração.
+
+    Não usa PK na URL: sempre carrega o primeiro registro (e cria um vazio se não existir).
+    """
+
+    model = ExtractionAgency
+    form_class = ExtractionAgencyForm
+    template_name = 'core/extraction_agency_update.html'
+    context_object_name = 'agency'
+
+    def get_object(self, queryset=None):
+        agency = ExtractionAgency.objects.first()
+        if agency:
+            return agency
+        # Cria um registro placeholder para permitir edição posterior
+        return ExtractionAgency.objects.create(acronym='', name='')
+
+    def get_success_url(self):
+        next_url = self.request.GET.get('next')
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
+            return next_url
+        return reverse('core:extraction_agency_hub')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, _('Agência de extração atualizada com sucesso!'))
+        return response

@@ -80,31 +80,53 @@ class CaseListView(ExtractionUnitFilterMixin, LoginRequiredMixin, ServiceMixin, 
         return context
 
 
-class CaseWaitingExtractorListView(CaseListView):
+class CaseWaitingExtractorListView(ExtractionUnitFilterMixin, LoginRequiredMixin, ServiceMixin, ListView):
     """
-    Lista processos aguardando extrator (status travado em waiting_extractor),
+    Lista processos aguardando extrator (assigned_to é nulo),
     mantendo os demais filtros disponíveis.
     """
-
+    model = Case
+    service_class = CaseService
+    search_form_class = CaseSearchForm
+    template_name = 'cases/case_waiting_extractor_list.html'
+    context_object_name = 'cases'
+    paginate_by = settings.PAGINATE_BY
+    
+    def get_queryset(self) -> QuerySet:
+        """Get filtered queryset using service, filtered by assigned_to being null"""
+        service = self.get_service()
+        filters = self.get_filters()
+        
+        try:
+            queryset = service.list_filtered(filters)
+            # Filtra apenas processos sem atribuição (assigned_to é nulo)
+            queryset = queryset.filter(assigned_to__isnull=True)
+            return queryset
+        except ServiceException as e:
+            self.handle_service_exception(e)
+            return self.model.objects.none()
+    
     def get_filters(self) -> Dict[str, Any]:
-        filters = super().get_filters()
-        filters['status'] = Case.CASE_STATUS_WAITING_EXTRACTOR
-        return filters
-
+        """Get filters from request"""
+        filters = {}
+        
+        if self.search_form_class:
+            form = self.search_form_class(self.request.GET or None)
+            if form.is_valid():
+                filters = form.cleaned_data
+                
+        return {k: v for k, v in filters.items() if v}
+    
     def get_context_data(self, **kwargs):
+        """Add search form and total count to context"""
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Processos - Aguardando Extrator'
         context['page_icon'] = 'fa-user-clock'
         context['page_description'] = 'Processos aguardando atribuição de extrator'
+        context['form'] = self.search_form_class(self.request.GET or None)
+        context['total_count'] = self.get_queryset().count()
         context['list_url'] = reverse('cases:waiting_extractor_list')
         context['clear_url'] = context['list_url']
-
-        # Exibe o status no filtro, mas trava (o backend força de qualquer forma)
-        form = context.get('form')
-        if form is not None and hasattr(form, 'fields') and 'status' in form.fields:
-            form.fields['status'].initial = Case.CASE_STATUS_WAITING_EXTRACTOR
-            form.fields['status'].disabled = True
-        context['form'] = form
 
         return context
 

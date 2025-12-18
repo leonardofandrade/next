@@ -362,7 +362,9 @@ class CaseService(BaseService):
                 Q(request_procedures__icontains=search) |
                 Q(requester_authority_name__icontains=search) |
                 Q(additional_info__icontains=search) |
-                Q(legacy_number__icontains=search)
+                Q(legacy_number__icontains=search) |
+                Q(requester_agency_unit__name__icontains=search) |
+                Q(requester_agency_unit__acronym__icontains=search)
             )
             
         if status := filters.get('status'):

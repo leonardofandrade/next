@@ -216,6 +216,17 @@ class CaseService(BaseService):
         case.assigned_by = self.user
         case.updated_by = self.user
         case.version += 1
+        
+        # Atualiza o status baseado nas extrações primeiro
+        case.update_status_based_on_extractions()
+        
+        # Se o status ainda for WAITING_EXTRACTOR ou DRAFT após atualizar baseado nas extrações,
+        # muda para WAITING_START já que agora o case está atribuído a um usuário
+        # Isso garante que quando um case é atribuído, o status reflita isso
+        if case.status in [case.CASE_STATUS_WAITING_EXTRACTOR, case.CASE_STATUS_DRAFT]:
+            case.status = case.CASE_STATUS_WAITING_START
+        
+        # Salva todas as alterações
         case.save()
         
         return case
@@ -236,7 +247,18 @@ class CaseService(BaseService):
         case.assigned_by = None
         case.updated_by = self.user
         case.version += 1
-        case.save()
+        
+        # Atualiza status baseado nas extrações primeiro
+        case.update_status_based_on_extractions()
+        
+        # Se o status ainda for WAITING_START após atualizar baseado nas extrações,
+        # volta para WAITING_EXTRACTOR já que o case não está mais atribuído
+        if case.status == case.CASE_STATUS_WAITING_START:
+            case.status = case.CASE_STATUS_WAITING_EXTRACTOR
+            case.save(update_fields=['status'])
+        else:
+            # Se já foi atualizado pelo método anterior, apenas salva
+            case.save()
         
         return case
     

@@ -411,8 +411,12 @@ class Case(AbstractCaseModel):
             new_status = self.CASE_STATUS_WAITING_START
         
         # Se todas estiverem pendentes (aguardando extrator)
+        # Mas se o case já está atribuído a um usuário, mantém WAITING_START
         elif pending_count == total:
-            new_status = self.CASE_STATUS_WAITING_EXTRACTOR
+            if self.assigned_to:
+                new_status = self.CASE_STATUS_WAITING_START
+            else:
+                new_status = self.CASE_STATUS_WAITING_EXTRACTOR
         
         # Caso padrão: mix de estados, considera em progresso
         else:

@@ -28,6 +28,10 @@
             <ul class="navbar-nav me-auto">
                 {% if user.is_authenticated %}
                 <!-- Solicitações -->
+                <a href="{% url 'users:home' %}?next={{ request.path }}" class="nav-link">
+                    <i class="fas fa-home me-1"></i>
+                    Página Inicial
+                </a>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="requisitionsDropdown" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">

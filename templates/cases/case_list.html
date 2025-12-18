@@ -28,52 +28,58 @@
             </h5>
         </div>
         <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-3">
-                    {{ form.search.label_tag }}
-                    {{ form.search }}
+            <form method="get">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        {{ form.search.label_tag }}
+                        {{ form.search }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ form.status.label_tag }}
+                        {{ form.status }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ form.priority.label_tag }}
+                        {{ form.priority }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.requester_agency_unit.label_tag }}
+                        {{ form.requester_agency_unit }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ form.extraction_unit.label_tag }}
+                        {{ form.extraction_unit }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.assigned_to.label_tag }}
+                        {{ form.assigned_to }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.crime_category.label_tag }}
+                        {{ form.crime_category }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.date_from.label_tag }}
+                        {{ form.date_from }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.date_to.label_tag }}
+                        {{ form.date_to }}
+                    </div>
                 </div>
-                <div class="col-md-2">
-                    {{ form.status.label_tag }}
-                    {{ form.status }}
-                </div>
-                <div class="col-md-2">
-                    {{ form.priority.label_tag }}
-                    {{ form.priority }}
-                </div>
-                <div class="col-md-3">
-                    {{ form.requester_agency_unit.label_tag }}
-                    {{ form.requester_agency_unit }}
-                </div>
-                <div class="col-md-2">
-                    {{ form.extraction_unit.label_tag }}
-                    {{ form.extraction_unit }}
-                </div>
-                <div class="col-md-3">
-                    {{ form.assigned_to.label_tag }}
-                    {{ form.assigned_to }}
-                </div>
-                <div class="col-md-3">
-                    {{ form.crime_category.label_tag }}
-                    {{ form.crime_category }}
-                </div>
-                <div class="col-md-3">
-                    {{ form.date_from.label_tag }}
-                    {{ form.date_from }}
-                </div>
-                <div class="col-md-3">
-                    {{ form.date_to.label_tag }}
-                    {{ form.date_to }}
-                </div>
-                <div class="col-12">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-search me-2"></i>
-                        Filtrar
-                    </button>
-                    <a href="{{ clear_url|default:list_url|default:"" }}" class="btn btn-secondary">
-                        <i class="fas fa-times me-2"></i>
-                        Limpar
-                    </a>
+                <div class="card-footer">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i>
+                                Filtrar
+                            </button>
+                            <a href="{{ clear_url|default:list_url|default:"" }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>
+                                Limpar
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>
@@ -148,26 +154,6 @@
                                            title="Ver detalhes">
                                             <i class="fas fa-folder-open"></i>
                                         </a>
-                                        <a href="{% url 'cases:devices' case.pk %}?next={{ list_url }}" 
-                                           class="btn btn-outline-info" 
-                                           title="Gerenciar dispositivos">
-                                            <i class="fas fa-mobile-alt"></i>
-                                        </a>
-                                        <a href="{% url 'cases:procedures' case.pk %}?next={{ list_url }}" 
-                                           class="btn btn-outline-warning" 
-                                           title="Gerenciar procedimentos">
-                                            <i class="fas fa-gavel"></i>
-                                        </a>
-                                        <a href="{% url 'cases:documents' case.pk %}?next={{ list_url }}" 
-                                           class="btn btn-outline-primary" 
-                                           title="Gerenciar documentos">
-                                            <i class="fas fa-file-alt"></i>
-                                        </a>
-                                        <a href="{% url 'extractions:case_extractions' case.pk %}?next={{ list_url }}" 
-                                           class="btn btn-outline-success" 
-                                           title="Gerenciar extrações">
-                                            <i class="fas fa-database"></i>
-                                        </a>
                                         {% if not case.assigned_to or case.assigned_to == request.user %}
                                         <a href="{% url 'cases:update' case.pk %}?next={{ list_url }}" 
                                            class="btn btn-outline-secondary" 
@@ -179,8 +165,10 @@
                                                 title="Apenas o responsável pode editar" 
                                                 disabled>
                                             <i class="fas fa-edit"></i>
-                                        </button>
-                                        {% endif %}
+                                        </button>   
+                                        {% endif %}                                     
+                                        
+                                        
                                         {% if case.assigned_to == request.user %}
                                         <button type="button" 
                                                 class="btn btn-outline-warning btn-sm" 
@@ -203,6 +191,26 @@
                                         </button>
                                         {% endif %}
                                         {% comment %}
+                                        <a href="{% url 'cases:devices' case.pk %}?next={{ list_url }}" 
+                                           class="btn btn-outline-info" 
+                                           title="Gerenciar dispositivos">
+                                            <i class="fas fa-mobile-alt"></i>
+                                        </a>
+                                        <a href="{% url 'cases:procedures' case.pk %}?next={{ list_url }}" 
+                                           class="btn btn-outline-warning" 
+                                           title="Gerenciar procedimentos">
+                                            <i class="fas fa-gavel"></i>
+                                        </a>
+                                        <a href="{% url 'cases:documents' case.pk %}?next={{ list_url }}" 
+                                           class="btn btn-outline-primary" 
+                                           title="Gerenciar documentos">
+                                            <i class="fas fa-file-alt"></i>
+                                        </a>
+                                        <a href="{% url 'extractions:case_extractions' case.pk %}?next={{ list_url }}" 
+                                           class="btn btn-outline-success" 
+                                           title="Gerenciar extrações">
+                                            <i class="fas fa-database"></i>
+                                        </a>                                         
                                         {% if not case.assigned_to or case.assigned_to == request.user %}
                                         <a href="{% url 'cases:delete' case.pk %}?next={{ list_url }}" 
                                            class="btn btn-outline-danger" 

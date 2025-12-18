@@ -131,26 +131,27 @@ Painel de controle dos processos sob sua responsabilidade - Visualização em Fl
                 </div>
                 <div class="card-body p-4">
                     <div class="row g-4">
+                        {% url 'users:my_cases' as my_cases_url %}
                         {% for case in cases_by_status.draft %}
-                            {% include 'users/extractors/includes/case_workflow_card.html' with case=case %}
+                            {% include 'users/extractors/includes/case_workflow_card.html' with case=case return_url=my_cases_url %}
                         {% endfor %}
                         {% for case in cases_by_status.waiting_extractor %}
-                            {% include 'users/extractors/includes/case_workflow_card.html' with case=case %}
+                            {% include 'users/extractors/includes/case_workflow_card.html' with case=case return_url=my_cases_url %}
                         {% endfor %}
                         {% for case in cases_by_status.waiting_start %}
-                            {% include 'users/extractors/includes/case_workflow_card.html' with case=case %}
+                            {% include 'users/extractors/includes/case_workflow_card.html' with case=case return_url=my_cases_url %}
                         {% endfor %}
                         {% for case in cases_by_status.waiting_collect %}
-                            {% include 'users/extractors/includes/case_workflow_card.html' with case=case %}
+                            {% include 'users/extractors/includes/case_workflow_card.html' with case=case return_url=my_cases_url %}
                         {% endfor %}
                         {% for case in cases_by_status.in_progress %}
-                            {% include 'users/extractors/includes/case_workflow_card.html' with case=case %}
+                            {% include 'users/extractors/includes/case_workflow_card.html' with case=case return_url=my_cases_url %}
                         {% endfor %}
                         {% for case in cases_by_status.paused %}
-                            {% include 'users/extractors/includes/case_workflow_card.html' with case=case %}
+                            {% include 'users/extractors/includes/case_workflow_card.html' with case=case return_url=my_cases_url %}
                         {% endfor %}
                         {% for case in cases_by_status.extractions_completed %}
-                            {% include 'users/extractors/includes/case_workflow_card.html' with case=case %}
+                            {% include 'users/extractors/includes/case_workflow_card.html' with case=case return_url=my_cases_url %}
                         {% endfor %}
                     </div>
                 </div>
@@ -190,8 +191,9 @@ Painel de controle dos processos sob sua responsabilidade - Visualização em Fl
         <div class="collapse" id="historyCollapse">
             <div class="card-body">
                 <div class="row g-3">
+                    {% url 'users:my_cases' as my_cases_url %}
                     {% for case in cases_by_status.completed %}
-                        {% include 'users/extractors/includes/case_workflow_card.html' with case=case %}
+                        {% include 'users/extractors/includes/case_workflow_card.html' with case=case return_url=my_cases_url %}
                     {% endfor %}
                 </div>
             </div>

@@ -163,6 +163,38 @@ class CaseDetailView(ExtractionUnitFilterMixin, BaseDetailView):
         return context
 
 
+class CaseHubView(ExtractionUnitFilterMixin, BaseDetailView):
+    """
+    Hub central de ações para um processo de extração
+    """
+    model = Case
+    service_class = CaseService
+    template_name = 'cases/case_hub.html'
+    context_object_name = 'case'
+    
+    def get_context_data(self, **kwargs):
+        """Add page information and counts to context"""
+        context = super().get_context_data(**kwargs)
+        case = self.get_object()
+        case_number = case.number if case.number else f"#{case.pk}"
+        acronym = f" - {case.requester_agency_unit.acronym}" if case.requester_agency_unit and case.requester_agency_unit.acronym else ""
+        context['page_title'] = f'Hub de Ações - Processo {case_number}{acronym}'
+        context['page_icon'] = 'fa-th'
+        
+        # Add device, procedure and document counts
+        context['devices_count'] = case.case_devices.filter(deleted_at__isnull=True).count()
+        context['procedures_count'] = case.procedures.filter(deleted_at__isnull=True).count()
+        context['documents_count'] = case.documents.filter(deleted_at__isnull=True).count()
+        
+        # Add extractions count
+        context['extractions_count'] = Extraction.objects.filter(
+            case_device__case=case,
+            deleted_at__isnull=True
+        ).count()
+        
+        return context
+
+
 class CaseCreateView(BaseCreateView):
     """
     Cria um novo processo de extração

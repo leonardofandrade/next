@@ -7,6 +7,7 @@ urlpatterns = [
     path('', views.CaseListView.as_view(), name='list'),
     path('waiting-extractor/', views.CaseWaitingExtractorListView.as_view(), name='waiting_extractor_list'),
     path('<int:pk>/', views.CaseDetailView.as_view(), name='detail'),
+    path('<int:pk>/hub/', views.CaseHubView.as_view(), name='hub'),
     path('create/', views.CaseCreateView.as_view(), name='create'),
     path('<int:pk>/update/', views.CaseUpdateView.as_view(), name='update'),
     path('<int:pk>/update-full/', views.CaseUpdateFullView.as_view(), name='update_full'),

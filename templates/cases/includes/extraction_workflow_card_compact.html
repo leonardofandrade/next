@@ -88,42 +88,7 @@ Uso: {% include 'cases/includes/extraction_workflow_card_compact.html' with extr
         
         <!-- Horizontal Workflow Diagram Compacto -->
         <div class="workflow-horizontal-compact d-flex align-items-stretch gap-1 mb-0">
-            <!-- Step 1: Pending -->
-            <div class="workflow-step-compact {% if extraction.status == 'pending' %}active{% elif extraction.assigned_at %}completed{% endif %}">
-                <div class="step-rectangle-compact">
-                    {% if extraction.assigned_at %}
-                    <div class="step-check-icon-compact">
-                        <i class="fas fa-check"></i>
-                    </div>
-                    {% endif %}
-                    <div class="step-icon-compact">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="step-content-compact">
-                        <div class="step-label-compact">Aguardando</div>
-                        {% if extraction.status == 'pending' %}
-                            <div class="step-badge-compact"><span class="badge bg-info" style="font-size: 0.6rem;">Atual</span></div>
-                            <div class="step-actions-compact mt-1">
-                                <button type="button" 
-                                        class="btn btn-primary btn-sm w-100" 
-                                        style="font-size: 0.65rem; padding: 0.2rem 0.4rem;"
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#startModal{{ extraction.pk }}">
-                                    <i class="fas fa-play me-1"></i>Iniciar
-                                </button>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Connector -->
-            <div class="connector-compact {% if extraction.assigned_at %}completed{% endif %}">
-                <div class="line-compact"></div>
-                <i class="fas fa-chevron-right arrow-compact"></i>
-            </div>
-            
-            <!-- Step 2: Assigned -->
+            <!-- Step 1: Assigned -->
             <div class="workflow-step-compact {% if extraction.status == 'assigned' %}active{% elif extraction.started_at %}completed{% endif %}">
                 <div class="step-rectangle-compact">
                     {% if extraction.started_at %}
@@ -161,6 +126,41 @@ Uso: {% include 'cases/includes/extraction_workflow_card_compact.html' with extr
                         {% endif %}
                         {% if extraction.assigned_at %}
                             <div class="step-date-compact">{{ extraction.assigned_at|date:"d/m H:i" }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Connector -->
+            <div class="connector-compact {% if extraction.status != 'pending' and extraction.assigned_at %}completed{% endif %}">
+                <div class="line-compact"></div>
+                <i class="fas fa-chevron-right arrow-compact"></i>
+            </div>
+            
+            <!-- Step 2: Pending -->
+            <div class="workflow-step-compact {% if extraction.status == 'pending' %}active{% elif extraction.assigned_at %}completed{% endif %}">
+                <div class="step-rectangle-compact">
+                    {% if extraction.assigned_at %}
+                    <div class="step-check-icon-compact">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    {% endif %}
+                    <div class="step-icon-compact">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="step-content-compact">
+                        <div class="step-label-compact">Aguardando</div>
+                        {% if extraction.status == 'pending' %}
+                            <div class="step-badge-compact"><span class="badge bg-info" style="font-size: 0.6rem;">Atual</span></div>
+                            <div class="step-actions-compact mt-1">
+                                <button type="button" 
+                                        class="btn btn-primary btn-sm w-100" 
+                                        style="font-size: 0.65rem; padding: 0.2rem 0.4rem;"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#startModal{{ extraction.pk }}">
+                                    <i class="fas fa-play me-1"></i>Iniciar
+                                </button>
+                            </div>
                         {% endif %}
                     </div>
                 </div>

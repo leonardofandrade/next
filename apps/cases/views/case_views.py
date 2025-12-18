@@ -154,11 +154,23 @@ class CaseDetailView(ExtractionUnitFilterMixin, BaseDetailView):
         context['procedures_count'] = case.procedures.filter(deleted_at__isnull=True).count()
         context['documents_count'] = case.documents.filter(deleted_at__isnull=True).count()
         
-        # Add extractions count
-        context['extractions_count'] = Extraction.objects.filter(
+        # Add extractions count and list
+        extractions = Extraction.objects.filter(
             case_device__case=case,
             deleted_at__isnull=True
-        ).count()
+        ).select_related(
+            'case_device',
+            'case_device__device_model',
+            'case_device__device_model__brand',
+            'case_device__case',
+            'assigned_to',
+            'assigned_to__user',
+            'started_by',
+            'started_by__user'
+        ).order_by('-created_at')
+        
+        context['extractions_count'] = extractions.count()
+        context['extractions'] = extractions
         
         return context
 

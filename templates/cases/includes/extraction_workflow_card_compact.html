@@ -6,158 +6,84 @@ Uso: {% include 'cases/includes/extraction_workflow_card_compact.html' with extr
 <div class="card shadow-sm border-0 mb-2 extraction-workflow-card-compact">
     <div class="card-body p-2">
         <!-- Header Row Compacto -->
-        <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
-            <div class="extraction-info flex-grow-1">
-                <div class="d-flex align-items-center gap-2 mb-1">
-                    <span class="badge bg-primary">#{{ extraction.pk }}</span>
-                    <h6 class="mb-0" style="font-size: 0.85rem;">
-                        {% if extraction.case_device.device_model %}
-                            <strong>{{ extraction.case_device.device_model.brand.name }}</strong>
-                            {{ extraction.case_device.device_model.name }}
-                        {% else %}
-                            <span class="text-muted">Dispositivo sem modelo</span>
+        <div class="mb-2 pb-2 border-bottom">
+            <div class="d-flex justify-content-between align-items-start mb-1">
+                <div class="extraction-info flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="badge bg-primary">#{{ extraction.pk }}</span>
+                        <h6 class="mb-0" style="font-size: 0.85rem;">
+                            {% if extraction.case_device.device_model %}
+                                <strong>{{ extraction.case_device.device_model.brand.name }}</strong>
+                                {{ extraction.case_device.device_model.name }}
+                            {% else %}
+                                <span class="text-muted">Dispositivo sem modelo</span>
+                            {% endif %}
+                        </h6>
+                        {% if extraction.case_device.imei_01 %}
+                            <span class="badge bg-secondary" style="font-size: 0.7rem;">
+                                <i class="fas fa-fingerprint me-1"></i>{{ extraction.case_device.imei_01 }}
+                            </span>
                         {% endif %}
-                    </h6>
-                    {% if extraction.case_device.imei_01 %}
-                        <span class="badge bg-secondary" style="font-size: 0.7rem;">
-                            <i class="fas fa-fingerprint me-1"></i>{{ extraction.case_device.imei_01 }}
-                        </span>
-                    {% endif %}
+                    </div>
+                    <div class="d-flex gap-3 flex-wrap small text-muted" style="font-size: 0.7rem;">
+                        {% if extraction.created_at %}
+                            <span>
+                                <i class="fas fa-calendar-plus me-1"></i>
+                                Criada: {{ extraction.created_at|date:"d/m/Y H:i" }}
+                            </span>
+                        {% endif %}
+                        {% if extraction.assigned_at %}
+                            <span>
+                                <i class="fas fa-user-check me-1"></i>
+                                Atribuída: {{ extraction.assigned_at|date:"d/m/Y H:i" }}
+                            </span>
+                        {% endif %}
+                        {% if extraction.started_at %}
+                            <span>
+                                <i class="fas fa-play me-1"></i>
+                                Iniciada: {{ extraction.started_at|date:"d/m/Y H:i" }}
+                            </span>
+                        {% endif %}
+                        {% if extraction.finished_at %}
+                            <span>
+                                <i class="fas fa-check-circle me-1"></i>
+                                Finalizada: {{ extraction.finished_at|date:"d/m/Y H:i" }}
+                            </span>
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="d-flex gap-3 flex-wrap small text-muted" style="font-size: 0.7rem;">
-                    {% if extraction.created_at %}
-                        <span>
-                            <i class="fas fa-calendar-plus me-1"></i>
-                            Criada: {{ extraction.created_at|date:"d/m/Y H:i" }}
-                        </span>
-                    {% endif %}
-                    {% if extraction.assigned_at %}
-                        <span>
-                            <i class="fas fa-user-check me-1"></i>
-                            Atribuída: {{ extraction.assigned_at|date:"d/m/Y H:i" }}
-                        </span>
-                    {% endif %}
-                    {% if extraction.started_at %}
-                        <span>
-                            <i class="fas fa-play me-1"></i>
-                            Iniciada: {{ extraction.started_at|date:"d/m/Y H:i" }}
-                        </span>
-                    {% endif %}
-                    {% if extraction.finished_at %}
-                        <span>
-                            <i class="fas fa-check-circle me-1"></i>
-                            Finalizada: {{ extraction.finished_at|date:"d/m/Y H:i" }}
-                        </span>
-                    {% endif %}
+                <!-- Botão Editar Dispositivo -->
+                <div class="flex-shrink-0">
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-primary" 
+                            style="font-size: 0.7rem; padding: 0.2rem 0.4rem;"
+                            title="Editar Dispositivo"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#editDeviceModal{{ extraction.case_device.pk }}"
+                            data-device-id="{{ extraction.case_device.pk }}"
+                            data-case-id="{{ extraction.case_device.case.pk }}">
+                        <i class="fas fa-edit"></i>
+                    </button>
                 </div>
             </div>
-            <div class="d-flex gap-1 flex-shrink-0 align-items-center flex-wrap">
-                <!-- Action Buttons -->
-                {% if extraction.status == 'pending' %}
-                    <button type="button" 
-                            class="btn btn-primary btn-sm" 
-                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
-                            data-bs-toggle="modal" 
-                            data-bs-target="#startModal{{ extraction.pk }}">
-                        <i class="fas fa-play me-1"></i>Iniciar
-                    </button>
-                {% elif extraction.status == 'assigned' %}
-                    <button type="button" 
-                            class="btn btn-primary btn-sm" 
-                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
-                            data-bs-toggle="modal" 
-                            data-bs-target="#startModal{{ extraction.pk }}">
-                        <i class="fas fa-play me-1"></i>Iniciar
-                    </button>
-                    {% if not extraction.started_at %}
-                        <form method="post" action="{% url 'extractions:unassign_from_me' extraction.pk %}" class="ajax-form d-inline">
-                            {% csrf_token %}
-                            <button type="submit" 
-                                    class="btn btn-outline-danger btn-sm" 
-                                    style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
-                                    onclick="return confirm('Desatribuir esta extração?');">
-                                <i class="fas fa-user-times"></i>
-                            </button>
-                        </form>
-                    {% endif %}
-                {% elif extraction.status == 'in_progress' %}
-                    {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
-                        {% if not extraction.brute_force_started_at %}
-                            <button type="button" 
-                                    class="btn btn-outline-danger btn-sm" 
-                                    style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#startBruteForceModal{{ extraction.pk }}">
-                                <i class="fas fa-unlock-alt me-1"></i>Força Bruta
-                            </button>
-                        {% elif extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
-                            <button type="button" 
-                                    class="btn btn-danger btn-sm" 
-                                    style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#finishBruteForceModal{{ extraction.pk }}"
-                                    data-extraction-id="{{ extraction.pk }}">
-                                <i class="fas fa-unlock me-1"></i>Finalizar FB
-                            </button>
-                        {% endif %}
-                    {% endif %}
-                    <button type="button" 
-                            class="btn btn-outline-warning btn-sm" 
-                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
-                            data-bs-toggle="modal" 
-                            data-bs-target="#pauseModal{{ extraction.pk }}">
-                        <i class="fas fa-pause me-1"></i>Pausar
-                    </button>
-                    <button type="button" 
-                            class="btn btn-outline-secondary btn-sm" 
-                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
-                            data-bs-toggle="modal" 
-                            data-bs-target="#cancelExtractionModal{{ extraction.pk }}">
-                        <i class="fas fa-times me-1"></i>Cancelar
-                    </button>
-                    <button type="button" 
-                            class="btn btn-success btn-sm" 
-                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
-                            data-bs-toggle="modal" 
-                            data-bs-target="#finishExtractionModal{{ extraction.pk }}"
-                            data-extraction-id="{{ extraction.pk }}">
-                        <i class="fas fa-check me-1"></i>Finalizar
-                    </button>
-                {% elif extraction.status == 'paused' %}
-                    <button type="button" 
-                            class="btn btn-primary btn-sm" 
-                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
-                            data-bs-toggle="modal" 
-                            data-bs-target="#resumeModal{{ extraction.pk }}">
-                        <i class="fas fa-play me-1"></i>Retomar
-                    </button>
-                    <button type="button" 
-                            class="btn btn-success btn-sm" 
-                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
-                            data-bs-toggle="modal" 
-                            data-bs-target="#finishExtractionModal{{ extraction.pk }}"
-                            data-extraction-id="{{ extraction.pk }}">
-                        <i class="fas fa-check me-1"></i>Finalizar
-                    </button>
-                {% elif extraction.status == 'completed' %}
-                    <span class="text-success small" style="font-size: 0.75rem;">
-                        <i class="fas fa-check-circle me-1"></i>
-                        Concluída
+            
+            <!-- Informações Adicionais (se necessário) -->
+            {% if extraction.status == 'in_progress' or extraction.status == 'paused' %}
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 small text-muted mt-1">
+                {% if extraction.assigned_to %}
+                    <span>
+                        <i class="fas fa-user me-1"></i>
+                        <strong>Extrator:</strong> {{ extraction.assigned_to.user.get_full_name|default:extraction.assigned_to.user.username }}
                     </span>
                 {% endif %}
-                
-                <!-- Info Buttons -->
-                <button type="button" 
-                        class="btn btn-sm btn-outline-primary" 
-                        style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
-                        title="Editar Dispositivo"
-                        data-bs-toggle="modal" 
-                        data-bs-target="#editDeviceModal{{ extraction.case_device.pk }}"
-                        data-device-id="{{ extraction.case_device.pk }}"
-                        data-case-id="{{ extraction.case_device.case.pk }}">
-                    <i class="fas fa-edit"></i>
-                </button>
+                {% if extraction.extraction_size %}
+                    <span>
+                        <i class="fas fa-hdd me-1"></i>
+                        <strong>Tamanho:</strong> {{ extraction.extraction_size }} GB
+                    </span>
+                {% endif %}
             </div>
+            {% endif %}
         </div>
         
         <!-- Horizontal Workflow Diagram Compacto -->
@@ -177,6 +103,15 @@ Uso: {% include 'cases/includes/extraction_workflow_card_compact.html' with extr
                         <div class="step-label-compact">Aguardando</div>
                         {% if extraction.status == 'pending' %}
                             <div class="step-badge-compact"><span class="badge bg-info" style="font-size: 0.6rem;">Atual</span></div>
+                            <div class="step-actions-compact mt-1">
+                                <button type="button" 
+                                        class="btn btn-primary btn-sm w-100" 
+                                        style="font-size: 0.65rem; padding: 0.2rem 0.4rem;"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#startModal{{ extraction.pk }}">
+                                    <i class="fas fa-play me-1"></i>Iniciar
+                                </button>
+                            </div>
                         {% endif %}
                     </div>
                 </div>
@@ -203,6 +138,26 @@ Uso: {% include 'cases/includes/extraction_workflow_card_compact.html' with extr
                         <div class="step-label-compact">Atribuído</div>
                         {% if extraction.status == 'assigned' %}
                             <div class="step-badge-compact"><span class="badge bg-warning" style="font-size: 0.6rem;">Atual</span></div>
+                            <div class="step-actions-compact mt-1">
+                                <button type="button" 
+                                        class="btn btn-primary btn-sm w-100 mb-1" 
+                                        style="font-size: 0.65rem; padding: 0.2rem 0.4rem;"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#startModal{{ extraction.pk }}">
+                                    <i class="fas fa-play me-1"></i>Iniciar
+                                </button>
+                                {% if not extraction.started_at %}
+                                <form method="post" action="{% url 'extractions:unassign_from_me' extraction.pk %}" class="ajax-form d-inline w-100">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            class="btn btn-outline-danger btn-sm w-100" 
+                                            style="font-size: 0.65rem; padding: 0.2rem 0.4rem;"
+                                            onclick="return confirm('Desatribuir esta extração?');">
+                                        <i class="fas fa-user-times me-1"></i>Desatribuir
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
                         {% endif %}
                         {% if extraction.assigned_at %}
                             <div class="step-date-compact">{{ extraction.assigned_at|date:"d/m H:i" }}</div>
@@ -241,8 +196,69 @@ Uso: {% include 'cases/includes/extraction_workflow_card_compact.html' with extr
                             {% if extraction.started_at %}
                                 <div class="step-date-compact">{{ extraction.started_at|date:"d/m H:i" }}</div>
                             {% endif %}
+                            <div class="step-actions-compact mt-1">
+                                {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
+                                    {% if not extraction.brute_force_started_at %}
+                                        <button type="button" 
+                                                class="btn btn-outline-danger btn-sm w-100 mb-1" 
+                                                style="font-size: 0.65rem; padding: 0.2rem 0.4rem;"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#startBruteForceModal{{ extraction.pk }}">
+                                            <i class="fas fa-unlock-alt me-1"></i>Força Bruta
+                                        </button>
+                                    {% elif extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
+                                        <button type="button" 
+                                                class="btn btn-danger btn-sm w-100 mb-1" 
+                                                style="font-size: 0.65rem; padding: 0.2rem 0.4rem;"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#finishBruteForceModal{{ extraction.pk }}"
+                                                data-extraction-id="{{ extraction.pk }}">
+                                            <i class="fas fa-unlock me-1"></i>Finalizar FB
+                                        </button>
+                                    {% endif %}
+                                {% endif %}
+                                <button type="button" 
+                                        class="btn btn-outline-warning btn-sm w-100 mb-1" 
+                                        style="font-size: 0.65rem; padding: 0.2rem 0.4rem;"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#pauseModal{{ extraction.pk }}">
+                                    <i class="fas fa-pause me-1"></i>Pausar
+                                </button>
+                                <button type="button" 
+                                        class="btn btn-outline-secondary btn-sm w-100 mb-1" 
+                                        style="font-size: 0.65rem; padding: 0.2rem 0.4rem;"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#cancelExtractionModal{{ extraction.pk }}">
+                                    <i class="fas fa-times me-1"></i>Cancelar
+                                </button>
+                                <button type="button" 
+                                        class="btn btn-success btn-sm w-100" 
+                                        style="font-size: 0.65rem; padding: 0.2rem 0.4rem;"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#finishExtractionModal{{ extraction.pk }}"
+                                        data-extraction-id="{{ extraction.pk }}">
+                                    <i class="fas fa-check me-1"></i>Finalizar
+                                </button>
+                            </div>
                         {% elif extraction.status == 'paused' %}
                             <div class="step-badge-compact"><span class="badge bg-secondary" style="font-size: 0.6rem;">Atual</span></div>
+                            <div class="step-actions-compact mt-1">
+                                <button type="button" 
+                                        class="btn btn-primary btn-sm w-100 mb-1" 
+                                        style="font-size: 0.65rem; padding: 0.2rem 0.4rem;"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#resumeModal{{ extraction.pk }}">
+                                    <i class="fas fa-play me-1"></i>Retomar
+                                </button>
+                                <button type="button" 
+                                        class="btn btn-success btn-sm w-100" 
+                                        style="font-size: 0.65rem; padding: 0.2rem 0.4rem;"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#finishExtractionModal{{ extraction.pk }}"
+                                        data-extraction-id="{{ extraction.pk }}">
+                                    <i class="fas fa-check me-1"></i>Finalizar
+                                </button>
+                            </div>
                         {% endif %}
                     </div>
                 </div>
@@ -447,6 +463,25 @@ Uso: {% include 'cases/includes/extraction_workflow_card_compact.html' with extr
     text-align: center;
     font-weight: 500;
     font-family: 'Courier New', monospace;
+}
+
+.step-actions-compact {
+    width: 100%;
+    margin-top: 4px;
+}
+
+.step-actions-compact .btn {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.step-rectangle-compact {
+    min-height: auto;
+}
+
+.workflow-step-compact.active .step-rectangle-compact {
+    min-height: auto;
 }
 
 .brute-force-badge-compact {

@@ -156,6 +156,12 @@
                                 <i class="fas fa-edit fa-2x mb-2"></i>
                                 <span class="small">Editar Processo</span>
                             </a>
+                            <a href="{% url 'cases:update_full' case.pk %}?next={% url 'cases:detail' case.pk %}" 
+                               class="btn btn-outline-primary d-flex flex-column align-items-center justify-content-center" 
+                               style="width: 120px; height: 120px; padding: 0.5rem;">
+                                <i class="fas fa-edit fa-2x mb-2"></i>
+                                <span class="small">Editar Processo</span>
+                            </a>
 
                             <!-- Procedimentos -->
                             <a href="{% url 'cases:procedures' case.pk %}?next={% url 'cases:detail' case.pk %}" 

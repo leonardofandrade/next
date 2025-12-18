@@ -89,9 +89,9 @@
 <div class="row g-3 mb-4">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
+            <span class="me-3 fw-bold text-muted"><i class="fas fa-bolt me-2 text-warning"></i>Ações Rápidas:</span>
             <div class="card-body">
-                <div class="d-flex flex-wrap gap-2 align-items-center">
-                    <span class="me-3 fw-bold text-muted"><i class="fas fa-bolt me-2 text-warning"></i>Ações Rápidas:</span>
+                <div class="d-flex flex-wrap gap-2 align-items-center justify-content-center">
                     {% if user.is_superuser %}
                     <a href="{% url 'cases:create' %}?next={{ request.path }}" class="btn btn-success d-flex flex-column align-items-center justify-content-center" style="width: 120px; height: 120px; padding: 0.5rem;">
                         <i class="fas fa-plus fa-2x mb-2"></i>

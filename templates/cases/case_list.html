@@ -255,6 +255,10 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <div id="assignErrorAlert{{ case.pk }}" class="alert alert-danger d-none mb-3" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <span id="assignErrorText{{ case.pk }}"></span>
+                    </div>
                     <div class="alert alert-info mb-3">
                         <i class="fas fa-info-circle me-2"></i>
                         Você está prestes a se tornar responsável por este processo.
@@ -286,10 +290,10 @@
                         <i class="fas fa-times me-2"></i>
                         Cancelar
                     </button>
-                    <form method="post" action="{% url 'cases:assign_to_me' case.pk %}" style="display: inline;">
+                    <form id="assignForm{{ case.pk }}" method="post" action="{% url 'cases:assign_to_me' case.pk %}" style="display: inline;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{{ list_url }}">
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" class="btn btn-success" id="assignSubmitBtn{{ case.pk }}">
                             <i class="fas fa-user-check me-2"></i>
                             Confirmar Atribuição
                         </button>
@@ -356,4 +360,98 @@
     </div>
 {% endfor %}
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Processa todos os formulários de atribuição
+    {% for case in cases %}
+    (function() {
+        const form = document.getElementById('assignForm{{ case.pk }}');
+        const errorAlert = document.getElementById('assignErrorAlert{{ case.pk }}');
+        const errorText = document.getElementById('assignErrorText{{ case.pk }}');
+        const submitBtn = document.getElementById('assignSubmitBtn{{ case.pk }}');
+        const modal = document.getElementById('assignModal{{ case.pk }}');
+        
+        // Limpa erro quando o modal é fechado
+        if (modal) {
+            modal.addEventListener('hidden.bs.modal', function() {
+                errorAlert.classList.add('d-none');
+                errorText.textContent = '';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-user-check me-2"></i>Confirmar Atribuição';
+            });
+        }
+        
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Esconde erro anterior
+                errorAlert.classList.add('d-none');
+                
+                // Desabilita botão e mostra loading
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
+                
+                const formData = new FormData(form);
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    return response.json().then(data => ({
+                        status: response.status,
+                        data: data
+                    }));
+                })
+                .then(result => {
+                    if (result.data.success) {
+                        // Sucesso - fecha modal e recarrega página
+                        const bsModal = bootstrap.Modal.getInstance(modal);
+                        if (bsModal) {
+                            bsModal.hide();
+                        }
+                        
+                        // Mostra mensagem de sucesso se disponível
+                        if (typeof window.ToastSystem !== 'undefined' && window.ToastSystem.success) {
+                            window.ToastSystem.success(result.data.message || 'Processo atribuído com sucesso!');
+                        }
+                        
+                        // Recarrega a página após um pequeno delay
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    } else {
+                        // Erro - exibe no modal
+                        errorText.textContent = result.data.error || 'Erro ao atribuir processo.';
+                        errorAlert.classList.remove('d-none');
+                        
+                        // Reabilita botão
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao atribuir processo:', error);
+                    errorText.textContent = 'Erro ao atribuir processo. Tente novamente.';
+                    errorAlert.classList.remove('d-none');
+                    
+                    // Reabilita botão
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                });
+            });
+        }
+    })();
+    {% endfor %}
+});
+</script>
 {% endblock %}

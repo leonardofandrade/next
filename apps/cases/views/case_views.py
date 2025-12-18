@@ -226,6 +226,7 @@ class CaseUpdateView(ExtractionUnitFilterMixin, BaseUpdateView):
             deleted_at__isnull=True
         ).prefetch_related(
             'procedures__procedure_category',
+            'documents__document_category',
             'case_devices__device_category',
             'case_devices__device_model__brand'
         )
@@ -281,9 +282,13 @@ class CaseUpdateView(ExtractionUnitFilterMixin, BaseUpdateView):
         # Add counts for complete registration button
         context['devices_count'] = case.case_devices.filter(deleted_at__isnull=True).count()
         context['procedures_count'] = case.procedures.filter(deleted_at__isnull=True).count()
+        context['documents_count'] = case.documents.filter(deleted_at__isnull=True).count()
         
         # Add procedures to context for the template
         context['procedures'] = case.procedures.filter(deleted_at__isnull=True).select_related('procedure_category')
+        
+        # Add documents to context for the template
+        context['documents'] = case.documents.filter(deleted_at__isnull=True).select_related('document_category')
         
         # Add devices to context for the template
         context['devices'] = case.case_devices.filter(deleted_at__isnull=True).select_related(
@@ -293,6 +298,17 @@ class CaseUpdateView(ExtractionUnitFilterMixin, BaseUpdateView):
         
         return context
 
+class CaseUpdateFullView(CaseUpdateView):
+    """
+    Atualiza um processo de extração existente com todos os campos
+    """
+    template_name = 'cases/case_form_update_full.html'
+
+    def get_form_kwargs(self):
+        """Pass current user to form"""
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
 class CaseDeleteView(BaseDeleteView):
     """
@@ -818,23 +834,44 @@ class CaseAssignToMeView(LoginRequiredMixin, ServiceMixin, View):
         Atribui o processo ao usuário logado
         """
         service = self.get_service()
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         
         try:
             # Verifica se já está atribuído antes de tentar atribuir
             case = service.get_object(pk)
             if case.assigned_to == request.user:
-                messages.warning(
-                    request,
-                    'Este processo já está atribuído a você.'
-                )
+                error_message = 'Este processo já está atribuído a você.'
+                if is_ajax:
+                    return JsonResponse({
+                        'success': False,
+                        'error': error_message
+                    }, status=400)
+                messages.warning(request, error_message)
             else:
                 case = service.assign_to_user(pk, request.user)
-                messages.success(
-                    request,
-                    f'Processo atribuído a você com sucesso!'
-                )
+                success_message = 'Processo atribuído a você com sucesso!'
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'message': success_message
+                    })
+                messages.success(request, success_message)
         except ServiceException as e:
+            error_message = str(e)
+            if is_ajax:
+                return JsonResponse({
+                    'success': False,
+                    'error': error_message
+                }, status=400)
             self.handle_service_exception(e)
+            # Em caso de erro, também respeita o parâmetro next
+            next_url = request.POST.get('next') or request.GET.get('next')
+            if next_url and url_has_allowed_host_and_scheme(
+                url=next_url,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure(),
+            ):
+                return redirect(next_url)
             return redirect('cases:detail', pk=pk)
         
         # Redireciona priorizando ?next / next (POST), depois referer, senão detalhes

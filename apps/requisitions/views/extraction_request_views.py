@@ -221,9 +221,19 @@ class ExtractionRequestDeleteView(BaseDeleteView):
     def get_success_url(self):
         return reverse('requisitions:list')
     
+    def dispatch(self, request, *args, **kwargs):
+        """Verifica se o objeto existe antes de processar a requisição"""
+        self.object = self.get_object()
+        if self.object is None:
+            messages.error(request, 'Solicitação não encontrada.')
+            return redirect('requisitions:list')
+        return super().dispatch(request, *args, **kwargs)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['page_title'] = f'Excluir Solicitação #{self.object.pk}'
+        if self.object:
+            context['page_title'] = f'Excluir Solicitação #{self.object.pk}'
+            context['extraction_request'] = self.object
         context['page_icon'] = 'fa-trash'
         return context
 

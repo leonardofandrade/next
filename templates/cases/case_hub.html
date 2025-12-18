@@ -135,271 +135,383 @@
     </div>
     {% endif %}
 
-    <!-- Diagrama MER - Nó Central e Nós de Ações -->
-    <div class="row justify-content-center">
-        <div class="col-12">
-            <div class="mer-diagram-container">
-                <!-- SVG para as linhas de conexão -->
-                <svg class="mer-connections" width="100%" height="100%">
-                    <!-- Linhas serão desenhadas via JavaScript -->
-                </svg>
-
-                <!-- Nó Central - Processo -->
-                <div class="mer-node mer-node-center" id="centerNode">
-                    <div class="mer-node-icon">
-                        <i class="fas fa-briefcase"></i>
-                    </div>
-                    <div class="mer-node-content">
-                        <h5 class="mer-node-title">{{ case.number|default:"#"|add:case.pk }}</h5>
-                        <div class="mer-node-subtitle">
-                            {% if case.requester_agency_unit %}
-                            {{ case.requester_agency_unit.acronym }}
-                            {% else %}
-                            Processo
-                            {% endif %}
+    <!-- Layout Principal: Processo à Esquerda, Ações à Direita -->
+    <div class="row g-4">
+        <!-- Card do Processo - Esquerda -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-briefcase me-2"></i>
+                        Processo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <div class="mb-3">
+                            <i class="fas fa-briefcase fa-4x text-primary"></i>
                         </div>
-                        <div class="mer-node-badges">
-                            <span class="badge {{ case.status_badge_class }} mb-1">
+                        <h4 class="mb-2">{{ case.number|default:"#"|add:case.pk }}</h4>
+                        {% if case.requester_agency_unit %}
+                        <p class="text-muted mb-2">
+                            <i class="fas fa-building me-2"></i>
+                            {{ case.requester_agency_unit.acronym }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <strong>Status:</strong>
+                        <div class="mt-1">
+                            <span class="badge {{ case.status_badge_class }} fs-6">
                                 {{ case.get_status_display }}
                             </span>
-                            <span class="badge bg-{{ case.get_priority_color }}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Prioridade:</strong>
+                        <div class="mt-1">
+                            <span class="badge bg-{{ case.get_priority_color }} fs-6">
                                 {{ case.get_priority_display }}
                             </span>
                         </div>
-                        {% if case.assigned_to %}
-                        <div class="mer-node-info mt-2">
-                            <small>
-                                <i class="fas fa-user me-1"></i>
-                                {{ case.assigned_to.get_full_name|default:case.assigned_to.username|truncatechars:25 }}
-                            </small>
+                    </div>
+                    
+                    {% if case.extraction_unit %}
+                    <div class="mb-3">
+                        <strong>Distribuído para:</strong>
+                        <div class="mt-1">
+                            {{ case.extraction_unit.acronym|default:case.extraction_unit.name }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if case.assigned_to %}
+                    <div class="mb-3">
+                        <strong>Responsável:</strong>
+                        <div class="mt-1">
+                            <i class="fas fa-user me-2"></i>
+                            {{ case.assigned_to.get_full_name|default:case.assigned_to.username }}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="mb-3">
+                        <span class="badge bg-warning text-dark">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Não atribuído
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if case.request_procedures %}
+                    <div class="mb-3">
+                        <strong>Procedimentos:</strong>
+                        <div class="mt-1 small text-muted">
+                            {{ case.request_procedures|truncatewords:15 }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <div class="small text-muted">
+                        <div class="mb-1">
+                            <i class="fas fa-calendar me-2"></i>
+                            <strong>Criado em:</strong> {{ case.created_at|date:"d/m/Y H:i" }}
+                        </div>
+                        {% if case.updated_at %}
+                        <div>
+                            <i class="fas fa-edit me-2"></i>
+                            <strong>Atualizado em:</strong> {{ case.updated_at|date:"d/m/Y H:i" }}
                         </div>
                         {% endif %}
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Nó: Procedimentos -->
-                <div class="mer-node mer-node-action" data-position="top" id="nodeProcedures">
-                    <div class="mer-node-header bg-warning">
-                        <i class="fas fa-gavel me-2"></i>
-                        Procedimentos
-                        {% if procedures_count %}
-                        <span class="badge bg-light text-dark ms-2">{{ procedures_count }}</span>
-                        {% endif %}
-                    </div>
-                    <div class="mer-node-body">
-                        <a href="{% url 'cases:procedures' case.pk %}?next={% url 'cases:hub' case.pk %}" 
-                           class="mer-action-link">
-                            <i class="fas fa-list me-2"></i>
-                            Gerenciar Procedimentos
-                        </a>
+        <!-- Cards de Ações - Direita -->
+        <div class="col-lg-8">
+            <div class="row g-4">
+                <!-- Edição e Cadastro -->
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100 border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-edit me-2"></i>
+                                Edição e Cadastro
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'cases:update' case.pk %}?next={% url 'cases:hub' case.pk %}" 
+                                   class="btn btn-outline-primary">
+                                    <i class="fas fa-edit me-2"></i>
+                                    Editar Processo
+                                </a>
+                                <a href="{% url 'cases:update_full' case.pk %}?next={% url 'cases:hub' case.pk %}" 
+                                   class="btn btn-outline-primary">
+                                    <i class="fas fa-edit me-2"></i>
+                                    Editar (Completo)
+                                </a>
+                                {% if not case.registration_completed_at %}
+                                    {% if devices_count > 0 and procedures_count > 0 %}
+                                        {% if not case.assigned_to or case.assigned_to == request.user %}
+                                        <button type="button" 
+                                                class="btn btn-success"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#completeRegistrationModal">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            Finalizar Cadastro
+                                        </button>
+                                        {% else %}
+                                        <button type="button" 
+                                                class="btn btn-outline-secondary"
+                                                disabled>
+                                            <i class="fas fa-lock me-2"></i>
+                                            Finalizar (Bloqueado)
+                                        </button>
+                                        {% endif %}
+                                    {% else %}
+                                    <button type="button" 
+                                            class="btn btn-outline-secondary"
+                                            disabled>
+                                        <i class="fas fa-clock me-2"></i>
+                                        Finalizar (Aguardando)
+                                    </button>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Nó: Documentos -->
-                <div class="mer-node mer-node-action" data-position="top-right" id="nodeDocuments">
-                    <div class="mer-node-header bg-info">
-                        <i class="fas fa-file-alt me-2"></i>
-                        Documentos
-                        {% if documents_count %}
-                        <span class="badge bg-light text-dark ms-2">{{ documents_count }}</span>
-                        {% endif %}
-                    </div>
-                    <div class="mer-node-body">
-                        <a href="{% url 'cases:documents' case.pk %}?next={% url 'cases:hub' case.pk %}" 
-                           class="mer-action-link">
-                            <i class="fas fa-list me-2"></i>
-                            Gerenciar Documentos
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Nó: Dispositivos -->
-                <div class="mer-node mer-node-action" data-position="right" id="nodeDevices">
-                    <div class="mer-node-header bg-success">
-                        <i class="fas fa-mobile-alt me-2"></i>
-                        Dispositivos
-                        {% if devices_count %}
-                        <span class="badge bg-light text-dark ms-2">{{ devices_count }}</span>
-                        {% endif %}
-                    </div>
-                    <div class="mer-node-body">
-                        <a href="{% url 'cases:devices' case.pk %}?next={% url 'cases:hub' case.pk %}" 
-                           class="mer-action-link">
-                            <i class="fas fa-list me-2"></i>
-                            Gerenciar Dispositivos
-                        </a>
+                <!-- Procedimentos -->
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100 border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-gavel me-2"></i>
+                                Procedimentos
+                                {% if procedures_count %}
+                                <span class="badge bg-dark ms-2">{{ procedures_count }}</span>
+                                {% endif %}
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'cases:procedures' case.pk %}?next={% url 'cases:hub' case.pk %}" 
+                                   class="btn btn-outline-warning">
+                                    <i class="fas fa-list me-2"></i>
+                                    Gerenciar Procedimentos
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-
-                <!-- Nó: Edição e Cadastro -->
-                <div class="mer-node mer-node-action" data-position="bottom" id="nodeEdit">
-                    <div class="mer-node-header bg-primary">
-                        <i class="fas fa-edit me-2"></i>
-                        Edição e Cadastro
+                <!-- Documentos -->
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100 border-info">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-file-alt me-2"></i>
+                                Documentos
+                                {% if documents_count %}
+                                <span class="badge bg-light text-dark ms-2">{{ documents_count }}</span>
+                                {% endif %}
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'cases:documents' case.pk %}?next={% url 'cases:hub' case.pk %}" 
+                                   class="btn btn-outline-info">
+                                    <i class="fas fa-list me-2"></i>
+                                    Gerenciar Documentos
+                                </a>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mer-node-body">
-                        <a href="{% url 'cases:update' case.pk %}?next={% url 'cases:hub' case.pk %}" 
-                           class="mer-action-link">
-                            <i class="fas fa-edit me-2"></i>
-                            Editar Processo
-                        </a>
-                        <a href="{% url 'cases:update_full' case.pk %}?next={% url 'cases:hub' case.pk %}" 
-                           class="mer-action-link">
-                            <i class="fas fa-edit me-2"></i>
-                            Editar (Completo)
-                        </a>
-                        {% if not case.registration_completed_at %}
-                            {% if devices_count > 0 and procedures_count > 0 %}
+                </div>
+
+                <!-- Dispositivos -->
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100 border-success">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-mobile-alt me-2"></i>
+                                Dispositivos
+                                {% if devices_count %}
+                                <span class="badge bg-light text-dark ms-2">{{ devices_count }}</span>
+                                {% endif %}
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'cases:devices' case.pk %}?next={% url 'cases:hub' case.pk %}" 
+                                   class="btn btn-outline-success">
+                                    <i class="fas fa-list me-2"></i>
+                                    Gerenciar Dispositivos
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Atribuição -->
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100 border-secondary">
+                        <div class="card-header bg-secondary text-white">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-user-check me-2"></i>
+                                Atribuição
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                {% if case.registration_completed_at %}
+                                    {% if case.assigned_to == request.user %}
+                                    <button type="button" 
+                                            class="btn btn-warning"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#unassignModal">
+                                        <i class="fas fa-user-times me-2"></i>
+                                        Desatribuir-me
+                                    </button>
+                                    {% elif not case.assigned_to %}
+                                    <button type="button" 
+                                            class="btn btn-success"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#assignModal">
+                                        <i class="fas fa-user-check me-2"></i>
+                                        Atribuir-me
+                                    </button>
+                                    {% else %}
+                                    <div class="alert alert-info mb-0">
+                                        <i class="fas fa-user me-2"></i>
+                                        <strong>Responsável:</strong><br>
+                                        {{ case.assigned_to.get_full_name|default:case.assigned_to.username }}
+                                    </div>
+                                    {% endif %}
+                                {% else %}
+                                    <div class="alert alert-warning mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Finalize o cadastro para habilitar atribuições.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Extrações -->
+                {% if case.registration_completed_at %}
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100 border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-database me-2"></i>
+                                Extrações
+                                {% if extractions_count %}
+                                <span class="badge bg-light text-dark ms-2">{{ extractions_count }}</span>
+                                {% endif %}
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'extractions:case_extractions' case.pk %}?next={% url 'cases:hub' case.pk %}" 
+                                   class="btn btn-outline-primary">
+                                    <i class="fas fa-list me-2"></i>
+                                    Gerenciar Extrações
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Relatórios -->
+                {% if case.registration_completed_at %}
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100 border-danger">
+                        <div class="card-header bg-danger text-white">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-file-pdf me-2"></i>
+                                Relatórios
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'cases:cover_pdf' case.pk %}" 
+                                   class="btn btn-outline-danger"
+                                   target="_blank">
+                                    <i class="fas fa-file-pdf me-2"></i>
+                                    Gerar Capa PDF
+                                </a>
+                                <a href="{% url 'cases:cover_odt' case.pk %}" 
+                                   class="btn btn-outline-success"
+                                   target="_blank">
+                                    <i class="fas fa-file-word me-2"></i>
+                                    Gerar Capa ODT
+                                </a>
+                                {% if case.status == 'completed' %}
+                                    {% if case.dispatch_number %}
+                                    <a href="{% url 'cases:dispatch_download' case.pk %}" 
+                                       class="btn btn-outline-warning"
+                                       target="_blank">
+                                        <i class="fas fa-file-alt me-2"></i>
+                                        Baixar Ofício #{{ case.dispatch_number }}
+                                    </a>
+                                    {% else %}
+                                    <form method="post" action="{% url 'cases:dispatch_generate' case.pk %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" 
+                                                class="btn btn-outline-warning w-100"
+                                                onclick="return confirm('Deseja gerar o ofício de resposta?');">
+                                            <i class="fas fa-file-alt me-2"></i>
+                                            Gerar Ofício
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Outros -->
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100 border-dark">
+                        <div class="card-header bg-dark text-white">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-ellipsis-h me-2"></i>
+                                Outros
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                {% if case.registration_completed_at and case.extraction_request %}
+                                <a href="{% url 'requisitions:detail' case.extraction_request.pk %}?next={% url 'cases:hub' case.pk %}" 
+                                   class="btn btn-outline-primary">
+                                    <i class="fas fa-envelope-open-text me-2"></i>
+                                    Ver Solicitação #{{ case.extraction_request.pk }}
+                                </a>
+                                {% endif %}
                                 {% if not case.assigned_to or case.assigned_to == request.user %}
                                 <button type="button" 
-                                        class="mer-action-link btn-success w-100"
+                                        class="btn btn-outline-danger"
                                         data-bs-toggle="modal" 
-                                        data-bs-target="#completeRegistrationModal">
-                                    <i class="fas fa-check-circle me-2"></i>
-                                    Finalizar Cadastro
-                                </button>
-                                {% else %}
-                                <button type="button" 
-                                        class="mer-action-link btn-secondary w-100"
-                                        disabled>
-                                    <i class="fas fa-lock me-2"></i>
-                                    Finalizar (Bloqueado)
+                                        data-bs-target="#deleteModal">
+                                    <i class="fas fa-trash me-2"></i>
+                                    Excluir Processo
                                 </button>
                                 {% endif %}
-                            {% else %}
-                            <button type="button" 
-                                    class="mer-action-link btn-secondary w-100"
-                                    disabled>
-                                <i class="fas fa-clock me-2"></i>
-                                Finalizar (Aguardando)
-                            </button>
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Nó: Extrações -->
-                {% if case.registration_completed_at %}
-                <div class="mer-node mer-node-action" data-position="bottom-left" id="nodeExtractions">
-                    <div class="mer-node-header bg-primary">
-                        <i class="fas fa-database me-2"></i>
-                        Extrações
-                        {% if extractions_count %}
-                        <span class="badge bg-light text-dark ms-2">{{ extractions_count }}</span>
-                        {% endif %}
-                    </div>
-                    <div class="mer-node-body">
-                        <a href="{% url 'extractions:case_extractions' case.pk %}?next={% url 'cases:hub' case.pk %}" 
-                           class="mer-action-link">
-                            <i class="fas fa-list me-2"></i>
-                            Gerenciar Extrações
-                        </a>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Nó: Relatórios -->
-                {% if case.registration_completed_at %}
-                <div class="mer-node mer-node-action" data-position="left" id="nodeReports">
-                    <div class="mer-node-header bg-danger">
-                        <i class="fas fa-file-pdf me-2"></i>
-                        Relatórios
-                    </div>
-                    <div class="mer-node-body">
-                        <a href="{% url 'cases:cover_pdf' case.pk %}" 
-                           class="mer-action-link"
-                           target="_blank">
-                            <i class="fas fa-file-pdf me-2"></i>
-                            Gerar Capa PDF
-                        </a>
-                        <a href="{% url 'cases:cover_odt' case.pk %}" 
-                           class="mer-action-link"
-                           target="_blank">
-                            <i class="fas fa-file-word me-2"></i>
-                            Gerar Capa ODT
-                        </a>
-                        {% if case.status == 'completed' %}
-                            {% if case.dispatch_number %}
-                            <a href="{% url 'cases:dispatch_download' case.pk %}" 
-                               class="mer-action-link"
-                               target="_blank">
-                                <i class="fas fa-file-alt me-2"></i>
-                                Baixar Ofício #{{ case.dispatch_number }}
-                            </a>
-                            {% else %}
-                            <form method="post" action="{% url 'cases:dispatch_generate' case.pk %}" class="d-inline w-100">
-                                {% csrf_token %}
-                                <button type="submit" 
-                                        class="mer-action-link btn-warning w-100"
-                                        onclick="return confirm('Deseja gerar o ofício de resposta?');">
-                                    <i class="fas fa-file-alt me-2"></i>
-                                    Gerar Ofício
-                                </button>
-                            </form>
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Nó: Atribuição (se finalizado, caso contrário fica no lugar de Extrações) -->
-                {% if case.registration_completed_at %}
-                <div class="mer-node mer-node-action" data-position="top-left" id="nodeAssignment">
-                    <div class="mer-node-header bg-secondary">
-                        <i class="fas fa-user-check me-2"></i>
-                        Atribuição
-                    </div>
-                    <div class="mer-node-body">
-                        {% if case.assigned_to == request.user %}
-                        <button type="button" 
-                                class="mer-action-link btn-warning w-100"
-                                data-bs-toggle="modal" 
-                                data-bs-target="#unassignModal">
-                            <i class="fas fa-user-times me-2"></i>
-                            Desatribuir-me
-                        </button>
-                        {% elif not case.assigned_to %}
-                        <button type="button" 
-                                class="mer-action-link btn-success w-100"
-                                data-bs-toggle="modal" 
-                                data-bs-target="#assignModal">
-                            <i class="fas fa-user-check me-2"></i>
-                            Atribuir-me
-                        </button>
-                        {% else %}
-                        <div class="mer-action-info">
-                            <i class="fas fa-user me-2"></i>
-                            {{ case.assigned_to.get_full_name|default:case.assigned_to.username|truncatechars:20 }}
+                            </div>
                         </div>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Nó: Outros -->
-                <div class="mer-node mer-node-action" data-position="top-left" id="nodeOthers">
-                    <div class="mer-node-header bg-dark">
-                        <i class="fas fa-ellipsis-h me-2"></i>
-                        Outros
-                    </div>
-                    <div class="mer-node-body">
-                        {% if case.registration_completed_at and case.extraction_request %}
-                        <a href="{% url 'requisitions:detail' case.extraction_request.pk %}?next={% url 'cases:hub' case.pk %}" 
-                           class="mer-action-link">
-                            <i class="fas fa-envelope-open-text me-2"></i>
-                            Ver Solicitação #{{ case.extraction_request.pk }}
-                        </a>
-                        {% endif %}
-                        {% if not case.assigned_to or case.assigned_to == request.user %}
-                        <button type="button" 
-                                class="mer-action-link btn-danger w-100"
-                                data-bs-toggle="modal" 
-                                data-bs-target="#deleteModal">
-                            <i class="fas fa-trash me-2"></i>
-                            Excluir Processo
-                        </button>
-                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -412,445 +524,5 @@
 {% include 'cases/includes/modal_unassign.html' %}
 {% include 'cases/includes/modal_complete_registration.html' %}
 {% include 'cases/includes/modal_delete.html' %}
-
-<style>
-.mer-diagram-container {
-    position: relative;
-    width: 100%;
-    min-height: 800px;
-    padding: 3rem;
-    margin: 2rem 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.mer-connections {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1;
-}
-
-.mer-node {
-    position: absolute;
-    z-index: 10;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.mer-node:hover {
-    transform: scale(1.05);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* Nó Central */
-.mer-node-center {
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 240px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 20px;
-    padding: 2rem;
-    color: white;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-    border: 4px solid white;
-}
-
-.mer-node-center .mer-node-icon {
-    font-size: 3.5rem;
-    margin-bottom: 1rem;
-    opacity: 0.95;
-}
-
-.mer-node-center .mer-node-title {
-    color: white;
-    font-weight: bold;
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.mer-node-center .mer-node-subtitle {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 1rem;
-    margin-bottom: 0.75rem;
-}
-
-.mer-node-center .mer-node-badges {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: center;
-}
-
-.mer-node-center .mer-node-info {
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.3);
-    color: rgba(255, 255, 255, 0.9);
-}
-
-/* Nós de Ação */
-.mer-node-action {
-    width: 220px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    border: 2px solid #e9ecef;
-}
-
-.mer-node-header {
-    padding: 0.75rem 1rem;
-    color: white;
-    font-weight: 600;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.mer-node-body {
-    padding: 0.75rem;
-}
-
-.mer-action-link {
-    display: block;
-    padding: 0.5rem 0.75rem;
-    margin-bottom: 0.5rem;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    color: #495057;
-    text-decoration: none;
-    font-size: 0.85rem;
-    transition: all 0.2s ease;
-    text-align: left;
-}
-
-.mer-action-link:hover {
-    background: #e9ecef;
-    border-color: #adb5bd;
-    color: #212529;
-    text-decoration: none;
-    transform: translateX(3px);
-}
-
-.mer-action-link.btn-success,
-.mer-action-link.btn-warning,
-.mer-action-link.btn-danger,
-.mer-action-link.btn-secondary {
-    color: white;
-    border: none;
-}
-
-.mer-action-link.btn-success:hover {
-    background: #198754;
-}
-
-.mer-action-link.btn-warning:hover {
-    background: #ffc107;
-    color: #000;
-}
-
-.mer-action-link.btn-danger:hover {
-    background: #dc3545;
-}
-
-.mer-action-link.btn-secondary:hover {
-    background: #6c757d;
-}
-
-.mer-action-link:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.mer-action-info {
-    padding: 0.5rem 0.75rem;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    color: #6c757d;
-    text-align: center;
-}
-
-/* Posicionamento dos nós - Layout circular equilibrado */
-.mer-node[data-position="top"] {
-    top: 5%;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.mer-node[data-position="top-right"] {
-    top: 12%;
-    right: 12%;
-}
-
-.mer-node[data-position="right"] {
-    top: 50%;
-    right: 8%;
-    transform: translateY(-50%);
-}
-
-.mer-node[data-position="bottom-right"] {
-    bottom: 12%;
-    right: 12%;
-}
-
-.mer-node[data-position="bottom"] {
-    bottom: 5%;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.mer-node[data-position="bottom-left"] {
-    bottom: 12%;
-    left: 12%;
-}
-
-.mer-node[data-position="left"] {
-    top: 50%;
-    left: 8%;
-    transform: translateY(-50%);
-}
-
-.mer-node[data-position="top-left"] {
-    top: 12%;
-    left: 12%;
-}
-
-/* Responsividade */
-@media (max-width: 1200px) {
-    .mer-diagram-container {
-        min-height: 700px;
-        padding: 2.5rem;
-    }
-    
-    .mer-node-center {
-        width: 200px;
-        padding: 1.5rem;
-    }
-    
-    .mer-node-action {
-        width: 190px;
-    }
-    
-    .mer-node[data-position="top-right"],
-    .mer-node[data-position="bottom-right"] {
-        right: 10%;
-    }
-    
-    .mer-node[data-position="top-left"],
-    .mer-node[data-position="bottom-left"] {
-        left: 10%;
-    }
-}
-
-@media (max-width: 992px) {
-    .mer-diagram-container {
-        min-height: 650px;
-        padding: 2rem;
-    }
-    
-    .mer-node-center {
-        width: 180px;
-        padding: 1.25rem;
-    }
-    
-    .mer-node-center .mer-node-icon {
-        font-size: 2.5rem;
-    }
-    
-    .mer-node-center .mer-node-title {
-        font-size: 1.25rem;
-    }
-    
-    .mer-node-action {
-        width: 170px;
-    }
-    
-    .mer-node[data-position="top"] {
-        top: 3%;
-    }
-    
-    .mer-node[data-position="bottom"] {
-        bottom: 3%;
-    }
-    
-    .mer-node[data-position="top-right"],
-    .mer-node[data-position="bottom-right"] {
-        right: 8%;
-    }
-    
-    .mer-node[data-position="top-left"],
-    .mer-node[data-position="bottom-left"] {
-        left: 8%;
-    }
-    
-    .mer-node[data-position="right"] {
-        right: 5%;
-    }
-    
-    .mer-node[data-position="left"] {
-        left: 5%;
-    }
-}
-
-@media (max-width: 768px) {
-    .mer-diagram-container {
-        min-height: 600px;
-        padding: 1.5rem;
-    }
-    
-    .mer-node-center {
-        width: 160px;
-        padding: 1.25rem;
-    }
-    
-    .mer-node-center .mer-node-icon {
-        font-size: 2.2rem;
-    }
-    
-    .mer-node-center .mer-node-title {
-        font-size: 1.1rem;
-    }
-    
-    .mer-node-action {
-        width: 150px;
-        font-size: 0.85rem;
-    }
-    
-    .mer-node-header {
-        padding: 0.6rem 0.75rem;
-        font-size: 0.85rem;
-    }
-    
-    .mer-node-body {
-        padding: 0.6rem;
-    }
-    
-    .mer-action-link {
-        padding: 0.45rem 0.6rem;
-        font-size: 0.8rem;
-    }
-    
-    /* Ajusta posicionamento para mobile */
-    .mer-node[data-position="top"] {
-        top: 2%;
-    }
-    
-    .mer-node[data-position="bottom"] {
-        bottom: 2%;
-    }
-    
-    .mer-node[data-position="top-right"],
-    .mer-node[data-position="bottom-right"] {
-        right: 5%;
-    }
-    
-    .mer-node[data-position="top-left"],
-    .mer-node[data-position="bottom-left"] {
-        left: 5%;
-    }
-    
-    .mer-node[data-position="right"] {
-        right: 2%;
-    }
-    
-    .mer-node[data-position="left"] {
-        left: 2%;
-    }
-}
-</style>
-
-<script>
-function drawConnections() {
-    const container = document.querySelector('.mer-diagram-container');
-    const centerNode = document.getElementById('centerNode');
-    const svg = document.querySelector('.mer-connections');
-    const actionNodes = document.querySelectorAll('.mer-node-action');
-    
-    if (!container || !centerNode || !svg || actionNodes.length === 0) return;
-    
-    // Remove linhas antigas
-    const lines = svg.querySelectorAll('line');
-    lines.forEach(line => line.remove());
-    
-    // Aguarda um frame para garantir que o layout está renderizado
-    requestAnimationFrame(function() {
-        const containerRect = container.getBoundingClientRect();
-        const centerRect = centerNode.getBoundingClientRect();
-        const centerX = centerRect.left - containerRect.left + centerRect.width / 2;
-        const centerY = centerRect.top - containerRect.top + centerRect.height / 2;
-        
-        // Desenha linhas para cada nó de ação
-        actionNodes.forEach(function(node) {
-            const nodeRect = node.getBoundingClientRect();
-            const nodeX = nodeRect.left - containerRect.left + nodeRect.width / 2;
-            const nodeY = nodeRect.top - containerRect.top + nodeRect.height / 2;
-            
-            // Cria linha SVG
-            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('x1', centerX);
-            line.setAttribute('y1', centerY);
-            line.setAttribute('x2', nodeX);
-            line.setAttribute('y2', nodeY);
-            line.setAttribute('stroke', '#cbd5e0');
-            line.setAttribute('stroke-width', '2');
-            line.setAttribute('stroke-dasharray', '6,4');
-            line.setAttribute('opacity', '0.5');
-            line.style.transition = 'opacity 0.3s ease';
-            
-            // Efeito hover na linha quando hover no nó
-            node.addEventListener('mouseenter', function() {
-                line.setAttribute('opacity', '0.8');
-                line.setAttribute('stroke', '#667eea');
-                line.setAttribute('stroke-width', '3');
-            });
-            
-            node.addEventListener('mouseleave', function() {
-                line.setAttribute('opacity', '0.5');
-                line.setAttribute('stroke', '#cbd5e0');
-                line.setAttribute('stroke-width', '2');
-            });
-            
-            svg.appendChild(line);
-        });
-    });
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Desenha linhas iniciais
-    setTimeout(drawConnections, 100);
-    
-    // Atualiza linhas ao redimensionar
-    let resizeTimer;
-    window.addEventListener('resize', function() {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(drawConnections, 250);
-    });
-    
-    // Observa mudanças no layout
-    const observer = new MutationObserver(function() {
-        drawConnections();
-    });
-    
-    const container = document.querySelector('.mer-diagram-container');
-    if (container) {
-        observer.observe(container, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['style', 'class']
-        });
-    }
-});
-</script>
 
 {% endblock %}

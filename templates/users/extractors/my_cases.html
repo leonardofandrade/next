@@ -15,23 +15,6 @@ Painel de controle dos processos sob sua responsabilidade - Visualização em Fl
     <!-- Dashboard de Estatísticas -->
     <div class="row g-3 mb-4">
         <div class="col-xl-2 col-md-4 col-sm-6">
-            <div class="card border-start border-4 border-danger h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="bg-danger bg-opacity-10 rounded-circle p-3">
-                                <i class="fas fa-edit text-danger fa-2x"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <div class="text-muted small">Rascunho</div>
-                            <div class="h4 mb-0 fw-bold">{{ stats.draft }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-2 col-md-4 col-sm-6">
             <div class="card border-start border-4 border-warning h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
@@ -94,6 +77,23 @@ Painel de controle dos processos sob sua responsabilidade - Visualização em Fl
                         <div class="flex-grow-1 ms-3">
                             <div class="text-muted small">Pausados</div>
                             <div class="h4 mb-0 fw-bold">{{ stats.paused }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="card border-start border-4 border-success h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                                <i class="fas fa-check-circle text-success fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="text-muted small">Finalizados</div>
+                            <div class="h4 mb-0 fw-bold">{{ stats.completed }}</div>
                         </div>
                     </div>
                 </div>

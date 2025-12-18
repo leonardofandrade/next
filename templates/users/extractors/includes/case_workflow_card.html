@@ -64,41 +64,13 @@
                 </div>
                 
                 <!-- Connector -->
-                <div class="connector-h {% if case.registration_completed_at %}completed{% endif %}">
+                <div class="connector-h {% if case.created_at %}completed{% endif %}">
                     <div class="line-h"></div>
                     <i class="fas fa-chevron-right arrow-h"></i>
                 </div>
                 
-                <!-- Step 2: Cadastro Finalizado -->
-                <div class="workflow-step-h {% if case.registration_completed_at %}completed{% elif case.status == 'draft' %}active{% endif %}">
-                    <div class="step-rectangle-h">
-                        {% if case.registration_completed_at %}
-                        <div class="step-check-icon">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        {% endif %}
-                        <div class="step-icon">
-                            <i class="fas fa-clipboard-check"></i>
-                        </div>
-                        <div class="step-content">
-                            <div class="step-label-h">Cadastro Finalizado</div>
-                            {% if case.status == 'draft' %}
-                                <div class="step-badge-h"><span class="badge bg-danger">Pendente</span></div>
-                            {% elif case.registration_completed_at %}
-                                <div class="step-date-h">{{ case.registration_completed_at|date:"d/m/Y H:i" }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Connector -->
-                <div class="connector-h {% if case.assigned_to %}completed{% endif %}">
-                    <div class="line-h"></div>
-                    <i class="fas fa-chevron-right arrow-h"></i>
-                </div>
-                
-                <!-- Step 3: Responsável Atribuído -->
-                <div class="workflow-step-h {% if case.assigned_to %}completed{% elif case.registration_completed_at and not case.assigned_to %}active{% endif %}">
+                <!-- Step 2: Responsável Atribuído -->
+                <div class="workflow-step-h {% if case.assigned_to %}completed{% elif case.created_at and not case.assigned_to %}active{% endif %}">
                     <div class="step-rectangle-h">
                         {% if case.assigned_to %}
                         <div class="step-check-icon">
@@ -114,7 +86,7 @@
                                 {% if case.assigned_at %}
                                     <div class="step-date-h">{{ case.assigned_at|date:"d/m/Y H:i" }}</div>
                                 {% endif %}
-                            {% elif case.registration_completed_at %}
+                            {% elif case.created_at %}
                                 <div class="step-badge-h"><span class="badge bg-warning">Aguardando</span></div>
                             {% endif %}
                         </div>
@@ -127,10 +99,10 @@
                     <i class="fas fa-chevron-right arrow-h"></i>
                 </div>
                 
-                <!-- Step 4: Extrações Iniciadas -->
-                <div class="workflow-step-h {% if case.status == 'completed' or case.status == 'extractions_completed' %}completed{% elif case.status in 'in_progress,paused,waiting_collect' %}active{% endif %}">
+                <!-- Step 3: Extrações Iniciadas -->
+                <div class="workflow-step-h {% if case.status == 'extractions_completed' or case.status == 'completed' %}completed{% elif case.status in 'in_progress,paused,waiting_collect' %}active{% endif %}">
                     <div class="step-rectangle-h">
-                        {% if case.status == 'completed' or case.status == 'extractions_completed' %}
+                        {% if case.status == 'extractions_completed' or case.status == 'completed' %}
                         <div class="step-check-icon">
                             <i class="fas fa-check-circle"></i>
                         </div>
@@ -152,8 +124,7 @@
                             <div class="step-label-h">
                                 {% if case.status == 'paused' %}Pausado
                                 {% elif case.status == 'waiting_collect' %}Aguardando Coleta
-                                {% elif case.status == 'extractions_completed' %}Extrações concluídas
-                                {% elif case.status == 'completed' %}Concluído
+                                {% elif case.status == 'extractions_completed' %}Extrações Concluídas
                                 {% else %}Extrações{% endif %}
                             </div>
                             {% if case.status == 'in_progress' %}
@@ -164,11 +135,45 @@
                                 <div class="step-badge-h"><span class="badge bg-info">Aguardando</span></div>
                             {% elif case.status == 'extractions_completed' %}
                                 <div class="step-badge-h"><span class="badge bg-success">Concluídas</span></div>
-                            {% elif case.status == 'completed' %}
-                                <div class="step-badge-h"><span class="badge bg-success">Concluído</span></div>
                             {% endif %}
                             {% if case.devices_count %}
                                 <div class="step-info-h">{{ case.devices_count }} dispositivo(s)</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Connector -->
+                <div class="connector-h {% if case.status == 'completed' %}completed{% endif %}">
+                    <div class="line-h"></div>
+                    <i class="fas fa-chevron-right arrow-h"></i>
+                </div>
+                
+                <!-- Step 4: Finalização -->
+                <div class="workflow-step-h {% if case.status == 'completed' %}completed{% elif case.status == 'extractions_completed' %}active{% endif %}">
+                    <div class="step-rectangle-h">
+                        {% if case.status == 'completed' %}
+                        <div class="step-check-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        {% endif %}
+                        <div class="step-icon">
+                            {% if case.status == 'completed' %}
+                                <i class="fas fa-flag-checkered"></i>
+                            {% else %}
+                                <i class="fas fa-hourglass-end"></i>
+                            {% endif %}
+                        </div>
+                        <div class="step-content">
+                            <div class="step-label-h">Finalização</div>
+                            {% if case.status == 'completed' %}
+                                {% if case.finished_at %}
+                                    <div class="step-date-h">{{ case.finished_at|date:"d/m/Y H:i" }}</div>
+                                {% else %}
+                                    <div class="step-badge-h"><span class="badge bg-success">Concluído</span></div>
+                                {% endif %}
+                            {% elif case.status == 'extractions_completed' %}
+                                <div class="step-badge-h"><span class="badge bg-warning">Aguardando</span></div>
                             {% endif %}
                         </div>
                     </div>

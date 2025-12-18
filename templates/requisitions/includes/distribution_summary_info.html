@@ -1,11 +1,40 @@
-    <!-- Gráficos -->
-    <!-- Resumo por Unidade de Extração (mover para a mesma linha do resumo por status) -->
-    <div class="col-lg-8 mb-4">
+{% comment %}
+Template include para exibir resumo de distribuição por unidade com gráfico.
+
+Parâmetros esperados:
+- distribution_data: Lista de dados das unidades (pode ser report_data.summary_by_unit ou distribution_summary)
+- statistics: Dict com totais (opcional, necessário se show_totals=True)
+- show_efficiency: Boolean - se True, mostra coluna de eficiência (padrão: False)
+- show_status: Boolean - se True, mostra coluna de status (padrão: False)
+- show_totals: Boolean - se True, mostra linha de totais (padrão: False)
+- card_title: Título do card (padrão: 'Resumo por Unidade de Extração')
+- card_icon: Ícone do card (padrão: 'fa-building')
+- card_title_color: Classe CSS para cor do título (opcional)
+- layout: 'side_by_side', 'table_only', ou 'toggle' - layout do card (padrão: 'side_by_side')
+- show_toggle: Boolean - se True e layout='toggle', mostra toggle entre gráfico pizza e barras (padrão: False)
+- chart_data: Dados para o gráfico externo (opcional, usado quando layout='side_by_side')
+- chart_id: ID do canvas do gráfico externo (padrão: 'unitDevicesDistributionChart')
+- chart_height: Altura do gráfico externo em px (padrão: 400)
+- chart_title: Título do gráfico externo (padrão: 'Dispositivos por Unidade')
+- chart_icon: Ícone do gráfico externo (padrão: 'fa-chart-pie')
+- table_col_class: Classe da coluna da tabela (padrão: 'col-lg-8')
+- chart_col_class: Classe da coluna do gráfico (padrão: 'col-lg-4')
+- compact_chart_id: ID do gráfico compacto quando show_toggle=True (padrão: 'compactChart')
+- detailed_chart_id: ID do gráfico detalhado quando show_toggle=True (padrão: 'requestsChart')
+- compact_chart_height: Altura do gráfico compacto (padrão: 300)
+- detailed_chart_height: Altura do gráfico detalhado (padrão: 350)
+{% endcomment %}
+
+{% load static %}
+
+{% if layout == 'table_only' %}
+    <!-- Layout apenas com tabela -->
+    <div class="col-lg-12 mb-4">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-building me-2"></i>
-                    Resumo por Unidade de Extração
+                <h5 class="mb-0 {% if card_title_color %}{{ card_title_color }}{% endif %}">
+                    <i class="fas {{ card_icon|default:'fa-building' }} me-2"></i>
+                    {{ card_title|default:'Resumo por Unidade de Extração' }}
                 </h5>
             </div>
             <div class="card-body">
@@ -16,68 +45,441 @@
                                 <th>Unidade</th>
                                 <th class="text-center">Solic.</th>
                                 <th class="text-center">Disp.</th>
+                                {% if show_status %}
+                                <th class="text-center">Status</th>
+                                {% endif %}
+                                {% if show_efficiency %}
                                 <th class="text-center">Eficiência</th>
+                                {% endif %}
                             </tr>
                         </thead>
                         <tbody>
-                            {% for unit_data in report_data.summary_by_unit %}
-                            <tr>
-                                <td>
-                                    <strong>{% if unit_data.unit.acronym %}{{ unit_data.unit.acronym }}{% else %}{{ unit_data.unit.name }}{% endif %}</strong>
-                                    {% if unit_data.unit.acronym %}
-                                        <br><small class="text-muted">{{ unit_data.unit.name }}</small>
+                            {% if distribution_data %}
+                                {% for unit_data in distribution_data %}
+                                <tr>
+                                    <td>
+                                        <strong>{% if unit_data.unit.acronym %}{{ unit_data.unit.acronym }}{% else %}{{ unit_data.unit.name }}{% endif %}</strong>
+                                        
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary">{{ unit_data.total_requests|default:0 }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info">{{ unit_data.total_devices|default:0 }}</span>
+                                    </td>
+                                    {% if show_status %}
+                                    <td class="text-center">
+                                        {% if unit_data.is_overloaded %}
+                                            <i class="fas fa-exclamation-triangle text-danger" title="Sobrecarregada"></i>
+                                        {% elif unit_data.is_available %}
+                                            <i class="fas fa-check-circle text-success" title="Disponível"></i>
+                                        {% else %}
+                                            <i class="fas fa-exclamation-circle text-warning" title="Atenção"></i>
+                                        {% endif %}
+                                    </td>
                                     {% endif %}
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-primary">{{ unit_data.total_requests }}</span>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-info">{{ unit_data.total_devices }}</span>
-                                </td>
-                                <td class="text-center">
-                                    <div class="progress" style="height: 20px;">
-                                        <div class="progress-bar {% if unit_data.efficiency_score >= 80 %}bg-success{% elif unit_data.efficiency_score >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
-                                             role="progressbar" 
-                                             style="width: {{ unit_data.efficiency_score }}%"
-                                             aria-valuenow="{{ unit_data.efficiency_score }}" 
-                                             aria-valuemin="0" 
-                                             aria-valuemax="100">
-                                            {{ unit_data.efficiency_score }}%
+                                    {% if show_efficiency %}
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar {% if unit_data.efficiency_score >= 80 %}bg-success{% elif unit_data.efficiency_score >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                 role="progressbar" 
+                                                 style="width: {{ unit_data.efficiency_score|default:0 }}%"
+                                                 aria-valuenow="{{ unit_data.efficiency_score|default:0 }}" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                                {{ unit_data.efficiency_score|default:0 }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="{% if show_status and show_efficiency %}5{% elif show_status or show_efficiency %}4{% else %}3{% endif %}" class="text-center text-muted">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Nenhuma unidade de extração encontrada.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% if show_totals and statistics %}
+                                <tr class="table-dark fw-bold">
+                                    <td>
+                                        <i class="fas fa-calculator me-2"></i>
+                                        <strong>TOTAIS</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary fs-6">
+                                            {{ statistics.total_requests|default:0 }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info fs-6">
+                                            {{ statistics.total_devices|default:0 }}
+                                        </span>
+                                    </td>
+                                    {% if show_status %}
+                                    <td class="text-center">
+                                        <span class="badge bg-secondary fs-6">-</span>
+                                    </td>
+                                    {% endif %}
+                                    {% if show_efficiency %}
+                                    <td class="text-center">
+                                        <span class="badge bg-secondary fs-6">
+                                            Média Geral
+                                        </span>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endif %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="{% if show_status and show_efficiency %}5{% elif show_status or show_efficiency %}4{% else %}3{% endif %}" class="text-center text-muted">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Nenhuma unidade de extração encontrada.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% elif layout == 'toggle' %}
+    <!-- Layout com toggle (Tabela + Gráfico lado a lado dentro do mesmo card) -->
+    <div class="col-lg-12 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 {% if card_title_color %}{{ card_title_color }}{% endif %}">
+                        <i class="fas {{ card_icon|default:'fa-chart-bar' }} me-2"></i>
+                        {{ card_title|default:'Distribuição por Unidade' }}
+                    </h5>
+                    {% if show_toggle %}
+                    <button type="button" class="btn btn-outline-info btn-sm" id="toggleDistributionView">
+                        <i class="fas fa-expand-alt me-1"></i>
+                        <span id="toggleText">Ver Detalhes</span>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <!-- Visualização Compacta (Tabela + Gráfico Pizza lado a lado) -->
+                <div id="compactView">
+                    <div class="row g-0">
+                        <!-- Tabela -->
+                        <div class="col-md-6 border-end">
+                            <div class="table-responsive" style="max-height: {{ compact_chart_height|default:300|add:60 }}px; overflow-y: auto;">
+                                <table class="table table-hover table-sm mb-0">
+                                    <thead class="table-dark sticky-top">
+                                        <tr>
+                                            <th>Unidade</th>
+                                            <th class="text-center">Solic.</th>
+                                            <th class="text-center">Disp.</th>
+                                            {% if show_status %}
+                                            <th class="text-center">Status</th>
+                                            {% endif %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if distribution_data %}
+                                            {% for unit_data in distribution_data %}
+                                            <tr class="{% if unit_data.is_overloaded %}table-danger{% elif unit_data.is_available %}table-success{% else %}table-warning{% endif %}">
+                                                <td>
+                                                    <div class="fw-bold">{{ unit_data.unit.acronym|default:unit_data.unit.name|truncatechars:15 }}</div>
+                                                    <small class="text-muted">{{ unit_data.unit.name|truncatechars:20 }}</small>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-primary fs-6">{{ unit_data.total_requests|default:0 }}</span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-info fs-6">{{ unit_data.total_devices|default:0 }}</span>
+                                                </td>
+                                                {% if show_status %}
+                                                <td class="text-center">
+                                                    {% if unit_data.is_overloaded %}
+                                                        <i class="fas fa-exclamation-triangle text-danger" title="Sobrecarregada"></i>
+                                                    {% elif unit_data.is_available %}
+                                                        <i class="fas fa-check-circle text-success" title="Disponível"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-exclamation-circle text-warning" title="Atenção"></i>
+                                                    {% endif %}
+                                                </td>
+                                                {% endif %}
+                                            </tr>
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="{% if show_status %}4{% else %}3{% endif %}" class="text-center text-muted py-3">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    Nenhuma unidade encontrada.
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="{% if show_status %}4{% else %}3{% endif %}" class="text-center text-muted py-3">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    Nenhuma unidade encontrada.
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Gráfico Compacto (Pizza) -->
+                        <div class="col-md-6">
+                            <div class="p-3">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Distribuição de Solicitações
+                                </h6>
+                                <div style="position: relative; height: {{ compact_chart_height|default:300 }}px;">
+                                    <canvas id="{{ compact_chart_id|default:'compactChart' }}"></canvas>
+                                    <div id="{{ compact_chart_id|default:'compactChart' }}NoData" class="no-data-message d-flex align-items-center justify-content-center h-100 text-muted" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.95); z-index: 10;">
+                                        <div class="text-center">
+                                            <i class="fas fa-info-circle fa-2x mb-2"></i>
+                                            <p class="mb-0">Nenhuma solicitação cadastrada ainda</p>
                                         </div>
                                     </div>
-                                </td>
-                            </tr>
-                            {% empty %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Visualização Detalhada (Tabela + Gráfico de Barras lado a lado) -->
+                {% if show_toggle %}
+                <div id="detailedView" style="display: none;">
+                    <div class="row g-0">
+                        <!-- Tabela -->
+                        <div class="col-md-6 border-end">
+                            <div class="table-responsive" style="max-height: {{ detailed_chart_height|default:350|add:60 }}px; overflow-y: auto;">
+                                <table class="table table-hover table-sm mb-0">
+                                    <thead class="table-dark sticky-top">
+                                        <tr>
+                                            <th>Unidade</th>
+                                            <th class="text-center">Solic.</th>
+                                            <th class="text-center">Disp.</th>
+                                            {% if show_status %}
+                                            <th class="text-center">Status</th>
+                                            {% endif %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if distribution_data %}
+                                            {% for unit_data in distribution_data %}
+                                            <tr class="{% if unit_data.is_overloaded %}table-danger{% elif unit_data.is_available %}table-success{% else %}table-warning{% endif %}">
+                                                <td>
+                                                    <div class="fw-bold">{{ unit_data.unit.acronym|default:unit_data.unit.name|truncatechars:15 }}</div>
+                                                    <small class="text-muted">{{ unit_data.unit.name|truncatechars:20 }}</small>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-primary fs-6">{{ unit_data.total_requests|default:0 }}</span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-info fs-6">{{ unit_data.total_devices|default:0 }}</span>
+                                                </td>
+                                                {% if show_status %}
+                                                <td class="text-center">
+                                                    {% if unit_data.is_overloaded %}
+                                                        <i class="fas fa-exclamation-triangle text-danger" title="Sobrecarregada"></i>
+                                                    {% elif unit_data.is_available %}
+                                                        <i class="fas fa-check-circle text-success" title="Disponível"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-exclamation-circle text-warning" title="Atenção"></i>
+                                                    {% endif %}
+                                                </td>
+                                                {% endif %}
+                                            </tr>
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="{% if show_status %}4{% else %}3{% endif %}" class="text-center text-muted py-3">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    Nenhuma unidade encontrada.
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="{% if show_status %}4{% else %}3{% endif %}" class="text-center text-muted py-3">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    Nenhuma unidade encontrada.
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Gráfico Detalhado (Barras) -->
+                        <div class="col-md-6">
+                            <div class="p-3">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    Distribuição por Status
+                                </h6>
+                                <div style="position: relative; height: {{ detailed_chart_height|default:350 }}px;">
+                                    <canvas id="{{ detailed_chart_id|default:'requestsChart' }}"></canvas>
+                                    <div id="{{ detailed_chart_id|default:'requestsChart' }}NoData" class="no-data-message d-flex align-items-center justify-content-center h-100 text-muted" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.95); z-index: 10;">
+                                        <div class="text-center">
+                                            <i class="fas fa-info-circle fa-2x mb-2"></i>
+                                            <p class="mb-0">Nenhuma solicitação cadastrada ainda</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Legenda -->
+                                <div class="mt-3">
+                                    <h6 class="mb-2 small">Legenda:</h6>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <div class="d-flex align-items-center">
+                                            <div class="legend-color bg-warning me-1" style="width: 12px; height: 12px; border-radius: 2px;"></div>
+                                            <small>Pendentes</small>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <div class="legend-color bg-info me-1" style="width: 12px; height: 12px; border-radius: 2px;"></div>
+                                            <small>Em Andamento</small>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <div class="legend-color bg-success me-1" style="width: 12px; height: 12px; border-radius: 2px;"></div>
+                                            <small>Recebidas</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <div class="alert alert-info mb-0 py-2">
+                    <small>
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>Legenda:</strong>
+                        <span class="badge bg-success me-1">Disponível</span>
+                        <span class="badge bg-warning me-1">Atenção</span>
+                        <span class="badge bg-danger">Sobrecarregada</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <!-- Layout lado a lado (Tabela + Gráfico em cards separados) -->
+    <div class="{{ table_col_class|default:'col-lg-8' }} mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0 {% if card_title_color %}{{ card_title_color }}{% endif %}">
+                    <i class="fas {{ card_icon|default:'fa-building' }} me-2"></i>
+                    {{ card_title|default:'Resumo por Unidade de Extração' }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
                             <tr>
-                                <td colspan="4" class="text-center text-muted">
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    Nenhuma unidade de extração encontrada.
-                                </td>
+                                <th>Unidade</th>
+                                <th class="text-center">Solic.</th>
+                                <th class="text-center">Disp.</th>
+                                {% if show_status %}
+                                <th class="text-center">Status</th>
+                                {% endif %}
+                                {% if show_efficiency %}
+                                <th class="text-center">Eficiência</th>
+                                {% endif %}
                             </tr>
-                            {% endfor %}
-                            <!-- Linha de Totais -->
-                            {% if report_data.summary_by_unit %}
-                            <tr class="table-dark fw-bold">
-                                <td>
-                                    <i class="fas fa-calculator me-2"></i>
-                                    <strong>TOTAIS</strong>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-primary fs-6">
-                                        {{ report_data.statistics.total_requests|default:0 }}
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-info fs-6">
-                                        {{ report_data.statistics.total_devices|default:0 }}
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-secondary fs-6">
-                                        Média Geral
-                                    </span>
-                                </td>
-                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if distribution_data %}
+                                {% for unit_data in distribution_data %}
+                                <tr>
+                                    <td>
+                                        <strong>{% if unit_data.unit.acronym %}{{ unit_data.unit.acronym }}{% else %}{{ unit_data.unit.name }}{% endif %}</strong>
+                                        {% if unit_data.unit.acronym %}
+                                            <br><small class="text-muted">{{ unit_data.unit.name }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary">{{ unit_data.total_requests|default:0 }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info">{{ unit_data.total_devices|default:0 }}</span>
+                                    </td>
+                                    {% if show_status %}
+                                    <td class="text-center">
+                                        {% if unit_data.is_overloaded %}
+                                            <i class="fas fa-exclamation-triangle text-danger" title="Sobrecarregada"></i>
+                                        {% elif unit_data.is_available %}
+                                            <i class="fas fa-check-circle text-success" title="Disponível"></i>
+                                        {% else %}
+                                            <i class="fas fa-exclamation-circle text-warning" title="Atenção"></i>
+                                        {% endif %}
+                                    </td>
+                                    {% endif %}
+                                    {% if show_efficiency %}
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar {% if unit_data.efficiency_score >= 80 %}bg-success{% elif unit_data.efficiency_score >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                 role="progressbar" 
+                                                 style="width: {{ unit_data.efficiency_score|default:0 }}%"
+                                                 aria-valuenow="{{ unit_data.efficiency_score|default:0 }}" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                                {{ unit_data.efficiency_score|default:0 }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="{% if show_status and show_efficiency %}5{% elif show_status or show_efficiency %}4{% else %}3{% endif %}" class="text-center text-muted">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Nenhuma unidade de extração encontrada.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% if show_totals and statistics %}
+                                <tr class="table-dark fw-bold">
+                                    <td>
+                                        <i class="fas fa-calculator me-2"></i>
+                                        <strong>TOTAIS</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary fs-6">
+                                            {{ statistics.total_requests|default:0 }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info fs-6">
+                                            {{ statistics.total_devices|default:0 }}
+                                        </span>
+                                    </td>
+                                    {% if show_status %}
+                                    <td class="text-center">
+                                        <span class="badge bg-secondary fs-6">-</span>
+                                    </td>
+                                    {% endif %}
+                                    {% if show_efficiency %}
+                                    <td class="text-center">
+                                        <span class="badge bg-secondary fs-6">
+                                            Média Geral
+                                        </span>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endif %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="{% if show_status and show_efficiency %}5{% elif show_status or show_efficiency %}4{% else %}3{% endif %}" class="text-center text-muted">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Nenhuma unidade de extração encontrada.
+                                    </td>
+                                </tr>
                             {% endif %}
                         </tbody>
                     </table>
@@ -86,18 +488,19 @@
         </div>
     </div>
     <!-- Gráfico Pie: Dispositivos por Unidade -->
-    <div class="col-lg-4 mb-4">
+    {% if chart_data %}
+    <div class="{{ chart_col_class|default:'col-lg-4' }} mb-4">
         <div class="card h-100">
             <div class="card-header">
                 <h5 class="mb-0">
-                    <i class="fas fa-chart-pie me-2"></i>
-                    Dispositivos por Unidade
+                    <i class="fas {{ chart_icon|default:'fa-chart-pie' }} me-2"></i>
+                    {{ chart_title|default:'Dispositivos por Unidade' }}
                 </h5>
             </div>
             <div class="card-body">
-                {% if report_data.chart_data.unit_devices_distribution %}
-                <div style="position: relative; height: 400px;">
-                    <canvas id="unitDevicesDistributionChart"></canvas>
+                {% if chart_data %}
+                <div style="position: relative; height: {{ chart_height|default:400 }}px;">
+                    <canvas id="{{ chart_id|default:'unitDevicesDistributionChart' }}"></canvas>
                 </div>
                 {% else %}
                 <div class="text-center text-muted py-5">
@@ -108,3 +511,5 @@
             </div>
         </div>
     </div>
+    {% endif %}
+{% endif %}

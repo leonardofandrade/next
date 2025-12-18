@@ -110,7 +110,7 @@
     </div>
     {% else %}
 
-    {% include 'requisitions/includes/distribution_summary_info.html' with report_data=report_data %}
+    {% include 'requisitions/includes/distribution_summary_info.html' with distribution_data=report_data.summary_by_unit statistics=report_data.statistics show_efficiency=True show_totals=True chart_data=report_data.chart_data.unit_devices_distribution chart_id='unitDevicesDistributionChart' %}
 
     <!-- Top 10 Unidades Solicitantes - Gráfico -->
     <div class="col-lg-12 mb-4">

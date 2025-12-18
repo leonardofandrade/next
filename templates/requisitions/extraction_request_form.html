@@ -175,9 +175,7 @@
     </div>
     
     <!-- Resumo de Distribuição - Coluna Lateral -->
-    <div class="col-lg-12">
-        {% include 'requisitions/includes/distribution_summary_card.html' with distribution_data=distribution_summary show_status=True show_toggle=True card_title='Distribuição por Unidade' card_title_color='text-info' card_icon='fa-chart-bar' compact_chart_height=300 detailed_chart_height=350 %}
-    </div>
+    {% include 'requisitions/includes/distribution_summary_info.html' with distribution_data=distribution_summary show_status=True layout='toggle' show_toggle=True card_title='Distribuição por Unidade' card_title_color='text-info' card_icon='fa-chart-bar' compact_chart_id='compactChart' detailed_chart_id='requestsChart' compact_chart_height=300 detailed_chart_height=350 %}
 </div>
 
 <!-- Modal para Email de Resposta -->

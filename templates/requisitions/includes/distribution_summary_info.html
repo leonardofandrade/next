@@ -187,7 +187,6 @@ Parâmetros esperados:
                                             <tr class="{% if unit_data.is_overloaded %}table-danger{% elif unit_data.is_available %}table-success{% else %}table-warning{% endif %}">
                                                 <td>
                                                     <div class="fw-bold">{{ unit_data.unit.acronym|default:unit_data.unit.name|truncatechars:15 }}</div>
-                                                    <small class="text-muted">{{ unit_data.unit.name|truncatechars:20 }}</small>
                                                 </td>
                                                 <td class="text-center">
                                                     <span class="badge bg-primary fs-6">{{ unit_data.total_requests|default:0 }}</span>
@@ -273,7 +272,6 @@ Parâmetros esperados:
                                             <tr class="{% if unit_data.is_overloaded %}table-danger{% elif unit_data.is_available %}table-success{% else %}table-warning{% endif %}">
                                                 <td>
                                                     <div class="fw-bold">{{ unit_data.unit.acronym|default:unit_data.unit.name|truncatechars:15 }}</div>
-                                                    <small class="text-muted">{{ unit_data.unit.name|truncatechars:20 }}</small>
                                                 </td>
                                                 <td class="text-center">
                                                     <span class="badge bg-primary fs-6">{{ unit_data.total_requests|default:0 }}</span>
@@ -399,9 +397,6 @@ Parâmetros esperados:
                                 <tr>
                                     <td>
                                         <strong>{% if unit_data.unit.acronym %}{{ unit_data.unit.acronym }}{% else %}{{ unit_data.unit.name }}{% endif %}</strong>
-                                        {% if unit_data.unit.acronym %}
-                                            <br><small class="text-muted">{{ unit_data.unit.name }}</small>
-                                        {% endif %}
                                     </td>
                                     <td class="text-center">
                                         <span class="badge bg-primary">{{ unit_data.total_requests|default:0 }}</span>

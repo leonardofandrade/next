@@ -127,6 +127,9 @@ class ExtractionRequestForm(forms.ModelForm):
         self.fields['extraction_unit'].required = True
 
         self.fields['requester_authority_position'].empty_label = None
+        
+        # Customiza o label do select para exibir o name ao invés do acronym
+        self.fields['requester_agency_unit'].label_from_instance = lambda obj: obj.name
 
     def clean(self):
         cleaned_data = super().clean()

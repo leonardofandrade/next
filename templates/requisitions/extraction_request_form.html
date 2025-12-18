@@ -253,14 +253,12 @@
                             </h6>
                             <div style="position: relative; height: 250px;">
                                 <canvas id="compactChart"></canvas>
-                                {% if not distribution_summary %}
-                                <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.9);">
+                                <div id="compactChartNoData" class="no-data-message d-flex align-items-center justify-content-center h-100 text-muted" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.95); z-index: 10;">
                                     <div class="text-center">
                                         <i class="fas fa-info-circle fa-2x mb-2"></i>
-                                        <p class="mb-0">Nenhum dado disponível</p>
+                                        <p class="mb-0">Nenhuma solicitação cadastrada ainda</p>
                                     </div>
                                 </div>
-                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -277,14 +275,12 @@
                                 <div class="col-md-8">
                                     <div style="position: relative; height: 300px;">
                                         <canvas id="requestsChart"></canvas>
-                                        {% if not distribution_summary %}
-                                        <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.9);">
+                                        <div id="requestsChartNoData" class="no-data-message d-flex align-items-center justify-content-center h-100 text-muted" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.95); z-index: 10;">
                                             <div class="text-center">
                                                 <i class="fas fa-info-circle fa-2x mb-2"></i>
-                                                <p class="mb-0">Nenhum dado disponível</p>
+                                                <p class="mb-0">Nenhuma solicitação cadastrada ainda</p>
                                             </div>
                                         </div>
-                                        {% endif %}
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -624,9 +620,30 @@ function loadEmailContent(pk) {
     
     // Distribution Summary Charts
     document.addEventListener('DOMContentLoaded', function() {
-        initDistributionCharts();
         initToggleView();
+        // Wait for Chart.js to be loaded before initializing charts
+        waitForChartJS(function() {
+            initDistributionCharts();
+        });
     });
+    
+    // Function to wait for Chart.js to be available
+    function waitForChartJS(callback, maxAttempts = 50, attempt = 0) {
+        // Check both Chart and window.Chart for compatibility
+        const ChartAvailable = typeof Chart !== 'undefined' || typeof window.Chart !== 'undefined';
+        
+        if (ChartAvailable) {
+            console.log('Chart.js loaded successfully');
+            callback();
+        } else if (attempt < maxAttempts) {
+            setTimeout(function() {
+                waitForChartJS(callback, maxAttempts, attempt + 1);
+            }, 100);
+        } else {
+            console.error('Chart.js failed to load after ' + (maxAttempts * 100) + 'ms');
+            console.error('Please check if Chart.js script is included in the page');
+        }
+    }
     
     function initToggleView() {
         const toggleBtn = document.getElementById('toggleDistributionView');
@@ -656,10 +673,15 @@ function loadEmailContent(pk) {
     }
     
     function initDistributionCharts() {
-        if (typeof Chart === 'undefined') {
+        // Use window.Chart if available, fallback to Chart
+        const ChartLib = window.Chart || Chart;
+        
+        if (typeof ChartLib === 'undefined') {
             console.error('Chart.js is not loaded');
             return;
         }
+        
+        console.log('Initializing distribution charts...');
         
         {% if distribution_summary %}
             const distributionData = [
@@ -677,15 +699,59 @@ function loadEmailContent(pk) {
             const distributionData = [];
         {% endif %}
         
+        console.log('Distribution data:', distributionData);
+        console.log('Distribution summary exists:', {% if distribution_summary %}true{% else %}false{% endif %});
+        
         // Filter out units with zero requests for charts (but keep all in table)
         const chartData = distributionData.filter(function(item) {
             return item.total > 0;
         });
         
+        console.log('Chart data (filtered):', chartData);
+        console.log('Chart data length:', chartData.length);
+        
+        // Show message if no data available
+        if (chartData.length === 0) {
+            console.log('No chart data available - showing message');
+            
+            // Show the no-data message divs that are already in the HTML
+            const compactNoData = document.getElementById('compactChartNoData');
+            const requestsNoData = document.getElementById('requestsChartNoData');
+            
+            if (compactNoData) {
+                compactNoData.style.display = 'flex';
+                console.log('Showing compactChartNoData message');
+            } else {
+                console.warn('compactChartNoData element not found');
+            }
+            
+            if (requestsNoData) {
+                requestsNoData.style.display = 'flex';
+                console.log('Showing requestsChartNoData message');
+            } else {
+                console.warn('requestsChartNoData element not found');
+            }
+            
+            return;
+        } else {
+            // Hide no-data messages if we have data
+            const compactNoData = document.getElementById('compactChartNoData');
+            const requestsNoData = document.getElementById('requestsChartNoData');
+            
+            if (compactNoData) {
+                compactNoData.style.display = 'none';
+            }
+            if (requestsNoData) {
+                requestsNoData.style.display = 'none';
+            }
+        }
+        
         // Compact Chart (Pie Chart) - only show units with requests
         const compactCtx = document.getElementById('compactChart');
         if (compactCtx && chartData.length > 0) {
-            new Chart(compactCtx, {
+            console.log('Creating compact pie chart...');
+            try {
+                new ChartLib(compactCtx, {
                 type: 'pie',
                 data: {
                     labels: chartData.map(function(item) {
@@ -733,13 +799,23 @@ function loadEmailContent(pk) {
                         }
                     }
                 }
-            });
+                });
+                console.log('Compact chart created successfully');
+            } catch (error) {
+                console.error('Error creating compact chart:', error);
+            }
+        } else {
+            if (!compactCtx) {
+                console.warn('compactChart canvas element not found');
+            }
         }
         
         // Detailed Chart (Bar Chart with stacked status) - only show units with requests
         const requestsCtx = document.getElementById('requestsChart');
         if (requestsCtx && chartData.length > 0) {
-            new Chart(requestsCtx, {
+            console.log('Creating detailed bar chart...');
+            try {
+                new ChartLib(requestsCtx, {
                 type: 'bar',
                 data: {
                     labels: chartData.map(function(item) {
@@ -819,7 +895,15 @@ function loadEmailContent(pk) {
                         }
                     }
                 }
-            });
+                });
+                console.log('Detailed chart created successfully');
+            } catch (error) {
+                console.error('Error creating detailed chart:', error);
+            }
+        } else {
+            if (!requestsCtx) {
+                console.warn('requestsChart canvas element not found');
+            }
         }
     }
     

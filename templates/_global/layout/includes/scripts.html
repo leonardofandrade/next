@@ -7,6 +7,13 @@
 
 <!-- Chart.js for dashboard charts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+<script>
+    // Ensure Chart.js is available globally
+    if (typeof Chart !== 'undefined') {
+        window.Chart = Chart;
+        console.log('Chart.js loaded and available globally');
+    }
+</script>
 
 <!-- Select2 CSS and JS -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />

@@ -103,6 +103,15 @@ Uso: {% include 'cases/includes/extraction_workflow_card_compact.html' with extr
                         <div class="step-label-compact">Atribuído</div>
                         {% if extraction.status == 'assigned' %}
                             <div class="step-badge-compact"><span class="badge bg-warning" style="font-size: 0.6rem;">Atual</span></div>
+                            {% if extraction.assigned_to %}
+                                <div class="step-info-compact" style="font-size: 0.6rem; color: #495057; margin-top: 2px;">
+                                    <i class="fas fa-user me-1"></i>
+                                    {{ extraction.assigned_to.user.get_full_name|default:extraction.assigned_to.user.username }}
+                                </div>
+                            {% endif %}
+                            {% if extraction.assigned_at %}
+                                <div class="step-date-compact">{{ extraction.assigned_at|date:"d/m/Y H:i" }}</div>
+                            {% endif %}
                             <div class="step-actions-compact mt-1">
                                 <button type="button" 
                                         class="btn btn-primary btn-sm w-100 mb-1" 
@@ -123,9 +132,14 @@ Uso: {% include 'cases/includes/extraction_workflow_card_compact.html' with extr
                                 </form>
                                 {% endif %}
                             </div>
-                        {% endif %}
-                        {% if extraction.assigned_at %}
-                            <div class="step-date-compact">{{ extraction.assigned_at|date:"d/m H:i" }}</div>
+                        {% elif extraction.assigned_at %}
+                            {% if extraction.assigned_to %}
+                                <div class="step-info-compact" style="font-size: 0.6rem; color: #495057; margin-top: 2px;">
+                                    <i class="fas fa-user me-1"></i>
+                                    {{ extraction.assigned_to.user.get_full_name|default:extraction.assigned_to.user.username }}
+                                </div>
+                            {% endif %}
+                            <div class="step-date-compact">{{ extraction.assigned_at|date:"d/m/Y H:i" }}</div>
                         {% endif %}
                     </div>
                 </div>

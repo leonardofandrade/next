@@ -67,9 +67,12 @@ class ExtractionRequestDetailView(ExtractionUnitFilterMixin, BaseDetailView):
         return context
 
 
-class ExtractionRequestCreateView(BaseCreateView):
+class ExtractionRequestCreateView(LoginRequiredMixin, ServiceMixin, CreateView):
     """
-    Cria uma nova solicitação de extração
+    Cria uma nova solicitação de extração.
+    
+    Permite que qualquer usuário autenticado crie solicitações.
+    A validação de permissões é feita no ExtractionRequestService.
     """
     model = ExtractionRequest
     form_class = ExtractionRequestForm

@@ -19,6 +19,39 @@ class ExtractionRequestService(BaseService):
     
     model_class = ExtractionRequest
     
+    def validate_permissions(self, action: str, obj: Optional[Any] = None) -> bool:
+        """
+        Valida permissões para ações em ExtractionRequest.
+        
+        Regras:
+        - Staff e superuser sempre têm acesso total
+        - Qualquer usuário autenticado pode criar solicitações (é uma solicitação, não uma extração)
+        - Para listar/visualizar: usuários autenticados podem ver
+        - Para editar/excluir: apenas staff/superuser ou o criador da solicitação
+        """
+        if not self.user or not self.user.is_authenticated:
+            return False
+        
+        # Staff e superuser sempre têm acesso
+        if self.user.is_staff or self.user.is_superuser:
+            return True
+        
+        # Qualquer usuário autenticado pode criar solicitações
+        if action == 'create':
+            return True
+        
+        # Qualquer usuário autenticado pode listar/visualizar
+        if action in ['list', 'get', 'retrieve']:
+            return True
+        
+        # Para editar/excluir: apenas o criador ou staff/superuser
+        if action in ['update', 'delete']:
+            if obj and hasattr(obj, 'created_by'):
+                return obj.created_by == self.user
+            return False
+        
+        return False
+    
     def get_queryset(self) -> QuerySet:
         """Get extraction requests queryset with optimized queries"""
         queryset = super().get_queryset().select_related(

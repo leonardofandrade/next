@@ -118,10 +118,16 @@ class CaseService(BaseService):
             if 'status' not in data:
                 data['status'] = Case.CASE_STATUS_DRAFT
             
-            # If has assigned_to, set assigned_at and assigned_by
-            if data.get('assigned_to') and not data.get('assigned_at'):
-                data['assigned_at'] = timezone.now()
-                data['assigned_by'] = self.user
+            # If has assigned_to, verifica se o cadastro está finalizado
+            if data.get('assigned_to'):
+                # Na criação, não é possível atribuir sem cadastro finalizado
+                if not data.get('registration_completed_at'):
+                    raise ValidationServiceException(
+                        "Não é possível atribuir o processo. O cadastro ainda não foi finalizado."
+                    )
+                if not data.get('assigned_at'):
+                    data['assigned_at'] = timezone.now()
+                    data['assigned_by'] = self.user
         
         # Se estiver atualizando e assigned_to mudou
         elif instance and 'assigned_to' in data:
@@ -130,6 +136,12 @@ class CaseService(BaseService):
             
             if old_assigned_to != new_assigned_to:
                 if new_assigned_to:
+                    # Verifica se o cadastro está finalizado antes de atribuir
+                    registration_completed = data.get('registration_completed_at') or instance.registration_completed_at
+                    if not registration_completed:
+                        raise ValidationServiceException(
+                            "Não é possível atribuir o processo. O cadastro ainda não foi finalizado."
+                        )
                     data['assigned_at'] = timezone.now()
                     data['assigned_by'] = self.user
                 else:
@@ -191,6 +203,12 @@ class CaseService(BaseService):
         
         if case.assigned_to == user:
             return case  # Já está atribuído
+        
+        # Verifica se o cadastro está finalizado
+        if not case.registration_completed_at:
+            raise ValidationServiceException(
+                "Não é possível atribuir o processo. O cadastro ainda não foi finalizado."
+            )
         
         # Atribui o caso ao usuário
         case.assigned_to = user

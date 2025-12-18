@@ -8,7 +8,7 @@ Uso: {% include 'cases/includes/extraction_workflow_card_compact.html' with extr
         <!-- Header Row Compacto -->
         <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
             <div class="extraction-info flex-grow-1">
-                <div class="d-flex align-items-center gap-2 mb-0">
+                <div class="d-flex align-items-center gap-2 mb-1">
                     <span class="badge bg-primary">#{{ extraction.pk }}</span>
                     <h6 class="mb-0" style="font-size: 0.85rem;">
                         {% if extraction.case_device.device_model %}
@@ -21,6 +21,32 @@ Uso: {% include 'cases/includes/extraction_workflow_card_compact.html' with extr
                     {% if extraction.case_device.imei_01 %}
                         <span class="badge bg-secondary" style="font-size: 0.7rem;">
                             <i class="fas fa-fingerprint me-1"></i>{{ extraction.case_device.imei_01 }}
+                        </span>
+                    {% endif %}
+                </div>
+                <div class="d-flex gap-3 flex-wrap small text-muted" style="font-size: 0.7rem;">
+                    {% if extraction.created_at %}
+                        <span>
+                            <i class="fas fa-calendar-plus me-1"></i>
+                            Criada: {{ extraction.created_at|date:"d/m/Y H:i" }}
+                        </span>
+                    {% endif %}
+                    {% if extraction.assigned_at %}
+                        <span>
+                            <i class="fas fa-user-check me-1"></i>
+                            Atribuída: {{ extraction.assigned_at|date:"d/m/Y H:i" }}
+                        </span>
+                    {% endif %}
+                    {% if extraction.started_at %}
+                        <span>
+                            <i class="fas fa-play me-1"></i>
+                            Iniciada: {{ extraction.started_at|date:"d/m/Y H:i" }}
+                        </span>
+                    {% endif %}
+                    {% if extraction.finished_at %}
+                        <span>
+                            <i class="fas fa-check-circle me-1"></i>
+                            Finalizada: {{ extraction.finished_at|date:"d/m/Y H:i" }}
                         </span>
                     {% endif %}
                 </div>

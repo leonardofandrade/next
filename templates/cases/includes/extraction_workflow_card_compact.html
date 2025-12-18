@@ -1,0 +1,511 @@
+{% comment %}
+Card compacto de workflow de extração para uso na página de detalhes do caso
+Uso: {% include 'cases/includes/extraction_workflow_card_compact.html' with extraction=extraction %}
+{% endcomment %}
+
+<div class="card shadow-sm border-0 mb-2 extraction-workflow-card-compact">
+    <div class="card-body p-2">
+        <!-- Header Row Compacto -->
+        <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
+            <div class="extraction-info flex-grow-1">
+                <div class="d-flex align-items-center gap-2 mb-0">
+                    <span class="badge bg-primary">#{{ extraction.pk }}</span>
+                    <h6 class="mb-0" style="font-size: 0.85rem;">
+                        {% if extraction.case_device.device_model %}
+                            <strong>{{ extraction.case_device.device_model.brand.name }}</strong>
+                            {{ extraction.case_device.device_model.name }}
+                        {% else %}
+                            <span class="text-muted">Dispositivo sem modelo</span>
+                        {% endif %}
+                    </h6>
+                    {% if extraction.case_device.imei_01 %}
+                        <span class="badge bg-secondary" style="font-size: 0.7rem;">
+                            <i class="fas fa-fingerprint me-1"></i>{{ extraction.case_device.imei_01 }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="d-flex gap-1 flex-shrink-0 align-items-center flex-wrap">
+                <!-- Action Buttons -->
+                {% if extraction.status == 'pending' %}
+                    <button type="button" 
+                            class="btn btn-primary btn-sm" 
+                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#startModal{{ extraction.pk }}">
+                        <i class="fas fa-play me-1"></i>Iniciar
+                    </button>
+                {% elif extraction.status == 'assigned' %}
+                    <button type="button" 
+                            class="btn btn-primary btn-sm" 
+                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#startModal{{ extraction.pk }}">
+                        <i class="fas fa-play me-1"></i>Iniciar
+                    </button>
+                    {% if not extraction.started_at %}
+                        <form method="post" action="{% url 'extractions:unassign_from_me' extraction.pk %}" class="ajax-form d-inline">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="btn btn-outline-danger btn-sm" 
+                                    style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
+                                    onclick="return confirm('Desatribuir esta extração?');">
+                                <i class="fas fa-user-times"></i>
+                            </button>
+                        </form>
+                    {% endif %}
+                {% elif extraction.status == 'in_progress' %}
+                    {% if extraction.assigned_to and extraction.assigned_to.user == request.user %}
+                        {% if not extraction.brute_force_started_at %}
+                            <button type="button" 
+                                    class="btn btn-outline-danger btn-sm" 
+                                    style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#startBruteForceModal{{ extraction.pk }}">
+                                <i class="fas fa-unlock-alt me-1"></i>Força Bruta
+                            </button>
+                        {% elif extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
+                            <button type="button" 
+                                    class="btn btn-danger btn-sm" 
+                                    style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#finishBruteForceModal{{ extraction.pk }}"
+                                    data-extraction-id="{{ extraction.pk }}">
+                                <i class="fas fa-unlock me-1"></i>Finalizar FB
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                    <button type="button" 
+                            class="btn btn-outline-warning btn-sm" 
+                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#pauseModal{{ extraction.pk }}">
+                        <i class="fas fa-pause me-1"></i>Pausar
+                    </button>
+                    <button type="button" 
+                            class="btn btn-outline-secondary btn-sm" 
+                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#cancelExtractionModal{{ extraction.pk }}">
+                        <i class="fas fa-times me-1"></i>Cancelar
+                    </button>
+                    <button type="button" 
+                            class="btn btn-success btn-sm" 
+                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#finishExtractionModal{{ extraction.pk }}"
+                            data-extraction-id="{{ extraction.pk }}">
+                        <i class="fas fa-check me-1"></i>Finalizar
+                    </button>
+                {% elif extraction.status == 'paused' %}
+                    <button type="button" 
+                            class="btn btn-primary btn-sm" 
+                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#resumeModal{{ extraction.pk }}">
+                        <i class="fas fa-play me-1"></i>Retomar
+                    </button>
+                    <button type="button" 
+                            class="btn btn-success btn-sm" 
+                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#finishExtractionModal{{ extraction.pk }}"
+                            data-extraction-id="{{ extraction.pk }}">
+                        <i class="fas fa-check me-1"></i>Finalizar
+                    </button>
+                {% elif extraction.status == 'completed' %}
+                    <span class="text-success small" style="font-size: 0.75rem;">
+                        <i class="fas fa-check-circle me-1"></i>
+                        Concluída
+                    </span>
+                {% endif %}
+                
+                <!-- Info Buttons -->
+                <button type="button" 
+                        class="btn btn-sm btn-outline-primary" 
+                        style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
+                        title="Editar Dispositivo"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#editDeviceModal{{ extraction.case_device.pk }}"
+                        data-device-id="{{ extraction.case_device.pk }}"
+                        data-case-id="{{ extraction.case_device.case.pk }}">
+                    <i class="fas fa-edit"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Horizontal Workflow Diagram Compacto -->
+        <div class="workflow-horizontal-compact d-flex align-items-stretch gap-1 mb-0">
+            <!-- Step 1: Pending -->
+            <div class="workflow-step-compact {% if extraction.status == 'pending' %}active{% elif extraction.assigned_at %}completed{% endif %}">
+                <div class="step-rectangle-compact">
+                    {% if extraction.assigned_at %}
+                    <div class="step-check-icon-compact">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    {% endif %}
+                    <div class="step-icon-compact">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="step-content-compact">
+                        <div class="step-label-compact">Aguardando</div>
+                        {% if extraction.status == 'pending' %}
+                            <div class="step-badge-compact"><span class="badge bg-info" style="font-size: 0.6rem;">Atual</span></div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Connector -->
+            <div class="connector-compact {% if extraction.assigned_at %}completed{% endif %}">
+                <div class="line-compact"></div>
+                <i class="fas fa-chevron-right arrow-compact"></i>
+            </div>
+            
+            <!-- Step 2: Assigned -->
+            <div class="workflow-step-compact {% if extraction.status == 'assigned' %}active{% elif extraction.started_at %}completed{% endif %}">
+                <div class="step-rectangle-compact">
+                    {% if extraction.started_at %}
+                    <div class="step-check-icon-compact">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    {% endif %}
+                    <div class="step-icon-compact">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="step-content-compact">
+                        <div class="step-label-compact">Atribuído</div>
+                        {% if extraction.status == 'assigned' %}
+                            <div class="step-badge-compact"><span class="badge bg-warning" style="font-size: 0.6rem;">Atual</span></div>
+                        {% endif %}
+                        {% if extraction.assigned_at %}
+                            <div class="step-date-compact">{{ extraction.assigned_at|date:"d/m H:i" }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Connector -->
+            <div class="connector-compact {% if extraction.started_at %}completed{% endif %}">
+                <div class="line-compact"></div>
+                <i class="fas fa-chevron-right arrow-compact"></i>
+            </div>
+            
+            <!-- Step 3: In Progress / Paused -->
+            <div class="workflow-step-compact {% if extraction.status == 'in_progress' or extraction.status == 'paused' %}active{% elif extraction.finished_at %}completed{% endif %}">
+                <div class="step-rectangle-compact">
+                    {% if extraction.finished_at %}
+                    <div class="step-check-icon-compact">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    {% endif %}
+                    <div class="step-icon-compact">
+                        {% if extraction.status == 'paused' %}
+                            <i class="fas fa-pause"></i>
+                        {% else %}
+                            <i class="fas fa-spinner {% if extraction.status == 'in_progress' %}fa-spin{% endif %}"></i>
+                        {% endif %}
+                    </div>
+                    <div class="step-content-compact">
+                        <div class="step-label-compact">
+                            {% if extraction.status == 'paused' %}Pausado{% else %}Em Andamento{% endif %}
+                        </div>
+                        {% if extraction.status == 'in_progress' %}
+                            <div class="step-badge-compact"><span class="badge bg-primary" style="font-size: 0.6rem;">Atual</span></div>
+                            {% if extraction.started_at %}
+                                <div class="step-date-compact">{{ extraction.started_at|date:"d/m H:i" }}</div>
+                            {% endif %}
+                        {% elif extraction.status == 'paused' %}
+                            <div class="step-badge-compact"><span class="badge bg-secondary" style="font-size: 0.6rem;">Atual</span></div>
+                        {% endif %}
+                    </div>
+                </div>
+                <!-- Brute Force Indicator -->
+                {% if extraction.brute_force_started_at and not extraction.brute_force_finished_at %}
+                    <div class="brute-force-badge-compact">
+                        <i class="fas fa-unlock-alt"></i> FB
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Connector -->
+            <div class="connector-compact {% if extraction.finished_at %}completed{% endif %}">
+                <div class="line-compact"></div>
+                <i class="fas fa-chevron-right arrow-compact"></i>
+            </div>
+            
+            <!-- Step 4: Completed -->
+            <div class="workflow-step-compact {% if extraction.status == 'completed' %}active completed{% endif %}">
+                <div class="step-rectangle-compact">
+                    {% if extraction.status == 'completed' %}
+                    <div class="step-check-icon-compact">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    {% endif %}
+                    <div class="step-icon-compact">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="step-content-compact">
+                        <div class="step-label-compact">Finalizada</div>
+                        {% if extraction.status == 'completed' %}
+                            <div class="step-badge-compact">
+                                {% if extraction.extraction_result == 'success' %}
+                                    <span class="badge bg-success" style="font-size: 0.6rem;">Sucesso</span>
+                                {% elif extraction.extraction_result == 'failed' %}
+                                    <span class="badge bg-danger" style="font-size: 0.6rem;">Falhou</span>
+                                {% elif extraction.extraction_result == 'partial' %}
+                                    <span class="badge bg-warning" style="font-size: 0.6rem;">Parcial</span>
+                                {% else %}
+                                    <span class="badge bg-success" style="font-size: 0.6rem;">OK</span>
+                                {% endif %}
+                            </div>
+                            {% if extraction.finished_at %}
+                                <div class="step-date-compact">{{ extraction.finished_at|date:"d/m H:i" }}</div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Card Compacto */
+.extraction-workflow-card-compact {
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-left: 3px solid #dee2e6;
+}
+
+.extraction-workflow-card-compact:hover {
+    transform: translateX(2px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Status-based border colors */
+.extraction-workflow-card-compact:has(.workflow-step-compact.active[class*="pending"]) {
+    border-left-color: #0dcaf0;
+}
+
+.extraction-workflow-card-compact:has(.workflow-step-compact.active[class*="assigned"]) {
+    border-left-color: #ffc107;
+}
+
+.extraction-workflow-card-compact:has(.workflow-step-compact.active[class*="in_progress"]) {
+    border-left-color: #0d6efd;
+}
+
+.extraction-workflow-card-compact:has(.workflow-step-compact.active[class*="paused"]) {
+    border-left-color: #6c757d;
+}
+
+.extraction-workflow-card-compact:has(.workflow-step-compact.completed) {
+    border-left-color: #198754;
+}
+
+/* Workflow Compacto */
+.workflow-horizontal-compact {
+    overflow-x: auto;
+    padding: 0.25rem 0;
+}
+
+.workflow-step-compact {
+    flex: 1;
+    min-width: 90px;
+    position: relative;
+}
+
+.step-rectangle-compact {
+    background: #ffffff;
+    border: 2px solid #212529;
+    border-radius: 8px;
+    padding: 4px 6px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    position: relative;
+    transition: all 0.3s ease;
+    min-height: 50px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.workflow-step-compact.active .step-rectangle-compact {
+    background: #ffffff;
+    border-color: #0d6efd;
+    border-width: 2px;
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.15);
+}
+
+.workflow-step-compact.completed .step-rectangle-compact {
+    background: #ffffff;
+    border-color: #198754;
+    border-width: 2px;
+}
+
+.step-check-icon-compact {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    color: #198754;
+    font-size: 0.85rem;
+    z-index: 1;
+    background: #ffffff;
+    border: 1.5px solid #198754;
+    border-radius: 6px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.step-icon-compact {
+    color: #212529;
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+    transition: color 0.3s ease;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 2px;
+    width: 100%;
+    text-align: center;
+}
+
+.workflow-step-compact.active .step-icon-compact {
+    color: #0d6efd;
+    border-bottom-color: #0d6efd;
+}
+
+.workflow-step-compact.completed .step-icon-compact {
+    color: #198754;
+    border-bottom-color: #198754;
+}
+
+.step-content-compact {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex-grow: 1;
+}
+
+.step-label-compact {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1.1;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+}
+
+.workflow-step-compact.active .step-label-compact {
+    color: #0d6efd;
+}
+
+.workflow-step-compact.completed .step-label-compact {
+    color: #198754;
+}
+
+.step-badge-compact {
+    margin-top: 1px;
+    text-align: center;
+}
+
+.step-date-compact {
+    font-size: 0.6rem;
+    color: #495057;
+    line-height: 1;
+    text-align: center;
+    font-weight: 500;
+    font-family: 'Courier New', monospace;
+}
+
+.brute-force-badge-compact {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    background: #dc3545;
+    color: white;
+    font-size: 0.55rem;
+    padding: 0.1rem 0.25rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+}
+
+/* Connector Compacto */
+.connector-compact {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+    flex-shrink: 0;
+    padding: 0 2px;
+}
+
+.line-compact {
+    width: 20px;
+    height: 2px;
+    background: #212529;
+    transition: background 0.3s ease;
+    border-radius: 0;
+}
+
+.connector-compact.completed .line-compact {
+    background: #198754;
+}
+
+.arrow-compact {
+    color: #212529;
+    font-size: 0.7rem;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.connector-compact.completed .arrow-compact {
+    color: #198754;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .workflow-horizontal-compact {
+        justify-content: flex-start;
+    }
+    
+    .workflow-step-compact {
+        min-width: 80px;
+    }
+    
+    .step-rectangle-compact {
+        padding: 4px;
+        min-height: 45px;
+    }
+    
+    .step-icon-compact {
+        font-size: 0.8rem;
+    }
+    
+    .step-label-compact {
+        font-size: 0.6rem;
+    }
+    
+    .step-date-compact {
+        font-size: 0.55rem;
+    }
+    
+    .step-check-icon-compact {
+        width: 16px;
+        height: 16px;
+        font-size: 0.75rem;
+    }
+    
+    .line-compact {
+        width: 15px;
+        height: 2px;
+    }
+}
+</style>

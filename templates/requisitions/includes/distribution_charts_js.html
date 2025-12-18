@@ -1,0 +1,342 @@
+{% comment %}
+Template include para JavaScript de inicialização dos gráficos de distribuição.
+
+Parâmetros esperados:
+- distribution_data: Lista de dados das unidades (pode ser distribution_summary ou report_data.summary_by_unit)
+- chart_data: Dados para o gráfico (opcional, se não fornecido, será gerado a partir de distribution_data)
+- compact_chart_id: ID do canvas do gráfico compacto (padrão: 'compactChart')
+- detailed_chart_id: ID do canvas do gráfico detalhado (padrão: 'requestsChart')
+- show_toggle: Boolean - se True, inicializa toggle view (padrão: False)
+{% endcomment %}
+
+<script>
+// Functions for distribution charts - defined in global scope
+// Function to wait for Chart.js to be available
+function waitForChartJS(callback, maxAttempts = 50, attempt = 0) {
+    // Check both Chart and window.Chart for compatibility
+    const ChartAvailable = typeof Chart !== 'undefined' || typeof window.Chart !== 'undefined';
+    
+    if (ChartAvailable) {
+        console.log('Chart.js loaded successfully - calling callback');
+        callback();
+    } else if (attempt < maxAttempts) {
+        setTimeout(function() {
+            waitForChartJS(callback, maxAttempts, attempt + 1);
+        }, 100);
+    } else {
+        console.error('Chart.js failed to load after ' + (maxAttempts * 100) + 'ms');
+        console.error('Please check if Chart.js script is included in the page');
+    }
+}
+
+{% if show_toggle %}
+function initToggleView() {
+    const toggleBtn = document.getElementById('toggleDistributionView');
+    const compactView = document.getElementById('compactView');
+    const detailedView = document.getElementById('detailedView');
+    const toggleText = document.getElementById('toggleText');
+    
+    if (toggleBtn && compactView && detailedView) {
+        toggleBtn.addEventListener('click', function() {
+            const isCompactVisible = compactView.style.display !== 'none' && compactView.style.display !== '';
+            
+            if (isCompactVisible) {
+                compactView.style.display = 'none';
+                detailedView.style.display = 'block';
+                toggleText.textContent = 'Ver Resumo';
+                toggleBtn.querySelector('i').classList.remove('fa-expand-alt');
+                toggleBtn.querySelector('i').classList.add('fa-compress-alt');
+                
+                // Update detailed chart when shown (it was created with 0x0 dimensions because it was hidden)
+                if (window.detailedChartInstance) {
+                    setTimeout(function() {
+                        try {
+                            window.detailedChartInstance.resize();
+                            window.detailedChartInstance.update('none');
+                            console.log('Detailed chart resized and updated');
+                        } catch (error) {
+                            console.error('Error updating detailed chart:', error);
+                        }
+                    }, 300);
+                }
+            } else {
+                compactView.style.display = 'block';
+                detailedView.style.display = 'none';
+                toggleText.textContent = 'Ver Detalhes';
+                toggleBtn.querySelector('i').classList.remove('fa-compress-alt');
+                toggleBtn.querySelector('i').classList.add('fa-expand-alt');
+            }
+        });
+    }
+}
+{% endif %}
+
+function initDistributionCharts() {
+    // Use window.Chart if available, fallback to Chart
+    const ChartLib = window.Chart || Chart;
+    
+    if (typeof ChartLib === 'undefined') {
+        console.error('Chart.js is not loaded');
+        return;
+    }
+    
+    console.log('Initializing distribution charts...');
+    
+    {% if distribution_data %}
+        const distributionData = [
+            {% for unit_data in distribution_data %}
+            {
+                unit: '{{ unit_data.unit.acronym|default:unit_data.unit.name|truncatechars:15|escapejs }}',
+                total: {{ unit_data.total_requests|default:0 }},
+                pending: {{ unit_data.pending_requests|default:0 }},
+                in_progress: {{ unit_data.in_progress_requests|default:0 }},
+                received: {{ unit_data.received_requests|default:0 }}
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+    {% else %}
+        const distributionData = [];
+    {% endif %}
+    
+    console.log('Distribution data:', distributionData);
+    
+    // Filter out units with zero requests for charts (but keep all in table)
+    const chartData = distributionData.filter(function(item) {
+        return item.total > 0;
+    });
+    
+    console.log('Chart data (filtered):', chartData);
+    
+    // Show message if no data available
+    if (chartData.length === 0) {
+        console.log('No chart data available - showing message');
+        
+        const compactNoData = document.getElementById('{{ compact_chart_id|default:"compactChart" }}NoData');
+        const requestsNoData = document.getElementById('{{ detailed_chart_id|default:"requestsChart" }}NoData');
+        
+        if (compactNoData) {
+            compactNoData.style.display = 'flex';
+        }
+        if (requestsNoData) {
+            requestsNoData.style.display = 'flex';
+        }
+        
+        return;
+    } else {
+        // Hide no-data messages if we have data
+        const compactNoData = document.getElementById('{{ compact_chart_id|default:"compactChart" }}NoData');
+        const requestsNoData = document.getElementById('{{ detailed_chart_id|default:"requestsChart" }}NoData');
+        
+        if (compactNoData) {
+            compactNoData.style.display = 'none';
+        }
+        if (requestsNoData) {
+            requestsNoData.style.display = 'none';
+        }
+    }
+    
+    // Compact Chart (Pie Chart) - only show units with requests
+    const compactCtx = document.getElementById('{{ compact_chart_id|default:"compactChart" }}');
+    if (compactCtx && chartData.length > 0) {
+        console.log('Creating compact pie chart with data:', chartData);
+        try {
+            const chartInstance = new ChartLib(compactCtx, {
+                type: 'pie',
+                data: {
+                    labels: chartData.map(function(item) {
+                        return item.unit;
+                    }),
+                    datasets: [{
+                        data: chartData.map(function(item) {
+                            return item.total;
+                        }),
+                        backgroundColor: [
+                            'rgba(13, 110, 253, 0.8)',
+                            'rgba(25, 135, 84, 0.8)',
+                            'rgba(255, 193, 7, 0.8)',
+                            'rgba(220, 53, 69, 0.8)',
+                            'rgba(108, 117, 125, 0.8)',
+                            'rgba(147, 51, 234, 0.8)',
+                            'rgba(13, 202, 240, 0.8)',
+                            'rgba(253, 126, 20, 0.8)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 8,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    return label + ': ' + value + ' solicitações';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            console.log('Compact chart created successfully');
+            
+            // Ensure no-data message is hidden after chart creation
+            const compactNoData = document.getElementById('{{ compact_chart_id|default:"compactChart" }}NoData');
+            if (compactNoData) {
+                compactNoData.style.display = 'none';
+            }
+            
+            // Force update and resize to ensure chart renders properly
+            setTimeout(function() {
+                chartInstance.update('none');
+            }, 100);
+        } catch (error) {
+            console.error('Error creating compact chart:', error);
+        }
+    }
+    
+    {% if show_toggle %}
+    // Detailed Chart (Bar Chart with stacked status) - only show units with requests
+    const requestsCtx = document.getElementById('{{ detailed_chart_id|default:"requestsChart" }}');
+    if (requestsCtx && chartData.length > 0) {
+        console.log('Creating detailed bar chart with data:', chartData);
+        try {
+            // Check if container is visible, if not, we'll update it later when shown
+            const detailedView = document.getElementById('detailedView');
+            const isVisible = detailedView && detailedView.style.display !== 'none' && detailedView.style.display !== '';
+            
+            const chartInstance = new ChartLib(requestsCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.map(function(item) {
+                        return item.unit;
+                    }),
+                    datasets: [
+                        {
+                            label: 'Pendentes',
+                            data: chartData.map(function(item) {
+                                return item.pending;
+                            }),
+                            backgroundColor: 'rgba(255, 193, 7, 0.8)',
+                            borderColor: 'rgba(255, 193, 7, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Em Andamento',
+                            data: chartData.map(function(item) {
+                                return item.in_progress;
+                            }),
+                            backgroundColor: 'rgba(13, 202, 240, 0.8)',
+                            borderColor: 'rgba(13, 202, 240, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Recebidas',
+                            data: chartData.map(function(item) {
+                                return item.received;
+                            }),
+                            backgroundColor: 'rgba(25, 135, 84, 0.8)',
+                            borderColor: 'rgba(25, 135, 84, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: isVisible ? 750 : 0  // Skip animation if hidden
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 8,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.parsed.y || 0;
+                                    return label + ': ' + value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            console.log('Detailed chart created successfully');
+            
+            // Store reference for later update
+            window.detailedChartInstance = chartInstance;
+            
+            // Ensure no-data message is hidden after chart creation
+            const requestsNoData = document.getElementById('{{ detailed_chart_id|default:"requestsChart" }}NoData');
+            if (requestsNoData) {
+                requestsNoData.style.display = 'none';
+            }
+            
+            // Only update if container is visible, otherwise it will be updated when shown
+            if (isVisible) {
+                setTimeout(function() {
+                    chartInstance.update('none');
+                }, 100);
+            }
+        } catch (error) {
+            console.error('Error creating detailed chart:', error);
+        }
+    }
+    {% endif %}
+}
+
+// Initialize charts when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing distribution charts and toggle view...');
+    
+    {% if show_toggle %}
+    if (typeof initToggleView === 'function') {
+        initToggleView();
+    }
+    {% endif %}
+    
+    // Wait for Chart.js to be loaded before initializing charts
+    waitForChartJS(function() {
+        initDistributionCharts();
+    });
+});
+</script>

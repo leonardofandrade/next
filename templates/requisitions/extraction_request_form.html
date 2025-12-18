@@ -29,10 +29,10 @@
 {% endblock page_actions %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container-fluid p-0">
     <!-- Form -->
     <div class="row">
-        <div class="col-lg-8">
+        <div class="col-lg-12">
             <form method="post" novalidate>
                 {% csrf_token %}
                 
@@ -172,211 +172,11 @@
                 </div>
             </form>
         </div>
-        
-        <!-- Resumo de Distribuição - Coluna Lateral -->
-        <div class="col-lg-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 text-info">
-                            <i class="fas fa-chart-bar me-2"></i>
-                            Distribuição por Unidade
-                        </h5>
-                        <button type="button" class="btn btn-outline-info btn-sm" id="toggleDistributionView">
-                            <i class="fas fa-expand-alt me-1"></i>
-                            <span id="toggleText">Ver Detalhes</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <!-- Visualização Compacta (Tabela + Gráfico) -->
-                    <div id="compactView">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-sm mb-0">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Unidade</th>
-                                        <th class="text-center">Solicitações</th>
-                                        <th class="text-center">Dispositivos</th>
-                                        <th class="text-center">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% if distribution_summary %}
-                                        {% for unit_data in distribution_summary %}
-                                        <tr class="{% if unit_data.is_overloaded %}table-danger{% elif unit_data.is_available %}table-success{% else %}table-warning{% endif %}">
-                                            <td>
-                                                <div class="fw-bold">{{ unit_data.unit.acronym|default:unit_data.unit.name|truncatechars:20 }}</div>
-                                                <small class="text-muted">{{ unit_data.unit.name|truncatechars:25 }}</small>
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="badge bg-primary fs-6">{{ unit_data.total_requests }}</span>
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="badge bg-info fs-6">{{ unit_data.total_devices }}</span>
-                                            </td>
-                                            <td class="text-center">
-                                                {% if unit_data.is_overloaded %}
-                                                    <i class="fas fa-exclamation-triangle text-danger" title="Sobrecarregada"></i>
-                                                {% elif unit_data.is_available %}
-                                                    <i class="fas fa-check-circle text-success" title="Disponível"></i>
-                                                {% else %}
-                                                    <i class="fas fa-exclamation-circle text-warning" title="Atenção"></i>
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                        {% empty %}
-                                        <tr>
-                                            <td colspan="4" class="text-center text-muted py-3">
-                                                <i class="fas fa-info-circle me-2"></i>
-                                                Nenhuma unidade de extração encontrada.
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    {% else %}
-                                        <tr>
-                                            <td colspan="4" class="text-center text-muted py-3">
-                                                <i class="fas fa-info-circle me-2"></i>
-                                                Nenhuma unidade de extração encontrada.
-                                            </td>
-                                        </tr>
-                                    {% endif %}
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <!-- Gráfico Compacto -->
-                        <div class="p-3 border-top">
-                            <h6 class="mb-3">
-                                <i class="fas fa-chart-pie me-2"></i>
-                                Distribuição de Solicitações
-                            </h6>
-                            <div style="position: relative; height: 250px;">
-                                <canvas id="compactChart"></canvas>
-                                <div id="compactChartNoData" class="no-data-message d-flex align-items-center justify-content-center h-100 text-muted" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.95); z-index: 10;">
-                                    <div class="text-center">
-                                        <i class="fas fa-info-circle fa-2x mb-2"></i>
-                                        <p class="mb-0">Nenhuma solicitação cadastrada ainda</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Visualização Detalhada (Cards + Gráfico) -->
-                    <div id="detailedView" style="display: none;">
-                        <!-- Gráfico de Solicitações por Unidade -->
-                        <div class="p-3 border-bottom">
-                            <h6 class="mb-3">
-                                <i class="fas fa-chart-pie me-2"></i>
-                                Distribuição de Solicitações
-                            </h6>
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <div style="position: relative; height: 300px;">
-                                        <canvas id="requestsChart"></canvas>
-                                        <div id="requestsChartNoData" class="no-data-message d-flex align-items-center justify-content-center h-100 text-muted" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.95); z-index: 10;">
-                                            <div class="text-center">
-                                                <i class="fas fa-info-circle fa-2x mb-2"></i>
-                                                <p class="mb-0">Nenhuma solicitação cadastrada ainda</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="chart-legend">
-                                        <h6 class="mb-3">Legenda</h6>
-                                        <div class="d-flex align-items-center mb-2">
-                                            <div class="legend-color bg-primary me-2" style="width: 12px; height: 12px; border-radius: 2px;"></div>
-                                            <small>Total Solicitações</small>
-                                        </div>
-                                        <div class="d-flex align-items-center mb-2">
-                                            <div class="legend-color bg-warning me-2" style="width: 12px; height: 12px; border-radius: 2px;"></div>
-                                            <small>Pendentes</small>
-                                        </div>
-                                        <div class="d-flex align-items-center mb-2">
-                                            <div class="legend-color bg-info me-2" style="width: 12px; height: 12px; border-radius: 2px;"></div>
-                                            <small>Em Andamento</small>
-                                        </div>
-                                        <div class="d-flex align-items-center mb-2">
-                                            <div class="legend-color bg-success me-2" style="width: 12px; height: 12px; border-radius: 2px;"></div>
-                                            <small>Recebidas</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Cards Detalhados -->
-                        <div class="p-3">
-                            {% if distribution_summary %}
-                                {% for unit_data in distribution_summary %}
-                            <div class="card mb-3 {% if unit_data.is_overloaded %}border-danger{% elif unit_data.is_available %}border-success{% else %}border-warning{% endif %}">
-                                <div class="card-header py-2 {% if unit_data.is_overloaded %}bg-danger text-white{% elif unit_data.is_available %}bg-success text-white{% else %}bg-warning text-dark{% endif %}">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-building me-1"></i>
-                                        {{ unit_data.unit.name }}
-                                        {% if unit_data.is_overloaded %}
-                                            <i class="fas fa-exclamation-triangle ms-1" title="Sobrecarregada"></i>
-                                        {% elif unit_data.is_available %}
-                                            <i class="fas fa-check-circle ms-1" title="Disponível"></i>
-                                        {% endif %}
-                                    </h6>
-                                </div>
-                                <div class="card-body py-2">
-                                    <div class="row g-2">
-                                        <div class="col-6">
-                                            <small class="text-muted">Total Solicitações</small>
-                                            <div class="fw-bold">{{ unit_data.total_requests }}</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <small class="text-muted">Total Dispositivos</small>
-                                            <div class="fw-bold">{{ unit_data.total_devices }}</div>
-                                        </div>
-                                        <div class="col-4">
-                                            <small class="text-muted">Pendentes</small>
-                                            <div class="fw-bold text-warning">{{ unit_data.pending_requests }}</div>
-                                        </div>
-                                        <div class="col-4">
-                                            <small class="text-muted">Em Andamento</small>
-                                            <div class="fw-bold text-info">{{ unit_data.in_progress_requests }}</div>
-                                        </div>
-                                        <div class="col-4">
-                                            <small class="text-muted">Recebidas</small>
-                                            <div class="fw-bold text-success">{{ unit_data.received_requests }}</div>
-                                        </div>
-                                        <div class="col-12">
-                                            <small class="text-muted">Dispositivos Pendentes</small>
-                                            <div class="fw-bold {% if unit_data.pending_devices > 50 %}text-danger{% elif unit_data.pending_devices < 20 %}text-success{% else %}text-warning{% endif %}">
-                                                {{ unit_data.pending_devices }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                                {% endfor %}
-                            {% else %}
-                                <div class="text-center text-muted py-4">
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    Nenhuma unidade de extração encontrada.
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <div class="alert alert-info mb-0 py-2">
-                        <small>
-                            <i class="fas fa-info-circle me-1"></i>
-                            <strong>Legenda:</strong>
-                            <span class="badge bg-success me-1">Disponível</span>
-                            <span class="badge bg-warning me-1">Atenção</span>
-                            <span class="badge bg-danger">Sobrecarregada</span>
-                        </small>
-                    </div>
-                </div>
-            </div>
-        </div>
+    </div>
+    
+    <!-- Resumo de Distribuição - Coluna Lateral -->
+    <div class="col-lg-12">
+        {% include 'requisitions/includes/distribution_summary_card.html' with distribution_data=distribution_summary show_status=True show_toggle=True card_title='Distribuição por Unidade' card_title_color='text-info' card_icon='fa-chart-bar' compact_chart_height=300 detailed_chart_height=350 %}
     </div>
 </div>
 
@@ -432,7 +232,10 @@
 
 {% block extra_js %}
 <script>
+console.log('extraction_request_form.html extra_js block loaded');
+
 $(document).ready(function() {
+    console.log('jQuery document ready fired in extraction_request_form.html');
     // Inicializa Select2 para requester_agency_unit com busca e tema Bootstrap 5
     $('#{{ form.requester_agency_unit.id_for_label }}').select2({
         theme: 'bootstrap-5',
@@ -618,61 +421,64 @@ function loadEmailContent(pk) {
     }
     {% endif %}
     
-    // Distribution Summary Charts
-    document.addEventListener('DOMContentLoaded', function() {
-        initToggleView();
-        // Wait for Chart.js to be loaded before initializing charts
-        waitForChartJS(function() {
-            initDistributionCharts();
-        });
-    });
-    
-    // Function to wait for Chart.js to be available
-    function waitForChartJS(callback, maxAttempts = 50, attempt = 0) {
-        // Check both Chart and window.Chart for compatibility
-        const ChartAvailable = typeof Chart !== 'undefined' || typeof window.Chart !== 'undefined';
-        
-        if (ChartAvailable) {
-            console.log('Chart.js loaded successfully');
-            callback();
-        } else if (attempt < maxAttempts) {
-            setTimeout(function() {
-                waitForChartJS(callback, maxAttempts, attempt + 1);
-            }, 100);
-        } else {
-            console.error('Chart.js failed to load after ' + (maxAttempts * 100) + 'ms');
-            console.error('Please check if Chart.js script is included in the page');
-        }
+});
+</script>
+
+<!-- Distribution Charts JavaScript -->
+{% include 'requisitions/includes/distribution_charts_js.html' with distribution_data=distribution_summary show_toggle=True compact_chart_id='compactChart' detailed_chart_id='requestsChart' %}
+
+<!-- Agency Unit Modal Functions -->
+<script>
+    // Event listener para o botão de nova unidade
+    $('#btnNewAgencyUnit').on('click', function(e) {
+    } else if (attempt < maxAttempts) {
+        setTimeout(function() {
+            waitForChartJS(callback, maxAttempts, attempt + 1);
+        }, 100);
+    } else {
+        console.error('Chart.js failed to load after ' + (maxAttempts * 100) + 'ms');
+        console.error('Please check if Chart.js script is included in the page');
+        console.error('Chart:', typeof Chart, 'window.Chart:', typeof window.Chart);
     }
+}
+
+function initToggleView() {
+    const toggleBtn = document.getElementById('toggleDistributionView');
+    const compactView = document.getElementById('compactView');
+    const detailedView = document.getElementById('detailedView');
+    const toggleText = document.getElementById('toggleText');
     
-    function initToggleView() {
-        const toggleBtn = document.getElementById('toggleDistributionView');
-        const compactView = document.getElementById('compactView');
-        const detailedView = document.getElementById('detailedView');
-        const toggleText = document.getElementById('toggleText');
-        
-        if (toggleBtn && compactView && detailedView) {
-            toggleBtn.addEventListener('click', function() {
-                const isCompactVisible = compactView.style.display !== 'none';
+    if (toggleBtn && compactView && detailedView) {
+        toggleBtn.addEventListener('click', function() {
+            const isCompactVisible = compactView.style.display !== 'none';
+            
+            if (isCompactVisible) {
+                compactView.style.display = 'none';
+                detailedView.style.display = 'block';
+                toggleText.textContent = 'Ver Resumo';
+                toggleBtn.querySelector('i').classList.remove('fa-expand-alt');
+                toggleBtn.querySelector('i').classList.add('fa-compress-alt');
                 
-                if (isCompactVisible) {
-                    compactView.style.display = 'none';
-                    detailedView.style.display = 'block';
-                    toggleText.textContent = 'Ver Resumo';
-                    toggleBtn.querySelector('i').classList.remove('fa-expand-alt');
-                    toggleBtn.querySelector('i').classList.add('fa-compress-alt');
-                } else {
-                    compactView.style.display = 'block';
-                    detailedView.style.display = 'none';
-                    toggleText.textContent = 'Ver Detalhes';
-                    toggleBtn.querySelector('i').classList.remove('fa-compress-alt');
-                    toggleBtn.querySelector('i').classList.add('fa-expand-alt');
+                // Update detailed chart when shown (it was created with 0x0 dimensions because it was hidden)
+                if (window.detailedChartInstance) {
+                    setTimeout(function() {
+                        window.detailedChartInstance.resize();
+                        window.detailedChartInstance.update();
+                        console.log('Detailed chart resized and updated, dimensions:', window.detailedChartInstance.width, 'x', window.detailedChartInstance.height);
+                    }, 100);
                 }
-            });
-        }
+            } else {
+                compactView.style.display = 'block';
+                detailedView.style.display = 'none';
+                toggleText.textContent = 'Ver Detalhes';
+                toggleBtn.querySelector('i').classList.remove('fa-compress-alt');
+                toggleBtn.querySelector('i').classList.add('fa-expand-alt');
+            }
+        });
     }
-    
-    function initDistributionCharts() {
+}
+
+function initDistributionCharts() {
         // Use window.Chart if available, fallback to Chart
         const ChartLib = window.Chart || Chart;
         
@@ -733,25 +539,37 @@ function loadEmailContent(pk) {
             }
             
             return;
+    } else {
+        // Hide no-data messages if we have data
+        const compactNoData = document.getElementById('compactChartNoData');
+        const requestsNoData = document.getElementById('requestsChartNoData');
+        
+        console.log('Hiding no-data messages, compactNoData:', compactNoData, 'requestsNoData:', requestsNoData);
+        
+        if (compactNoData) {
+            compactNoData.style.display = 'none';
+            console.log('compactChartNoData hidden');
         } else {
-            // Hide no-data messages if we have data
-            const compactNoData = document.getElementById('compactChartNoData');
-            const requestsNoData = document.getElementById('requestsChartNoData');
-            
-            if (compactNoData) {
-                compactNoData.style.display = 'none';
-            }
-            if (requestsNoData) {
-                requestsNoData.style.display = 'none';
-            }
+            console.warn('compactChartNoData element not found to hide');
         }
+        if (requestsNoData) {
+            requestsNoData.style.display = 'none';
+            console.log('requestsChartNoData hidden');
+        } else {
+            console.warn('requestsChartNoData element not found to hide');
+        }
+    }
         
         // Compact Chart (Pie Chart) - only show units with requests
         const compactCtx = document.getElementById('compactChart');
+        console.log('compactCtx element:', compactCtx);
+        console.log('chartData.length:', chartData.length);
+        console.log('ChartLib available:', typeof ChartLib !== 'undefined');
+        
         if (compactCtx && chartData.length > 0) {
-            console.log('Creating compact pie chart...');
+            console.log('Creating compact pie chart with data:', chartData);
             try {
-                new ChartLib(compactCtx, {
+                const chartInstance = new ChartLib(compactCtx, {
                 type: 'pie',
                 data: {
                     labels: chartData.map(function(item) {
@@ -800,22 +618,39 @@ function loadEmailContent(pk) {
                     }
                 }
                 });
-                console.log('Compact chart created successfully');
+                console.log('Compact chart created successfully', chartInstance);
+                
+                // Ensure no-data message is hidden after chart creation
+                const compactNoData = document.getElementById('compactChartNoData');
+                if (compactNoData) {
+                    compactNoData.style.display = 'none';
+                    console.log('compactChartNoData hidden after chart creation');
+                }
+                
+                // Force update to ensure chart is rendered
+                chartInstance.update();
+                console.log('Compact chart updated, dimensions:', chartInstance.width, 'x', chartInstance.height);
             } catch (error) {
                 console.error('Error creating compact chart:', error);
+                console.error('Error stack:', error.stack);
             }
         } else {
             if (!compactCtx) {
                 console.warn('compactChart canvas element not found');
             }
+            if (chartData.length === 0) {
+                console.warn('No chart data available (chartData.length === 0)');
+            }
         }
         
         // Detailed Chart (Bar Chart with stacked status) - only show units with requests
         const requestsCtx = document.getElementById('requestsChart');
+        console.log('requestsCtx element:', requestsCtx);
+        
         if (requestsCtx && chartData.length > 0) {
-            console.log('Creating detailed bar chart...');
+            console.log('Creating detailed bar chart with data:', chartData);
             try {
-                new ChartLib(requestsCtx, {
+                const chartInstance = new ChartLib(requestsCtx, {
                 type: 'bar',
                 data: {
                     labels: chartData.map(function(item) {
@@ -896,17 +731,35 @@ function loadEmailContent(pk) {
                     }
                 }
                 });
-                console.log('Detailed chart created successfully');
+                console.log('Detailed chart created successfully', chartInstance);
+                
+                // Ensure no-data message is hidden after chart creation
+                const requestsNoData = document.getElementById('requestsChartNoData');
+                if (requestsNoData) {
+                    requestsNoData.style.display = 'none';
+                    console.log('requestsChartNoData hidden after chart creation');
+                }
+                
+                // Note: Detailed chart will be updated when detailedView is shown
+                // Store reference for later update
+                window.detailedChartInstance = chartInstance;
             } catch (error) {
                 console.error('Error creating detailed chart:', error);
+                console.error('Error stack:', error.stack);
             }
         } else {
             if (!requestsCtx) {
                 console.warn('requestsChart canvas element not found');
             }
+            if (chartData.length === 0) {
+                console.warn('No chart data available for detailed chart (chartData.length === 0)');
+            }
         }
     }
-    
+</script>
+
+<!-- Agency Unit Modal Functions -->
+<script>
     // Event listener para o botão de nova unidade
     $('#btnNewAgencyUnit').on('click', function(e) {
         e.preventDefault();
@@ -917,6 +770,7 @@ function loadEmailContent(pk) {
     $('#newAgencyUnitModal').on('show.bs.modal', function() {
         initAgencyUnitModal();
     });
+    
 });
 
 // Função para inicializar o modal de AgencyUnit (definida no escopo global)
@@ -1067,4 +921,5 @@ function initAgencyUnitModal() {
         $('#agencyUnitModalAlerts').empty();
     });
 </script>
+
 {% endblock %}

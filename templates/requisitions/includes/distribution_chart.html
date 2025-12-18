@@ -1,0 +1,23 @@
+{% comment %}
+Template include para exibir gráfico de distribuição.
+
+Parâmetros esperados:
+- chart_id: ID do canvas (padrão: 'distributionChart')
+- chart_type: 'pie' ou 'bar' - tipo de gráfico (padrão: 'pie')
+- chart_height: Altura do gráfico em px (padrão: 400)
+- chart_title: Título do gráfico (opcional)
+- chart_data: Dados para o gráfico (opcional, se não fornecido, será gerado via JavaScript)
+- no_data_message: Mensagem quando não há dados (padrão: 'Nenhum dado disponível')
+- show_legend: Boolean - se True, mostra legenda (padrão: True)
+- legend_position: Posição da legenda (padrão: 'bottom')
+{% endcomment %}
+
+<div style="position: relative; height: {{ chart_height|default:400 }}px;">
+    <canvas id="{{ chart_id|default:'distributionChart' }}"></canvas>
+    <div id="{{ chart_id|default:'distributionChart' }}NoData" class="no-data-message d-flex align-items-center justify-content-center h-100 text-muted" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.95); z-index: 10;">
+        <div class="text-center">
+            <i class="fas fa-info-circle fa-2x mb-2"></i>
+            <p class="mb-0">{{ no_data_message|default:'Nenhum dado disponível para exibir o gráfico' }}</p>
+        </div>
+    </div>
+</div>

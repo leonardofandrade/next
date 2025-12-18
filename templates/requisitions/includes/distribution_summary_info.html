@@ -1,0 +1,110 @@
+    <!-- Gráficos -->
+    <!-- Resumo por Unidade de Extração (mover para a mesma linha do resumo por status) -->
+    <div class="col-lg-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-building me-2"></i>
+                    Resumo por Unidade de Extração
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Unidade</th>
+                                <th class="text-center">Solic.</th>
+                                <th class="text-center">Disp.</th>
+                                <th class="text-center">Eficiência</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for unit_data in report_data.summary_by_unit %}
+                            <tr>
+                                <td>
+                                    <strong>{% if unit_data.unit.acronym %}{{ unit_data.unit.acronym }}{% else %}{{ unit_data.unit.name }}{% endif %}</strong>
+                                    {% if unit_data.unit.acronym %}
+                                        <br><small class="text-muted">{{ unit_data.unit.name }}</small>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">{{ unit_data.total_requests }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-info">{{ unit_data.total_devices }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar {% if unit_data.efficiency_score >= 80 %}bg-success{% elif unit_data.efficiency_score >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                             role="progressbar" 
+                                             style="width: {{ unit_data.efficiency_score }}%"
+                                             aria-valuenow="{{ unit_data.efficiency_score }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            {{ unit_data.efficiency_score }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Nenhuma unidade de extração encontrada.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            <!-- Linha de Totais -->
+                            {% if report_data.summary_by_unit %}
+                            <tr class="table-dark fw-bold">
+                                <td>
+                                    <i class="fas fa-calculator me-2"></i>
+                                    <strong>TOTAIS</strong>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary fs-6">
+                                        {{ report_data.statistics.total_requests|default:0 }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-info fs-6">
+                                        {{ report_data.statistics.total_devices|default:0 }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary fs-6">
+                                        Média Geral
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Gráfico Pie: Dispositivos por Unidade -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Dispositivos por Unidade
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if report_data.chart_data.unit_devices_distribution %}
+                <div style="position: relative; height: 400px;">
+                    <canvas id="unitDevicesDistributionChart"></canvas>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-microchip fa-3x mb-3"></i>
+                    <p>Nenhum dado disponível para exibir o gráfico</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>

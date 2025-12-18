@@ -237,7 +237,7 @@ Parâmetros esperados:
                                 </h6>
                                 <div style="position: relative; height: {{ compact_chart_height|default:300 }}px;">
                                     <canvas id="{{ compact_chart_id|default:'compactChart' }}"></canvas>
-                                    <div id="{{ compact_chart_id|default:'compactChart' }}NoData" class="no-data-message d-flex align-items-center justify-content-center h-100 text-muted" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.95); z-index: 10;">
+                                    <div id="{{ compact_chart_id|default:'compactChart' }}NoData" class="no-data-message d-flex align-items-center justify-content-center h-100 text-muted" style="display: none !important; visibility: hidden !important; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.95); z-index: 10;">
                                         <div class="text-center">
                                             <i class="fas fa-info-circle fa-2x mb-2"></i>
                                             <p class="mb-0">Nenhuma solicitação cadastrada ainda</p>
@@ -323,7 +323,7 @@ Parâmetros esperados:
                                 </h6>
                                 <div style="position: relative; height: {{ detailed_chart_height|default:350 }}px;">
                                     <canvas id="{{ detailed_chart_id|default:'requestsChart' }}"></canvas>
-                                    <div id="{{ detailed_chart_id|default:'requestsChart' }}NoData" class="no-data-message d-flex align-items-center justify-content-center h-100 text-muted" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.95); z-index: 10;">
+                                    <div id="{{ detailed_chart_id|default:'requestsChart' }}NoData" class="no-data-message d-flex align-items-center justify-content-center h-100 text-muted" style="display: none !important; visibility: hidden !important; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.95); z-index: 10;">
                                         <div class="text-center">
                                             <i class="fas fa-info-circle fa-2x mb-2"></i>
                                             <p class="mb-0">Nenhuma solicitação cadastrada ainda</p>
@@ -488,7 +488,6 @@ Parâmetros esperados:
         </div>
     </div>
     <!-- Gráfico Pie: Dispositivos por Unidade -->
-    {% if chart_data %}
     <div class="{{ chart_col_class|default:'col-lg-4' }} mb-4">
         <div class="card h-100">
             <div class="card-header">
@@ -498,18 +497,16 @@ Parâmetros esperados:
                 </h5>
             </div>
             <div class="card-body">
-                {% if chart_data %}
                 <div style="position: relative; height: {{ chart_height|default:400 }}px;">
                     <canvas id="{{ chart_id|default:'unitDevicesDistributionChart' }}"></canvas>
+                    <div id="{{ chart_id|default:'unitDevicesDistributionChart' }}NoData" class="no-data-message d-flex align-items-center justify-content-center h-100 text-muted" style="display: none !important; visibility: hidden !important; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.95); z-index: 10;">
+                        <div class="text-center">
+                            <i class="fas fa-microchip fa-3x mb-3"></i>
+                            <p class="mb-0">Nenhum dado disponível para exibir o gráfico</p>
+                        </div>
+                    </div>
                 </div>
-                {% else %}
-                <div class="text-center text-muted py-5">
-                    <i class="fas fa-microchip fa-3x mb-3"></i>
-                    <p>Nenhum dado disponível para exibir o gráfico</p>
-                </div>
-                {% endif %}
             </div>
         </div>
     </div>
-    {% endif %}
 {% endif %}

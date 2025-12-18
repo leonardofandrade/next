@@ -107,31 +107,34 @@ function initDistributionCharts() {
     
     console.log('Chart data (filtered):', chartData);
     
+    // Get references to no-data message elements first
+    const compactNoData = document.getElementById('{{ compact_chart_id|default:"compactChart" }}NoData');
+    const requestsNoData = document.getElementById('{{ detailed_chart_id|default:"requestsChart" }}NoData');
+    
     // Show message if no data available
     if (chartData.length === 0) {
         console.log('No chart data available - showing message');
         
-        const compactNoData = document.getElementById('{{ compact_chart_id|default:"compactChart" }}NoData');
-        const requestsNoData = document.getElementById('{{ detailed_chart_id|default:"requestsChart" }}NoData');
-        
         if (compactNoData) {
             compactNoData.style.display = 'flex';
+            compactNoData.style.visibility = 'visible';
         }
         if (requestsNoData) {
             requestsNoData.style.display = 'flex';
+            requestsNoData.style.visibility = 'visible';
         }
         
         return;
     } else {
-        // Hide no-data messages if we have data
-        const compactNoData = document.getElementById('{{ compact_chart_id|default:"compactChart" }}NoData');
-        const requestsNoData = document.getElementById('{{ detailed_chart_id|default:"requestsChart" }}NoData');
-        
+        // Hide no-data messages immediately if we have data
+        console.log('Chart data available - hiding no-data messages');
         if (compactNoData) {
             compactNoData.style.display = 'none';
+            compactNoData.style.visibility = 'hidden';
         }
         if (requestsNoData) {
             requestsNoData.style.display = 'none';
+            requestsNoData.style.visibility = 'hidden';
         }
     }
     
@@ -195,11 +198,17 @@ function initDistributionCharts() {
             const compactNoData = document.getElementById('{{ compact_chart_id|default:"compactChart" }}NoData');
             if (compactNoData) {
                 compactNoData.style.display = 'none';
+                compactNoData.style.visibility = 'hidden';
             }
             
             // Force update and resize to ensure chart renders properly
             setTimeout(function() {
                 chartInstance.update('none');
+                // Double-check that no-data message is hidden
+                if (compactNoData) {
+                    compactNoData.style.display = 'none';
+                    compactNoData.style.visibility = 'hidden';
+                }
             }, 100);
         } catch (error) {
             console.error('Error creating compact chart:', error);
@@ -309,12 +318,18 @@ function initDistributionCharts() {
             const requestsNoData = document.getElementById('{{ detailed_chart_id|default:"requestsChart" }}NoData');
             if (requestsNoData) {
                 requestsNoData.style.display = 'none';
+                requestsNoData.style.visibility = 'hidden';
             }
             
             // Only update if container is visible, otherwise it will be updated when shown
             if (isVisible) {
                 setTimeout(function() {
                     chartInstance.update('none');
+                    // Double-check that no-data message is hidden
+                    if (requestsNoData) {
+                        requestsNoData.style.display = 'none';
+                        requestsNoData.style.visibility = 'hidden';
+                    }
                 }, 100);
             }
         } catch (error) {

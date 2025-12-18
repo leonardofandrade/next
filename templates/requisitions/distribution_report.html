@@ -293,49 +293,71 @@ function initDistributionCharts() {
     
     // Unit Devices Distribution Chart (devices per unit) - Pie Chart
     const unitDevicesCtx = document.getElementById('unitDevicesDistributionChart');
-    if (unitDevicesCtx && window.distributionReportData && window.distributionReportData.unitDevicesDistribution && window.distributionReportData.unitDevicesDistribution.length > 0) {
-        try {
-            new Chart(unitDevicesCtx, {
-                type: 'pie',
-                data: {
-                    labels: window.distributionReportData.unitDevicesDistribution.map(function(item) {
-                        return (item.extraction_unit__acronym || item.extraction_unit__name || 'Unidade');
-                    }),
-                    datasets: [{
-                        data: window.distributionReportData.unitDevicesDistribution.map(function(item) {
-                            return item.devices || 0;
+    const unitDevicesNoData = document.getElementById('unitDevicesDistributionChartNoData');
+    
+    if (unitDevicesCtx) {
+        // Check if we have data
+        const hasData = window.distributionReportData && 
+                       window.distributionReportData.unitDevicesDistribution && 
+                       window.distributionReportData.unitDevicesDistribution.length > 0;
+        
+        if (hasData) {
+            // Hide no-data message
+            if (unitDevicesNoData) {
+                unitDevicesNoData.style.display = 'none';
+                unitDevicesNoData.style.visibility = 'hidden';
+            }
+            
+            // Create chart
+            try {
+                new Chart(unitDevicesCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: window.distributionReportData.unitDevicesDistribution.map(function(item) {
+                            return (item.extraction_unit__acronym || item.extraction_unit__name || 'Unidade');
                         }),
-                        backgroundColor: [
-                            'rgba(13, 110, 253, 0.8)',
-                            'rgba(25, 135, 84, 0.8)',
-                            'rgba(255, 193, 7, 0.8)',
-                            'rgba(220, 53, 69, 0.8)',
-                            'rgba(108, 117, 125, 0.8)',
-                            'rgba(147, 51, 234, 0.8)',
-                            'rgba(13, 202, 240, 0.8)',
-                            'rgba(253, 126, 20, 0.8)',
-                            'rgba(32, 201, 151, 0.8)',
-                            'rgba(233, 84, 85, 0.8)'
-                        ],
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Dispositivos por Unidade'
-                        },
-                        legend: {
-                            position: 'bottom'
+                        datasets: [{
+                            data: window.distributionReportData.unitDevicesDistribution.map(function(item) {
+                                return item.devices || 0;
+                            }),
+                            backgroundColor: [
+                                'rgba(13, 110, 253, 0.8)',
+                                'rgba(25, 135, 84, 0.8)',
+                                'rgba(255, 193, 7, 0.8)',
+                                'rgba(220, 53, 69, 0.8)',
+                                'rgba(108, 117, 125, 0.8)',
+                                'rgba(147, 51, 234, 0.8)',
+                                'rgba(13, 202, 240, 0.8)',
+                                'rgba(253, 126, 20, 0.8)',
+                                'rgba(32, 201, 151, 0.8)',
+                                'rgba(233, 84, 85, 0.8)'
+                            ],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Dispositivos por Unidade'
+                            },
+                            legend: {
+                                position: 'bottom'
+                            }
                         }
                     }
-                }
-            });
-        } catch (error) {
-            console.error('Error creating unit devices distribution chart:', error);
+                });
+            } catch (error) {
+                console.error('Error creating unit devices distribution chart:', error);
+            }
+        } else {
+            // Show no-data message
+            if (unitDevicesNoData) {
+                unitDevicesNoData.style.display = 'flex';
+                unitDevicesNoData.style.visibility = 'visible';
+            }
         }
     }
     

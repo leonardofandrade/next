@@ -369,7 +369,6 @@ class DeviceModel(AuditedModel):
     def __str__(self):
         return f"{self.brand} - {self.name}"
 
-
 class DocumentCategory(BaseTable):
     """
     DocumentCategory model represents a category of a document.

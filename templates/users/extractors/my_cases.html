@@ -1,6 +1,10 @@
 {% extends '_global/layout/base.html' %}
 {% load static %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/workflow.css' %}?v=1.0">
+{% endblock extra_css %}
+
 {% block page_title %}
 <i class="fas {{ page_icon }} text-primary me-2"></i>
 {{ page_title }}
@@ -12,94 +16,7 @@ Painel de controle dos processos sob sua responsabilidade - Visualização em Fl
 
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- Dashboard de Estatísticas -->
-    <div class="row g-3 mb-4">
-        <div class="col-xl-2 col-md-4 col-sm-6">
-            <div class="card border-start border-4 border-info h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="bg-info bg-opacity-10 rounded-circle p-3">
-                                <i class="fas fa-hourglass-half text-info fa-2x"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <div class="text-muted small">Aguardando Início</div>
-                            <div class="h4 mb-0 fw-bold">{{ stats.waiting_start }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-2 col-md-4 col-sm-6">
-            <div class="card border-start border-4 border-primary h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="bg-primary bg-opacity-10 rounded-circle p-3">
-                                <i class="fas fa-spinner fa-spin text-primary fa-2x"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <div class="text-muted small">Em Andamento</div>
-                            <div class="h4 mb-0 fw-bold">{{ stats.in_progress }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-2 col-md-4 col-sm-6">
-            <div class="card border-start border-4 border-secondary h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="bg-secondary bg-opacity-10 rounded-circle p-3">
-                                <i class="fas fa-pause text-secondary fa-2x"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <div class="text-muted small">Pausados</div>
-                            <div class="h4 mb-0 fw-bold">{{ stats.paused }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-2 col-md-4 col-sm-6">
-            <div class="card border-start border-4 border-success h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="bg-success bg-opacity-10 rounded-circle p-3">
-                                <i class="fas fa-check-circle text-success fa-2x"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <div class="text-muted small">Finalizados</div>
-                            <div class="h4 mb-0 fw-bold">{{ stats.completed }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-2 col-md-4 col-sm-6">
-            <div class="card border-start border-4 border-dark h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="bg-dark bg-opacity-10 rounded-circle p-3">
-                                <i class="fas fa-list text-dark fa-2x"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <div class="text-muted small">Total</div>
-                            <div class="h4 mb-0 fw-bold">{{ total_count }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    
 
     <!-- Processos Ativos (Não Finalizados) - Visualização em Fluxo -->
     {% if cases_by_status.draft or cases_by_status.waiting_extractor or cases_by_status.waiting_start or cases_by_status.waiting_collect or cases_by_status.in_progress or cases_by_status.paused or cases_by_status.extractions_completed %}
@@ -109,7 +26,7 @@ Painel de controle dos processos sob sua responsabilidade - Visualização em Fl
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-project-diagram me-2"></i>
-                        Processos Ativos - Fluxo de Trabalho
+                        Processos Ativos
                     </h5>
                 </div>
                 <div class="card-body p-4">
@@ -148,40 +65,12 @@ Painel de controle dos processos sob sua responsabilidade - Visualização em Fl
             <i class="fas fa-check-circle fa-4x text-success mb-4 opacity-50"></i>
             <h4 class="text-muted mb-3">Nenhum processo ativo</h4>
             <p class="text-muted mb-4">Você não tem processos em andamento no momento.</p>
-            <a href="{% url 'cases:list' %}" class="btn btn-primary">
+            <a href="{% url 'cases:waiting_extractor_list' %}" class="btn btn-primary">
                 <i class="fas fa-search me-2"></i>
                 Ver todos os processos disponíveis
             </a>
         </div>
     </div>
-    {% endif %}
-
-    <!-- Seção: Histórico de Processos Finalizados (Colapsável) -->
-    {% if stats.completed > 0 %}
-    <div class="card mb-4">
-        <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h6 class="card-title mb-0">
-                    <i class="fas fa-history me-2"></i>
-                    Histórico de Processos Finalizados
-                    <span class="badge bg-success ms-2">{{ stats.completed }}</span>
-                </h6>
-                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#historyCollapse" aria-expanded="false" aria-controls="historyCollapse">
-                    <i class="fas fa-chevron-down"></i>
-                </button>
-            </div>
-        </div>
-        <div class="collapse" id="historyCollapse">
-            <div class="card-body">
-                <div class="row g-3">
-                    {% url 'users:my_cases' as my_cases_url %}
-                    {% for case in cases_by_status.completed %}
-                        {% include 'users/extractors/includes/case_workflow_card.html' with case=case return_url=my_cases_url %}
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
+    {% endif %}    
 </div>
 {% endblock %}

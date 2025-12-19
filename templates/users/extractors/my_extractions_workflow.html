@@ -1,6 +1,10 @@
 {% extends '_global/layout/base.html' %}
 {% load static %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/workflow.css' %}?v=1.0">
+{% endblock extra_css %}
+
 {% block page_title %}
 <i class="fas {{ page_icon }} text-primary me-2"></i>
 {{ page_title }}

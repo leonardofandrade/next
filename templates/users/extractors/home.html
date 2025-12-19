@@ -6,324 +6,58 @@
 {% block page_icon %}{{ page_icon }}{% endblock page_icon %}
 
 {% block content %}
-<!-- Stats Row -->
-<div class="row g-3 mb-4">
-    <!-- Total Cases -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0 me-3">
-                        <div class="icon-shape bg-primary bg-opacity-10 text-primary rounded-3 p-3">
-                            <i class="fas fa-folder-open fa-lg"></i>
-                        </div>
-                    </div>
-                    <div>
-                        <h6 class="card-subtitle text-muted mb-1">Meus Processos</h6>
-                        <h2 class="card-title mb-0">{{ stats.total_cases }}</h2>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Active Cases -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0 me-3">
-                        <div class="icon-shape bg-info bg-opacity-10 text-info rounded-3 p-3">
-                            <i class="fas fa-spinner fa-lg"></i>
-                        </div>
-                    </div>
-                    <div>
-                        <h6 class="card-subtitle text-muted mb-1">Processos Ativos</h6>
-                        <h2 class="card-title mb-0">{{ stats.active_cases }}</h2>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Total Extractions -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0 me-3">
-                        <div class="icon-shape bg-success bg-opacity-10 text-success rounded-3 p-3">
-                            <i class="fas fa-microchip fa-lg"></i>
-                        </div>
-                    </div>
-                    <div>
-                        <h6 class="card-subtitle text-muted mb-1">Minhas Extrações</h6>
-                        <h2 class="card-title mb-0">{{ stats.total_extractions }}</h2>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- In Progress Extractions -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0 me-3">
-                        <div class="icon-shape bg-warning bg-opacity-10 text-warning rounded-3 p-3">
-                            <i class="fas fa-tasks fa-lg"></i>
-                        </div>
-                    </div>
-                    <div>
-                        <h6 class="card-subtitle text-muted mb-1">Em Andamento</h6>
-                        <h2 class="card-title mb-0">{{ stats.in_progress_extractions }}</h2>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Quick Actions for Extractors -->
 <div class="row g-3 mb-4">
-    <div class="col-12">
+    <div class="col-12">        
         <div class="card border-0 shadow-sm">
-            <span class="me-3 fw-bold text-muted"><i class="fas fa-bolt me-2 text-warning"></i>Ações Rápidas:</span>
+            <div class="card-header text-center">
+                <i class="fas fa-bolt me-2 text-warning"></i>Ações Disponíveis</span>
+            </div>
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-2 align-items-center justify-content-center">
                     {% if user.is_superuser %}
-                    <a href="{% url 'cases:create' %}?next={{ request.path }}" class="btn btn-success d-flex flex-column align-items-center justify-content-center" style="width: 120px; height: 120px; padding: 0.5rem;">
-                        <i class="fas fa-plus fa-2x mb-2"></i>
+                    <a href="{% url 'cases:create' %}?next={{ request.path }}" 
+                        class="btn btn-success d-flex flex-column align-items-center justify-content-center" 
+                        style="width: 120px; height: 120px; padding: 0.5rem;">
+                        <i class="fas fa-folder-plus fa-2x mb-2"></i>
                         <span class="small">Novo Processo</span>
                     </a>
                     {% endif %}
-                    <a href="{% url 'users:my_extractions' %}?next={{ request.path }}" class="btn btn-outline-primary d-flex flex-column align-items-center justify-content-center" style="width: 120px; height: 120px; padding: 0.5rem;">
-                        <i class="fas fa-tasks fa-2x mb-2"></i>
+                    <a href="{% url 'users:my_extractions' %}?next={{ request.path }}" 
+                        class="btn btn-primary d-flex flex-column align-items-center justify-content-center" 
+                        style="width: 120px; height: 120px; padding: 0.5rem;"
+                        title="Minhas Extrações">
+                        <i class="fas fa-microchip fa-2x mb-2"></i>
                         <span class="small">Minhas Extrações</span>
                     </a>
-                    <a href="{% url 'users:my_cases' %}?next={{ request.path }}" class="btn btn-outline-info d-flex flex-column align-items-center justify-content-center" style="width: 120px; height: 120px; padding: 0.5rem;">
+                    <a href="{% url 'users:my_cases' %}?next={{ request.path }}" 
+                        class="btn btn-info d-flex flex-column align-items-center justify-content-center" 
+                        style="width: 120px; height: 120px; padding: 0.5rem;"
+                        title="Meus Processos">
                         <i class="fas fa-folder-open fa-2x mb-2"></i>
                         <span class="small">Meus Processos</span>
                     </a>
-                    <a href="{% url 'requisitions:not_received' %}?next={{ request.path }}" class="btn btn-outline-warning d-flex flex-column align-items-center justify-content-center" style="width: 120px; height: 120px; padding: 0.5rem;">
+                    <a href="{% url 'requisitions:not_received' %}?next={{ request.path }}" 
+                        class="btn btn-warning d-flex flex-column align-items-center justify-content-center" 
+                        style="width: 120px; height: 120px; padding: 0.5rem;"
+                        title="Solicitações Não Recebidas">
                         <i class="fas fa-inbox fa-2x mb-2"></i>
                         <span class="small">Solicitações Não Recebidas</span>
                     </a>
-                    <a href="{% url 'cases:waiting_extractor_list' %}?next={{ request.path }}" class="btn btn-outline-secondary d-flex flex-column align-items-center justify-content-center" style="width: 120px; height: 120px; padding: 0.5rem;">
-                        <i class="fas fa-user-clock fa-2x mb-2"></i>
-                        <span class="small">Aguardando Extrator</span>
+                    <a href="{% url 'cases:waiting_extractor_list' %}?next={{ request.path }}" 
+                        class="btn btn-warning d-flex flex-column align-items-center justify-content-center" 
+                        style="width: 120px; height: 120px; padding: 0.5rem;"
+                        title="Processos Pendentes">
+                        <i class="fas fa-folder fa-2x mb-2"></i>
+                        <span class="small">Processos Pendentes</span>
                     </a>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-12">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-0 py-3">
-                <h5 class="card-title mb-0"><i class="fas fa-bell me-2 text-primary"></i>Avisos</h5>
-            </div>
-            <div class="card-body">
-                {% if stats.pending_extractions > 0 %}
-                <div class="alert alert-info mb-2 border-0 bg-info bg-opacity-10 text-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Você tem <strong>{{ stats.pending_extractions }}</strong> extração(ões) pendente(s).
-                </div>
-                {% endif %}
-                {% if stats.assigned_extractions > 0 %}
-                <div class="alert alert-warning mb-2 border-0 bg-warning bg-opacity-10 text-warning">
-                    <i class="fas fa-user-check me-2"></i>
-                    Você tem <strong>{{ stats.assigned_extractions }}</strong> extração(ões) atribuída(s) aguardando início.
-                </div>
-                {% endif %}
-                {% if stats.in_progress_extractions > 0 %}
-                <div class="alert alert-primary mb-2 border-0 bg-primary bg-opacity-10 text-primary">
-                    <i class="fas fa-spinner me-2"></i>
-                    Você tem <strong>{{ stats.in_progress_extractions }}</strong> extração(ões) em andamento.
-                </div>
-                {% endif %}
-                {% if stats.pending_extractions == 0 and stats.assigned_extractions == 0 and stats.in_progress_extractions == 0 %}
-                <div class="alert alert-success mb-0 border-0 bg-success bg-opacity-10 text-success">
-                    <i class="fas fa-check-circle me-2"></i>
-                    Todas as suas extrações estão em dia!
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+    
 </div>
 
-<!-- Detailed Extraction Stats -->
-<div class="row g-3 mb-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent border-0 py-3">
-                <h5 class="card-title mb-0"><i class="fas fa-chart-pie me-2 text-primary"></i>Status das Minhas Extrações</h5>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-6 col-md-4 col-lg-2">
-                        <div class="text-center p-3 bg-light rounded">
-                            <div class="text-muted small mb-1">Pendentes</div>
-                            <div class="h4 mb-0 fw-bold text-info">{{ stats.pending_extractions }}</div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-4 col-lg-2">
-                        <div class="text-center p-3 bg-light rounded">
-                            <div class="text-muted small mb-1">Atribuídas</div>
-                            <div class="h4 mb-0 fw-bold text-warning">{{ stats.assigned_extractions }}</div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-4 col-lg-2">
-                        <div class="text-center p-3 bg-light rounded">
-                            <div class="text-muted small mb-1">Em Andamento</div>
-                            <div class="h4 mb-0 fw-bold text-primary">{{ stats.in_progress_extractions }}</div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-4 col-lg-2">
-                        <div class="text-center p-3 bg-light rounded">
-                            <div class="text-muted small mb-1">Pausadas</div>
-                            <div class="h4 mb-0 fw-bold text-secondary">{{ stats.paused_extractions }}</div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-4 col-lg-2">
-                        <div class="text-center p-3 bg-light rounded">
-                            <div class="text-muted small mb-1">Finalizadas</div>
-                            <div class="h4 mb-0 fw-bold text-success">{{ stats.completed_extractions }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-4">
-    <!-- Main Content Col -->
-    <div class="col-12 col-lg-6">
-        <!-- Recent Cases -->
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-history me-2 text-primary"></i>Meus Processos Recentes
-                </h5>
-                <a href="{% url 'users:my_cases' %}?next={{ request.path }}" class="btn btn-sm btn-outline-primary">Ver Todos</a>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="border-0">Número</th>
-                            <th class="border-0">Status</th>
-                            <th class="border-0">Prioridade</th>
-                            <th class="border-0">Atualizado em</th>
-                            <th class="border-0"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for case in recent_cases %}
-                        <tr>
-                            <td>
-                                <div class="fw-bold">{{ case.number|default:"Sem Número" }}</div>
-                            </td>
-                            <td>
-                                <span class="badge {{ case.status_badge_class }}">{{ case.get_status_display }}</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-{{ case.get_priority_color }}">{{ case.get_priority_display }}</span>
-                            </td>
-                            <td class="text-muted small">
-                                {{ case.updated_at|date:"d/m/Y H:i" }}
-                            </td>
-                            <td class="text-end">
-                                <a href="{% url 'cases:detail' case.pk %}?next={{ request.path }}" class="btn btn-sm btn-light text-primary">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="text-center py-4 text-muted">
-                                <i class="fas fa-folder-open fa-2x mb-3 d-block opacity-25"></i>
-                                Nenhum processo recente encontrado
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Extractions Col -->
-    <div class="col-12 col-lg-6">
-        <!-- Recent Extractions -->
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
-                <h5 class="card-title mb-0"><i class="fas fa-microchip me-2 text-success"></i>Minhas Extrações Recentes</h5>
-                <a href="{% url 'users:my_extractions' %}?next={{ request.path }}" class="btn btn-sm btn-outline-success">Ver Todas</a>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="border-0">Processo</th>
-                            <th class="border-0">Dispositivo</th>
-                            <th class="border-0">Status</th>
-                            <th class="border-0">Atualizado em</th>
-                            <th class="border-0"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for extraction in recent_extractions %}
-                        <tr>
-                            <td>
-                                <div class="fw-bold">{{ extraction.case_device.case.number|default:"Sem Número" }}</div>
-                            </td>
-                            <td>
-                                <div class="small">
-                                    {{ extraction.case_device.device_category.name|default:"-" }}
-                                    {% if extraction.case_device.device_model %}
-                                    <br><span class="text-muted">{{ extraction.case_device.device_model.brand.name }} {{ extraction.case_device.device_model.name }}</span>
-                                    {% endif %}
-                                </div>
-                            </td>
-                            <td>
-                                {% if extraction.status == 'pending' %}
-                                <span class="badge bg-info">Aguardando</span>
-                                {% elif extraction.status == 'assigned' %}
-                                <span class="badge bg-warning">Atribuída</span>
-                                {% elif extraction.status == 'in_progress' %}
-                                <span class="badge bg-primary">Em Andamento</span>
-                                {% elif extraction.status == 'paused' %}
-                                <span class="badge bg-secondary">Pausada</span>
-                                {% elif extraction.status == 'completed' %}
-                                <span class="badge bg-success">Finalizada</span>
-                                {% else %}
-                                <span class="badge bg-secondary">{{ extraction.get_status_display }}</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-muted small">
-                                {{ extraction.updated_at|date:"d/m/Y H:i" }}
-                            </td>
-                            <td class="text-end">
-                                <a href="{% url 'cases:detail' extraction.case_device.case.pk %}?next={{ request.path }}" class="btn btn-sm btn-light text-success">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="text-center py-4 text-muted">
-                                <i class="fas fa-microchip fa-2x mb-3 d-block opacity-25"></i>
-                                Nenhuma extração recente encontrada
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}

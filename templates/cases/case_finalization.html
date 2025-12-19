@@ -1,0 +1,196 @@
+{% extends '_global/layout/base.html' %}
+{% load static %}
+
+{% block page_title %}
+<i class="fas {{ page_icon }} text-success me-2"></i>
+{{ page_title }}
+{% endblock page_title %}
+
+{% block page_description %}
+Finalize o processo após todas as extrações estarem concluídas
+{% endblock page_description %}
+
+{% block page_actions %}
+<a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'cases:detail' case.pk %}{% endif %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left me-2"></i>
+    Voltar
+</a>
+{% endblock page_actions %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Informações do Processo -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Resumo do Processo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <strong>Status Atual:</strong><br>
+                            <span class="badge {{ case.status_badge_class }} fs-6">
+                                {{ case.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Prioridade:</strong><br>
+                            <span class="badge bg-{{ case.get_priority_color }} fs-6">
+                                {{ case.get_priority_display }}
+                            </span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Número:</strong><br>
+                            <span class="badge bg-primary fs-6">{{ case.number|default:"Rascunho" }}</span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Unidade Solicitante:</strong><br>
+                            {% if case.requester_agency_unit %}
+                                {{ case.requester_agency_unit.name }}
+                                <span class="badge bg-info">{{ case.requester_agency_unit.acronym }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Unidade de Extração:</strong><br>
+                            {% if case.extraction_unit %}
+                                <span class="badge bg-info">{{ case.extraction_unit.acronym }}</span>
+                                {{ case.extraction_unit.name }}
+                            {% else %}
+                                <span class="text-muted">Não atribuída</span>
+                            {% endif %}
+                        </div>
+                        {% if case.assigned_to %}
+                        <div class="col-md-6">
+                            <strong>Responsável:</strong><br>
+                            <i class="fas fa-user me-1"></i>
+                            {{ case.assigned_to.get_full_name|default:case.assigned_to.username }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status das Extrações -->
+        <div class="col-12 mb-4">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-check-double me-2"></i>
+                        Status das Extrações
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <strong>Total de Extrações:</strong><br>
+                            <span class="badge bg-primary fs-5">{{ total_extractions }}</span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Extrações Concluídas:</strong><br>
+                            <span class="badge bg-success fs-5">{{ completed_extractions }}</span>
+                        </div>
+                    </div>
+                    {% if completed_extractions == total_extractions %}
+                    <div class="alert alert-success mt-3 mb-0">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Todas as extrações foram concluídas!</strong> O processo está pronto para ser finalizado.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário de Finalização -->
+        <div class="col-12">
+            <form method="post" action="{% url 'cases:finalize' case.pk %}" id="finalizeForm">
+                {% csrf_token %}
+                
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Finalização do Processo
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label for="{{ form.finalization_notes.id_for_label }}" class="form-label">
+                                    {{ form.finalization_notes.label }}
+                                </label>
+                                {{ form.finalization_notes }}
+                                {% if form.finalization_notes.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.finalization_notes.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted d-block mt-1">
+                                    {{ form.finalization_notes.help_text }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aviso Importante -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="alert alert-warning mb-0" role="alert">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                                <div>
+                                    <h5 class="alert-heading mb-2">Importante</h5>
+                                    <ul class="mb-0">
+                                        <li>Ao finalizar o processo, ele será marcado como <strong>Concluído</strong>.</li>
+                                        <li>O status do processo será alterado para "Concluído" e não poderá mais ser modificado automaticamente.</li>
+                                        <li>Esta ação é <strong>irreversível</strong>. Certifique-se de que todas as extrações foram realmente concluídas.</li>
+                                        <li>Após a finalização, você poderá gerar o ofício de resposta do processo.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'cases:detail' case.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check-double me-2"></i>
+                                Finalizar Processo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Confirmação antes de submeter
+        const form = document.getElementById('finalizeForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const confirmed = confirm('Tem certeza que deseja finalizar este processo?\n\nEsta ação é irreversível e marcará o processo como concluído.');
+                if (!confirmed) {
+                    e.preventDefault();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

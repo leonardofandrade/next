@@ -816,3 +816,19 @@ class CaseCompleteRegistrationForm(forms.Form):
             'placeholder': 'Observações sobre a finalização do cadastro (opcional)...'
         })
     )
+
+
+class CaseFinalizationForm(forms.Form):
+    """
+    Formulário para finalizar um processo (após todas as extrações estarem concluídas)
+    """
+    finalization_notes = forms.CharField(
+        required=False,
+        label='Observações sobre a Finalização',
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 5,
+            'placeholder': 'Observações sobre a finalização do processo (opcional)...'
+        }),
+        help_text='Informe observações relevantes sobre a finalização do processo.'
+    )

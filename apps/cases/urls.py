@@ -13,6 +13,7 @@ urlpatterns = [
     path('<int:pk>/update-full/', views.CaseUpdateFullView.as_view(), name='update_full'),
     path('<int:pk>/delete/', views.CaseDeleteView.as_view(), name='delete'),
     path('<int:pk>/complete-registration/', views.CaseCompleteRegistrationView.as_view(), name='complete_registration'),
+    path('<int:pk>/finalize/', views.CaseFinalizationView.as_view(), name='finalize'),
     path('<int:pk>/cover-pdf/', views.CaseCoverPDFView.as_view(), name='cover_pdf'),
     path('<int:pk>/cover-odt/', views.CaseCoverODTView.as_view(), name='cover_odt'),
     path('<int:pk>/dispatch/generate/', views.CaseDispatchGenerateView.as_view(), name='dispatch_generate'),

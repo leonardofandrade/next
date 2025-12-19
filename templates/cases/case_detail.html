@@ -311,6 +311,29 @@
                                 <span class="badge bg-primary mt-1">#{{ case.extraction_request.pk }}</span>
                             </a>
                             {% endif %}
+                            
+                            <!-- Finalizar Processo (quando todas as extrações estiverem concluídas) -->
+                            {% if all_extractions_completed and not case.finished_at %}
+                                {% if not case.assigned_to or case.assigned_to == request.user %}
+                                <a href="{% url 'cases:finalize' case.pk %}" 
+                                   class="btn btn-success d-flex flex-column align-items-center justify-content-center" 
+                                   style="width: 120px; height: 120px; padding: 0.5rem;">
+                                    <i class="fas fa-check-double fa-2x mb-2"></i>
+                                    <span class="small">Finalizar</span>
+                                    <span class="small">Processo</span>
+                                </a>
+                                {% else %}
+                                <button type="button" 
+                                        class="btn btn-outline-success d-flex flex-column align-items-center justify-content-center" 
+                                        style="width: 120px; height: 120px; padding: 0.5rem;"
+                                        disabled
+                                        title="Você precisa estar atribuído ao processo para finalizá-lo">
+                                    <i class="fas fa-check-double fa-2x mb-2"></i>
+                                    <span class="small">Finalizar</span>
+                                    <span class="small">Processo</span>
+                                </button>
+                                {% endif %}
+                            {% endif %}
                             {% endif %}
                             
                         </div>

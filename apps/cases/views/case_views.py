@@ -27,7 +27,8 @@ from apps.core.mixins.views import (
 from apps.cases.models import Case, CaseDevice, Extraction, CaseProcedure, CaseDocument
 from apps.cases.forms import (
     CaseCreateForm, CaseUpdateForm, CaseSearchForm, 
-    CaseDeviceForm, CaseCompleteRegistrationForm, CaseProcedureForm, CaseDocumentForm
+    CaseDeviceForm, CaseCompleteRegistrationForm, CaseProcedureForm, CaseDocumentForm,
+    CaseFinalizationForm
 )
 from apps.core.models import ReportsSettings
 from apps.cases.services import CaseService
@@ -171,6 +172,11 @@ class CaseDetailView(ExtractionUnitFilterMixin, BaseDetailView):
         
         context['extractions_count'] = extractions.count()
         context['extractions'] = extractions
+        
+        # Check if all extractions are completed
+        total_extractions = extractions.count()
+        completed_extractions = extractions.filter(status=Extraction.STATUS_COMPLETED).count()
+        context['all_extractions_completed'] = total_extractions > 0 and completed_extractions == total_extractions
         
         return context
 
@@ -1601,4 +1607,169 @@ class CaseCoverPDFView(LoginRequiredMixin, View):
                 f'Erro ao gerar o PDF da capa: {str(e)}'
             )
             return redirect('cases:detail', pk=case.pk)
+
+
+class CaseFinalizationView(LoginRequiredMixin, ServiceMixin, View):
+    """
+    View para finalizar um processo após todas as extrações estarem concluídas
+    """
+    service_class = CaseService
+    template_name = 'cases/case_finalization.html'
+    
+    def get(self, request, pk):
+        """
+        Exibe o formulário de finalização do processo
+        """
+        case = get_object_or_404(
+            Case.objects.filter(deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        # Verifica se o usuário tem permissão
+        if case.assigned_to and case.assigned_to != request.user:
+            messages.error(
+                request,
+                'Você não tem permissão para finalizar este processo. Apenas o responsável pode fazer isso.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        # Verifica se o processo já foi finalizado
+        if case.finished_at:
+            messages.warning(
+                request,
+                'Este processo já foi finalizado.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        # Verifica se todas as extrações estão concluídas
+        extractions = Extraction.objects.filter(
+            case_device__case=case,
+            deleted_at__isnull=True
+        )
+        
+        total_extractions = extractions.count()
+        if total_extractions == 0:
+            messages.error(
+                request,
+                'Não é possível finalizar um processo sem extrações cadastradas.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        completed_extractions = extractions.filter(status=Extraction.STATUS_COMPLETED).count()
+        if completed_extractions != total_extractions:
+            messages.error(
+                request,
+                f'Não é possível finalizar o processo. Ainda há {total_extractions - completed_extractions} extração(ões) não concluída(s).'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        # Verifica se o status está correto
+        if case.status != Case.CASE_STATUS_EXTRACTIONS_COMPLETED:
+            messages.error(
+                request,
+                'O processo deve estar com status "Extrações concluídas" para ser finalizado.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        form = CaseFinalizationForm()
+        
+        return render(request, self.template_name, {
+            'case': case,
+            'form': form,
+            'total_extractions': total_extractions,
+            'completed_extractions': completed_extractions,
+            'page_title': f'Finalizar Processo {case.number if case.number else f"#{case.pk}"}',
+            'page_icon': 'fa-check-circle',
+        })
+    
+    def post(self, request, pk):
+        """
+        Processa a finalização do processo
+        """
+        case = get_object_or_404(
+            Case.objects.filter(deleted_at__isnull=True),
+            pk=pk
+        )
+        
+        # Verifica se o usuário tem permissão
+        if case.assigned_to and case.assigned_to != request.user:
+            messages.error(
+                request,
+                'Você não tem permissão para finalizar este processo.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        # Verifica se o processo já foi finalizado
+        if case.finished_at:
+            messages.warning(
+                request,
+                'Este processo já foi finalizado.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        # Verifica se todas as extrações estão concluídas
+        extractions = Extraction.objects.filter(
+            case_device__case=case,
+            deleted_at__isnull=True
+        )
+        
+        total_extractions = extractions.count()
+        if total_extractions == 0:
+            messages.error(
+                request,
+                'Não é possível finalizar um processo sem extrações cadastradas.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        completed_extractions = extractions.filter(status=Extraction.STATUS_COMPLETED).count()
+        if completed_extractions != total_extractions:
+            messages.error(
+                request,
+                f'Não é possível finalizar o processo. Ainda há {total_extractions - completed_extractions} extração(ões) não concluída(s).'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        # Verifica se o status está correto
+        if case.status != Case.CASE_STATUS_EXTRACTIONS_COMPLETED:
+            messages.error(
+                request,
+                'O processo deve estar com status "Extrações concluídas" para ser finalizado.'
+            )
+            return redirect('cases:detail', pk=case.pk)
+        
+        form = CaseFinalizationForm(request.POST)
+        
+        if not form.is_valid():
+            return render(request, self.template_name, {
+                'case': case,
+                'form': form,
+                'total_extractions': total_extractions,
+                'completed_extractions': completed_extractions,
+                'page_title': f'Finalizar Processo {case.number if case.number else f"#{case.pk}"}',
+                'page_icon': 'fa-check-circle',
+            })
+        
+        # Finaliza o processo usando o service
+        service = self.get_service()
+        finalization_notes = form.cleaned_data.get('finalization_notes')
+        
+        try:
+            case = service.complete_case(case.pk, finalization_notes=finalization_notes)
+            
+            messages.success(
+                request,
+                'Processo finalizado com sucesso!'
+            )
+            
+            return redirect('cases:detail', pk=case.pk)
+        except ServiceException as e:
+            self.handle_service_exception(e)
+            return render(request, self.template_name, {
+                'case': case,
+                'form': form,
+                'total_extractions': total_extractions,
+                'completed_extractions': completed_extractions,
+                'page_title': f'Finalizar Processo {case.number if case.number else f"#{case.pk}"}',
+                'page_icon': 'fa-check-circle',
+            })
 

@@ -513,4 +513,66 @@ class CaseService(BaseService):
             requisition.save()
         
         return case
+    
+    def complete_case(self, case_pk: int, finalization_notes: Optional[str] = None) -> Case:
+        """
+        Finaliza um processo após todas as extrações estarem concluídas
+        
+        Args:
+            case_pk: ID do processo
+            finalization_notes: Observações sobre a finalização (opcional)
+        
+        Returns:
+            Case: Processo finalizado
+        
+        Raises:
+            ValidationServiceException: Se o processo não pode ser finalizado
+        """
+        case = self.get_object(case_pk)
+        
+        if not self.validate_permissions('update', case):
+            raise ValidationServiceException("Sem permissão para finalizar o processo")
+        
+        # Verifica se o processo já foi finalizado
+        if case.finished_at:
+            raise ValidationServiceException("Este processo já foi finalizado")
+        
+        # Verifica se todas as extrações estão concluídas
+        extractions = Extraction.objects.filter(
+            case_device__case=case,
+            deleted_at__isnull=True
+        )
+        
+        total_extractions = extractions.count()
+        if total_extractions == 0:
+            raise ValidationServiceException(
+                "Não é possível finalizar um processo sem extrações cadastradas"
+            )
+        
+        completed_extractions = extractions.filter(status=Extraction.STATUS_COMPLETED).count()
+        if completed_extractions != total_extractions:
+            raise ValidationServiceException(
+                f"Não é possível finalizar o processo. Ainda há {total_extractions - completed_extractions} extração(ões) não concluída(s)."
+            )
+        
+        # Verifica se o status está correto
+        if case.status != Case.CASE_STATUS_EXTRACTIONS_COMPLETED:
+            raise ValidationServiceException(
+                "O processo deve estar com status 'Extrações concluídas' para ser finalizado"
+            )
+        
+        # Finaliza o processo
+        case.finished_at = timezone.now()
+        case.finished_by = self.user
+        case.status = Case.CASE_STATUS_COMPLETED
+        case.updated_by = self.user
+        case.version += 1
+        
+        # Adiciona observações se fornecidas
+        if finalization_notes:
+            case.finalization_notes = finalization_notes
+        
+        case.save()
+        
+        return case
 
